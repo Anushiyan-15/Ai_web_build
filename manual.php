@@ -212,6 +212,7 @@ td{color:#cbd5e1;}
       <h3>Panels around the canvas</h3>
       <ul>
         <li><b>Left icon rail (13):</b> 🧱 Elements · 🃏 Cards · ⭐ Shapes · 📁 Media · ✍️ Text · 🎬 Anim · 🌐 Lang · 🎨 Styles · ⚙️ Settings · 📑 Layers · 📝 Forms · 🛍️ Shop · 📄 Pages. Click one, pick a block, it drops on the canvas. <b>🔍 Search blocks</b> finds things fast.</li>
+        <li><b>⭐ Shapes (20):</b> circle, arch, blob, hexagon, star, square, ellipse, pill, triangle, pentagon, octagon, slant, trapezoid, arrow, chevron, plus, speech, leaf… — every shape already holds a picture. <b>Drag any stock/uploaded image onto a shape</b> and it fits inside automatically; or select the shape and click an image (or right-click → Change Card / Shape Image).</li>
         <li><b>Right ⚡ Quick Actions:</b> contextual buttons for the selection (Edit, Style, Clone, Delete, Image, Animate, AI Edit…). Nothing selected? It shows tips instead.</li>
         <li><b>Header:</b> devices 🖥/📱/📲 + ribbon (adds 💻 1200px laptop) · ↶ ↷ undo/redo · ⬚ outlines · ⛶ fullscreen · ❓ Help (all shortcuts) · ✦ Magic AI · 👁️ Preview (new tab at current width) · <b>✏️ Edit ON/OFF</b> (OFF = clean normal page, nothing selectable).</li>
       </ul>
