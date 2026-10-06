@@ -6,7 +6,7 @@
 //  (see config/*.example.php — copy to config/*.php for local dev).
 // ═══════════════════════════════════════════════════════════════
 
-foreach (['app.php', 'paypal.php', 'database.php', 'mail.php', 'platform-admin.php'] as $cfg) {
+foreach (['app.php', 'paypal.php', 'database.php', 'mail.php', 'platform-admin.php', 'social.php'] as $cfg) {
     $f = __DIR__ . '/config/' . $cfg;
     if (file_exists($f)) require_once $f;
 }

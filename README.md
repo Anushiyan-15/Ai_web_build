@@ -15,11 +15,13 @@ webbbuilder/
 │
 ├── assets/                           # Static Web Assets
 │   ├── css/
-│   │   ├── main.css                  # Core design system styles
-│   │   └── legacy.css                # Archived prototype stylesheet
+│   │   └── loader-3d.css             # Shared creative loaders (all pages)
 │   ├── js/
-│   │   ├── main.js                   # Application utilities
-│   │   └── legacy.js                 # Archived prototype script
+│   │   ├── ai-flowcraft.js           # Core AI generation engine (used by builder.php)
+│   │   ├── opencode-service.js       # OpenCode AI lane (builder.php, studio.php)
+│   │   ├── puter-service.js          # Puter auth + models (studio.php, site-manager.php)
+│   │   ├── ai-admin-generator.js     # AI admin-panel generator (publish.php, site-manager.php)
+│   │   └── loader-3d.js              # Loader helpers (all pages)
 │   └── images/                       # Graphics, icons, logos
 │
 ├── config/                           # Modular Configurations
@@ -145,4 +147,3 @@ Project skill file: `skills/taste/SKILL.md`. Executable adapter: `includes/Taste
   generation; weak pages (score < 85) get one AI polish pass via `POST /api/opencode.php {"action":"taste_repair",…}`
   — frontend auto-fires it per slot in its own request budget and keeps the better-scoring version.
 - **Standalone audit**: `POST /api/opencode.php {"action":"taste_audit","html":"..."}`.
-- **Regression test**: `php test-taste.php` (33 checks, must all pass).

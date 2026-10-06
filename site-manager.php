@@ -94,6 +94,21 @@ if ($action === 'get_notifications') {
     exit;
 }
 
+if ($action === 'get_submissions') {
+    header('Content-Type: application/json');
+    $oid = smClean($_GET['order_id'] ?? '');
+    $order = loadOrder($oid);
+    if (!$order) { echo json_encode(['success' => false, 'error' => 'Order not found']); exit; }
+    $owner = smOwnerEmail($order);
+    if ($owner && $owner !== $smCustomerEmail) smDeny('Access denied for this project.');
+    $slug = preg_replace('/[^a-zA-Z0-9_\-]/', '', $order['slug'] ?? '');
+    $file = publishedDir() . '/' . $slug . '/admin/data_inquiries.json';
+    $rows = ($slug !== '' && file_exists($file)) ? json_decode(file_get_contents($file), true) : [];
+    if (!is_array($rows)) $rows = [];
+    echo json_encode(['success' => true, 'submissions' => $rows, 'count' => count($rows)]);
+    exit;
+}
+
 if ($action === 'add_feature' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     $raw  = file_get_contents('php://input');
@@ -393,6 +408,7 @@ a{text-decoration:none;color:inherit}
     <button class="tab-btn" data-tab="ai-adder" id="tab-ai-adder">🤖 Add Features (AI)</button>
     <button class="tab-btn" data-tab="guide">📋 Step-by-Step Guide</button>
     <button class="tab-btn" data-tab="notifications">🔔 Notifications <span id="notif-badge" style="display:none;background:#ef4444;color:#fff;width:18px;height:18px;border-radius:50%;font-size:.62rem;font-weight:800;align-items:center;justify-content:center">0</span></button>
+    <button class="tab-btn" data-tab="inbox">📥 Inbox <span id="inbox-badge" style="display:none;background:#10b981;color:#fff;min-width:18px;height:18px;border-radius:999px;font-size:.62rem;font-weight:800;align-items:center;justify-content:center;padding:0 .3rem">0</span></button>
   </div>
 
   <!-- ═══ TAB 1: OVERVIEW ═══ -->
@@ -549,6 +565,16 @@ a{text-decoration:none;color:inherit}
     </div>
   </div>
 
+  <!-- ═══ TAB 5: FORM INBOX (contact / booking / newsletter leads) ═══ -->
+  <div class="tab-panel" id="tab-inbox">
+    <div id="inbox-list">
+      <div style="text-align:center;padding:3rem;color:#64748b">
+        <div style="font-size:2.5rem;margin-bottom:1rem">📥</div>
+        Loading inbox…
+      </div>
+    </div>
+  </div>
+
 </div><!-- /wrap -->
 <?php endif; ?>
 
@@ -573,6 +599,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTabs();
   try { await loadOrder(); } finally { if (window.Loader3D) Loader3D.hide(); }
   loadNotifications();
+  loadSubmissions();
 });
 
 /* ════ TABS ════ */
@@ -794,6 +821,42 @@ function renderNotifications(notifs) {
       </div>
       ${n.subject ? `<div style="font-weight:700;color:#fff;font-size:.88rem;margin-bottom:.4rem">${esc(n.subject)}</div>` : ''}
       <div class="notif-msg">${esc(n.message).replace(/\n/g,'<br>')}</div>
+    </div>`).join('');
+}
+
+/* ════ FORM INBOX (contact / booking / newsletter leads) ════ */
+async function loadSubmissions() {
+  try {
+    const r = await fetch(`${SITE_URL}/site-manager.php?action=get_submissions&order_id=${encodeURIComponent(ORDER_ID)}`);
+    const j = await r.json();
+    renderSubmissions(j.submissions || []);
+  } catch (e) {}
+}
+
+function renderSubmissions(rows) {
+  const list = document.getElementById('inbox-list');
+  const badge = document.getElementById('inbox-badge');
+  if (!list) return;
+  if (!rows.length) {
+    list.innerHTML = `<div style="text-align:center;padding:3rem;color:#64748b">
+      <div style="font-size:2.5rem;margin-bottom:1rem">📥</div>
+      <div>No form submissions yet</div>
+      <div style="font-size:.78rem;margin-top:.5rem">Add a Smart Form / Booking / Newsletter block in Studio, publish, and leads appear here.</div>
+    </div>`;
+    return;
+  }
+  const unread = rows.filter(x => !x.read).length;
+  if (badge && unread) { badge.style.display = 'inline-flex'; badge.textContent = unread; }
+  const kindLabels = { contact: '📨 Contact', booking: '📅 Booking', newsletter: '💌 Newsletter', popup: '🎁 Popup' };
+  list.innerHTML = rows.map(n => `
+    <div class="notif-item" style="${n.read ? '' : 'border-color:#10b981;'}">
+      <div class="notif-header">
+        <span class="notif-type info">${kindLabels[n.kind] || '📨 Form'}</span>
+        <span class="notif-date">${esc(n.date || '')}</span>
+      </div>
+      <div style="font-weight:700;color:#fff;font-size:.88rem;margin-bottom:.25rem">${esc(n.name || 'Visitor')} ${n.email ? `<a href="mailto:${esc(n.email)}" style="color:#38bdf8;font-weight:600;font-size:.78rem;">${esc(n.email)}</a>` : ''}</div>
+      ${n.phone ? `<div style="font-size:.78rem;color:#94a3b8;margin-bottom:.4rem">📞 ${esc(n.phone)}</div>` : ''}
+      <div class="notif-msg">${esc(n.message || '').replace(/\n/g,'<br>')}</div>
     </div>`).join('');
 }
 
