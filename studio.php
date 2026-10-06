@@ -151,6 +151,17 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       border-color: #f472b6; color: #fff;
       box-shadow: 0 0 12px rgba(236, 72, 153, 0.5);
     }
+    .hdr-btn.edit-toggle-btn.active {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-color: #818cf8; color: #fff;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+    /* ★ Edit OFF = clean normal page preview: editor sidebars + canvas tools hidden */
+    body.studio-edit-off .canva-rail,
+    body.studio-edit-off #canva-drawer,
+    body.studio-edit-off #ctx-panel,
+    body.studio-edit-off #canvas-feature-ribbon,
+    body.studio-edit-off #floating-edit-content-btn { display: none !important; }
     .lbl-short { display: none; }
 
     .lang-select {
@@ -717,6 +728,50 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       background: #06090e; position: relative;
       overflow: hidden; min-width: 0;
     }
+
+    /* ── Business blocks: Pages manager + Business setup ── */
+    .biz-card {
+      background: linear-gradient(180deg, #131a2b 0%, #0f1522 100%);
+      border: 1.5px solid #243049; border-radius: 14px;
+      padding: 1rem; margin-bottom: 0.85rem;
+    }
+    .biz-card-hdr { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.7rem; }
+    .biz-card-icon {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+      background: linear-gradient(135deg, #059669, #10b981);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+    .biz-card-title { font-size: 0.88rem; font-weight: 800; color: #fff; }
+    .biz-card-sub { font-size: 0.7rem; color: #94a3b8; margin-top: 0.1rem; }
+    .biz-field { margin-bottom: 0.6rem; }
+    .biz-field label { display: block; font-size: 0.7rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.25rem; }
+    .biz-input {
+      width: 100%; padding: 0.5rem 0.7rem; border-radius: 8px;
+      border: 1.5px solid #283347; background: #080c14; color: #fff;
+      font-family: inherit; font-size: 0.78rem;
+    }
+    .biz-input:focus { outline: none; border-color: #10b981; }
+    .biz-note { font-size: 0.68rem; color: #64748b; line-height: 1.5; margin-top: 0.5rem; }
+    .wc-page-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: #0a0e1a; border: 1.5px solid #1e293b; border-radius: 10px;
+      padding: 0.55rem 0.65rem; margin-bottom: 0.45rem; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .wc-page-item:hover { border-color: #3b4260; }
+    .wc-page-item.active { border-color: #6366f1; background: #13172e; box-shadow: 0 0 0 1px #6366f1; }
+    .wc-page-item .pg-info { flex: 1; min-width: 0; }
+    .wc-page-item .pg-name { font-size: 0.78rem; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wc-page-item .pg-slug { font-size: 0.66rem; color: #818cf8; font-family: monospace; }
+    .wc-page-item .pg-home { font-size: 0.58rem; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em; }
+    .wc-page-mini-btn {
+      background: #111827; border: 1px solid #283347; border-radius: 6px;
+      color: #94a3b8; font-size: 0.7rem; padding: 0.25rem 0.45rem; cursor: pointer;
+      flex-shrink: 0;
+    }
+    .wc-page-mini-btn:hover { border-color: #6366f1; color: #fff; }
+    .wc-page-mini-btn.danger:hover { border-color: #ef4444; color: #fca5a5; }
 
     /* ── Canvas Feature Ribbon (Top Creative Toolbar) ── */
     .canvas-feature-ribbon {
@@ -1550,13 +1605,15 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <div class="header-divider"></div>
       <select class="lang-select" id="header-lang-select" onchange="switchCanvasLanguage(this.value)" title="Preview site in a different language"></select>
       <button class="hdr-btn help-btn" onclick="openShortcutsModal()" title="Keyboard shortcuts & tips">❓ <span class="lbl">Help</span></button>
+      <button class="hdr-btn" onclick="openUserManual()" title="User manual: how to use, edit & publish (popup)">📘 <span class="lbl">Manual</span></button>
       <div class="header-divider"></div>
       <button class="hdr-btn" id="header-puter-btn" onclick="togglePuterAccountMenu(event)" title="Puter AI Account & Credits" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:700;">
         <span id="puter-status-dot" style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span>
         <span id="header-puter-name">Puter AI</span>
       </button>
       <button class="hdr-btn ai-btn" onclick="toggleMagicAi()" title="Ask AI to build sections, rewrite copy, or edit selected elements">✦ <span class="lbl">Magic AI</span></button>
-      <button class="hdr-btn" onclick="openStudioPreview()" title="Preview your site in a new tab">👁️ <span class="lbl">Preview</span></button>
+      <button class="hdr-btn edit-toggle-btn active" id="btn-studio-edit-mode" onclick="toggleStudioEditMode()" title="Edit mode: ON = full visual editing. OFF = clean normal page preview.">✏️ <span class="lbl">Edit: ON</span></button>
+      <button class="hdr-btn" onclick="openStudioPreview()" title="Preview in a new tab — opens in the selected device view (PC / Laptop / Tablet / Phone)">👁️ <span class="lbl">Preview</span></button>
       <button class="hdr-btn save-btn" onclick="saveAndReturnToBuilder()" title="Save all changes and return">✓ <span class="lbl">Save</span></button>
     </div>
   </header>
@@ -1573,6 +1630,9 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <div class="rail-item" id="rail-styles" onclick="switchDrawerTab('styles')"><span class="icon">🎨</span><span>Styles</span></div>
       <div class="rail-item" id="rail-traits" onclick="switchDrawerTab('traits')"><span class="icon">⚙️</span><span>Settings</span></div>
       <div class="rail-item" id="rail-layers" onclick="switchDrawerTab('layers')"><span class="icon">📑</span><span>Layers</span></div>
+      <div class="rail-item" id="rail-forms" onclick="openBlockCategory('Forms', 'rail-forms')"><span class="icon">📝</span><span>Forms</span></div>
+      <div class="rail-item" id="rail-shop" onclick="openBlockCategory('Shop', 'rail-shop')"><span class="icon">🛍️</span><span>Shop</span></div>
+      <div class="rail-item" id="rail-pages" onclick="switchDrawerTab('pages')"><span class="icon">📄</span><span>Pages</span></div>
     </aside>
 
     <div class="canva-drawer" id="canva-drawer">
@@ -1587,11 +1647,53 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
           <span class="bpill active" onclick="filterBlockCategory('all', this)">All</span>
           <span class="bpill" onclick="filterBlockCategory('Sections', this)">Sections</span>
           <span class="bpill" onclick="filterBlockCategory('Components', this)">Components</span>
+          <span class="bpill" onclick="filterBlockCategory('Forms', this)">Forms</span>
+          <span class="bpill" onclick="filterBlockCategory('Shop', this)">Shop</span>
+          <span class="bpill" onclick="filterBlockCategory('Business', this)">Business</span>
           <span class="bpill" onclick="filterBlockCategory('Shapes', this)">Shapes</span>
           <span class="bpill" onclick="filterBlockCategory('Cards', this)">Cards</span>
           <span class="bpill" onclick="filterBlockCategory('Typography', this)">Text</span>
         </div>
         <div id="gjs-blocks"></div>
+      </div>
+
+      <div class="drawer-content" id="dtab-pages" style="display:none;">
+        <div class="biz-card">
+          <div class="biz-card-hdr">
+            <div class="biz-card-icon">📄</div>
+            <div>
+              <div class="biz-card-title">Pages Manager</div>
+              <div class="biz-card-sub">Home, About, Contact… multi-page site</div>
+            </div>
+          </div>
+          <div id="wc-pages-list"></div>
+          <div style="display:flex; gap:0.4rem; margin-top:0.6rem;">
+            <input type="text" id="wc-new-page-name" class="biz-input" placeholder="New page name…" style="flex:1;">
+            <button type="button" class="friendly-action primary" style="flex:0 0 auto; min-width:0;" onclick="wcAddPage()">+ Add</button>
+          </div>
+          <div class="biz-note">First page = Homepage (publishes as index). Extra pages stay saved in Studio &amp; can be downloaded as .html. Full multi-page publish coming soon.</div>
+        </div>
+
+        <div class="biz-card">
+          <div class="biz-card-hdr">
+            <div class="biz-card-icon">⚙️</div>
+            <div>
+              <div class="biz-card-title">Business Setup</div>
+              <div class="biz-card-sub">One place → applies to all blocks</div>
+            </div>
+          </div>
+          <div class="biz-field"><label>WhatsApp number (country code + number, no +)</label><input type="text" id="biz-wa" class="biz-input" placeholder="e.g. 94771234567"></div>
+          <div class="biz-field"><label>Contact email (form alerts)</label><input type="email" id="biz-email" class="biz-input" placeholder="hello@yourshop.lk"></div>
+          <div class="biz-field"><label>Google Sheets webhook URL (optional)</label><input type="url" id="biz-sheet" class="biz-input" placeholder="https://script.google.com/…/exec"></div>
+          <div class="biz-field"><label>PayHere Merchant ID (or YOUR_MERCHANT_ID)</label><input type="text" id="biz-merchant" class="biz-input" placeholder="YOUR_MERCHANT_ID"></div>
+          <div class="biz-field"><label>LankaQR text (account / tagline on QR)</label><input type="text" id="biz-qr" class="biz-input" placeholder="My Shop • 0771234567"></div>
+          <div class="biz-field"><label>Currency label</label><input type="text" id="biz-currency" class="biz-input" placeholder="Rs"></div>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button type="button" class="friendly-action primary" style="flex:1;" onclick="wcSaveBizSetup()">💾 Save</button>
+            <button type="button" class="friendly-action whatsapp" style="flex:1;" onclick="wcApplyBizSetup()">⚡ Apply to canvas</button>
+          </div>
+          <div class="biz-note">Save keeps it for new blocks. “Apply to canvas” rewrites WhatsApp / email / Sheets / PayHere / QR / currency on blocks already on the page.</div>
+        </div>
       </div>
 
       <div class="drawer-content" id="dtab-uploads" style="display:none;">
@@ -2889,6 +2991,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     </div>
   </div>
 
+  <?php include __DIR__ . '/includes/manual-modal.php'; ?>
   <div class="toast" id="toast"></div>
 
   <script>
@@ -5061,7 +5164,19 @@ p{color:#64748b;max-width:520px;line-height:1.6}
             { id: 'sb-button-whatsapp', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">💬</div><div>WhatsApp</div>', category: 'Components', content: `<a href="https://wa.me/15551234567" target="_blank" class="btn-whatsapp" style="display:inline-flex;align-items:center;gap:0.5rem;margin:1rem auto;padding:0.9rem 1.8rem;border-radius:999px;background:#25D366;color:#fff;font-weight:700;text-decoration:none;width:max-content;">💬 Chat on WhatsApp</a>` },
             { id: 'sb-h1', label: '<div style="font-size:1.2rem;font-weight:800">H1</div><div>Headline</div>', category: 'Typography', content: '<h1 style="font-size:2.8rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:1rem;">Transform Your Vision</h1>' },
             { id: 'sb-h2', label: '<div style="font-size:1.2rem;font-weight:700">H2</div><div>Subheading</div>', category: 'Typography', content: '<h2 style="font-size:2.2rem;font-weight:800;margin-bottom:0.75rem;">World-Class Execution</h2>' },
-            { id: 'sb-p', label: '<div style="font-size:1.3rem">¶</div><div>Paragraph</div>', category: 'Typography', content: '<p style="font-size:1.05rem;line-height:1.7;color:#475569;margin-bottom:1rem;">We deliver high-performing digital solutions engineered for growth.</p>' }
+            { id: 'sb-p', label: '<div style="font-size:1.3rem">¶</div><div>Paragraph</div>', category: 'Typography', content: '<p style="font-size:1.05rem;line-height:1.7;color:#475569;margin-bottom:1rem;">We deliver high-performing digital solutions engineered for growth.</p>' },
+            { id: 'sb-form-contact', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">📨</div><div>Smart Form</div>', category: 'Forms', content: '<section style="padding:5rem 1.5rem;"><div style="max-width:1000px;margin:0 auto;background:#fff;border:1.5px solid #e2e8f0;border-radius:20px;padding:3rem;box-shadow:0 15px 40px rgba(0,0,0,0.06);display:grid;grid-template-columns:1fr 1.2fr;gap:3rem;"><div><h2 style="font-size:1.8rem;font-weight:800;margin-bottom:1rem;color:#0f172a;">Get in Touch</h2><p style="color:#64748b;line-height:1.6;margin-bottom:1.5rem;">Send a message — it lands in the inbox with email alerts.</p><p style="margin-bottom:0.75rem;color:#0f172a;"><strong>📞 Phone:</strong> +94 77 123 4567</p><p style="margin-bottom:1.5rem;color:#0f172a;"><strong>📧 Email:</strong> hello@example.com</p><a href="https://wa.me/15551234567?text=Hello!%20I%20have%20an%20inquiry." target="_blank" style="display:inline-block;padding:0.85rem 1.8rem;border-radius:999px;background:#25D366;color:#fff;font-weight:700;text-decoration:none;">💬 Chat on WhatsApp</a></div><form data-wc-form="contact" data-wc-sheet="" data-wc-thanks="✓ Thank you! Your message has been sent. We will reply soon."><input type="text" name="company" style="display:none;" tabindex="-1" autocomplete="off"/><input type="text" name="name" placeholder="Your Name" required style="width:100%;padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;margin-bottom:1rem;font-family:inherit;font-size:0.95rem;"/><input type="email" name="email" placeholder="Your Email" required style="width:100%;padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;margin-bottom:1rem;font-family:inherit;font-size:0.95rem;"/><input type="text" name="phone" placeholder="Phone (optional)" style="width:100%;padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;margin-bottom:1rem;font-family:inherit;font-size:0.95rem;"/><textarea name="message" placeholder="Your message..." required style="width:100%;padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;margin-bottom:1rem;font-family:inherit;font-size:0.95rem;min-height:120px;resize:vertical;"></textarea><button type="submit" style="width:100%;padding:0.9rem;border:none;border-radius:12px;background:var(--primary,#6366f1);color:#fff;font-weight:700;cursor:pointer;">Send Message →</button></form></div></section>' },
+            { id: 'sb-form-newsletter', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">💌</div><div>Newsletter</div>', category: 'Forms', content: '<section style="padding:4rem 1.5rem;background:#0f172a;text-align:center;"><h2 style="font-size:2rem;font-weight:800;color:#fff;margin-bottom:0.5rem;">Stay in the loop</h2><p style="color:#94a3b8;margin-bottom:1.75rem;">Offers and updates, once a month. No spam.</p><form data-wc-form="newsletter" data-wc-sheet="" data-wc-thanks="✓ Subscribed! Welcome aboard." style="max-width:480px;margin:0 auto;display:flex;gap:0.6rem;flex-wrap:wrap;"><input type="text" name="company" style="display:none;" tabindex="-1" autocomplete="off"/><input type="email" name="email" placeholder="you@email.com" required style="flex:1 1 220px;padding:0.85rem 1.1rem;border:1.5px solid #334155;border-radius:999px;background:#080c14;color:#fff;font-family:inherit;font-size:0.95rem;"/><button type="submit" style="padding:0.85rem 1.8rem;border:none;border-radius:999px;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-weight:700;cursor:pointer;">Subscribe</button></form></section>' },
+            { id: 'sb-form-booking', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">📅</div><div>Booking</div>', category: 'Forms', content: '<section style="padding:5rem 1.5rem;background:#f8fafc;"><div style="max-width:640px;margin:0 auto;background:#fff;border:1.5px solid #e2e8f0;border-radius:20px;padding:2.75rem;box-shadow:0 15px 40px rgba(0,0,0,0.06);"><h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:0.5rem;color:#0f172a;">📅 Book an Appointment</h2><p style="color:#64748b;text-align:center;margin-bottom:2rem;">Pick a date and service — we confirm shortly.</p><form data-wc-form="booking" data-wc-sheet="" data-wc-thanks="✓ Booking received! We will confirm your slot soon."><input type="text" name="company" style="display:none;" tabindex="-1" autocomplete="off"/><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;"><input type="text" name="bk-name" placeholder="Full name" required style="padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;font-family:inherit;font-size:0.95rem;"/><input type="text" name="bk-phone" placeholder="Phone / WhatsApp" required style="padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;font-family:inherit;font-size:0.95rem;"/></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;"><input type="date" name="bk-date" required style="padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;font-family:inherit;font-size:0.95rem;"/><select name="bk-service" style="padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;font-family:inherit;font-size:0.95rem;"><option>General Consultation</option><option>Service Package A</option><option>Service Package B</option><option>Follow-up Visit</option></select></div><input type="email" name="bk-email" placeholder="Email (for confirmation)" style="width:100%;padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;margin-bottom:1rem;font-family:inherit;font-size:0.95rem;"/><input type="text" name="bk-notes" placeholder="Notes (optional)" style="width:100%;padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;margin-bottom:1rem;font-family:inherit;font-size:0.95rem;"/><button type="submit" style="width:100%;padding:0.95rem;border:none;border-radius:12px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-weight:800;cursor:pointer;">Confirm Booking →</button></form></div></section>' },
+            { id: 'sb-shop-grid', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">🛍️</div><div>Product Grid</div>', category: 'Shop', content: '<section style="padding:5rem 1.5rem;"><h2 style="font-size:2.4rem;font-weight:800;text-align:center;margin-bottom:0.5rem;color:#0f172a;">Our Products</h2><p style="color:#64748b;text-align:center;margin-bottom:3rem;">Tap add to cart, or order instantly on WhatsApp.</p><div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;"><div data-wc-product data-wc-id="prod-1" data-wc-name="Premium T-Shirt" data-wc-price="2490" data-wc-img="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format&fit=crop&q=80" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format&fit=crop&q=80" alt="Premium T-Shirt" style="width:100%;height:220px;object-fit:cover;display:block;"/><div style="padding:1.5rem;"><h3 style="font-size:1.15rem;font-weight:800;color:#0f172a;">Premium T-Shirt</h3><div style="font-size:1.3rem;font-weight:900;color:var(--primary,#6366f1);margin:0.4rem 0 1rem;">Rs 2,490</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;"><button data-wc-add data-wc-id="prod-1" style="flex:1;padding:0.7rem;border:none;border-radius:10px;background:var(--primary,#6366f1);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;">Add to Cart</button><a href="https://wa.me/15551234567?text=Hello!%20I%20want%20to%20order%20Premium%20T-Shirt%20(Rs%202%2C490)" target="_blank" style="flex:1;text-align:center;padding:0.7rem;border-radius:10px;background:#25D366;color:#fff;font-weight:700;text-decoration:none;white-space:nowrap;">WhatsApp</a></div></div></div><div data-wc-product data-wc-id="prod-2" data-wc-name="Leather Wallet" data-wc-price="3950" data-wc-img="https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&auto=format&fit=crop&q=80" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&auto=format&fit=crop&q=80" alt="Leather Wallet" style="width:100%;height:220px;object-fit:cover;display:block;"/><div style="padding:1.5rem;"><h3 style="font-size:1.15rem;font-weight:800;color:#0f172a;">Leather Wallet</h3><div style="font-size:1.3rem;font-weight:900;color:var(--primary,#6366f1);margin:0.4rem 0 1rem;">Rs 3,950</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;"><button data-wc-add data-wc-id="prod-2" style="flex:1;padding:0.7rem;border:none;border-radius:10px;background:var(--primary,#6366f1);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;">Add to Cart</button><a href="https://wa.me/15551234567?text=Hello!%20I%20want%20to%20order%20Leather%20Wallet%20(Rs%203%2C950)" target="_blank" style="flex:1;text-align:center;padding:0.7rem;border-radius:10px;background:#25D366;color:#fff;font-weight:700;text-decoration:none;white-space:nowrap;">WhatsApp</a></div></div></div><div data-wc-product data-wc-id="prod-3" data-wc-name="Ceramic Mug" data-wc-price="1290" data-wc-img="https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&auto=format&fit=crop&q=80" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&auto=format&fit=crop&q=80" alt="Ceramic Mug" style="width:100%;height:220px;object-fit:cover;display:block;"/><div style="padding:1.5rem;"><h3 style="font-size:1.15rem;font-weight:800;color:#0f172a;">Ceramic Mug</h3><div style="font-size:1.3rem;font-weight:900;color:var(--primary,#6366f1);margin:0.4rem 0 1rem;">Rs 1,290</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;"><button data-wc-add data-wc-id="prod-3" style="flex:1;padding:0.7rem;border:none;border-radius:10px;background:var(--primary,#6366f1);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;">Add to Cart</button><a href="https://wa.me/15551234567?text=Hello!%20I%20want%20to%20order%20Ceramic%20Mug%20(Rs%201%2C290)" target="_blank" style="flex:1;text-align:center;padding:0.7rem;border-radius:10px;background:#25D366;color:#fff;font-weight:700;text-decoration:none;white-space:nowrap;">WhatsApp</a></div></div></div></div></section>' },
+            { id: 'sb-shop-cart', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">🛒</div><div>Cart</div>', category: 'Shop', content: '<section data-wc-cart data-wc-currency="Rs" data-wc-payhere="YOUR_MERCHANT_ID" data-wc-qr="" data-wc-wa="15551234567" style="padding:5rem 1.5rem;background:#f8fafc;"><div style="max-width:640px;margin:0 auto;background:#fff;border:1.5px solid #e2e8f0;border-radius:20px;padding:2.5rem;box-shadow:0 15px 40px rgba(0,0,0,0.06);"><h2 style="font-size:1.8rem;font-weight:800;color:#0f172a;">🛒 Your Cart <span data-wc-cart-count style="font-size:0.85rem;background:var(--primary,#6366f1);color:#fff;border-radius:999px;padding:0.15rem 0.6rem;vertical-align:middle;">0</span></h2><div class="wc-cart-items" style="margin:1rem 0;"></div><div style="display:flex;justify-content:space-between;align-items:center;padding:1rem 0;border-top:2px solid #0f172a;font-size:1.2rem;font-weight:900;color:#0f172a;"><span>Total</span><span class="wc-cart-total">Rs 0</span></div><button data-wc-checkout style="width:100%;padding:0.95rem;border:none;border-radius:12px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-weight:800;cursor:pointer;">Checkout — PayHere / LankaQR →</button><p style="font-size:0.75rem;color:#94a3b8;text-align:center;margin-top:0.75rem;">Secure checkout · PayHere cards + bank apps via LankaQR</p></div></section>' },
+            { id: 'sb-countdown', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">⏳</div><div>Countdown</div>', category: 'Business', content: '<section data-wc-countdown="2026-12-31T23:59:59" data-wc-expire-text="Offer ended — contact us for the next deal!" style="padding:4.5rem 1.5rem;background:linear-gradient(135deg,#0f172a,#1e1b4b);text-align:center;"><h2 style="font-size:2.2rem;font-weight:800;color:#fff;margin-bottom:0.5rem;">🔥 Limited-Time Offer Ends In</h2><p style="color:#94a3b8;margin-bottom:2rem;">Hurry — special pricing disappears when the timer hits zero.</p><div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;"><div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:1.25rem 1.5rem;min-width:92px;"><div data-wc-cd="days" style="font-size:2.4rem;font-weight:900;color:#fff;">00</div><div style="font-size:0.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">Days</div></div><div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:1.25rem 1.5rem;min-width:92px;"><div data-wc-cd="hours" style="font-size:2.4rem;font-weight:900;color:#fff;">00</div><div style="font-size:0.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">Hours</div></div><div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:1.25rem 1.5rem;min-width:92px;"><div data-wc-cd="mins" style="font-size:2.4rem;font-weight:900;color:#fff;">00</div><div style="font-size:0.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">Mins</div></div><div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:1.25rem 1.5rem;min-width:92px;"><div data-wc-cd="secs" style="font-size:2.4rem;font-weight:900;color:#fbbf24;">00</div><div style="font-size:0.72rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">Secs</div></div></div><div style="margin-top:2rem;"><a href="#contact" style="display:inline-block;padding:0.9rem 2.4rem;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:800;text-decoration:none;">Claim the Deal →</a></div></section>' },
+            { id: 'sb-slider', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">🎞️</div><div>Slider</div>', category: 'Business', content: '<section style="padding:5rem 1.5rem;"><style>.wc-slider{max-width:900px;margin:0 auto;position:relative;overflow:hidden;border-radius:20px;box-shadow:0 15px 40px rgba(0,0,0,0.12);}.wc-slider input{display:none;}.wc-slides{display:flex;width:300%;transition:transform .6s ease;}.wc-slide{width:33.3333%;flex-shrink:0;position:relative;}.wc-slide img{width:100%;height:420px;object-fit:cover;display:block;}.wc-slide-cap{position:absolute;bottom:0;left:0;right:0;padding:1.5rem;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;font-weight:700;}.wc-s1:checked~.wc-slides{transform:translateX(0);}.wc-s2:checked~.wc-slides{transform:translateX(-33.3333%);}.wc-s3:checked~.wc-slides{transform:translateX(-66.6666%);}.wc-dots{display:flex;gap:.5rem;justify-content:center;padding:1rem;background:#0f172a;}.wc-dots label{width:12px;height:12px;border-radius:50%;background:#475569;cursor:pointer;}.wc-s1:checked~.wc-dots label:nth-child(1),.wc-s2:checked~.wc-dots label:nth-child(2),.wc-s3:checked~.wc-dots label:nth-child(3){background:#fff;}</style><div class="wc-slider" data-wc-slider data-wc-autoplay="5000"><input class="wc-s1" type="radio" name="wcsl1" id="wcsl1a" checked/><input class="wc-s2" type="radio" name="wcsl1" id="wcsl1b"/><input class="wc-s3" type="radio" name="wcsl1" id="wcsl1c"/><div class="wc-slides"><div class="wc-slide"><img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&auto=format&fit=crop&q=80" alt="Slide 1"/><div class="wc-slide-cap">Premium quality, crafted for you</div></div><div class="wc-slide"><img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80" alt="Slide 2"/><div class="wc-slide-cap">A workspace you will love</div></div><div class="wc-slide"><img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&auto=format&fit=crop&q=80" alt="Slide 3"/><div class="wc-slide-cap">Grow with a team that cares</div></div></div><div class="wc-dots"><label for="wcsl1a"></label><label for="wcsl1b"></label><label for="wcsl1c"></label></div></div></section>' },
+            { id: 'sb-video', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">▶️</div><div>Video</div>', category: 'Business', content: '<section style="padding:5rem 1.5rem;text-align:center;"><h2 style="font-size:2.2rem;font-weight:800;margin-bottom:0.5rem;color:#0f172a;">Watch How It Works</h2><p style="color:#64748b;margin-bottom:2.5rem;">Two minutes that explain everything.</p><div data-wc-video="dQw4w9WgXcQ" data-wc-video-kind="youtube" style="max-width:820px;margin:0 auto;position:relative;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.2);cursor:pointer;padding-top:56.25%;background:#000;"><a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" style="position:absolute;inset:0;display:block;"><img src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="Play video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"/><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;background:rgba(239,68,68,0.95);color:#fff;font-size:2rem;display:flex;align-items:center;justify-content:center;">▶</span></a></div></section>' },
+            { id: 'sb-map', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">🗺️</div><div>Map</div>', category: 'Business', content: '<section style="padding:5rem 1.5rem;"><div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1.4fr;gap:2.5rem;align-items:stretch;"><div><h2 style="font-size:2.2rem;font-weight:800;margin-bottom:1rem;color:#0f172a;">📍 Visit Us</h2><p style="color:#64748b;line-height:1.7;margin-bottom:1.25rem;">Drop by our store — parking available right outside.</p><p style="margin-bottom:0.6rem;color:#0f172a;"><strong>Address:</strong> 123 Galle Road, Colombo 03</p><p style="margin-bottom:0.6rem;color:#0f172a;"><strong>Hours:</strong> Mon–Sat, 9am–7pm</p><p style="color:#0f172a;"><strong>Phone:</strong> +94 77 123 4567</p></div><div style="border-radius:18px;overflow:hidden;border:1.5px solid #e2e8f0;min-height:320px;"><iframe title="Our location" src="https://www.google.com/maps?q=Galle+Road+Colombo+03+Sri+Lanka&output=embed" style="width:100%;height:100%;min-height:320px;border:0;" loading="lazy"></iframe></div></div></section>' },
+            { id: 'sb-blog', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">📰</div><div>Blog List</div>', category: 'Business', content: '<section style="padding:5rem 1.5rem;background:#f8fafc;"><h2 style="font-size:2.4rem;font-weight:800;text-align:center;margin-bottom:0.5rem;color:#0f172a;">Latest from the Blog</h2><p style="color:#64748b;text-align:center;margin-bottom:3rem;">Tips, stories and updates.</p><div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;"><article style="background:#fff;border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600&auto=format&fit=crop&q=80" alt="Blog post" style="width:100%;height:190px;object-fit:cover;display:block;"/><div style="padding:1.5rem;"><span style="font-size:0.7rem;font-weight:800;color:#6366f1;text-transform:uppercase;">Tips • 5 min read</span><h3 style="font-size:1.15rem;font-weight:800;margin:0.5rem 0;color:#0f172a;">How to choose the right product</h3><p style="color:#64748b;font-size:0.9rem;line-height:1.6;">A short guide that helps customers decide with confidence.</p><span style="display:inline-block;margin-top:1rem;font-weight:700;color:var(--primary,#6366f1);">Read more →</span></div></article><article style="background:#fff;border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=600&auto=format&fit=crop&q=80" alt="Blog post" style="width:100%;height:190px;object-fit:cover;display:block;"/><div style="padding:1.5rem;"><span style="font-size:0.7rem;font-weight:800;color:#6366f1;text-transform:uppercase;">News • 3 min read</span><h3 style="font-size:1.15rem;font-weight:800;margin:0.5rem 0;color:#0f172a;">What is new this season</h3><p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Fresh arrivals and behind-the-scenes stories from our team.</p><span style="display:inline-block;margin-top:1rem;font-weight:700;color:var(--primary,#6366f1);">Read more →</span></div></article><article style="background:#fff;border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&auto=format&fit=crop&q=80" alt="Blog post" style="width:100%;height:190px;object-fit:cover;display:block;"/><div style="padding:1.5rem;"><span style="font-size:0.7rem;font-weight:800;color:#6366f1;text-transform:uppercase;">Guide • 7 min read</span><h3 style="font-size:1.15rem;font-weight:800;margin:0.5rem 0;color:#0f172a;">Getting the most value</h3><p style="color:#64748b;font-size:0.9rem;line-height:1.6;">Practical advice from people who do this every day.</p><span style="display:inline-block;margin-top:1rem;font-weight:700;color:var(--primary,#6366f1);">Read more →</span></div></article></div></section>' },
+            { id: 'sb-socials', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">🔗</div><div>Social Links</div>', category: 'Business', content: '<section style="padding:3.5rem 1.5rem;text-align:center;"><h2 style="font-size:1.6rem;font-weight:800;margin-bottom:0.5rem;color:#0f172a;">Follow Us</h2><p style="color:#64748b;margin-bottom:1.5rem;">Daily updates, offers and behind the scenes.</p><div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;"><a href="https://facebook.com/yourpage" target="_blank" style="width:52px;height:52px;border-radius:50%;background:#1877F2;color:#fff;font-size:1.4rem;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;">f</a><a href="https://instagram.com/yourpage" target="_blank" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;font-size:1.4rem;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;">◉</a><a href="https://tiktok.com/@yourpage" target="_blank" style="width:52px;height:52px;border-radius:50%;background:#000;color:#fff;font-size:1.2rem;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;">♪</a><a href="https://wa.me/15551234567" target="_blank" style="width:52px;height:52px;border-radius:50%;background:#25D366;color:#fff;font-size:1.4rem;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">✆</a><a href="https://youtube.com/@yourpage" target="_blank" style="width:52px;height:52px;border-radius:50%;background:#FF0000;color:#fff;font-size:1.2rem;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">▶</a></div></section>' },
+            { id: 'sb-popup', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">🎁</div><div>Popup Offer</div>', category: 'Business', content: '<div style="padding:2rem 1.5rem;text-align:center;background:#fff8ed;border:1.5px dashed #f59e0b;border-radius:16px;max-width:640px;margin:2rem auto;"><div style="font-size:2rem;">🎁</div><h3 style="font-size:1.3rem;font-weight:800;color:#0f172a;margin:0.5rem 0;">Popup Offer installed</h3><p style="color:#64748b;font-size:0.9rem;margin-bottom:1rem;">Visitors see a 10% welcome popup (<a href="#wc-popup-1" style="color:#d97706;font-weight:700;">click to preview it</a>). Auto-opens once per visit on the live site.</p></div><div id="wc-popup-1" data-wc-popup="offer" data-wc-popup-delay="6" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:1rem;"><style>#wc-popup-1:target{display:flex !important;}</style><div style="background:#fff;border-radius:20px;max-width:420px;width:100%;padding:2.5rem 2rem;text-align:center;position:relative;"><a href="#" data-wc-pop-close style="position:absolute;top:0.75rem;right:1rem;font-size:1.4rem;color:#94a3b8;text-decoration:none;">×</a><div style="font-size:2.5rem;">🎁</div><h3 style="font-size:1.5rem;font-weight:900;color:#0f172a;margin:0.5rem 0;">Get 10% Off Today</h3><p style="color:#64748b;font-size:0.9rem;margin-bottom:1.25rem;">Join the list and grab your welcome code.</p><form data-wc-form="popup" data-wc-sheet="" data-wc-thanks="✓ Code WELCOME10 unlocked!"><input type="text" name="company" style="display:none;" tabindex="-1" autocomplete="off"/><input type="email" name="email" placeholder="you@email.com" required style="width:100%;padding:0.85rem 1rem;border:1.5px solid #cbd5e1;border-radius:12px;margin-bottom:0.75rem;font-family:inherit;"/><button type="submit" style="width:100%;padding:0.85rem;border:none;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:800;cursor:pointer;">Claim 10% Off</button></form></div></div>' }
           ]
         },
         styleManager: {
@@ -5120,6 +5235,16 @@ p{color:#64748b;max-width:520px;line-height:1.6}
           else if (btns.length > 0) showToast('🔘 Button added');
           else showToast('✨ New element added');
         }, 300);
+      });
+      // ★ Business blocks: stamp saved Business Setup onto newly added components.
+      grapesEditor.on('component:add', (component) => {
+        try { wcStampBizOnComponent(component); } catch (e) {}
+      });
+      // ★ Pages manager: always boot on the homepage (extra pages stay saved).
+      grapesEditor.on('load', () => {
+        try {
+          (projectData.designs || []).forEach((d) => { if (d && Array.isArray(d.pages)) d._wcPage = 0; });
+        } catch (e) {}
       });
       grapesEditor.on('load', () => {
         setupContextMenu();
@@ -5869,6 +5994,7 @@ ${WC_ANIMATION_RUNTIME}
         if (!canvasDoc || canvasDoc.__ctxBound) return;
         canvasDoc.__ctxBound = true;
         canvasDoc.addEventListener('contextmenu', (e) => {
+          if (!studioEditMode) return; // normal preview: let links/menus behave natively
           e.preventDefault();
           let target = e.target;
           let comp = componentFromElement(target);
@@ -7669,7 +7795,7 @@ ${WC_ANIMATION_RUNTIME}
     function switchDrawerTab(tab) {
       document.getElementById('canva-drawer').classList.remove('collapsed');
       document.querySelectorAll('.rail-item').forEach(r => r.classList.remove('active'));
-      ['blocks', 'uploads', 'text', 'anim', 'lang', 'styles', 'traits', 'layers'].forEach(t => {
+      ['blocks', 'uploads', 'text', 'anim', 'lang', 'styles', 'traits', 'layers', 'pages'].forEach(t => {
         const el = document.getElementById(`dtab-${t}`);
         if (el) el.style.display = (t === tab) ? 'block' : 'none';
       });
@@ -7684,10 +7810,12 @@ ${WC_ANIMATION_RUNTIME}
         lang: '🌐 Multi-Language',
         styles: 'Style Inspector',
         traits: 'Website Settings',
-        layers: 'Layers & Content'
+        layers: 'Layers & Content',
+        pages: '📄 Pages & Business'
       };
       document.getElementById('drawer-title').textContent = titles[tab] || 'Tools';
       if (tab === 'layers') renderSmartLayers();
+      if (tab === 'pages') { renderWcPagesPanel(); loadBizSetup(); }
       if (tab === 'traits') renderFriendlySections();
       if (tab === 'anim') {
         renderAnimationPresets();
@@ -7766,7 +7894,7 @@ ${WC_ANIMATION_RUNTIME}
 
     function openBlockCategory(cat, railId) {
       document.getElementById('canva-drawer').classList.remove('collapsed');
-      ['blocks', 'uploads', 'text', 'anim', 'lang', 'styles', 'traits', 'layers'].forEach(t => {
+      ['blocks', 'uploads', 'text', 'anim', 'lang', 'styles', 'traits', 'layers', 'pages'].forEach(t => {
         const el = document.getElementById(`dtab-${t}`);
         if (el) el.style.display = (t === 'blocks') ? 'block' : 'none';
       });
@@ -7781,7 +7909,10 @@ ${WC_ANIMATION_RUNTIME}
         Shapes: '⭐ Geometric Shapes',
         Sections: '📐 Page Sections',
         Components: '🔘 UI Components',
-        Typography: '✍️ Typography'
+        Typography: '✍️ Typography',
+        Forms: '📝 Smart Forms (email + WhatsApp + Sheets)',
+        Shop: '🛍️ Shop (products, cart, PayHere / LankaQR)',
+        Business: '🧩 Business Blocks'
       };
       const titleEl = document.getElementById('drawer-title');
       if (titleEl) titleEl.textContent = titles[cat] || (cat + ' & Blocks');
@@ -8413,8 +8544,10 @@ ${WC_ANIMATION_RUNTIME}
 
     /* ══════════════ TOP BAR & CANVAS FEATURE RIBBON ══════════════ */
     let currentCanvasZoom = 1;
+    let studioCurrentDevice = 'Desktop'; // mirrors the selected device buttons
 
     function setStudioDevice(dev) {
+      studioCurrentDevice = dev;
       if (!grapesEditor) return;
       grapesEditor.setDevice(dev);
 
@@ -8678,8 +8811,37 @@ ${WC_ANIMATION_RUNTIME}
 
     function openStudioPreview() {
       syncCanvasToHtml();
-      const blob = new Blob([currentHtml], { type: 'text/html;charset=utf-8' });
-      window.open(URL.createObjectURL(blob), '_blank');
+      // Preview opens in the SELECTED device view (not always full PC width),
+      // so the customer sees exactly what was chosen: PC / Laptop / Tablet / Phone.
+      const dev = studioCurrentDevice || 'Desktop';
+      const widths = { Desktop: '', Laptop: '1200px', Tablet: '768px', Mobile: '375px' };
+      const labels = { Desktop: '🖥️ PC • Full width', Laptop: '💻 Laptop • 1200px', Tablet: '📱 Tablet • 768px', Mobile: '📲 Phone • 375px' };
+      const w = widths[dev] || '';
+      const framed = w !== '';
+      const frameStyle = framed
+        ? 'width:' + w + ';max-width:100%;border:1px solid #283347;border-radius:18px;'
+        : 'width:100%;border:none;border-radius:0;';
+      const shell = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+        + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        + '<title>Preview (' + dev + ') — WebCraft</title>'
+        + '<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}'
+        + 'body{font-family:Inter,system-ui,sans-serif;background:#06090e;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;}'
+        + '.pv-top{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:.7rem 1rem;background:#0d121c;border-bottom:1px solid #1e293b;font-size:.82rem;font-weight:700;}'
+        + '.pv-top .dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;}'
+        + '.pv-stage{flex:1;display:flex;justify-content:center;padding:18px;min-height:0;}'
+        + '#pv-frame{display:block;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.6);min-height:70vh;' + frameStyle + '}</style>'
+        + '</head><body>'
+        + '<div class="pv-top"><span class="dot"></span><span>👁️ Customer preview — ' + (labels[dev] || dev) + '</span></div>'
+        + '<div class="pv-stage"><iframe id="pv-frame" title="Website preview"></iframe></div>'
+        + '</body></html>';
+      const win = window.open('', '_blank');
+      if (!win) { showToast('⚠️ Popup blocked — allow popups to preview'); return; }
+      win.document.open();
+      win.document.write(shell);
+      win.document.close();
+      // srcdoc via property (no HTML-escaping pitfalls with inline scripts).
+      const frame = win.document.getElementById('pv-frame');
+      if (frame) frame.srcdoc = currentHtml;
     }
 
     function toggleFullscreen() {
@@ -8702,6 +8864,50 @@ ${WC_ANIMATION_RUNTIME}
         try { grapesEditor?.refresh?.(); } catch (e) {}
         try { window.dispatchEvent(new Event('resize')); } catch (e) {}
       }, 60);
+    }
+
+    /* ══ STUDIO EDIT MODE — ON: full visual editing (default).
+       OFF: GrapesJS preview command + sidebars hidden = clean normal
+       page preview (links work, nothing selectable/editable). ══ */
+    let studioEditMode = true;
+    function setStudioEditBtn() {
+      const b = document.getElementById('btn-studio-edit-mode');
+      if (!b) return;
+      b.innerHTML = studioEditMode ? '✏️ <span class="lbl">Edit: ON</span>' : '✏️ <span class="lbl">Edit: OFF</span>';
+      b.classList.toggle('active', studioEditMode);
+    }
+    function studioPreviewCmd(start) {
+      try {
+        const ed = grapesEditor;
+        if (!ed) return false;
+        const ids = ['core:preview', 'preview'];
+        for (let i = 0; i < ids.length; i++) {
+          try {
+            if (start) ed.runCommand(ids[i]); else ed.stopCommand(ids[i]);
+            return true;
+          } catch (e) {}
+        }
+      } catch (e) {}
+      return false;
+    }
+    function toggleStudioEditMode() {
+      if (!grapesEditor) { showToast('⚠️ Studio is still loading…'); return; }
+      studioEditMode = !studioEditMode;
+      try { document.body.classList.toggle('studio-edit-off', !studioEditMode); } catch (e) {}
+      if (studioEditMode) {
+        studioPreviewCmd(false);
+      } else {
+        try { grapesEditor?.select?.(null); } catch (e) {}
+        try { updateCtxPanel(null); } catch (e) {}
+        try { hideContextMenu(); } catch (e) {}
+        studioPreviewCmd(true);
+      }
+      setTimeout(() => {
+        try { grapesEditor?.refresh?.(); } catch (e) {}
+        try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+      }, 60);
+      setStudioEditBtn();
+      showToast(studioEditMode ? '✏️ Edit mode ON — full visual editing' : '👁️ Normal preview — toggle Edit ON to keep editing');
     }
 
     function openShortcutsModal() {
@@ -8731,7 +8937,7 @@ ${WC_ANIMATION_RUNTIME}
         closeShortcutsModal();
         hideContextMenu();
       }
-      if (e.key === 'Delete' && selectedComponent) {
+      if (e.key === 'Delete' && selectedComponent && studioEditMode) {
         const tag = (selectedComponent.get('tagName') || '').toLowerCase();
         if (!['section', 'header', 'footer', 'body'].includes(tag) || confirm('Delete this ' + tag + '?')) {
           try {
@@ -8761,6 +8967,206 @@ ${WC_ANIMATION_RUNTIME}
       if (!ok) { try { if (window.Loader3D) Loader3D.hide(); } catch (e) {} return; }
       try { if (window.Loader3D) Loader3D.text('✓ Saved ' + savedDesignsKB() + ' · Opening builder…'); } catch (e) {}
       setTimeout(() => window.location.href = '<?= SITE_URL ?>/builder.php?resume=1&concept=' + activeConceptIndex + '&view=' + currentStudioView, 900);
+    }
+
+    /* ══════════════ PAGES MANAGER + BUSINESS SETUP (additive) ══════════════
+       Pages live on projectData.designs[i].pages[] and persist through the
+       normal saveProjectData() flow. pages[0] mirrors the homepage html.
+       Extra pages are Studio-managed (.html download supported); the
+       builder/publish pipeline still publishes the homepage. */
+    function wcDesign() {
+      try { return projectData.designs[activeConceptIndex] || null; } catch (e) { return null; }
+    }
+    function wcEnsurePages() {
+      const d = wcDesign();
+      if (!d) return [];
+      if (!Array.isArray(d.pages) || !d.pages.length) {
+        d.pages = [{ id: 'home', name: 'Home', slug: 'index', html: d.html || '' }];
+        d._wcPage = 0;
+      }
+      if (typeof d._wcPage !== 'number' || !d.pages[d._wcPage]) d._wcPage = 0;
+      return d.pages;
+    }
+    function wcCurrentPageIdx() {
+      const d = wcDesign();
+      if (!d) return 0;
+      wcEnsurePages();
+      return d._wcPage || 0;
+    }
+    function renderWcPagesPanel() {
+      const box = document.getElementById('wc-pages-list');
+      if (!box || !grapesEditor) return;
+      const d = wcDesign();
+      if (!d) { box.innerHTML = '<div style="font-size:0.72rem;color:#64748b;">No project loaded.</div>'; return; }
+      const pages = wcEnsurePages();
+      const cur = wcCurrentPageIdx();
+      box.innerHTML = '';
+      pages.forEach((p, i) => {
+        const item = document.createElement('div');
+        item.className = 'wc-page-item' + (i === cur ? ' active' : '');
+        item.innerHTML = `<div class="pg-info"><div class="pg-name">${escapeHtml(p.name)} ${i === 0 ? '<span class="pg-home">· Home</span>' : ''}</div><div class="pg-slug">/${escapeHtml(p.slug)}.html</div></div>`;
+        const open = document.createElement('button');
+        open.className = 'wc-page-mini-btn'; open.textContent = i === cur ? '● Editing' : 'Open';
+        open.onclick = (ev) => { ev.stopPropagation(); wcSwitchPage(i); };
+        const dl = document.createElement('button');
+        dl.className = 'wc-page-mini-btn'; dl.textContent = '⤓'; dl.title = 'Download .html';
+        dl.onclick = (ev) => { ev.stopPropagation(); wcDownloadPage(i); };
+        item.appendChild(open); item.appendChild(dl);
+        if (i !== 0) {
+          const ren = document.createElement('button');
+          ren.className = 'wc-page-mini-btn'; ren.textContent = '✎'; ren.title = 'Rename';
+          ren.onclick = (ev) => { ev.stopPropagation(); wcRenamePage(i); };
+          const del = document.createElement('button');
+          del.className = 'wc-page-mini-btn danger'; del.textContent = '🗑'; del.title = 'Delete';
+          del.onclick = (ev) => { ev.stopPropagation(); wcDeletePage(i); };
+          item.appendChild(ren); item.appendChild(del);
+        }
+        item.onclick = () => { if (i !== cur) wcSwitchPage(i); };
+        box.appendChild(item);
+      });
+    }
+    function wcSyncCurrentPageFromCanvas() {
+      try {
+        syncCanvasToHtml();
+        const d = wcDesign();
+        if (!d) return;
+        const pages = wcEnsurePages();
+        const cur = wcCurrentPageIdx();
+        pages[cur].html = (currentStudioView === 'admin' && d.adminHtml) ? d.adminHtml : d.html;
+        if (cur === 0) pages[0].html = d.html || '';
+      } catch (e) {}
+    }
+    function wcSwitchPage(i) {
+      const d = wcDesign();
+      if (!d || !grapesEditor) return;
+      const pages = wcEnsurePages();
+      if (!pages[i] || i === wcCurrentPageIdx()) return;
+      wcSyncCurrentPageFromCanvas();
+      d._wcPage = i;
+      currentHtml = pages[i].html || d.html || '';
+      lockTheme(currentHtml, true);
+      showCanvasLoading();
+      loadHtmlIntoStudioCanvas();
+      saveProjectData();
+      renderWcPagesPanel();
+      showToast(`📄 Editing page: ${pages[i].name}`);
+    }
+    function wcAddPage() {
+      const d = wcDesign();
+      if (!d) return;
+      const pages = wcEnsurePages();
+      if (pages.length >= 10) { showToast('⚠️ Max 10 pages (storage limit)'); return; }
+      const inp = document.getElementById('wc-new-page-name');
+      const name = (inp && inp.value.trim()) || ('Page ' + (pages.length + 1));
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ('page-' + pages.length);
+      wcSyncCurrentPageFromCanvas();
+      pages.push({ id: 'p' + Date.now(), name, slug, html: pages[0].html || '' });
+      d._wcPage = pages.length - 1;
+      if (inp) inp.value = '';
+      currentHtml = pages[d._wcPage].html || '';
+      lockTheme(currentHtml, true);
+      loadHtmlIntoStudioCanvas();
+      saveProjectData();
+      renderWcPagesPanel();
+      showToast(`📄 Page added: ${name}`);
+    }
+    function wcRenamePage(i) {
+      const d = wcDesign();
+      if (!d) return;
+      const pages = wcEnsurePages();
+      const name = prompt('Page name:', pages[i].name);
+      if (!name || !name.trim()) return;
+      pages[i].name = name.trim();
+      pages[i].slug = pages[i].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || pages[i].slug;
+      saveProjectData();
+      renderWcPagesPanel();
+    }
+    function wcDeletePage(i) {
+      const d = wcDesign();
+      if (!d || i === 0) return;
+      const pages = wcEnsurePages();
+      if (!confirm(`Delete page "${pages[i].name}"?`)) return;
+      if (i === wcCurrentPageIdx()) { wcSwitchPage(0); }
+      pages.splice(i, 1);
+      if ((d._wcPage || 0) >= pages.length) d._wcPage = 0;
+      saveProjectData();
+      renderWcPagesPanel();
+      showToast('🗑 Page deleted');
+    }
+    function wcDownloadPage(i) {
+      const d = wcDesign();
+      if (!d) return;
+      const pages = wcEnsurePages();
+      if (!pages[i]) return;
+      let html = pages[i].html || '';
+      if (i === wcCurrentPageIdx()) { try { syncCanvasToHtml(); html = d.html || html; } catch (e) {} }
+      const blob = new Blob([html], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (pages[i].slug || 'page') + '.html';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      showToast(`⤓ Downloaded ${pages[i].slug}.html`);
+    }
+
+    /* ── Business Setup: one config → stamped onto blocks ── */
+    function wcBizConfig() {
+      try { return JSON.parse(localStorage.getItem('webcraft_biz_config') || '{}'); }
+      catch (e) { return {}; }
+    }
+    function loadBizSetup() {
+      const c = wcBizConfig();
+      const set = (id, v) => { const el = document.getElementById(id); if (el && el.value === '') el.value = v || ''; };
+      set('biz-wa', c.wa || ''); set('biz-email', c.email || '');
+      set('biz-sheet', c.sheet || ''); set('biz-merchant', c.merchant || '');
+      set('biz-qr', c.qr || ''); set('biz-currency', c.currency || '');
+    }
+    function wcSaveBizSetup() {
+      const get = (id) => (document.getElementById(id)?.value || '').trim();
+      const cfg = { wa: get('biz-wa'), email: get('biz-email'), sheet: get('biz-sheet'), merchant: get('biz-merchant'), qr: get('biz-qr'), currency: get('biz-currency') };
+      try { localStorage.setItem('webcraft_biz_config', JSON.stringify(cfg)); } catch (e) {}
+      showToast('💾 Business details saved — new blocks will use them');
+    }
+    function wcApplyBizSetup() {
+      if (!grapesEditor) return;
+      const cfg = wcBizConfig();
+      if (!Object.values(cfg).some(Boolean)) { showToast('⚠️ Save business details first'); return; }
+      try {
+        let n = 0;
+        grapesEditor.DomComponents.getWrapper().components().forEach((c) => { n += wcStampBizOnComponent(c); });
+        syncCanvasToHtml();
+        showToast(`⚡ Applied to ${n} block(s)`);
+      } catch (e) { showToast('⚠️ Apply failed'); }
+    }
+
+    /* Stamp saved Business Setup onto one component tree (used on add + Apply). */
+    function wcStampBizOnComponent(root) {
+      const cfg = wcBizConfig();
+      if (!root || !Object.values(cfg).some(Boolean)) return 0;
+      let n = 0;
+      const walk = (comp) => {
+        try {
+          const attrs = comp.getAttributes?.() || {};
+          let touched = false;
+          const setA = (k, v) => { if (v) { comp.addAttributes({ [k]: v }); touched = true; } };
+          if ('data-wc-wa' in attrs) setA('data-wc-wa', cfg.wa);
+          if ('data-wc-sheet' in attrs) setA('data-wc-sheet', cfg.sheet);
+          if ('data-wc-payhere' in attrs) setA('data-wc-payhere', cfg.merchant);
+          if ('data-wc-qr' in attrs && cfg.qr) setA('data-wc-qr', cfg.qr);
+          if ('data-wc-currency' in attrs && cfg.currency) setA('data-wc-currency', cfg.currency);
+          if ((comp.get?.('tagName') || '').toLowerCase() === 'a') {
+            const href = attrs.href || '';
+            if (cfg.wa && href.includes('wa.me/')) {
+              comp.addAttributes({ href: href.replace(/wa\.me\/\d+/, 'wa.me/' + cfg.wa) });
+              touched = true;
+            }
+          }
+          if (touched) n++;
+        } catch (e) {}
+        try { (comp.components?.() || []).forEach(walk); } catch (e) {}
+      };
+      walk(root);
+      return n;
     }
 
     function saveAndReturnToBuilder() {

@@ -43,7 +43,7 @@ window.OpenCodeAI = (function () {
     return '';
   }
   function endpoint(path) {
-    const b = base();
+    const b = base().replace(/\/+$/, '');
     return (b ? b : '') + path;
   }
 
@@ -260,12 +260,13 @@ window.OpenCodeAI = (function () {
     };
   }
 
-  /* ── MAIN: 3 variations, fixed AI split, NO template fallback ──
+  /* ── MAIN: 3 variations, fixed AI split, PARTIAL template fallback ──
      Slot 1-2 → Gemini lite, slot 3 → OpenCode (each with an AI backup
      lane, so a single-model outage still yields 3/3 AI).
      Diversity via temperature + layout brief + slot direction + taste dials.
-     Throws unless ALL 3 slots succeed — caller shows the AI error, never
-     templates. Bounded ≈ 175s (gen ~25s/slot solo + optional taste polish). */
+     Partial fallback: 1-2 AI ready → return them, caller fills the rest
+     with server templates by variation id. Throws only on 0/3.
+     Bounded ≈ 175s (gen ~25s/slot solo + optional taste polish). */
   async function generateConcepts(data, mode, options) {
     options = options || {};
     const onProgress = options.onProgress;
@@ -335,16 +336,22 @@ window.OpenCodeAI = (function () {
     }
 
     const designs = slots.filter(Boolean);
-    if (designs.length !== VARIATIONS.length) {
-      throw new Error('AI incomplete (' + designs.length + '/3 ready: ' + errors.slice(0, 2).join(' | ') + '). Please retry — no templates used.');
+    // PARTIAL FALLBACK: 1-2 AI slots ready + rest failed/timed-out →
+    // return what AI made; caller fills missing slots with server
+    // templates (by variation id). Only 0/3 throws (full templates).
+    if (designs.length === 0) {
+      throw new Error('AI incomplete (0/3 ready: ' + errors.slice(0, 2).join(' | ') + '). Please retry — no templates used.');
     }
-    if (onProgress) onProgress({ stage: 'done', pct: 100, completedCount: designs.length, message: `✓ ${designs.length}/3 AI variations ready in ${secs()} ${tokStr()}` });
-    return { designs, brief, aiCount: designs.length, errors, tokens: tok };
+    const partial = designs.length !== VARIATIONS.length;
+    if (onProgress) onProgress({ stage: 'done', pct: 100, completedCount: designs.length, message: partial ? `✓ ${designs.length}/3 AI ready — rest filled with templates (${secs()} ${tokStr()})` : `✓ ${designs.length}/3 AI variations ready in ${secs()} ${tokStr()}` });
+    return { designs, brief, aiCount: designs.length, errors, tokens: tok, partial };
   }
 
   /* ── 3 AI LAYOUTS inside ONE selected variation ──
      Same fixed split as concepts (slots 1-2 Gemini, slot 3 OpenCode).
-     Throws unless ALL 3 succeed — never templates. */
+     Partial fallback: 1-2 AI layouts ready → return them (each carries
+     its slot 0-2); caller fills the missing slot(s) with templates.
+     Only 0/3 throws. */
   const SLOT_META = [
     { suffix: 'A', label: 'Layout A · Hero Focus' },
     { suffix: 'B', label: 'Layout B · Bento Showcase' },
@@ -374,6 +381,7 @@ window.OpenCodeAI = (function () {
           pendingSub.push({ j, engine, s });
           slots[s] = {
             id: variation + '-' + SLOT_META[s].suffix,
+            slot: s,
             name: `${conceptNum}${SLOT_META[s].suffix} · ${SLOT_META[s].label.replace('Layout ', '')} (${variation})`,
             badge: 'AI Layout ' + SLOT_META[s].suffix + ' · ' + (j.model || engine),
             description: `AI-generated ${SLOT_META[s].label} in ${variation} style.`,
@@ -406,9 +414,12 @@ window.OpenCodeAI = (function () {
       }));
     }
     const designs = slots.filter(Boolean);
-    if (designs.length !== 3) throw new Error('AI layouts incomplete (' + designs.length + '/3 ready: ' + errors.slice(0, 2).join(' | ') + '). Please retry — no templates used.');
-    if (onProgress) onProgress({ stage: 'done', pct: 100, completedCount: designs.length, message: `✓ ${designs.length}/3 AI layouts ready ${tokStr()}` });
-    return { designs, brief, aiCount: designs.length, errors, tokens: tok };
+    // PARTIAL FALLBACK: return ready AI layouts (each has .slot 0-2);
+    // caller fills missing slots with server templates. Only 0/3 throws.
+    if (designs.length === 0) throw new Error('AI layouts incomplete (0/3 ready: ' + errors.slice(0, 2).join(' | ') + '). Please retry — no templates used.');
+    const subPartial = designs.length !== 3;
+    if (onProgress) onProgress({ stage: 'done', pct: 100, completedCount: designs.length, message: subPartial ? `✓ ${designs.length}/3 AI layouts ready — rest filled with templates ${tokStr()}` : `✓ ${designs.length}/3 AI layouts ready ${tokStr()}` });
+    return { designs, brief, aiCount: designs.length, errors, tokens: tok, partial: subPartial };
   }
 
   /* ── Free-model dropdown (live Zen list, recommended first) ──

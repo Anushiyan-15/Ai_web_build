@@ -313,6 +313,88 @@ body { background:#0a0d14; color:#e2e8f0; font-family:'Inter',system-ui,sans-ser
   color: #c7d2fe; font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.65rem;
   letter-spacing: 0.03em;
 }
+/* ── Creative clock: progress ring (JS --p) + live analog face ── */
+.gen-clock {
+  --p: 0;
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: conic-gradient(from -90deg, #818cf8 calc(var(--p) * 1%), rgba(255,255,255,0.10) 0);
+  box-shadow: 0 0 14px rgba(99,102,241,0.55);
+  animation: gcPulse 2s ease-in-out infinite;
+}
+@keyframes gcPulse { 0%, 100% { box-shadow: 0 0 8px rgba(99,102,241,0.4); } 50% { box-shadow: 0 0 18px rgba(129,140,248,0.9); } }
+.gen-clock .gc-face {
+  position: relative; width: 32px; height: 32px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #1e1b4b, #05070f 75%);
+  border: 1px solid rgba(129,140,248,0.5);
+}
+.gen-clock .gc-face i { position: absolute; left: 50%; bottom: 50%; transform-origin: 50% 100%; border-radius: 2px; }
+.gen-clock .gc-h { width: 3px; height: 8px; margin-left: -1.5px; background: #c7d2fe; animation: gcSpin 120s linear infinite; }
+.gen-clock .gc-m { width: 2px; height: 11px; margin-left: -1px; background: #818cf8; animation: gcSpin 60s linear infinite; }
+.gen-clock .gc-s { width: 1.5px; height: 13px; margin-left: -0.75px; background: #f472b6; box-shadow: 0 0 6px #f472b6; animation: gcSpin 12s linear infinite; }
+@keyframes gcSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.gen-clock .gc-pin { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; }
+/* ── NOW banner: the current AI activity, big + glowing ── */
+.gen-now {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 0.55rem; padding: 0.45rem 1.1rem; border-radius: 999px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.22), rgba(168,85,247,0.22));
+  border: 1px solid rgba(129,140,248,0.55);
+  box-shadow: 0 0 24px rgba(99,102,241,0.45), inset 0 0 18px rgba(99,102,241,0.12);
+  animation: genNowGlow 2.2s ease-in-out infinite;
+  max-width: 92vw;
+}
+@keyframes genNowGlow { 0%, 100% { box-shadow: 0 0 14px rgba(99,102,241,0.35), inset 0 0 18px rgba(99,102,241,0.10); } 50% { box-shadow: 0 0 32px rgba(139,92,246,0.75), inset 0 0 24px rgba(139,92,246,0.2); } }
+.gen-now-ic { font-size: 1.15rem; line-height: 1; animation: genNowBob 1.1s ease-in-out infinite; }
+@keyframes genNowBob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.15); } }
+.gen-now-text {
+  font-size: 0.95rem; font-weight: 800; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: linear-gradient(135deg, #fff 10%, #c7d2fe 55%, #f0abfc 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.gen-now-dots { display: inline-flex; gap: 4px; }
+.gen-now-dots i { width: 6px; height: 6px; border-radius: 50%; background: #818cf8; box-shadow: 0 0 8px #818cf8; animation: genNowDot 1.2s ease-in-out infinite; }
+.gen-now-dots i:nth-child(2) { animation-delay: 0.2s; }
+.gen-now-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes genNowDot { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.25); } }
+/* ── Live analysis feed: mac-style terminal window ── */
+.gen-live-log {
+  width: min(520px, 90vw); margin-bottom: 0.55rem;
+  background: rgba(5,8,18,0.85); border: 1px solid rgba(99,102,241,0.45);
+  border-radius: 14px; overflow: hidden;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.55), 0 0 26px rgba(99,102,241,0.25);
+  text-align: left;
+}
+.glog-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(180deg, rgba(30,41,59,0.9), rgba(15,23,42,0.9));
+  border-bottom: 1px solid rgba(99,102,241,0.3);
+  font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.66rem; font-weight: 700; color: #94a3b8;
+}
+.glog-head i { width: 9px; height: 9px; border-radius: 50%; }
+.glog-head i:nth-child(1) { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.8); }
+.glog-head i:nth-child(2) { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,0.8); }
+.glog-head i:nth-child(3) { background: #34d399; box-shadow: 0 0 6px rgba(52,211,153,0.8); }
+.glog-head span { margin-left: 0.3rem; letter-spacing: 0.04em; }
+.glog-live { margin-left: auto !important; color: #f472b6 !important; animation: glogLiveBlink 1.3s ease-in-out infinite; }
+@keyframes glogLiveBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.glog-body {
+  padding: 0.5rem 0.8rem 0.6rem;
+  font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.7rem; font-weight: 600;
+  min-height: 5.6em;
+}
+.glog-row { display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; padding: 0.12rem 0; animation: glogIn 0.35s cubic-bezier(0.22,1,0.36,1); white-space: nowrap; overflow: hidden; }
+.glog-row span:last-child { overflow: hidden; text-overflow: ellipsis; }
+@keyframes glogIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.glog-row .glog-ic { width: 1.4em; text-align: center; flex-shrink: 0; font-style: normal; }
+.glog-row.run { color: #fff; text-shadow: 0 0 12px rgba(56,189,248,0.6); }
+.glog-row.run .glog-ic::after { content: '◌'; color: #38bdf8; animation: glogSpin 1s linear infinite; display: inline-block; }
+@keyframes glogSpin { to { transform: rotate(360deg); } }
+.glog-row .glog-caret { display: inline-block; width: 7px; height: 0.85em; margin-left: 3px; vertical-align: -1px; background: #38bdf8; box-shadow: 0 0 8px #38bdf8; animation: glogCaret 0.8s steps(2) infinite; }
+@keyframes glogCaret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.glog-row.done { color: #6ee7b7; }
+.glog-row.done .glog-ic::after { content: '✓'; }
 
 /* Perspective Cyber Grid */
 #gen-overlay::before {
@@ -536,8 +618,125 @@ body { background:#0a0d14; color:#e2e8f0; font-family:'Inter',system-ui,sans-ser
 @keyframes gwPop { 0% { transform: scale(0.96); } 60% { transform: scale(1.02); } 100% { transform: scale(1); } }
 .gw-scan { position: absolute; left: 0; right: 0; top: -30%; height: 26%; background: linear-gradient(180deg, transparent, rgba(129,140,248,0.18), transparent); animation: gwScan 2.6s ease-in-out infinite; pointer-events: none; }
 @keyframes gwScan { 0% { top: -30%; } 100% { top: 110%; } }
-.gen-wire-cap { font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.7rem; color: #67e8f9; font-weight: 600; margin-bottom: 0.55rem; min-height: 1.1em; }
+.gen-wire-cap { font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.7rem; color: #67e8f9; font-weight: 600; margin-bottom: 0.45rem; min-height: 1.1em; }
 @media (prefers-reduced-motion: reduce) { .gw-scan { animation: none; } }
+
+/* ── AI ANALYZE LAYER (additive — same design, AI vision feel) ── */
+.gen-pill { position: relative; overflow: hidden; transition: border-color .3s, color .3s, box-shadow .3s; }
+.gen-pill.scanning { color: #e0e7ff !important; border-color: rgba(129,140,248,0.8) !important; box-shadow: 0 0 14px rgba(99,102,241,0.45); }
+.gen-pill.scanning::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(129,140,248,0.35) 50%, transparent 80%); transform: translateX(-100%); animation: pillSweep 1.4s ease-in-out infinite; pointer-events: none; }
+@keyframes pillSweep { 100% { transform: translateX(100%); } }
+.gen-pill.locked { color: #6ee7b7 !important; border-color: rgba(16,185,129,0.55) !important; box-shadow: 0 0 12px rgba(16,185,129,0.25); }
+.gen-pill.locked::after { display: none; }
+/* AI vision frame over the self-assembling wireframe */
+.gw-ai-frame { position: absolute; inset: 6px; pointer-events: none; z-index: 3; }
+.gw-ai-frame .gw-corner { position: absolute; width: 16px; height: 16px; border: 2px solid rgba(103,232,249,0.9); filter: drop-shadow(0 0 6px rgba(103,232,249,0.8)); }
+.gw-ai-frame .gw-corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 6px 0 0 0; }
+.gw-ai-frame .gw-corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-radius: 0 6px 0 0; }
+.gw-ai-frame .gw-corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-radius: 0 0 0 6px; }
+.gw-ai-frame .gw-corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 6px 0; }
+.gw-ai-beam { position: absolute; left: 4px; right: 4px; top: 0; height: 34px; background: linear-gradient(180deg, transparent, rgba(103,232,249,0.16) 45%, rgba(129,140,248,0.32) 55%, transparent); border-top: 1px solid rgba(103,232,249,0.7); border-bottom: 1px solid rgba(129,140,248,0.5); box-shadow: 0 0 18px rgba(103,232,249,0.35); animation: gwAiBeam 2.8s ease-in-out infinite; }
+@keyframes gwAiBeam { 0% { top: 0; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: calc(100% - 34px); opacity: 0; } }
+.gw-ai-tag { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-family: 'Fira Code','Courier New',monospace; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em; color: #67e8f9; background: rgba(5,8,18,0.92); border: 1px solid rgba(103,232,249,0.5); border-radius: 999px; padding: 0.1rem 0.55rem; white-space: nowrap; box-shadow: 0 0 12px rgba(103,232,249,0.35); animation: gwTagBlink 2s ease-in-out infinite; }
+@keyframes gwTagBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.65; } }
+/* AI insight cards — what the AI just figured out, with confidence */
+.gen-insights { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; margin-bottom: 0.55rem; min-height: 0; width: min(520px, 90vw); }
+.gen-insight { display: flex; align-items: center; gap: 0.5rem; width: 100%; background: rgba(8,12,24,0.85); border: 1px solid rgba(103,232,249,0.35); border-radius: 10px; padding: 0.35rem 0.65rem; font-size: 0.7rem; font-weight: 600; color: #cbd5e1; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,0.45), 0 0 14px rgba(103,232,249,0.12); animation: giIn 0.4s cubic-bezier(0.22,1,0.36,1); overflow: hidden; }
+@keyframes giIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.gen-insight.out { opacity: 0; transform: translateY(-6px); transition: all 0.35s ease; }
+.gen-insight .gi-ic { font-size: 0.95rem; flex-shrink: 0; }
+.gen-insight .gi-tx { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gen-insight .gi-tx b { color: #fff; }
+.gen-insight .gi-conf { flex-shrink: 0; display: flex; align-items: center; gap: 0.35rem; font-family: 'Fira Code',monospace; font-size: 0.62rem; font-weight: 800; color: #6ee7b7; }
+.gen-insight .gi-bar { width: 44px; height: 5px; border-radius: 99px; background: rgba(255,255,255,0.1); overflow: hidden; }
+.gen-insight .gi-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg,#10b981,#67e8f9); box-shadow: 0 0 8px rgba(16,185,129,0.8); animation: giBar 0.8s cubic-bezier(0.22,1,0.36,1); }
+@keyframes giBar { from { width: 0 !important; } }
+/* stage text AI thinking dots */
+.gen-overlay-stage .stage-think { display: inline-flex; gap: 3px; margin-left: 2px; }
+.gen-overlay-stage .stage-think i { width: 5px; height: 5px; border-radius: 50%; background: #818cf8; animation: genNowDot 1.1s ease-in-out infinite; }
+.gen-overlay-stage .stage-think i:nth-child(2) { animation-delay: 0.2s; }
+.gen-overlay-stage .stage-think i:nth-child(3) { animation-delay: 0.4s; }
+/* ── AI ticker: compact single-line deduction, visible in every viewport height ── */
+.gen-ai-ticker { display: flex; align-items: center; gap: 0.5rem; width: min(520px, 90vw); margin: -0.15rem 0 0.6rem; padding: 0.32rem 0.75rem; border-radius: 999px; background: rgba(8,12,24,0.82); border: 1px solid rgba(103,232,249,0.35); box-shadow: 0 0 16px rgba(103,232,249,0.14), inset 0 0 14px rgba(99,102,241,0.10); font-family: 'Fira Code','Courier New',monospace; font-size: 0.68rem; font-weight: 600; color: #a5f3fc; overflow: hidden; }
+.gen-ai-ticker .tk-orb { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: radial-gradient(circle at 35% 35%, #a5f3fc, #0ea5e9 60%, #6366f1); box-shadow: 0 0 10px #22d3ee, 0 0 20px rgba(99,102,241,0.6); animation: tkOrb 1.4s ease-in-out infinite; }
+@keyframes tkOrb { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.6; } }
+.gen-ai-ticker .tk-tx { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.25s ease; }
+.gen-ai-ticker .tk-tx b { color: #fff; }
+.gen-ai-ticker .tk-conf { flex-shrink: 0; font-weight: 800; color: #6ee7b7; text-shadow: 0 0 8px rgba(16,185,129,0.7); }
+/* ── Active build-step gets an AI scanning shine (always-visible zone) ── */
+.gen-step { position: relative; overflow: hidden; }
+.gen-step.active::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(129,140,248,0.4) 50%, transparent 80%); transform: translateX(-100%); animation: pillSweep 1.6s ease-in-out infinite; pointer-events: none; }
+/* ── Traveling comet on the progress fill ── */
+.gen-overlay-fill { position: relative; overflow: visible; }
+.gen-overlay-fill::after { content: ''; position: absolute; right: -2px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, #67e8f9 45%, transparent 75%); filter: blur(1px); box-shadow: 0 0 12px #22d3ee, 0 0 26px rgba(99,102,241,0.9); animation: fillComet 1.6s ease-in-out infinite; }
+@keyframes fillComet { 0%,100% { transform: scale(0.8); opacity: 0.75; } 50% { transform: scale(1.25); opacity: 1; } }
+/* ── Attractiveness pass: title sheen, sonar dot, pct pop, eq, breathing glows ── */
+.gen-overlay-title { background-size: 200% auto; animation: titleSheen 6s linear infinite; }
+@keyframes titleSheen { to { background-position: 200% center; } }
+.gen-overlay-stage .stage-dot { position: relative; }
+.gen-overlay-stage .stage-dot::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(99,102,241,0.7); animation: dotSonar 1.6s ease-out infinite; pointer-events: none; }
+@keyframes dotSonar { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+.gen-pct-wrap.pop { animation: pctPop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes pctPop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.gen-step.done { animation: stepPop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+#gen-overlay.active .gen-step.done { animation: stepPop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes stepPop { 0% { transform: scale(0.92); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.gen-ai-ticker { animation: tickerGlow 2.6s ease-in-out infinite; }
+@keyframes tickerGlow { 0%,100% { box-shadow: 0 0 10px rgba(103,232,249,0.10), inset 0 0 14px rgba(99,102,241,0.10); border-color: rgba(103,232,249,0.30); } 50% { box-shadow: 0 0 22px rgba(103,232,249,0.30), inset 0 0 18px rgba(99,102,241,0.18); border-color: rgba(103,232,249,0.60); } }
+.gen-overlay-track { position: relative; animation: trackGlow 2.8s ease-in-out infinite; }
+@keyframes trackGlow { 0%,100% { box-shadow: 0 0 0 1px rgba(99,102,241,0.25), 0 0 14px rgba(99,102,241,0.12); } 50% { box-shadow: 0 0 0 1px rgba(99,102,241,0.45), 0 0 30px rgba(99,102,241,0.35); } }
+/* HUD live equalizer — AI is "talking" */
+.hud-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.hud-eq i { width: 3px; height: 14px; border-radius: 2px; background: linear-gradient(180deg, #67e8f9, #818cf8); box-shadow: 0 0 6px rgba(103,232,249,0.7); transform-origin: bottom; animation: eqB 0.9s ease-in-out infinite; }
+.hud-eq i:nth-child(2) { animation-delay: 0.15s; }
+.hud-eq i:nth-child(3) { animation-delay: 0.3s; }
+.hud-eq i:nth-child(4) { animation-delay: 0.45s; }
+@keyframes eqB { 0%,100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+/* ── Attractiveness+ pass: twinkle starfield, meteors, pill cascade,
+   title float, pct halo, wire breathing, badge sweep (all ambient) ── */
+.gen-stars { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.gen-stars::before, .gen-stars::after { content: ''; position: absolute; border-radius: 50%; }
+.gen-stars::before {
+  width: 2px; height: 2px; top: 0; left: 0; color: #e0e7ff;
+  box-shadow: 80px 120px 0 0 currentColor, 240px 80px 0 0 currentColor, 420px 200px 0 0 currentColor, 600px 90px 0 0 currentColor, 760px 160px 0 0 currentColor, 940px 70px 0 0 currentColor, 1120px 140px 0 0 currentColor, 1300px 90px 0 0 currentColor, 1450px 180px 0 0 currentColor, 120px 420px 0 0 currentColor, 520px 460px 0 0 currentColor, 880px 480px 0 0 currentColor, 1260px 470px 0 0 currentColor, 200px 760px 0 0 currentColor, 820px 780px 0 0 currentColor, 1380px 790px 0 0 currentColor;
+  animation: starTwinkle 2.8s ease-in-out infinite;
+}
+.gen-stars::after {
+  width: 3px; height: 3px; top: 0; left: 0; color: #67e8f9;
+  box-shadow: 160px 260px 0 0 currentColor, 580px 300px 0 0 currentColor, 1000px 280px 0 0 currentColor, 1400px 300px 0 0 currentColor, 90px 640px 0 0 currentColor, 680px 680px 0 0 currentColor, 1240px 680px 0 0 currentColor, 420px 620px 0 0 currentColor, 960px 640px 0 0 currentColor, 1480px 620px 0 0 currentColor;
+  animation: starTwinkle 3.7s ease-in-out 1.2s infinite;
+}
+@keyframes starTwinkle { 0%,100% { opacity: 0.25; } 50% { opacity: 1; } }
+.gen-meteor { position: absolute; top: 0; left: 0; width: 180px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, #a5f3fc 60%, #fff); filter: drop-shadow(0 0 8px #67e8f9); pointer-events: none; z-index: 1; opacity: 0; animation: meteorFly 9s linear infinite; }
+.gen-meteor.m2 { width: 120px; animation-duration: 14s; animation-delay: 4.5s; }
+@keyframes meteorFly {
+  0% { transform: translate(-20vw, 6vh) rotate(-24deg); opacity: 0; }
+  3% { opacity: 1; }
+  12% { transform: translate(115vw, 46vh) rotate(-24deg); opacity: 0; }
+  100% { transform: translate(115vw, 46vh) rotate(-24deg); opacity: 0; }
+}
+#gen-overlay.active .gen-step { animation: stepIn 0.5s cubic-bezier(0.22,1,0.36,1) backwards; }
+#gen-overlay.active .gen-step:nth-child(2) { animation-delay: 0.08s; }
+#gen-overlay.active .gen-step:nth-child(3) { animation-delay: 0.16s; }
+#gen-overlay.active .gen-step:nth-child(4) { animation-delay: 0.24s; }
+#gen-overlay.active .gen-step:nth-child(5) { animation-delay: 0.32s; }
+@keyframes stepIn { from { opacity: 0; transform: translateY(10px) scale(0.94); } }
+.gen-overlay-title { animation: titleSheen 6s linear infinite, titleFloat 5s ease-in-out infinite; }
+@keyframes titleFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.gen-pct-wrap { position: relative; }
+.gen-pct-wrap::before { content: ''; position: absolute; inset: -14px -30px; background: radial-gradient(ellipse, rgba(99,102,241,0.35), transparent 70%); filter: blur(10px); z-index: -1; animation: pctHalo 2.4s ease-in-out infinite; pointer-events: none; }
+@keyframes pctHalo { 0%,100% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.08); } }
+.gen-wire { animation: wireBreathe 3.2s ease-in-out infinite; }
+@keyframes wireBreathe { 0%,100% { box-shadow: 0 10px 34px rgba(0,0,0,0.5); } 50% { box-shadow: 0 10px 44px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.35); } }
+.gen-hud-badge { position: relative; overflow: hidden; }
+.gen-hud-badge::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%); transform: translateX(-100%); animation: badgeSweep 3.5s ease-in-out infinite; pointer-events: none; }
+@keyframes badgeSweep { 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .gen-stars, .gen-meteor { display: none; }
+  .gen-overlay-title, .gen-wire, .gen-pct-wrap::before, .gen-hud-badge::after, #gen-overlay.active .gen-step { animation: none !important; }
+}
+@media (max-height: 920px) { .gen-insights { display: none; } .gw-ai-tag { display: none; } }
+@media (max-height: 560px) { .gen-ai-ticker { display: none; } }
 
 /* Live Telemetry Terminal Line */
 .gen-terminal-box {
@@ -615,6 +814,7 @@ body { background:#0a0d14; color:#e2e8f0; font-family:'Inter',system-ui,sans-ser
 /* GEN OVERLAY FIT — no-scroll: everything fits viewport, extras hide progressively */
 @media (max-height: 920px) {
   .gen-terminal-box, .gen-overlay-tip { display: none; }
+  .gen-live-log { display: none; }
   #gen-overlay .wcl-hb { transform: scale(0.55); margin-bottom: -100px; }
   .gen-analysis-brief { gap: 0.3rem !important; margin: 0.2rem 0 0.5rem !important; }
   #gen-brief-line { display: none; }
@@ -631,12 +831,16 @@ body { background:#0a0d14; color:#e2e8f0; font-family:'Inter',system-ui,sans-ser
 @media (max-height: 620px) {
   .gen-stage-wrap { display: none; }
   .gen-analysis-brief { display: none !important; }
+  .gen-now { display: none; }
   .gen-overlay-stage { font-size: 0.76rem; margin-bottom: 0.4rem; }
 }
 @media (max-width: 640px) {
   .gen-hud-bar { padding: 0 0.8rem; }
   .gen-hud-badge { display: none; }
   .gen-hud-mono { font-size: 0.62rem; }
+  .gen-clock { width: 32px; height: 32px; }
+  .gen-clock .gc-face { width: 25px; height: 25px; }
+  .gen-now-text { font-size: 0.82rem; }
   .gen-overlay-content { width: 94vw; }
   .gen-analysis-brief { width: 94vw !important; }
 }
@@ -706,12 +910,21 @@ body.builder-focus .resume-banner { top: 12px; }
 .device-toggles { display: flex; gap: 0.3rem; }
 .device-btn { padding: 0.28rem 0.6rem; border: 1px solid #283347; border-radius: 6px; background: transparent; color: #94a3b8; cursor: pointer; font-size: 0.75rem; font-family: inherit; }
 .device-btn.active { color: #fff; border-color: #6366f1; background: #1e1b4b; }
+.tb-btn.edit-on { border-color: #6366f1 !important; background: #1e1b4b !important; color: #fff !important; }
 .preview-container { flex: 1; display: flex; justify-content: center; background: #06090e; overflow: hidden; position: relative; }
 /* ★ Tab-load detector overlay: shown only if the frame takes >350ms to render */
 .pv-frame-spin { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(6,9,14,.6); z-index: 5; pointer-events: none; }
 #live-iframe { width: 100%; height: 100%; border: none; background: #fff; transition: width 0.3s ease; }
-.preview-container.tablet #live-iframe { width: 768px; }
-.preview-container.mobile #live-iframe { width: 390px; }
+.preview-container.laptop #live-iframe { width: 1280px; max-width: 100%; }
+.preview-container.tablet #live-iframe { width: 768px; max-width: 100%; }
+.preview-container.mobile #live-iframe { width: 390px; max-width: 100%; }
+/* Fullscreen modal device preview: same widths as the workspace preview,
+   centered with dark gutters so tablet/phone views read clearly. */
+.modal-iframe { transition: width 0.3s ease, max-width 0.3s ease; }
+#modal-iframe.m-desktop { width: 100%; }
+#modal-iframe.m-laptop { width: 1280px; max-width: 100%; margin: 0 auto; flex: none; height: 100%; }
+#modal-iframe.m-tablet { width: 768px; max-width: 100%; margin: 0 auto; flex: none; height: 100%; }
+#modal-iframe.m-mobile { width: 390px; max-width: 100%; margin: 0 auto; flex: none; height: 100%; border-left: 1px solid #283347; border-right: 1px solid #283347; }
 
 /* ══ FLOATING AI BUTTON ══ */
 .floating-gemini-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1000; display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.68rem 1.25rem 0.68rem 0.9rem; border-radius: 999px; border: 1px solid rgba(129,140,248,0.35); background: linear-gradient(135deg, #4f46e5 0%, #6d5ce8 55%, #8b5cf6 100%); color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 700; letter-spacing: -0.005em; box-shadow: 0 10px 28px rgba(79,70,229,0.45), 0 0 0 1px rgba(255,255,255,0.06) inset; cursor: pointer; transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), box-shadow 0.22s; }
@@ -884,10 +1097,12 @@ body.builder-focus .resume-banner { top: 12px; }
   <div class="gen-hud-bar">
     <div class="gen-hud-left">
       <span class="gen-hud-dot"></span>
+      <span class="hud-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       <span class="gen-hud-mono">AI-FLOWCRAFT: AUTONOMOUS NEURAL SYNTHESIS</span>
     </div>
     <div class="gen-hud-right">
       <span class="gen-hud-badge">✦ DEEP ANALYSIS · 3 VARIATIONS</span>
+      <span class="gen-clock" id="gen-clock" title="Elapsed generation time"><span class="gc-face"><i class="gc-h"></i><i class="gc-m"></i><i class="gc-s"></i><b class="gc-pin"></b></span></span>
       <span class="gen-hud-mono" id="gen-hud-time">0.0s</span>
     </div>
   </div>
@@ -897,6 +1112,9 @@ body.builder-focus .resume-banner { top: 12px; }
 
   <!-- Floating particles (injected by JS) -->
   <div class="gen-particles" id="gen-particles"></div>
+  <div class="gen-stars" aria-hidden="true"></div>
+  <div class="gen-meteor m1" aria-hidden="true"></div>
+  <div class="gen-meteor m2" aria-hidden="true"></div>
   <div class="gen-shard s1"></div>
   <div class="gen-shard s2"></div>
   <div class="gen-shard s3"></div>
@@ -950,6 +1168,7 @@ body.builder-focus .resume-banner { top: 12px; }
     <div class="gen-overlay-stage">
       <span class="stage-dot"></span>
       <span id="gen-overlay-text">AI-FlowCraft initializing neural requirements analysis…</span>
+      <span class="stage-think" aria-hidden="true"><i></i><i></i><i></i></span>
     </div>
     <div id="gen-brief-line" style="font-size:0.78rem; color:#c7d2fe; font-weight:600; margin-bottom:0.5rem; text-align:center; max-width:520px;"></div>
 
@@ -962,6 +1181,9 @@ body.builder-focus .resume-banner { top: 12px; }
     <div class="gen-overlay-track">
       <div class="gen-overlay-fill" id="gen-overlay-fill"></div>
     </div>
+
+    <!-- AI insight ticker: single-line, always visible even in compact mode -->
+    <div class="gen-ai-ticker" id="gen-ai-ticker" aria-live="polite"><span class="tk-orb"></span><span class="tk-tx" id="gen-ai-ticker-tx">AI analyzing business DNA…</span><span class="tk-conf" id="gen-ai-ticker-conf">…</span></div>
 
     <!-- Build Step Checklist — AI-FlowCraft 28-Skill Pipeline -->
     <div class="gen-steps" id="gen-steps">
@@ -980,8 +1202,24 @@ body.builder-focus .resume-banner { top: 12px; }
       <div class="gw-cards"><span class="gw-card"><i></i><i></i><i></i></span><span class="gw-card"><i></i><i></i><i></i></span><span class="gw-card"><i></i><i></i><i></i></span></div>
       <div class="gw-foot"><i></i><i></i></div>
       <div class="gw-scan"></div>
+      <div class="gw-ai-frame" aria-hidden="true"><span class="gw-corner tl"></span><span class="gw-corner tr"></span><span class="gw-corner bl"></span><span class="gw-corner br"></span><div class="gw-ai-beam"></div><span class="gw-ai-tag">◉ AI VISION · ANALYZING LAYOUT</span></div>
     </div>
     <div class="gen-wire-cap" id="gen-wire-cap">Assembling sections…</div>
+    <!-- AI insights: what the AI just deduced (injected by JS, max 2 visible) -->
+    <div class="gen-insights" id="gen-insights" aria-live="polite"></div>
+
+    <!-- NOW line: big attractive banner of the current AI activity -->
+    <div class="gen-now" id="gen-now" aria-live="polite">
+      <span class="gen-now-ic" id="gen-now-ic">🔍</span>
+      <span class="gen-now-text" id="gen-now-text">Reading business DNA</span>
+      <span class="gen-now-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+
+    <!-- Live analysis feed: mac-style terminal, AI narrates line by line -->
+    <div class="gen-live-log" id="gen-live-log" aria-label="Live AI activity">
+      <div class="glog-head" aria-hidden="true"><i></i><i></i><i></i><span>neural-analysis · live</span><b class="glog-live">● LIVE</b></div>
+      <div class="glog-body" id="gen-live-log-body" aria-live="polite"></div>
+    </div>
 
     <!-- Live Telemetry Terminal Line -->
     <div class="gen-terminal-box">
@@ -1328,6 +1566,7 @@ body.builder-focus .resume-banner { top: 12px; }
     <button class="tb-btn visual-btn" onclick="openStudioInNewTab()">🎨 Edit in Studio ↗</button>
     <button class="tb-btn" id="btn-add-function" onclick="openAddFunctionManager()" style="display:none;background:linear-gradient(135deg,#10b981,#059669);border-color:#34d399;color:#fff;font-weight:800;" title="Add new features to your admin panel using AI">&#xFF0B; Add Function</button>
     <button class="tb-btn guide-btn" onclick="openStepByStepGuide()" style="background:rgba(99,102,241,0.18); border:1.5px solid #6366f1; color:#c7d2fe; font-weight:800;" title="How to use admin panel & add functions">📖 Admin &amp; Features Guide</button>
+    <button class="tb-btn" onclick="openUserManual()" title="User manual: how to use, edit & publish (popup)">📘 Manual</button>
     <button class="tb-btn" onclick="goToVariations()">← Back to Variations</button>
     <div style="flex:1"></div>
     <button class="tb-btn undo-btn" id="btn-undo-ai" onclick="undoLastAiChange()" style="display:none">↶ Undo AI</button>
@@ -1338,12 +1577,14 @@ body.builder-focus .resume-banner { top: 12px; }
     <div class="preview-pane">
       <div class="preview-bar">
         <div class="device-toggles">
-          <button class="device-btn active" id="d-desktop" onclick="setDevice('desktop')">🖥 Desktop</button>
+          <button class="device-btn active" id="d-desktop" onclick="setDevice('desktop')">🖥 PC</button>
+          <button class="device-btn" id="d-laptop" onclick="setDevice('laptop')">💻 Laptop</button>
           <button class="device-btn" id="d-tablet" onclick="setDevice('tablet')">📱 Tablet</button>
-          <button class="device-btn" id="d-mobile" onclick="setDevice('mobile')">📲 Mobile</button>
+          <button class="device-btn" id="d-mobile" onclick="setDevice('mobile')">📲 Phone</button>
         </div>
         <div style="display:flex; align-items:center; gap:0.6rem;">
           <span id="current-view-label" style="font-size:0.72rem;color:#94a3b8;font-weight:700;">🌐 Frontend Site</span>
+          <button class="tb-btn" id="btn-edit-mode" onclick="toggleEditMode()" style="padding:0.28rem 0.7rem; font-size:0.75rem;" title="Edit mode ON = click any text in the preview and type. OFF = normal preview page.">✏️ Edit: OFF</button>
           <button class="tb-btn" onclick="refreshLivePreview()" style="padding:0.28rem 0.7rem; font-size:0.75rem;">↺ Reload</button>
         </div>
       </div>
@@ -1440,7 +1681,13 @@ body.builder-focus .resume-banner { top: 12px; }
   <div class="modal-box">
     <div class="modal-bar">
       <div style="font-weight:700; color:#fff" id="modal-title">Fullscreen Preview</div>
-      <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+      <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
+        <div class="device-toggles" title="Preview on different devices">
+          <button class="device-btn active" id="md-desktop" onclick="setModalDevice('desktop')">🖥 PC</button>
+          <button class="device-btn" id="md-laptop" onclick="setModalDevice('laptop')">💻 Laptop</button>
+          <button class="device-btn" id="md-tablet" onclick="setModalDevice('tablet')">📱 Tablet</button>
+          <button class="device-btn" id="md-mobile" onclick="setModalDevice('mobile')">📲 Phone</button>
+        </div>
         <div class="view-tabs show" id="modal-view-tabs" style="display:none;">
           <button class="view-tab active" id="m-vtab-site" onclick="switchModalView('site')">🌐 Site</button>
           <button class="view-tab admin-view" id="m-vtab-admin" onclick="switchModalView('admin')">🔐 Admin</button>
@@ -1454,6 +1701,7 @@ body.builder-focus .resume-banner { top: 12px; }
   </div>
 </div>
 
+<?php include __DIR__ . '/includes/manual-modal.php'; ?>
 <!-- ═══ GENERATE MODE MODAL ═══ -->
 <div class="modal-overlay" id="generate-modal">
   <div class="modal-box" style="max-width:960px; height:auto; max-height:90vh; overflow-y:auto;">
@@ -1981,9 +2229,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   wireAutoSave();
 
-  // ★ Frame load detection: hide tab-load spinners the moment content renders
+  // ★ Frame load detection: hide tab-load spinners the moment content renders.
+  // If edit mode is ON (e.g. an AI update reloaded the frame), re-enable
+  // inline editing on the fresh document so the mode persists.
   try {
-    document.getElementById('live-iframe')?.addEventListener('load', () => __hideSpin('live-frame-spin', 'live'));
+    document.getElementById('live-iframe')?.addEventListener('load', () => {
+      __hideSpin('live-frame-spin', 'live');
+      if (editMode) { try { setIframeEditable(true); } catch (e) {} }
+    });
     document.getElementById('modal-iframe')?.addEventListener('load', () => __hideSpin('modal-frame-spin', 'modal'));
   } catch (e) {}
 
@@ -2704,6 +2957,7 @@ async function confirmSoloGenerate() {
     soloPct = Math.min(soloPct + 6, 90);
     if (fill) fill.style.width = soloPct + '%';
     if (pctNum) pctNum.textContent = String(soloPct);
+    try { popPct(); } catch (e) {}
   }, 450);
 
   try {
@@ -2781,8 +3035,157 @@ const GEN_TIPS = [
 ];
 let _tipInterval = null;
 let _hudTimerInterval = null;
+let _logInterval = null;
+let _typeTimer = null;
+let _logIdx = 0;
+let _lastLogMsg = '';
 let _startTime = 0;
 let _currentPct = 0;
+/* Live analysis feed — AI narrates its work while generating (built per-business) */
+let GEN_ANALYZE_STEPS = [
+  { ic: '🔍', tx: 'Reading business DNA' },
+  { ic: '🎯', tx: 'Profiling target audience' },
+  { ic: '🎨', tx: 'Mixing brand palette' },
+  { ic: '✒️', tx: 'Pairing display + body type' },
+  { ic: '🧱', tx: 'Sketching hero layout' },
+  { ic: '🗂️', tx: 'Structuring services grid' },
+  { ic: '🖼️', tx: 'Placing showcase + photos' },
+  { ic: '🛒', tx: 'Wiring shop products + cart' },
+  { ic: '⭐', tx: 'Arranging client reviews' },
+  { ic: '❓', tx: 'Building FAQ accordion' },
+  { ic: '📍', tx: 'Pinning map + contact block' },
+  { ic: '✨', tx: 'Weaving scroll-reveal motion' },
+  { ic: '📱', tx: 'Collapsing grids for mobile' },
+  { ic: '🧪', tx: 'Running taste pre-flight' },
+  { ic: '💅', tx: 'Polishing pixels' },
+];
+/* ★ AI-analyze planner: turns the customer's real brief into AI reasoning steps + insights */
+function buildAiAnalysisPlan(data) {
+  data = data || {};
+  const short = (s, n) => String(s || '').slice(0, n || 34);
+  const bName = short(data.biz_name, 26) || 'Your business';
+  const bType = short(data.biz_type, 26) || 'brand';
+  const aud = short(data.biz_audience, 30) || 'modern clients';
+  const secs = Array.isArray(data.sections) ? data.sections : [];
+  const pal = String(data.color_palette || 'purple').toUpperCase();
+  const style = String(data.design_style || 'modern').toUpperCase();
+  const conf = () => 88 + Math.floor(Math.random() * 11);
+  const steps = [
+    { ic: '🧬', tx: 'Reading "' + bName + '" DNA (' + bType + ')…', pill: 'gpill-biz', insight: { ic: '🧬', tx: 'Business intent <b>' + escapeHtml(bType) + '</b> detected', conf: conf() } },
+    { ic: '🎯', tx: 'Profiling "' + aud + '" psychology…', pill: 'gpill-aud', insight: { ic: '🎯', tx: 'Audience <b>' + escapeHtml(aud) + '</b> matched', conf: conf() } },
+    { ic: '🎨', tx: 'Mixing ' + pal + ' × ' + style + ' direction…', pill: 'gpill-style', insight: { ic: '🎨', tx: '<b>' + escapeHtml(pal) + '</b> theme + <b>' + escapeHtml(style) + '</b> style locked', conf: conf() } },
+    { ic: '🗺️', tx: 'Mapping ' + (secs.length || 6) + ' sections (' + short(secs.slice(0, 3).join(' · ') || 'hero · services · contact', 34) + ')…', wire: 'Analyzing ' + (secs.length || 6) + ' sections…' },
+    { ic: '✒️', tx: 'Pairing display + body type for "' + short(data.biz_tagline, 30) + '"…', insight: { ic: '✒️', tx: 'Tagline tone <b>analyzed</b> → typography paired', conf: conf() } },
+    { ic: '🧱', tx: 'Sketching hero for "' + bName + '"…', wire: 'Sketching hero layout…' },
+    { ic: '🗂️', tx: 'Structuring ' + (data.biz_services ? 'your services' : 'services grid') + '…', wire: 'Structuring content blocks…' },
+    { ic: '🖼️', tx: 'Placing showcase + photos…', wire: 'Composing visual hierarchy…' },
+    { ic: '🛒', tx: (secs.includes('shop') || (data.biz_products && data.biz_products.trim()) ? 'Wiring ' + short(data.biz_products, 26) + ' + cart…' : 'Checking shop intent… no cart needed…'), wire: 'Wiring interactive sections…' },
+    { ic: '⭐', tx: 'Arranging client reviews…', wire: 'Assembling sections… 1/3 live' },
+    { ic: '❓', tx: 'Building FAQ + trust blocks…', wire: 'Assembling sections… 2/3 live' },
+    { ic: '📍', tx: 'Pinning map + contact block…', wire: 'Assembling sections… 3/3 live' },
+    { ic: '✨', tx: 'Weaving scroll-reveal motion…', pill: 'gpill-mode' },
+    { ic: '📱', tx: 'Collapsing grids for mobile…', insight: { ic: '📱', tx: 'Responsive breakpoints <b>calculated</b>', conf: conf() } },
+    { ic: '🧪', tx: 'Running taste pre-flight audit…', insight: { ic: '🧪', tx: 'Taste audit <b>passed</b> → polishing', conf: 96 } },
+    { ic: '💅', tx: 'Polishing pixels for launch…', insight: { ic: '💅', tx: 'Final polish <b>applied</b>', conf: 99 } },
+  ];
+  return steps;
+}
+/* AI insight cards — what the AI just deduced, with confidence bar */
+function addGenInsight(ic, html, conf) {
+  try {
+    const box = document.getElementById('gen-insights');
+    if (!box) return;
+    while (box.children.length >= 2) box.removeChild(box.firstChild);
+    const el = document.createElement('div');
+    el.className = 'gen-insight';
+    const c = Math.max(80, Math.min(99, conf || 92));
+    el.innerHTML = '<span class="gi-ic">' + ic + '</span><span class="gi-tx">' + html + '</span><span class="gi-conf"><span class="gi-bar"><i style="width:' + c + '%"></i></span>' + c + '%</span>';
+    box.appendChild(el);
+    setTimeout(() => { try { el.classList.add('out'); setTimeout(() => { try { el.remove(); } catch (e) {} }, 380); } catch (e) {} }, 3600);
+  } catch (e) {}
+}
+function setPillState(id, mode) {
+  try {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('scanning', 'locked');
+    if (mode) el.classList.add(mode);
+  } catch (e) {}
+}
+/* Percentage pop — number jumps playfully on change */
+let _lastPop = 0;
+function popPct() {
+  try {
+    const w = document.querySelector('.gen-pct-wrap');
+    if (!w) return;
+    w.classList.remove('pop');
+    void w.offsetWidth;
+    w.classList.add('pop');
+  } catch (e) {}
+}
+function setAiTicker(html, conf) {
+  try {
+    const tx = document.getElementById('gen-ai-ticker-tx');
+    const cf = document.getElementById('gen-ai-ticker-conf');
+    if (!tx) return;
+    tx.style.opacity = '0';
+    setTimeout(() => {
+      tx.innerHTML = html;
+      if (cf) cf.textContent = conf || '';
+      tx.style.opacity = '1';
+    }, 220);
+  } catch (e) {}
+}
+function setNowStep(ic, text) {
+  const nic = document.getElementById('gen-now-ic');
+  const ntx = document.getElementById('gen-now-text');
+  if (nic) {
+    nic.textContent = ic;
+    try { nic.style.animation = 'none'; void nic.offsetWidth; nic.style.animation = ''; } catch (e) {}
+  }
+  if (ntx) ntx.textContent = text;
+}
+function addGenLog(ic, text) {
+  const box = document.getElementById('gen-live-log-body');
+  if (!box || !text) return;
+  const key = ic + '|' + text;
+  if (key === _lastLogMsg) return;
+  _lastLogMsg = key;
+  clearInterval(_typeTimer);
+  // Finish the previous running row instantly (full text, green check)
+  box.querySelectorAll('.glog-row.run').forEach(el => {
+    el.classList.remove('run');
+    el.classList.add('done');
+    const c = el.querySelector('.glog-caret');
+    if (c) c.remove();
+    const t = el.querySelector('.glog-tx');
+    if (t && el.dataset.full) t.textContent = el.dataset.full;
+  });
+  while (box.children.length >= 4) box.removeChild(box.firstChild);
+  const row = document.createElement('div');
+  row.className = 'glog-row run';
+  row.dataset.full = text;
+  const icEl = document.createElement('span');
+  icEl.className = 'glog-ic';
+  icEl.textContent = ic;
+  const tx = document.createElement('span');
+  tx.className = 'glog-tx';
+  const caret = document.createElement('span');
+  caret.className = 'glog-caret';
+  row.appendChild(icEl);
+  row.appendChild(tx);
+  row.appendChild(caret);
+  box.appendChild(row);
+  // Typewriter effect for the running line
+  let i = 0;
+  _typeTimer = setInterval(() => {
+    i += 2;
+    if (!document.body.contains(tx)) { clearInterval(_typeTimer); return; }
+    tx.textContent = text.slice(0, i);
+    if (i >= text.length) clearInterval(_typeTimer);
+  }, 24);
+  setNowStep(ic, text);
+}
 
 function showGenOverlay(dataOrName) {
   const overlay = document.getElementById('gen-overlay');
@@ -2816,9 +3219,12 @@ function showGenOverlay(dataOrName) {
 
   // Reset state
   _currentPct = 5;
+  _lastPop = 5;
   if (fill) fill.style.width = '5%';
   if (pctNum) pctNum.textContent = '5';
   if (text) text.textContent = 'AI-FlowCraft initializing neural requirements analysis…';
+  popPct();
+  setAiTicker('🧬 AI reading business DNA…', '5%');
 
   // Reset wireframe (self-assembling preview)
   paintWire(0);
@@ -2830,14 +3236,51 @@ function showGenOverlay(dataOrName) {
     el.classList.remove('done');
   });
 
-  // Start HUD stopwatch
+  // Start HUD stopwatch + creative clock ring (fills over ~150s)
   _startTime = Date.now();
+  const clockEl = document.getElementById('gen-clock');
   if (timeEl) timeEl.textContent = '0.0s';
+  if (clockEl) clockEl.style.setProperty('--p', '0');
   clearInterval(_hudTimerInterval);
   _hudTimerInterval = setInterval(() => {
-    const elapsed = ((Date.now() - _startTime) / 1000).toFixed(1);
-    if (timeEl) timeEl.textContent = elapsed + 's';
+    const elapsed = (Date.now() - _startTime) / 1000;
+    if (timeEl) timeEl.textContent = elapsed.toFixed(1) + 's';
+    if (clockEl) clockEl.style.setProperty('--p', String(Math.min(100, (elapsed / 150) * 100)));
   }, 100);
+
+  // Start live analysis feed — contextual AI plan built from the real brief
+  // (scripted steps + real engine messages via updateGenOverlay)
+  _logIdx = 0;
+  _lastLogMsg = '';
+  clearInterval(_typeTimer);
+  const logBox = document.getElementById('gen-live-log-body');
+  if (logBox) logBox.innerHTML = '';
+  try { document.getElementById('gen-insights').innerHTML = ''; } catch (e) {}
+  ['gpill-biz', 'gpill-aud', 'gpill-style', 'gpill-mode'].forEach(id => setPillState(id, null));
+  try { GEN_ANALYZE_STEPS = buildAiAnalysisPlan(data); } catch (e) {}
+  const feedStep = (s) => {
+    if (!s) return;
+    addGenLog(s.ic, s.tx);
+    if (s.pill) {
+      setPillState(s.pill, 'scanning');
+      setTimeout(() => setPillState(s.pill, 'locked'), 2600);
+    }
+    if (s.wire) { const cap = document.getElementById('gen-wire-cap'); if (cap) cap.textContent = '◉ ' + s.wire; }
+    if (s.insight) {
+      addGenInsight(s.insight.ic, s.insight.tx, s.insight.conf);
+      // Mirror the same deduction into the always-visible ticker (plain text)
+      const plain = String(s.insight.tx).replace(/<[^>]*>/g, '');
+      setAiTicker(s.ic + ' AI detected: ' + plain, (s.insight.conf || 92) + '%');
+    } else {
+      setAiTicker('🧠 ' + s.tx, '…');
+    }
+  };
+  feedStep(GEN_ANALYZE_STEPS[0]);
+  clearInterval(_logInterval);
+  _logInterval = setInterval(() => {
+    _logIdx = (_logIdx + 1) % GEN_ANALYZE_STEPS.length;
+    feedStep(GEN_ANALYZE_STEPS[_logIdx]);
+  }, 3400);
 
   // Spawn starfield particles
   const pc = document.getElementById('gen-particles');
@@ -2898,12 +3341,16 @@ function updateGenOverlay(stage, message, pct, meta) {
   const termLine = document.getElementById('gen-terminal-line');
 
   if (text) text.textContent = message;
-  if (termLine) termLine.textContent = message;
+  // AI-analyze voice for the telemetry line: prefix as AI reasoning
+  if (termLine) termLine.textContent = 'AI ▸ analyzing: ' + message;
+  // Mirror real engine progress into the live analysis feed too
+  if (message) addGenLog('⚡', String(message).slice(0, 90));
 
   if (typeof pct === 'number') {
     _currentPct = Math.max(_currentPct, pct);
     if (fill) fill.style.width = _currentPct + '%';
     if (pctNum) pctNum.textContent = String(_currentPct);
+    if (_currentPct >= _lastPop + 5) { _lastPop = _currentPct; popPct(); }
     // Build step checklist: 0 analyze · 1-3 variations · 4 finalize
     const stageIdx = _currentPct < 15 ? 0 : _currentPct < 40 ? 1 : _currentPct < 62 ? 2 : _currentPct < 84 ? 3 : 4;
     document.querySelectorAll('#gen-steps .gen-step').forEach(el => {
@@ -2911,19 +3358,34 @@ function updateGenOverlay(stage, message, pct, meta) {
       el.classList.toggle('done', s < stageIdx);
       el.classList.toggle('active', s === stageIdx);
     });
+    // AI-analyze feel: lock brief pills as real progress crosses thresholds
+    try {
+      if (_currentPct >= 12) setPillState('gpill-biz', 'locked');
+      if (_currentPct >= 22) setPillState('gpill-aud', 'locked');
+      if (_currentPct >= 32) setPillState('gpill-style', 'locked');
+      if (_currentPct >= 80) setPillState('gpill-mode', 'locked');
+    } catch (e) {}
   }
 
   // Light up wireframe sections as variations go live
   if (meta && (typeof meta.completedCount === 'number' || typeof meta.variationIndex === 'number')) {
     let n = meta.completedCount || 0;
     if (!n && typeof meta.variationIndex === 'number') n = meta.variationIndex + 1;
-    paintWire(Math.min(n, 3));
+    n = Math.min(n, 3);
+    paintWire(n);
+    // Celebrate each live variation as an AI insight
+    try { if (n > 0) { addGenInsight('✅', 'Variation <b>' + n + '/3</b> synthesized & verified', 94 + n); setAiTicker('✅ Variation <b>' + n + '/3</b> synthesized & verified', (94 + n) + '%'); } } catch (e) {}
+  } else if (message) {
+    // Real engine message → keep ticker in AI-analyze voice (plain text)
+    try { setAiTicker('🧠 ' + escapeHtml(String(message).slice(0, 80)), _currentPct + '%'); } catch (e) {}
   }
 }
 
 function hideGenOverlay(success) {
   clearInterval(_tipInterval);
   clearInterval(_hudTimerInterval);
+  clearInterval(_logInterval);
+  clearInterval(_typeTimer);
   const fill = document.getElementById('gen-overlay-fill');
   const pctNum = document.getElementById('gen-pct-num');
   const overlay = document.getElementById('gen-overlay');
@@ -2931,12 +3393,25 @@ function hideGenOverlay(success) {
 
   if (success) {
     paintWire(3);
+    try { ['gpill-biz', 'gpill-aud', 'gpill-style', 'gpill-mode'].forEach(id => setPillState(id, 'locked')); } catch (e) {}
+    try { addGenInsight('🎉', 'Analysis complete — <b>3 bespoke sites</b> ready', 99); } catch (e) {}
+    try { setAiTicker('🎉 Analysis complete — <b>3 bespoke sites</b> ready', '100%'); } catch (e) {}
+    document.querySelectorAll('#gen-live-log-body .glog-row.run').forEach(el => {
+      el.classList.remove('run');
+      el.classList.add('done');
+      const c = el.querySelector('.glog-caret');
+      if (c) c.remove();
+      const t = el.querySelector('.glog-tx');
+      if (t && el.dataset.full) t.textContent = el.dataset.full;
+    });
+    addGenLog('🎉', '3 variations ready — pick your favorite…');
     document.querySelectorAll('#gen-steps .gen-step').forEach(el => {
       el.classList.add('done');
       el.classList.remove('active');
     });
     if (fill) fill.style.width = '100%';
     if (pctNum) pctNum.textContent = '100';
+    popPct();
     if (text) text.textContent = '✓ 3 variations successfully synthesized!';
     setTimeout(() => { overlay.classList.remove('active'); document.body.style.overflow = ''; }, 650);
   } else {
@@ -2987,23 +3462,45 @@ async function generateWithMode(mode) {
 
   try {
     // ★ Fixed AI split: variations 1-2 → Gemini, variation 3 → OpenCode.
-    // No picker, no server templates — all 3 slots must come from AI.
+    // No picker. Missing/failed slots → server templates fill in (never empty).
     const prog = (p) => {
       const pct = p.pct || (p.stage === 'connecting' ? 15 : (p.stage === 'done' ? 100 : 50));
       updateGenOverlay(p.stage, p.message, pct, p);
     };
     let concepts = null;
     let engineNote = '';
+    let aiErr = '';
     let ocTokens = 0;
     const tokStr = () => ocTokens > 0 ? ` · ~${(ocTokens / 1000).toFixed(1)}k tokens` : '';
-    if (window.OpenCodeAI?.generateConcepts) {
-      const oc = await window.OpenCodeAI.generateConcepts(data, mode, { onProgress: prog });
-      ocTokens = oc.tokens || 0;
-      if (!oc.designs || oc.designs.length !== 3) throw new Error('AI incomplete — please retry.');
-      concepts = oc.designs;
-      engineNote = 'Gemini ×2 + OpenCode AI';
-    } else {
-      throw new Error('AI engine not loaded. Please reload and retry.');
+    try {
+      if (window.OpenCodeAI?.generateConcepts) {
+        const oc = await window.OpenCodeAI.generateConcepts(data, mode, { onProgress: prog });
+        ocTokens = oc.tokens || 0;
+        if (oc.designs.length === 3) {
+          concepts = oc.designs;
+          engineNote = 'Gemini ×2 + OpenCode AI';
+        } else if (oc.designs.length > 0) {
+          // PARTIAL: 1-2 AI ready (3rd timed out/failed) → keep the AI
+          // ones, fill ONLY missing variations with server templates.
+          const tpl = await window.AIFlowCraft.generateConcepts(data, mode, {});
+          const byId = {};
+          oc.designs.forEach(d => { byId[d.id] = d; });
+          concepts = tpl.map(t => byId[t.id] || t);
+          if (!concepts.length) concepts = null;
+          else {
+            engineNote = 'AI (' + oc.designs.length + '/3) + template (' + (3 - oc.designs.length) + '/3)';
+            showToast('⚠️ Partial AI — ' + oc.designs.length + '/3 AI ready, templates filled ' + (3 - oc.designs.length) + ' slot(s)');
+            if (oc.errors && oc.errors.length) aiErr = String(oc.errors[0]).slice(0, 220);
+          }
+        }
+      }
+    } catch (e) {
+      aiErr = String(e?.message || e).slice(0, 220);
+      console.warn('[generate] OpenCode lane failed, using templates:', e?.message);
+    }
+    if (!concepts) {
+      concepts = await window.AIFlowCraft.generateConcepts(data, mode, { onProgress: prog });
+      engineNote = 'templates';
     }
 
     // Sanitize each generated design to strip any PHP leaks or markdown after </html>
@@ -3030,7 +3527,9 @@ async function generateWithMode(mode) {
     saveSessionNow();
     hideGenOverlay(true);
     // Variations live on their own URL now (variations.php) — redirect there.
-    try { sessionStorage.setItem('wc_flash', ('3 style variations ready! [' + engineNote + ']' + tokStr())); } catch (e) {}
+    try { sessionStorage.setItem('wc_flash', (engineNote === 'templates' && aiErr
+      ? 'Templates (AI failed: ' + aiErr + ')' + tokStr()
+      : '3 style variations ready! [' + engineNote + ']' + tokStr())); } catch (e) {}
     window.location.href = ((typeof SITE_URL !== 'undefined' && SITE_URL) ? SITE_URL : '') + '/variations.php';
   } catch (err) {
     console.error(err);
@@ -3086,7 +3585,7 @@ function display3Designs(concepts, bizName) {
         </div>
       </div>`;
     grid.appendChild(card);
-    setTimeout(() => { const f = document.getElementById(`d${i}-iframe`); if (f) f.srcdoc = sanitizeHtmlOutput(c.html); }, 40);
+    setTimeout(() => { const f = document.getElementById(`d${i}-iframe`); if (f) f.srcdoc = sanitizeHtmlOutput(withWorkspaceNavFix(c.html)); }, 40);
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
   saveSessionNow();
@@ -3489,7 +3988,8 @@ function openFullscreenModal(index) {
   document.getElementById('m-vtab-site').classList.add('active');
   document.getElementById('m-vtab-admin').classList.remove('active');
   __armSpin('modal-frame-spin', 'modal');
-  document.getElementById('modal-iframe').srcdoc = c.html;
+  document.getElementById('modal-iframe').srcdoc = withWorkspaceNavFix(c.html);
+  setModalDevice('desktop');
   document.getElementById('fullscreen-modal').classList.add('active');
 }
 function switchModalView(view) {
@@ -3501,7 +4001,7 @@ function switchModalView(view) {
   __armSpin('modal-frame-spin', 'modal');
   document.getElementById('modal-iframe').srcdoc = view === 'admin'
     ? stabilizeAdminHtml(c.adminHtml || '<p style="padding:2rem;font-family:sans-serif;">No admin panel yet — will be generated during publish.</p>')
-    : c.html;
+    : withWorkspaceNavFix(c.html);
 }
 function closeFullscreenModal() { document.getElementById('fullscreen-modal').classList.remove('active'); }
 function selectFromModal() { closeFullscreenModal(); selectDesignAndEdit(modalViewingIndex); }
@@ -3515,6 +4015,7 @@ function openAdminPreview(index) {
   document.getElementById('m-vtab-admin').classList.add('active');
   __armSpin('modal-frame-spin', 'modal');
   document.getElementById('modal-iframe').srcdoc = stabilizeAdminHtml(c.adminHtml);
+  setModalDevice('desktop');
   document.getElementById('fullscreen-modal').classList.add('active');
 }
 
@@ -3605,6 +4106,20 @@ function variationOfConcept(c, idx) {
   return ['classic', 'bold', 'editorial'][(idx || 0) % 3];
 }
 
+async function fetchTemplateSubdesigns(variation, data) {
+  try {
+    const base = (typeof SITE_URL !== 'undefined' && SITE_URL) ? SITE_URL : '';
+    const resp = await fetch((base ? base : '') + '/api/generate.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'flowcraft_subdesigns', concept_id: variation, data: data || {} })
+    });
+    const j = await resp.json();
+    if (j && j.success && Array.isArray(j.subdesigns)) return j.subdesigns;
+  } catch (e) { console.warn('[subdesigns] template fallback failed:', e?.message); }
+  return [];
+}
+
 async function showSubDesigns(conceptIndex) {
   const concept = generatedConcepts[conceptIndex];
   if (!concept) return;
@@ -3614,7 +4129,7 @@ async function showSubDesigns(conceptIndex) {
   }
 
   // No subdesigns yet — generate 3 AI layouts in THIS style (same fixed
-  // split: slots 1-2 Gemini, slot 3 OpenCode). No templates.
+  // split: slots 1-2 Gemini, slot 3 OpenCode). Failed slots → templates.
   const variation = variationOfConcept(concept, conceptIndex);
   const data = collectWizardSnapshot();
   data.biz_name = data.biz_name || (concept.meta && concept.meta.bizName) || 'Website';
@@ -3623,23 +4138,58 @@ async function showSubDesigns(conceptIndex) {
     updateGenOverlay('generating', `Crafting 3 AI layouts in "${variation}" style…`, 28, {});
     let subs = null;
     let engineNote = '';
+    let subAiErr = '';
     let subTokens = 0;
     const subTokStr = () => subTokens > 0 ? ` · ~${(subTokens / 1000).toFixed(1)}k tokens` : '';
-    if (!window.OpenCodeAI?.generateSubDesigns) throw new Error('AI engine not loaded. Please reload and retry.');
-    const r = await window.OpenCodeAI.generateSubDesigns(data, variation, selectedGenMode, conceptIndex + 1, {
-      brief: (concept.meta && concept.meta.brief) || '',
-      onProgress: (p) => updateGenOverlay(p.stage || 'generating', p.message, p.pct || 50, p)
-    });
-    subTokens = r.tokens || 0;
-    if (!r.designs || r.designs.length !== 3) throw new Error('AI layouts incomplete — please retry.');
-    subs = r.designs;
-    engineNote = 'Gemini ×2 + OpenCode AI';
+    try {
+      if (!window.OpenCodeAI?.generateSubDesigns) throw new Error('AI engine not loaded.');
+      const r = await window.OpenCodeAI.generateSubDesigns(data, variation, selectedGenMode, conceptIndex + 1, {
+        brief: (concept.meta && concept.meta.brief) || '',
+        onProgress: (p) => updateGenOverlay(p.stage || 'generating', p.message, p.pct || 50, p)
+      });
+      subTokens = r.tokens || 0;
+      if (r.designs.length === 3) {
+        subs = r.designs;
+        engineNote = 'Gemini ×2 + OpenCode AI';
+      } else if (r.designs.length > 0) {
+        // PARTIAL: keep ready AI layouts in their own slots, fill ONLY
+        // missing slots with templates (index-merge would misplace a
+        // layout when the middle slot failed — map by slot instead).
+        const tpl = await fetchTemplateSubdesigns(variation, data);
+        const aiBySlot = {};
+        r.designs.forEach(d => {
+          let s = (d && typeof d.slot === 'number') ? d.slot : -1;
+          if (s < 0 || s > 2) {
+            const m = /-([ABC])$/.exec(d.id || '');
+            s = m ? ({ A: 0, B: 1, C: 2 })[m[1]] : -1;
+          }
+          if (s >= 0) aiBySlot[s] = d;
+        });
+        subs = [0, 1, 2].map(i => aiBySlot[i] || tpl[i]).filter(Boolean);
+        if (!subs.length) subs = null;
+        else {
+          engineNote = 'AI (' + r.designs.length + '/3) + template (' + (3 - r.designs.length) + '/3)';
+          showToast('Partial AI — ' + r.designs.length + '/3 AI layouts ready, templates filled ' + (3 - r.designs.length) + ' slot(s)');
+        }
+      }
+      if (r.errors && r.errors.length) subAiErr = String(r.errors[0]).slice(0, 220);
+    } catch (e) {
+      subAiErr = String(e?.message || e).slice(0, 220);
+      console.warn('[subdesigns] AI lane failed, using templates:', e?.message);
+    }
+    if (!subs || !subs.length) {
+      subs = await fetchTemplateSubdesigns(variation, data);
+      engineNote = 'templates';
+    }
+    if (!subs.length) throw new Error('No layouts available');
     concept.subdesigns = subs;
     concept._subEngine = engineNote;
     saveSessionNow();
     hideGenOverlay(true);
     renderSubDesignGrid(conceptIndex, engineNote);
-    showToast('3 layouts ready! [' + engineNote + ']' + subTokStr());
+    showToast(engineNote === 'templates' && subAiErr
+      ? 'Templates (AI failed: ' + subAiErr + ')' + subTokStr()
+      : '3 layouts ready! [' + engineNote + ']' + subTokStr());
   } catch (err) {
     console.error(err);
     hideGenOverlay(false);
@@ -3694,7 +4244,7 @@ function renderSubDesignGrid(conceptIndex, engineNote) {
     // Load iframe after short delay
     setTimeout(() => {
       const f = document.getElementById(`sd${conceptIndex}-${si}-iframe`);
-      if (f && sd.html) f.srcdoc = sanitizeHtmlOutput(sd.html);
+      if (f && sd.html) f.srcdoc = sanitizeHtmlOutput(withWorkspaceNavFix(sd.html));
     }, 50 + si * 30);
   });
 
@@ -3735,7 +4285,7 @@ function openSubdesignFullPreview(conceptIndex, subIndex) {
   const sd = concept.subdesigns && concept.subdesigns[subIndex];
   if (!sd || !sd.html) return;
   const w = window.open('', '_blank');
-  if (w) { w.document.open(); w.document.write(sd.html); w.document.close(); }
+  if (w) { w.document.open(); w.document.write(withWorkspaceNavFix(sd.html)); w.document.close(); }
 }
 
 function backToDesignsFromSub() {
@@ -3876,16 +4426,38 @@ function __hideSpin(id, timerSlot) {
   const s = document.getElementById(id);
   if (s) s.style.display = 'none';
 }
-/* Workspace-only anchor reliability: guarantees header section links
-   smooth-scroll inside the live iframe even when the generated page
-   ships broken/missing nav JS. Capture-phase, #links only. */
+/* Scroll-triggered count-up for stat numbers. Shared by every preview
+   surface via withWorkspaceNavFix. Auto-detects single-token numbers,
+   skips prices/years/phones/slashes (24/7), honors reduced-motion,
+   and no-ops when the page has no stats. */
+const WC_COUNT_FIX_JS = '<script data-wc-count-fix>(function(){if(window.__wcCountUp)return;window.__wcCountUp=true;function parseStat(raw){var t=String(raw==null?"":raw).trim();if(!t||t.length>16)return null;if(t.indexOf("/")!==-1)return null;if(/\\s/.test(t))return null;var m=t.match(/^([^0-9.,]*)([0-9][0-9.,]*)([A-Za-z%+]*)$/);if(!m)return null;var pre=m[1]||"",num=m[2],suf=m[3]||"";if(/[$\\u20AC\\u00A3\\u20B9]/.test(pre))return null;if(!/^[kKmMbB]?[%+]{0,2}$/.test(suf))return null;var pure=num.replace(/,/g,"");if((pure.match(/\\./g)||[]).length>1)return null;var target=parseFloat(pure);if(!isFinite(target)||target<=0)return null;var dec=0,di=pure.indexOf(".");if(di!==-1)dec=pure.length-di-1;if(dec>2)return null;if(!pre&&!suf&&dec===0&&target>=1900&&target<=2100)return null;return{pre:pre,target:target,dec:dec,suf:suf,final:t};}function collect(){var out=[];function push(el,p){if(el.__wcCounted)return;el.__wcCounted=true;if(out.length<60)out.push({el:el,p:p});}var tagged=null;try{tagged=document.querySelectorAll("[data-count],[data-target]");}catch(e){}if(tagged){for(var k=0;k<tagged.length;k++){var el2=tagged[k],p2=parseStat(el2.textContent);if(!p2){var av=parseFloat(String(el2.getAttribute("data-count")||el2.getAttribute("data-target")||"").replace(/,/g,""));if(isFinite(av)&&av>0)p2={pre:"",target:av,dec:0,suf:"",final:el2.textContent};}if(p2)push(el2,p2);}}var els=null;try{els=document.querySelectorAll("h1,h2,h3,h4,div,span,p,strong");}catch(e){}if(els){for(var i=0;i<els.length;i++){var el=els[i];if(el.children&&el.children.length>0)continue;if(el.closest&&el.closest("a,button,nav,form,select,textarea,input,script,style"))continue;var p=parseStat(el.textContent);if(p)push(el,p);}}return out;}function render(el,p,v){var s;if(p.dec>0)s=v.toFixed(p.dec);else{try{s=Math.round(v).toLocaleString("en-US");}catch(e){s=String(Math.round(v));}}el.textContent=p.pre+s+p.suf;}function animate(el,p,delay){var reduce=false;try{reduce=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);}catch(e){}if(reduce){el.textContent=p.final;return;}var dur=1600,t0=null;function frame(ts){if(t0===null)t0=ts;var t=Math.min((ts-t0)/dur,1);var ez=t>=1?1:1-Math.pow(2,-10*t);render(el,p,p.target*ez);if(t<1)requestAnimationFrame(frame);else render(el,p,p.target);}setTimeout(function(){try{requestAnimationFrame(frame);}catch(e){el.textContent=p.final;}},delay||0);}function init(){var items=collect();if(!items.length)return;for(var i=0;i<items.length;i++)render(items[i].el,items[i].p,0);if("IntersectionObserver" in window){try{var io=new IntersectionObserver(function(es){for(var j=0;j<es.length;j++){var en=es[j];if(en.isIntersecting){try{io.unobserve(en.target);}catch(e){}for(var q=0;q<items.length;q++){if(items[q].el===en.target){animate(en.target,items[q].p,(q%4)*120);break;}}}}},{threshold:0.35});for(var m2=0;m2<items.length;m2++)io.observe(items[m2].el);return;}catch(e){}}for(var n=0;n<items.length;n++)animate(items[n].el,items[n].p,n*120);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();})();<\/script>';
+/* Preview reliability bundle — injected at END of <head> so (1) the CSS
+   lands after the page's own styles and uses !important, and (2) listeners
+   register BEFORE body scripts, pre-empting the page's own instant-jump
+   handlers. Two independent parts, each added only when its marker is
+   missing, so live iframe, cards, modal, new-tab preview and the published
+   page all behave the same:
+   (a) wc-nav-fix: header anchor links smooth-scroll (+scroll-margin).
+   (b) wc-count-fix: stat numbers (50k+, 99.8%, 30+) count up from 0 when
+       scrolled into view (IntersectionObserver, once, easeOutExpo). */
 function withWorkspaceNavFix(html) {
-  if (!html || html.indexOf('wc-nav-fix') !== -1) return html;
-  const fix = '<script data-wc-nav-fix>(function(){document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;var href=a.getAttribute("href")||"";if(href.length<2)return;var t=document.getElementById(href.slice(1));if(!t)return;e.preventDefault();try{t.scrollIntoView({behavior:"smooth",block:"start"});}catch(_){t.scrollIntoView();}var d=document.getElementById("mobile-drawer");if(d)d.classList.remove("open");},true);})();<\/script>';
-  const s = String(html);
-  const idx = s.toLowerCase().lastIndexOf('</body>');
-  if (idx !== -1) return s.slice(0, idx) + fix + s.slice(idx);
-  return s + fix;
+  if (!html) return html;
+  const haveNav = html.indexOf('wc-nav-fix') !== -1;
+  const haveCount = html.indexOf('wc-count-fix') !== -1;
+  if (haveNav && haveCount) return html;
+  let bundle = '';
+  if (!haveNav) {
+    bundle += '<style data-wc-nav-fix-css>html{scroll-behavior:smooth!important}section[id],div[id],footer[id],header[id],main[id],article[id]{scroll-margin-top:88px!important}</style>';
+    bundle += '<script data-wc-nav-fix>(function(){document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;var href=a.getAttribute("href")||"";if(href.length<2)return;var id=href.slice(1).split("?")[0].split("#")[0];try{id=decodeURIComponent(id)}catch(_){}id=(id||"").trim();if(!id)return;var t=document.getElementById(id);if(!t)return;e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(_){try{t.scrollIntoView()}catch(__){}}try{history.replaceState(null,"","#"+id)}catch(__){}var d=document.getElementById("mobile-drawer");if(d)d.classList.remove("open")},true)})();<\/script>';
+  }
+  if (!haveCount) bundle += WC_COUNT_FIX_JS;
+  // NOTE: function replacers — the bundle contains '$' (currency guard),
+  // which a string replacer would misread as a $pattern. Function returns
+  // are inserted literally.
+  let s = String(html);
+  if (/<\/head\s*>/i.test(s)) return s.replace(/<\/head\s*>/i, () => bundle + '</head>');
+  if (/<head[^>]*>/i.test(s)) return s.replace(/<head([^>]*)>/i, (m, g1) => '<head' + g1 + '>' + bundle);
+  return bundle + s;
 }
 function updateLiveIframe(html) { const f = document.getElementById('live-iframe'); if (!f) return; __armSpin('live-frame-spin', 'live'); f.srcdoc = sanitizeHtmlOutput(withWorkspaceNavFix(html)); }
 function refreshLivePreview() {
@@ -3898,11 +4470,87 @@ function refreshLivePreview() {
 function setDevice(device) {
   const c = document.getElementById('preview-container');
   c.className = 'preview-container' + (device !== 'desktop' ? ' ' + device : '');
-  ['desktop', 'tablet', 'mobile'].forEach(d => document.getElementById(`d-${d}`)?.classList.toggle('active', d === device));
+  ['desktop', 'laptop', 'tablet', 'mobile'].forEach(d => document.getElementById(`d-${d}`)?.classList.toggle('active', d === device));
+}
+/* Fullscreen modal device preview — same 4 widths as the workspace preview,
+   so PC / laptop / tablet / phone views (incl. stat count-up on scroll)
+   can be checked in the big preview too. */
+function setModalDevice(device) {
+  const f = document.getElementById('modal-iframe');
+  if (f) f.className = 'modal-iframe m-' + device;
+  ['desktop', 'laptop', 'tablet', 'mobile'].forEach(d => document.getElementById(`md-${d}`)?.classList.toggle('active', d === device));
+}
+/* ══ EDIT MODE — ON: click any text inside the live preview and type
+   (iframe designMode + hover outlines). OFF: pure normal preview page,
+   edits saved back into the variation. Default OFF. ══ */
+let editMode = false;
+function setEditModeUI() {
+  const b = document.getElementById('btn-edit-mode');
+  if (!b) return;
+  b.textContent = editMode ? '✏️ Edit: ON' : '✏️ Edit: OFF';
+  b.classList.toggle('edit-on', editMode);
+}
+function setIframeEditable(on) {
+  const f = document.getElementById('live-iframe');
+  const doc = f && (f.contentDocument || (f.contentWindow && f.contentWindow.document));
+  if (!doc || !doc.body) return false;
+  doc.designMode = on ? 'on' : 'off';
+  let st = doc.getElementById('wc-edit-css');
+  if (on) {
+    if (!st) {
+      st = doc.createElement('style');
+      st.id = 'wc-edit-css';
+      st.textContent = 'body{outline:2px dashed rgba(99,102,241,.65)!important;outline-offset:-2px!important;}body :hover{outline:1px dashed rgba(99,102,241,.7)!important;}';
+      (doc.head || doc.documentElement).appendChild(st);
+    }
+  } else if (st) st.remove();
+  return true;
+}
+function toggleEditMode() {
+  if (!editMode) {
+    // Turning ON — only the site preview can be edited inline.
+    if (currentViewMode !== 'site' || !generatedDesigns[activeDesignIndex]) {
+      showToast('⚠️ Edit mode works on the 🌐 Site preview');
+      return;
+    }
+    let ok = false;
+    try { ok = setIframeEditable(true); } catch (e) { ok = false; }
+    if (!ok) { showToast('⚠️ Could not edit this preview (external page?)'); return; }
+    editMode = true;
+    setEditModeUI();
+    showToast('✏️ Edit mode ON — click any text and type. Toggle OFF to save + preview normally.');
+  } else {
+    // Turning OFF — serialize edits back, then show a clean normal preview.
+    // Only the site preview is serializable; an admin view is never written
+    // back into the variation.
+    let html = null;
+    if (currentViewMode === 'site') {
+      try {
+        const f = document.getElementById('live-iframe');
+        const doc = f && (f.contentDocument || (f.contentWindow && f.contentWindow.document));
+        if (doc && doc.body) {
+          try { doc.designMode = 'off'; } catch (e) {}
+          doc.getElementById('wc-edit-css')?.remove();
+          html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        }
+      } catch (e) { html = null; }
+    }
+    editMode = false;
+    setEditModeUI();
+    if (html && generatedDesigns[activeDesignIndex]) {
+      try { pushHistory(activeDesignIndex, currentHtml); } catch (e) {}
+      currentHtml = sanitizeHtmlOutput(html);
+      generatedDesigns[activeDesignIndex].html = currentHtml;
+      try { updateUndoBtn(); } catch (e) {}
+      try { saveSessionNow(); } catch (e) {}
+      showToast('✅ Edits saved — normal preview');
+    }
+    if (currentViewMode === 'site') updateLiveIframe(currentHtml);
+  }
 }
 function openInNewTab() {
   const c = generatedDesigns[activeDesignIndex];
-  const html = currentViewMode === 'admin' ? stabilizeAdminHtml(c?.adminHtml || '') : currentHtml;
+  const html = currentViewMode === 'admin' ? stabilizeAdminHtml(c?.adminHtml || '') : withWorkspaceNavFix(currentHtml);
   window.open(URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })), '_blank');
 }
 

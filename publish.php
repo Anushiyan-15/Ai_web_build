@@ -79,6 +79,23 @@ WCJS;
 }
 
 /**
+ * Inject the Studio Business-Blocks runtime (countdown, slider autoplay,
+ * video lite-embed, smart forms, mini cart + PayHere/LankaQR).
+ * Only added when the page actually uses business blocks (data-wc- marks).
+ * Additive — existing contact wiring above is untouched.
+ */
+function injectBusinessRuntime(string $html): string {
+    if (stripos($html, 'data-wc-') === false) return $html;
+    if (stripos($html, 'wc-business.js') !== false) return $html;
+    $src = (defined('SITE_URL') ? rtrim(SITE_URL, '/') : '') . '/assets/js/wc-business.js';
+    $tag = '<script src="' . htmlspecialchars($src) . '" defer></script>';
+    if (stripos($html, '</body>') !== false) {
+        return preg_replace('/<\/body\s*>/i', $tag . "\n</body>", $html, 1);
+    }
+    return $html . "\n" . $tag;
+}
+
+/**
  * Build contact.php receiver: validates + rate-limits + sends via OWNER Gmail
  * SMTP first (tested step-by-step at publish), platform queue as fallback.
  */
@@ -557,6 +574,17 @@ if (($_GET['action'] ?? '') === 'do_publish') {
     $contactInbox = filter_var($order['contact_email'] ?? ($order['admin_email'] ?? ''), FILTER_VALIDATE_EMAIL) ?: '';
     if ($contactInbox && stripos($siteHtml, '<form') !== false) {
         $siteHtml = injectContactHandler($siteHtml);
+    }
+    // 1a. Business blocks runtime (countdown/slider/forms/cart/…) when used
+    $siteHtml = injectBusinessRuntime($siteHtml);
+    // 1a2. Deterministic safety net (smooth scroll + stat count-up + reveal
+    // watchdog). Idempotent — also upgrades designs generated before the
+    // count-up script existed, so published stats always animate.
+    if (!function_exists('taste_apply_safety_net')) {
+        @require_once __DIR__ . '/includes/TasteSkill.php';
+    }
+    if (function_exists('taste_apply_safety_net')) {
+        $siteHtml = taste_apply_safety_net($siteHtml);
     }
     file_put_contents($targetDir . '/index.html', $siteHtml);
 

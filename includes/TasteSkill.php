@@ -302,6 +302,25 @@ function taste_apply_safety_net(string $html): string {
             $html .= $watchdog;
         }
     }
+    // Count-up: stat numbers (50k+, 99.8%, 30+) animate 0-to-target when
+    // scrolled into view. AI often ships them static; this additive script
+    // auto-detects single-token numbers, skips prices/years/phones and
+    // slash fractions (24/7), honors prefers-reduced-motion, and no-ops
+    // when the page has no stats. Skipped when a copy already exists
+    // (template shared-JS or preview bundle carry the same marker).
+    if (stripos($html, 'wc-count-fix') === false) {
+        $counter = <<<'WCCOUNT'
+<script data-wc-count-fix>(function(){if(window.__wcCountUp)return;window.__wcCountUp=true;function wcParseStat(raw){var t=String(raw==null?"":raw).trim();if(!t||t.length>16)return null;if(t.indexOf("/")!==-1)return null;if(/\s/.test(t))return null;var m=t.match(/^([^0-9.,]*)([0-9][0-9.,]*)([A-Za-z%+]*)$/);if(!m)return null;var pre=m[1]||"",num=m[2],suf=m[3]||"";if(pre.indexOf('$')!==-1)return null;if(pre.indexOf('Rs')!==-1||pre.indexOf('INR')!==-1||pre.indexOf('+')!==-1)return null;var digitsOnly=num.replace(/[^0-9]/g,"");if(digitsOnly.length>7)return null;for(var ci=0;ci<pre.length;ci++){var cc=pre.charCodeAt(ci);if(cc===0x20AC||cc===0x00A3||cc===0x20B9)return null;}if(!/^[kKmMbB]?[%+]{0,2}$/.test(suf))return null;var pure=num.replace(/,/g,"");if((pure.match(/\./g)||[]).length>1)return null;var target=parseFloat(pure);if(!isFinite(target)||target<=0)return null;var dec=0,di=pure.indexOf(".");if(di!==-1)dec=pure.length-di-1;if(dec>2)return null;if(!pre&&!suf&&dec===0&&target>=1900&&target<=2100)return null;return{pre:pre,target:target,dec:dec,suf:suf,final:t};}function wcCollect(){var out=[];function push(el,p){if(el.__wcCounted)return;el.__wcCounted=true;if(out.length<60)out.push({el:el,p:p});}var tagged=null;try{tagged=document.querySelectorAll("[data-count],[data-target]");}catch(e){}if(tagged){for(var k=0;k<tagged.length;k++){var el2=tagged[k],p2=wcParseStat(el2.textContent);if(!p2){var av=parseFloat(String(el2.getAttribute("data-count")||el2.getAttribute("data-target")||"").replace(/,/g,""));if(isFinite(av)&&av>0)p2={pre:"",target:av,dec:0,suf:"",final:el2.textContent};}if(p2)push(el2,p2);}}var els=null;try{els=document.querySelectorAll("h1,h2,h3,h4,div,span,p,strong");}catch(e){}if(els){for(var i=0;i<els.length;i++){var el=els[i];if(el.children&&el.children.length>0)continue;if(el.closest&&el.closest("a,button,nav,form,select,textarea,input,script,style"))continue;var p=wcParseStat(el.textContent);if(p)push(el,p);}}return out;}function wcRender(el,p,v){var s;if(p.dec>0)s=v.toFixed(p.dec);else{try{s=Math.round(v).toLocaleString("en-US");}catch(e){s=String(Math.round(v));}}el.textContent=p.pre+s+p.suf;}function wcAnimate(el,p,delay){var reduce=false;try{reduce=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);}catch(e){}if(reduce){el.textContent=p.final;return;}var dur=1600,t0=null;function frame(ts){if(t0===null)t0=ts;var t=Math.min((ts-t0)/dur,1);var ez=t>=1?1:1-Math.pow(2,-10*t);wcRender(el,p,p.target*ez);if(t<1)requestAnimationFrame(frame);else wcRender(el,p,p.target);}setTimeout(function(){try{requestAnimationFrame(frame);}catch(e){el.textContent=p.final;}},delay||0);}function wcInitCounters(){var items=wcCollect();if(!items.length)return;for(var i=0;i<items.length;i++)wcRender(items[i].el,items[i].p,0);if("IntersectionObserver" in window){try{var io=new IntersectionObserver(function(es){for(var j=0;j<es.length;j++){var en=es[j];if(en.isIntersecting){try{io.unobserve(en.target);}catch(e){}for(var q=0;q<items.length;q++){if(items[q].el===en.target){wcAnimate(en.target,items[q].p,(q%4)*120);break;}}}}},{threshold:0.35});for(var m2=0;m2<items.length;m2++)io.observe(items[m2].el);return;}catch(e){}}for(var n=0;n<items.length;n++)wcAnimate(items[n].el,items[n].p,n*120);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",wcInitCounters);else wcInitCounters();})();
+</script>
+WCCOUNT;
+        if (stripos($html, '</body>') !== false) {
+            // str_ireplace (literal) — the script holds '$' and backslashes
+            // that preg_replace would reinterpret.
+            $html = str_ireplace('</body>', $counter . "\n</body>", $html);
+        } else {
+            $html .= "\n" . $counter;
+        }
+    }
     return $html;
 }
 

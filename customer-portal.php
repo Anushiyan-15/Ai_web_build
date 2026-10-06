@@ -19,6 +19,120 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/Mailer.php';
 require_once __DIR__ . '/includes/MailQueue.php';
+require_once __DIR__ . '/includes/SocialAuth.php';
+
+// ─── SOCIAL LOGIN (Google / Facebook / Instagram — real OAuth 2.0) ──
+// ?action=social&provider=X → 302 to provider. Provider returns to
+// ?action=social_callback&provider=X&code=…&state=… → verify →
+// find-or-create account → session login (same shape as password login).
+$socialError = '';
+$socialPending = $_SESSION['social_pending'] ?? null;
+
+if (isset($_GET['action']) && $_GET['action'] === 'social') {
+    $sp = strtolower(trim($_GET['provider'] ?? ''));
+    if (!social_is_provider($sp)) {
+        $socialError = 'Unknown sign-in provider.';
+    } else {
+        $url = social_login_url($sp);
+        if ($url === null) {
+            $socialError = ucfirst($sp) . ' sign-in is not set up yet — add your app keys in config/social.php (see social.example.php), then try again.';
+        } else {
+            header('Location: ' . $url);
+            exit;
+        }
+    }
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'social_callback') {
+    $sp = strtolower(trim($_GET['provider'] ?? ''));
+    $cb = social_handle_callback($sp, $_GET);
+    if (isset($cb['error'])) {
+        $socialError = $cb['error'];
+    } elseif (empty($cb['email'])) {
+        // Instagram shares id+username but no email → one extra step: email.
+        $_SESSION['social_pending'] = [
+            'provider' => $sp,
+            'name' => $cb['name'] ?? ucfirst($sp) . ' user',
+            'provider_id' => $cb['provider_id'] ?? '',
+        ];
+        $socialPending = $_SESSION['social_pending'];
+    } else {
+        $prov = social_provision_customer($sp, $cb['email'], $cb['name'] ?? '');
+        if (empty($prov['success'])) {
+            $socialError = $prov['error'] ?? 'Social sign-in failed.';
+        } else {
+            unset($_SESSION['social_pending']);
+            $_SESSION['customer_user'] = $prov['customer'];
+            $_SESSION['flash_success'] = ($prov['is_new'] ?? false)
+                ? 'Account created with ' . ucfirst($sp) . ' — welcome, ' . $prov['customer']['name'] . '!'
+                : 'Welcome back, ' . $prov['customer']['name'] . '!';
+            try {
+                $spm = Mailer::buildSigninAlertPayload($prov['customer']['email'], $prov['customer']['name'], $_SERVER['REMOTE_ADDR'] ?? '');
+                queueMail($spm + ['kind' => 'signin_alert']);
+            } catch (Throwable $e) {}
+            header('Location: ' . SITE_URL . '/customer-portal.php');
+            exit;
+        }
+    }
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'social_cancel') {
+    unset($_SESSION['social_pending']);
+    $socialPending = null;
+    header('Location: ' . SITE_URL . '/customer-portal.php');
+    exit;
+}
+
+// Instagram-style providers without email: complete account with email.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'social_email') {
+    $pend = $_SESSION['social_pending'] ?? null;
+    $seEmail = strtolower(trim($_POST['se_email'] ?? ''));
+    if (!$pend || empty($pend['name'])) {
+        unset($_SESSION['social_pending']);
+        $socialPending = null;
+        $socialError = 'Session expired. Please sign in again.';
+    } elseif (!filter_var($seEmail, FILTER_VALIDATE_EMAIL)) {
+        $socialError = 'Please enter a valid email address.';
+    } else {
+        $prov = social_provision_customer($pend['provider'] ?? 'social', $seEmail, $pend['name']);
+        if (empty($prov['success'])) {
+            $socialError = $prov['error'] ?? 'Could not complete sign-in.';
+        } else {
+            unset($_SESSION['social_pending']);
+            $socialPending = null;
+            $_SESSION['customer_user'] = $prov['customer'];
+            $_SESSION['flash_success'] = 'Signed in with ' . ucfirst($pend['provider'] ?? 'social') . ' — welcome!';
+            try {
+                $spm = Mailer::buildSigninAlertPayload($prov['customer']['email'], $prov['customer']['name'], $_SERVER['REMOTE_ADDR'] ?? '');
+                queueMail($spm + ['kind' => 'signin_alert']);
+            } catch (Throwable $e) {}
+            header('Location: ' . SITE_URL . '/customer-portal.php');
+            exit;
+        }
+    }
+}
+
+/**
+ * "or continue with" social button row (Google / Facebook / Instagram).
+ * $suffix keeps inline-SVG ids unique when rendered twice on one page.
+ */
+function socialButtonsHtml(string $suffix): string {
+    $base = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
+    $mk = function (string $provider, string $label, string $icon) use ($base) {
+        return '<a class="social-btn" href="' . $base . '/customer-portal.php?action=social&provider='
+            . $provider . '" title="Continue with ' . $label . '">' . $icon
+            . '<span>' . $label . '</span></a>';
+    };
+    $g = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#fff"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#4285F4" font-family="Arial,sans-serif">G</text></svg>';
+    $f = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#1877F2"/><text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="900" fill="#fff" font-family="Arial,sans-serif">f</text></svg>';
+    $i = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><defs><linearGradient id="igg' . $suffix . '" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f09433"/><stop offset=".5" stop-color="#dc2743"/><stop offset="1" stop-color="#bc1888"/></linearGradient></defs><rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="url(#igg' . $suffix . ')"/><rect x="6.5" y="6.5" width="11" height="11" rx="3.2" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="16" cy="8" r="1.3" fill="#fff"/></svg>';
+    return '<div class="social-divider"><span>or continue with</span></div>'
+        . '<div class="social-row">'
+        . $mk('google', 'Google', $g)
+        . $mk('facebook', 'Facebook', $f)
+        . $mk('instagram', 'Instagram', $i)
+        . '</div>';
+}
 
 // ─── LOGOUT HANDLER ──────────────────────────────────────────
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
@@ -177,11 +291,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'remove_avatar' && !empty($_SE
     exit;
 }
 
-// ─── FORGOT PASSWORD WITH EMAIL OTP ───────────────────────────
+// ─── FORGOT PASSWORD WITH EMAIL OTP (3-step, like signup) ───────────
+// Step 1: email → OTP mail. Step 2: code ONLY → verify.
+// Step 3 (only after verify): new password → update + auto sign-in.
 $resetError = '';
-$resetStep = 'email'; // email | otp
+$resetStep = 'email'; // email | otp | password
 $resetEmail = $_SESSION['reset_email'] ?? '';
 if ($resetEmail !== '') $resetStep = 'otp';
+if (!empty($_SESSION['reset_verified'])) $resetStep = 'password';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reset_request') {
     $re = strtolower(trim($_POST['re_email'] ?? ''));
@@ -204,36 +321,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reset_verify') {
     $re = $_SESSION['reset_email'] ?? '';
     $code = (string)($_POST['re_otp'] ?? '');
-    $np = (string)($_POST['re_password'] ?? '');
-    $np2 = (string)($_POST['re_password2'] ?? '');
     if ($re === '') {
         $resetError = 'Session expired. Please start again.';
         $resetStep = 'email';
-    } elseif (strlen($np) < 8) {
-        $resetError = 'Password must be at least 8 characters.';
-        $resetStep = 'otp';
-    } elseif ($np !== $np2) {
-        $resetError = 'Passwords do not match.';
-        $resetStep = 'otp';
+    } elseif (!empty($_SESSION['reset_verified']) && $_SESSION['reset_verified'] === $re) {
+        $resetStep = 'password';
     } else {
         $ver = verifyEmailOtp($re, 'reset', $code);
         if ($ver['success']) {
-            $upd = setCustomerPassword($re, $np);
-            unset($_SESSION['reset_email']);
-            if ($upd['success']) {
-                $row = findCustomerByEmail($re);
-                $_SESSION['customer_user'] = ['email' => $re, 'name' => $row['name'] ?? 'Customer'];
-                $_SESSION['flash_success'] = 'Password updated successfully. You are signed in.';
-                try {
-                    $pp = Mailer::buildPasswordChangedPayload($re, $row['name'] ?? 'Customer');
-                    queueMail($pp + ['kind' => 'password_changed']);
-                } catch (Throwable $e) {}
-                header('Location: ' . SITE_URL . '/customer-portal.php');
-                exit;
-            } else {
-                $resetError = $upd['error'] ?? 'Password update failed.';
-                $resetStep = 'email';
-            }
+            $_SESSION['reset_verified'] = $re;
+            $resetStep = 'password';
         } else {
             $resetError = $ver['error'] ?? 'Verification failed.';
             $resetStep = 'otp';
@@ -241,9 +338,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reset_complete') {
+    $verified = $_SESSION['reset_verified'] ?? '';
+    $re = $_SESSION['reset_email'] ?? '';
+    $np = (string)($_POST['re_password'] ?? '');
+    $np2 = (string)($_POST['re_password2'] ?? '');
+    if ($verified === '' || $re === '' || $re !== $verified) {
+        $resetError = 'Verification missing. Please start again.';
+        $resetStep = 'email';
+    } elseif (strlen($np) < 8) {
+        $resetError = 'Password must be at least 8 characters.';
+        $resetStep = 'password';
+    } elseif ($np !== $np2) {
+        $resetError = 'Passwords do not match.';
+        $resetStep = 'password';
+    } else {
+        $upd = setCustomerPassword($re, $np);
+        if ($upd['success']) {
+            unset($_SESSION['reset_email'], $_SESSION['reset_verified']);
+            $row = findCustomerByEmail($re);
+            // No auto-login: user signs in manually on the login portal.
+            $_SESSION['flash_success'] = 'Password updated successfully. Please sign in with your new password.';
+            try {
+                $pp = Mailer::buildPasswordChangedPayload($re, $row['name'] ?? 'Customer');
+                queueMail($pp + ['kind' => 'password_changed']);
+            } catch (Throwable $e) {}
+            header('Location: ' . SITE_URL . '/customer-portal.php');
+            exit;
+        } else {
+            $resetError = $upd['error'] ?? 'Password update failed.';
+            $resetStep = 'password';
+        }
+    }
+}
+
 if (isset($_GET['action']) && $_GET['action'] === 'reset_resend' && !empty($_SESSION['reset_email'])) {
     $otp = requestEmailOtp($_SESSION['reset_email'], 'reset');
     header('Location: ' . SITE_URL . '/customer-portal.php?view=forgot' . ($otp['success'] ? '' : '&err=' . urlencode($otp['error'] ?? 'Resend failed.')));
+    exit;
+}
+if (isset($_GET['action']) && $_GET['action'] === 'reset_cancel') {
+    unset($_SESSION['reset_email'], $_SESSION['reset_verified']);
+    header('Location: ' . SITE_URL . '/customer-portal.php?view=forgot');
+    exit;
+}
+// Back button from the forgot screen: clear reset state so the login
+// (Sign In) tab renders — otherwise the pending session would reopen
+// the forgot tab and the back button would look broken.
+if (isset($_GET['action']) && $_GET['action'] === 'reset_exit') {
+    unset($_SESSION['reset_email'], $_SESSION['reset_verified']);
+    header('Location: ' . SITE_URL . '/customer-portal.php');
     exit;
 }
 if (isset($_GET['err'])) {
@@ -372,12 +516,62 @@ a{color:inherit;text-decoration:none;}
 .btn-primary{width:100%;padding:0.85rem;border-radius:11px;border:none;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:800;font-size:0.92rem;cursor:pointer;transition:all 0.2s;box-shadow:0 8px 24px rgba(99,102,241,0.4);display:flex;align-items:center;justify-content:center;gap:0.5rem;}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(99,102,241,0.6);}
 .err-box{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;padding:0.75rem;border-radius:10px;font-size:0.82rem;margin-bottom:1.25rem;}
+.back-login-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:9px;background:#131c30;border:1.5px solid #243049;color:#cbd5e1;font-size:.8rem;font-weight:800;text-decoration:none;transition:all .18s;}
+.back-login-btn:hover{border-color:#6366f1;color:#fff;background:#1e1b4b;transform:translateX(-2px);}
 .ok-box{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.4);color:#6ee7b7;padding:0.75rem;border-radius:10px;font-size:0.82rem;margin-bottom:1.25rem;}
 .otp-inp{width:100%;padding:0.85rem 1rem;border:1.5px solid #6366f1;border-radius:10px;background:#060a14;color:#fff;font-family:monospace;font-size:1.4rem;letter-spacing:10px;text-align:center;transition:all 0.2s;}
 .otp-inp:focus{outline:none;border-color:#a5b4fc;box-shadow:0 0 0 3px rgba(99,102,241,0.25);}
 .pw-track{height:8px;background:#1e293b;border-radius:999px;overflow:hidden;margin-top:.55rem;}
 .pw-fill{height:100%;width:0%;border-radius:999px;transition:width .3s ease,background .3s ease;background:#ef4444;}
 .pw-hint{font-size:.74rem;color:#64748b;margin-top:.4rem;line-height:1.5;}
+
+/* ── 3D animated auth scene (login + create account) ── */
+.login-wrap{position:relative;overflow:hidden;perspective:1200px;}
+.auth-bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.auth-bg .orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;animation:orbDrift 14s ease-in-out infinite alternate;}
+.auth-bg .orb.o1{width:420px;height:420px;left:-120px;top:-100px;background:radial-gradient(circle,#6366f1,transparent 70%);}
+.auth-bg .orb.o2{width:380px;height:380px;right:-100px;top:20%;background:radial-gradient(circle,#a855f7,transparent 70%);animation-delay:-5s;animation-duration:17s;}
+.auth-bg .orb.o3{width:340px;height:340px;left:30%;bottom:-140px;background:radial-gradient(circle,#06b6d4,transparent 70%);animation-delay:-9s;animation-duration:20s;}
+@keyframes orbDrift{from{transform:translate(0,0) scale(1);}to{transform:translate(60px,40px) scale(1.15);}}
+.auth-bg .gridfloor{position:absolute;left:-25%;right:-25%;bottom:-12%;height:46%;background-image:linear-gradient(rgba(99,102,241,.22) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.22) 1px,transparent 1px);background-size:44px 44px;transform:perspective(700px) rotateX(62deg);transform-origin:bottom;-webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 85%);mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 85%);animation:gridMove 7s linear infinite;}
+@keyframes gridMove{from{background-position:0 0,0 0;}to{background-position:0 44px,0 0;}}
+.cube3d{position:absolute;width:110px;height:110px;transform-style:preserve-3d;animation:cubeSpin 16s linear infinite;}
+.cube3d.c1{left:9%;top:16%;}
+.cube3d.c2{right:8%;bottom:14%;width:76px;height:76px;animation-duration:11s;animation-direction:reverse;}
+.cube3d .face{position:absolute;inset:0;border:1.5px solid rgba(129,140,248,.55);background:linear-gradient(135deg,rgba(99,102,241,.22),rgba(168,85,247,.08));box-shadow:0 0 28px rgba(99,102,241,.25) inset;border-radius:10px;}
+.cube3d .f1{transform:translateZ(55px);}
+.cube3d .f2{transform:rotateY(180deg) translateZ(55px);}
+.cube3d .f3{transform:rotateY(90deg) translateZ(55px);}
+.cube3d .f4{transform:rotateY(-90deg) translateZ(55px);}
+.cube3d .f5{transform:rotateX(90deg) translateZ(55px);}
+.cube3d .f6{transform:rotateX(-90deg) translateZ(55px);}
+.cube3d.c2 .f1{transform:translateZ(38px);}
+.cube3d.c2 .f2{transform:rotateY(180deg) translateZ(38px);}
+.cube3d.c2 .f3{transform:rotateY(90deg) translateZ(38px);}
+.cube3d.c2 .f4{transform:rotateY(-90deg) translateZ(38px);}
+.cube3d.c2 .f5{transform:rotateX(90deg) translateZ(38px);}
+.cube3d.c2 .f6{transform:rotateX(-90deg) translateZ(38px);}
+@keyframes cubeSpin{from{transform:rotateX(-18deg) rotateY(0deg);}to{transform:rotateX(-18deg) rotateY(360deg);}}
+.auth-bg .floatchip{position:absolute;padding:.5rem .9rem;border-radius:12px;background:rgba(17,22,34,.72);border:1px solid rgba(129,140,248,.35);backdrop-filter:blur(8px);font-size:.72rem;font-weight:800;color:#c7d2fe;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:chipFloat 6s ease-in-out infinite alternate;}
+.auth-bg .floatchip.fc1{left:12%;bottom:22%;}
+.auth-bg .floatchip.fc2{right:11%;top:18%;animation-delay:-3s;}
+@keyframes chipFloat{from{transform:translateY(-8px) rotate(-2deg);}to{transform:translateY(10px) rotate(2deg);}}
+.login-card{transform-style:preserve-3d;will-change:transform;transition:transform .15s ease-out;z-index:1;}
+@media(max-width:1100px){.cube3d.c1,.auth-bg .floatchip.fc1{display:none;}}
+@media(max-width:820px){.cube3d.c2,.auth-bg .floatchip.fc2{display:none;}}
+@media (prefers-reduced-motion: reduce){
+  .auth-bg .orb,.auth-bg .gridfloor,.cube3d,.auth-bg .floatchip{animation:none !important;}
+  .login-card{transition:none;}
+}
+
+/* ── Social login row ── */
+.social-divider{display:flex;align-items:center;gap:.75rem;margin:1.35rem 0 1rem;color:#64748b;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
+.social-divider::before,.social-divider::after{content:'';flex:1;height:1px;background:#1e293b;}
+.social-row{display:flex;gap:.6rem;}
+.social-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem .4rem;border-radius:10px;background:#131c30;border:1.5px solid #243049;color:#e2e8f0;font-weight:800;font-size:.8rem;font-family:inherit;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+.social-btn:hover{transform:translateY(-2px);border-color:#6366f1;box-shadow:0 10px 26px rgba(99,102,241,.35);}
+.social-btn:active{transform:translateY(0);}
+@media(max-width:420px){.social-row{flex-direction:column;}}
 
 /* ── Dashboard View ── */
 .dash-wrap{flex:1;max-width:1250px;width:100%;margin:0 auto;padding:2rem 1.5rem;}
@@ -465,11 +659,19 @@ a{color:inherit;text-decoration:none;}
 $viewParam = $_GET['view'] ?? '';
 $activeTab = 'signin';
 if ($viewParam === 'signup' || !empty($signupError) || $signupStep === 'otp') $activeTab = 'signup';
-if ($viewParam === 'forgot' || !empty($resetError) || $resetStep === 'otp') $activeTab = 'forgot';
+if ($viewParam === 'forgot' || !empty($resetError) || $resetStep === 'otp' || $resetStep === 'password') $activeTab = 'forgot';
 $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
 ?>
 <main class="login-wrap">
-  <div class="login-card">
+  <div class="auth-bg" aria-hidden="true">
+    <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+    <div class="gridfloor"></div>
+    <div class="cube3d c1"><div class="face f1"></div><div class="face f2"></div><div class="face f3"></div><div class="face f4"></div><div class="face f5"></div><div class="face f6"></div></div>
+    <div class="cube3d c2"><div class="face f1"></div><div class="face f2"></div><div class="face f3"></div><div class="face f4"></div><div class="face f5"></div><div class="face f6"></div></div>
+    <div class="floatchip fc1">🔐 Secure sign-in</div>
+    <div class="floatchip fc2">⚡ 1-click social login</div>
+  </div>
+  <div class="login-card" id="auth-card">
     <div style="text-align:center;margin-bottom:1.5rem;">
       <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 8px 24px rgba(99,102,241,0.4);margin-bottom:0.75rem;">📱</div>
       <h1 style="font-size:1.4rem;font-weight:900;color:#fff;">Customer Portal</h1>
@@ -478,6 +680,9 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
 
     <?php if ($flashSuccess): ?>
       <div class="ok-box"><?= htmlspecialchars($flashSuccess) ?></div>
+    <?php endif; ?>
+    <?php if ($socialError): ?>
+      <div class="err-box">⚠️ <?= htmlspecialchars($socialError) ?></div>
     <?php endif; ?>
     <?php if (isset($_GET['logged_out'])): ?>
       <div class="ok-box">Signed out successfully.</div>
@@ -492,8 +697,8 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
 
     <?php if ($activeTab === 'forgot'): ?>
     <!-- ── FORGOT PASSWORD ── -->
-    <div style="text-align:center;margin-bottom:1.25rem;">
-      <a href="customer-portal.php" style="font-size:.78rem;color:#94a3b8;">← Back to Sign In</a>
+    <div style="margin-bottom:1.25rem;">
+      <a href="customer-portal.php?action=reset_exit" class="back-login-btn" title="Back to the login page">← Back</a>
     </div>
     <h2 style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:.35rem;">Reset Password</h2>
     <p style="font-size:.8rem;color:#94a3b8;margin-bottom:1.25rem;">We'll email you a 6-digit code to verify it's you.</p>
@@ -511,7 +716,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
       </div>
       <button type="submit" class="btn-primary"><span>Send Verification Code</span></button>
     </form>
-    <?php else: ?>
+    <?php elseif ($resetStep === 'otp'): ?>
     <div class="ok-box">Code sent to <strong><?= htmlspecialchars($resetEmail) ?></strong>. Valid for 10 minutes.</div>
     <form method="POST" action="customer-portal.php?view=forgot">
       <input type="hidden" name="action" value="reset_verify">
@@ -519,9 +724,19 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <label>6-Digit Code</label>
         <input type="text" name="re_otp" class="otp-inp" placeholder="••••••" required autofocus maxlength="6" inputmode="numeric" autocomplete="one-time-code">
       </div>
+      <button type="submit" class="btn-primary"><span>Verify Code →</span></button>
+    </form>
+    <div style="margin-top:1rem;text-align:center;font-size:.78rem;color:#64748b;">
+      Didn't get it? <a href="customer-portal.php?action=reset_resend&view=forgot" style="color:#38bdf8;font-weight:700;">Resend code</a>
+      &nbsp;·&nbsp; <a href="customer-portal.php?action=reset_cancel&view=forgot" style="color:#64748b;">Use a different email</a>
+    </div>
+    <?php else: ?>
+    <div class="ok-box">Email <strong><?= htmlspecialchars($_SESSION['reset_verified'] ?? $resetEmail) ?></strong> verified. Now set your new password.</div>
+    <form method="POST" action="customer-portal.php?view=forgot">
+      <input type="hidden" name="action" value="reset_complete">
       <div class="field">
         <label>New Password (min 8 characters)</label>
-        <input type="password" name="re_password" id="re_password" class="inp" placeholder="New password" required oninput="pwMeter(this.value,'re')">
+        <input type="password" name="re_password" id="re_password" class="inp" placeholder="New password" required autofocus oninput="pwMeter(this.value,'re')">
         <div class="pw-track"><div class="pw-fill" id="pw-fill-re"></div></div>
         <div class="pw-hint" id="pw-hint-re">Use 8+ characters with upper, lower, number &amp; symbol.</div>
       </div>
@@ -529,13 +744,25 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <label>Confirm New Password</label>
         <input type="password" name="re_password2" class="inp" placeholder="Re-enter new password" required>
       </div>
-      <button type="submit" class="btn-primary"><span>Verify &amp; Update Password</span></button>
+      <button type="submit" class="btn-primary"><span>Update Password &amp; Sign In</span></button>
     </form>
-    <div style="margin-top:1rem;text-align:center;font-size:.78rem;color:#64748b;">
-      Didn't get it? <a href="customer-portal.php?action=reset_resend&view=forgot" style="color:#38bdf8;font-weight:700;">Resend code</a>
-    </div>
     <?php endif; ?>
 
+    <?php else: ?>
+    <?php if ($socialPending): ?>
+    <!-- ── SOCIAL: provider shared no email (e.g. Instagram) — one last step ── -->
+    <div class="ok-box">Signed in with <strong><?= htmlspecialchars(ucfirst($socialPending['provider'] ?? 'social')) ?></strong> as <strong><?= htmlspecialchars($socialPending['name'] ?? '') ?></strong>. One last step — add your email to finish.</div>
+    <form method="POST" action="customer-portal.php">
+      <input type="hidden" name="action" value="social_email">
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" name="se_email" class="inp" placeholder="you@email.com" required autofocus>
+      </div>
+      <button type="submit" class="btn-primary"><span>Complete Sign In →</span></button>
+    </form>
+    <div style="margin-top:1rem;text-align:center;font-size:.78rem;color:#64748b;">
+      Wrong account? <a href="customer-portal.php?action=social_cancel" style="color:#38bdf8;font-weight:700;">Start over</a>
+    </div>
     <?php else: ?>
     <div style="display:flex;gap:.5rem;background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.3rem;margin-bottom:1.5rem;">
       <a href="customer-portal.php" style="flex:1;text-align:center;padding:.55rem;border-radius:8px;font-size:.84rem;font-weight:800;<?= $activeTab === 'signin' ? 'background:#6366f1;color:#fff;' : 'color:#94a3b8;' ?>">Sign In</a>
@@ -593,6 +820,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
       </div>
       <button type="submit" class="btn-primary"><span>Send Verification Code</span></button>
     </form>
+    <?= socialButtonsHtml('b') ?>
     <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid #1e293b;text-align:center;font-size:0.75rem;color:#64748b;line-height:1.5;">
       💡 One account manages all your websites. Use the same email at publish time.
     </div>
@@ -616,6 +844,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <span>🚀 Access My Websites</span>
       </button>
     </form>
+    <?= socialButtonsHtml('a') ?>
 
     <div style="margin-top:1.25rem;text-align:center;font-size:.8rem;">
       <a href="customer-portal.php?view=forgot" style="color:#38bdf8;font-weight:700;">Forgot password?</a>
@@ -623,6 +852,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
     <div style="margin-top:1rem;padding-top:1.25rem;border-top:1px solid #1e293b;text-align:center;font-size:0.75rem;color:#64748b;line-height:1.5;">
       💡 New here? <a href="customer-portal.php?view=signup" style="color:#38bdf8;font-weight:700;">Create a free account</a> first, then build.
     </div>
+    <?php endif; ?>
     <?php endif; ?>
     <?php endif; ?>
   </div>
@@ -945,15 +1175,36 @@ document.querySelectorAll('form').forEach(function (f) {
         signup_verify: ['Verifying…', 'Checking your code', 'lock'],
         signup_complete: ['Creating account…', 'Setting up your workspace', 'lock'],
         reset_request: ['Sending code…', 'Mailing your reset code', 'mail'],
-        reset_verify: ['Updating password…', 'Securing your account', 'lock'],
+        reset_verify: ['Verifying…', 'Checking your code', 'lock'],
+        reset_complete: ['Updating password…', 'Securing your account', 'lock'],
         update_profile: ['Saving profile…', 'Updating your details', 'save'],
-        upload_avatar: ['Uploading photo…', 'Saving your picture', 'save']
+        upload_avatar: ['Uploading photo…', 'Saving your picture', 'save'],
+        social_email: ['Completing sign-in…', 'Setting up your workspace', 'lock']
       };
       var m = msgs[act];
       if (m && window.Loader3D) Loader3D.show(m[0], m[1], m[2]);
     } catch (e) {}
   });
 });
+
+// ★ 3D tilt on the auth card (login + create account) — mouse-driven,
+// disabled for touch / reduced-motion users.
+(function () {
+  try {
+    var card = document.getElementById('auth-card');
+    var wrap = document.querySelector('.login-wrap');
+    if (!card || !wrap) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
+    wrap.addEventListener('mousemove', function (e) {
+      var r = wrap.getBoundingClientRect();
+      var x = (e.clientX - r.left) / Math.max(r.width, 1) - 0.5;
+      var y = (e.clientY - r.top) / Math.max(r.height, 1) - 0.5;
+      card.style.transform = 'rotateY(' + (x * 8).toFixed(2) + 'deg) rotateX(' + (-y * 8).toFixed(2) + 'deg)';
+    });
+    wrap.addEventListener('mouseleave', function () { card.style.transform = ''; });
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
