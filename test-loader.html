@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ WebCraft AI — 3D Cybernetic Parallel Synthesis Loader</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#030611; font-family:'Plus Jakarta Sans',system-ui,sans-serif; color:#fff; min-height:100vh; display:flex; flex-direction:column; }
+
+.hero-box {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1rem; text-align:center; padding:2rem;
+}
+.hero-box h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem); font-weight:900; letter-spacing:-0.03em;
+  background: linear-gradient(135deg, #fff 20%, #818cf8 60%, #c084fc 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.hero-box p { color:#94a3b8; font-size:1.1rem; max-width:540px; line-height:1.6; }
+.trigger-btn {
+  margin-top:1.5rem; padding:1rem 2.5rem; border-radius:14px; border:none;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; font-size:1.1rem;
+  font-weight:800; cursor:pointer; box-shadow:0 10px 30px rgba(99,102,241,0.5);
+  transition:all 0.25s; display:inline-flex; align-items:center; gap:0.6rem;
+}
+.trigger-btn:hover { transform:translateY(-3px); box-shadow:0 15px 40px rgba(99,102,241,0.7); }
+
+/* ══ 3D CYBERNETIC GENERATION OVERLAY ══ */
+#gen-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 99999;
+  background: radial-gradient(circle at 50% 40%, #0d1226 0%, #03060f 70%, #010206 100%);
+  align-items: center; justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+  perspective: 1200px;
+}
+#gen-overlay.active { display: flex; animation: overlayIn 0.5s cubic-bezier(0.22,1,0.36,1); }
+@keyframes overlayIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+/* Cybernetic HUD Top Bar */
+.gen-hud-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 48px;
+  background: rgba(10,15,28,0.7); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(99,102,241,0.25);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; z-index: 10;
+}
+.gen-hud-left, .gen-hud-right { display: flex; align-items: center; gap: 0.75rem; }
+.gen-hud-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 20px rgba(16,185,129,0.5);
+  animation: hudBlink 1.4s ease-in-out infinite alternate;
+}
+@keyframes hudBlink { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+.gen-hud-mono { font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.72rem; color: #94a3b8; font-weight: 600; letter-spacing: 0.05em; }
+.gen-hud-badge {
+  background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25));
+  border: 1px solid rgba(129,140,248,0.4); border-radius: 999px;
+  color: #c7d2fe; font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.65rem;
+  letter-spacing: 0.03em;
+}
+
+/* Perspective Cyber Grid */
+#gen-overlay::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.12) 1px, transparent 1px);
+  background-size: 44px 44px;
+  transform: perspective(500px) rotateX(65deg) scale(3) translateY(20%);
+  transform-origin: center bottom;
+  animation: gridScroll 3s linear infinite;
+  pointer-events: none;
+}
+@keyframes gridScroll { from { background-position: 0 0; } to { background-position: 0 44px; } }
+
+/* Laser Scanner Beam */
+#gen-overlay::after {
+  content: '';
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.8) 50%, rgba(56,189,248,0.8) 70%, transparent 100%);
+  box-shadow: 0 0 20px rgba(99,102,241,0.9), 0 0 40px rgba(56,189,248,0.6);
+  animation: laserScan 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes laserScan {
+  0%   { top: 5%; opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.8; }
+  100% { top: 95%; opacity: 0; }
+}
+
+/* ── 3D Stage & Rotating Quantum Cube ── */
+.gen-stage-wrap {
+  position: relative; z-index: 2; margin-top: 2rem; margin-bottom: 2rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.gen-cube-scene {
+  width: 100px; height: 100px;
+  perspective: 700px;
+  position: relative;
+}
+.gen-cube {
+  width: 100px; height: 100px;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: cubeSpin 6s linear infinite;
+}
+@keyframes cubeSpin {
+  0%   { transform: rotateX(15deg) rotateY(0deg) rotateZ(0deg); }
+  50%  { transform: rotateX(-25deg) rotateY(180deg) rotateZ(15deg); }
+  100% { transform: rotateX(15deg) rotateY(360deg) rotateZ(0deg); }
+}
+.gen-cube-face {
+  position: absolute; width: 100px; height: 100px;
+  border: 1.5px solid rgba(129,140,248,0.8);
+  background: rgba(15,23,42,0.45);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  box-shadow: 0 0 25px rgba(99,102,241,0.3) inset, 0 0 15px rgba(99,102,241,0.2);
+}
+.gen-cube-face.front  { transform: rotateY(0deg)   translateZ(50px); }
+.gen-cube-face.back   { transform: rotateY(180deg) translateZ(50px); border-color: rgba(168,85,247,0.85); box-shadow: 0 0 25px rgba(168,85,247,0.3) inset; }
+.gen-cube-face.right  { transform: rotateY(90deg)  translateZ(50px); border-color: rgba(16,185,129,0.85); box-shadow: 0 0 25px rgba(16,185,129,0.3) inset; }
+.gen-cube-face.left   { transform: rotateY(-90deg) translateZ(50px); border-color: rgba(56,189,248,0.85); box-shadow: 0 0 25px rgba(56,189,248,0.3) inset; }
+.gen-cube-face.top    { transform: rotateX(90deg)  translateZ(50px); border-color: rgba(251,191,36,0.85); box-shadow: 0 0 25px rgba(251,191,36,0.3) inset; }
+.gen-cube-face.bottom { transform: rotateX(-90deg) translateZ(50px); border-color: rgba(244,63,94,0.85);  box-shadow: 0 0 25px rgba(244,63,94,0.3) inset; }
+
+/* Glowing Inner Energy Core */
+.gen-cube-core {
+  position: absolute; width: 44px; height: 44px;
+  top: 28px; left: 28px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #818cf8 40%, #a855f7 70%, transparent 100%);
+  box-shadow: 0 0 35px #818cf8, 0 0 60px #a855f7;
+  transform: translateZ(0);
+  animation: corePulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes corePulse {
+  0%   { transform: scale(0.85); filter: brightness(0.9); }
+  100% { transform: scale(1.15); filter: brightness(1.4); }
+}
+
+/* ── Gyroscope Orbiting Rings ── */
+.gen-rings {
+  position: absolute; width: 230px; height: 230px;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 1;
+}
+.gen-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.8px solid transparent; }
+.gen-ring-1 {
+  border-top-color: #6366f1; border-right-color: rgba(99,102,241,0.5);
+  box-shadow: 0 0 15px rgba(99,102,241,0.4);
+  animation: ringSpin1 3s linear infinite;
+}
+.gen-ring-2 {
+  inset: 18px;
+  border-bottom-color: #a855f7; border-left-color: rgba(168,85,247,0.5);
+  box-shadow: 0 0 15px rgba(168,85,247,0.4);
+  animation: ringSpin2 2.2s linear infinite reverse;
+}
+.gen-ring-3 {
+  inset: 36px;
+  border-top-color: #06b6d4; border-right-color: rgba(6,182,212,0.4);
+  box-shadow: 0 0 15px rgba(6,182,212,0.4);
+  animation: ringSpin3 4s linear infinite;
+}
+@keyframes ringSpin1 { 0% { transform: rotateX(65deg) rotateY(20deg) rotateZ(0deg); } 100% { transform: rotateX(65deg) rotateY(20deg) rotateZ(360deg); } }
+@keyframes ringSpin2 { 0% { transform: rotateX(-50deg) rotateY(45deg) rotateZ(0deg); } 100% { transform: rotateX(-50deg) rotateY(45deg) rotateZ(360deg); } }
+@keyframes ringSpin3 { 0% { transform: rotateX(30deg) rotateY(-60deg) rotateZ(0deg); } 100% { transform: rotateX(30deg) rotateY(-60deg) rotateZ(360deg); } }
+
+/* ── Content Area & Headings ── */
+.gen-overlay-content { position: relative; z-index: 2; text-align: center; display: flex; flex-direction: column; align-items: center; max-width: 680px; width: 92vw; }
+
+.gen-overlay-title {
+  font-size: clamp(1.4rem, 3.2vw, 2.1rem); font-weight: 900; letter-spacing: -0.03em; margin-bottom: 0.35rem;
+  background: linear-gradient(135deg, #ffffff 15%, #c7d2fe 55%, #e9d5ff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  text-shadow: 0 0 40px rgba(129,140,248,0.3);
+}
+
+.gen-overlay-stage {
+  font-size: 0.88rem; color: #cbd5e1; font-weight: 600; min-height: 1.4em;
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.gen-overlay-stage .stage-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #6366f1;
+  box-shadow: 0 0 12px #818cf8; animation: stagePulse 0.9s ease-in-out infinite; flex-shrink: 0;
+}
+@keyframes stagePulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.4; } }
+
+/* Glowing Live Percentage */
+.gen-pct-wrap {
+  display: flex; align-items: baseline; gap: 0.15rem; margin-bottom: 0.6rem;
+  font-family: 'Fira Code', monospace; font-size: 1.8rem; font-weight: 900;
+  background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 14px rgba(99,102,241,0.5));
+}
+.gen-pct-wrap .pct-symbol { font-size: 1.1rem; opacity: 0.8; }
+
+/* Neon Progress Track */
+.gen-overlay-track {
+  width: min(520px, 90vw); height: 7px; background: rgba(255,255,255,0.06);
+  border-radius: 999px; overflow: hidden; margin-bottom: 1.35rem;
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.25), 0 0 20px rgba(99,102,241,0.15);
+}
+.gen-overlay-fill {
+  height: 100%; width: 5%; border-radius: 999px;
+  background: linear-gradient(90deg, #4f46e5 0%, #8b5cf6 45%, #06b6d4 100%);
+  background-size: 200% 100%;
+  animation: progressShimmer 2s linear infinite;
+  box-shadow: 0 0 16px rgba(99,102,241,0.9), 0 0 32px rgba(6,182,212,0.4);
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes progressShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+/* Parallel 3-Variation Badges */
+.gen-var-status {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem;
+  width: min(520px, 90vw); margin-bottom: 1.25rem;
+}
+@media (max-width: 580px) { .gen-var-status { grid-template-columns: 1fr; } }
+.gen-vcard {
+  background: rgba(15,23,42,0.65); border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 10px; padding: 0.5rem 0.65rem; text-align: left;
+  display: flex; flex-direction: column; gap: 0.15rem;
+  transition: all 0.3s ease;
+}
+.gen-vcard.ready {
+  border-color: rgba(16,185,129,0.7); background: rgba(6,78,59,0.25);
+  box-shadow: 0 0 15px rgba(16,185,129,0.25);
+}
+.gen-vcard-name { font-size: 0.72rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gen-vcard-state { font-size: 0.65rem; color: #94a3b8; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
+.gen-vcard.ready .gen-vcard-state { color: #34d399; font-weight: 800; }
+.gen-vcard.ready .gen-vcard-state::before { content: '✓ '; }
+
+/* Live Telemetry Terminal Line */
+.gen-terminal-box {
+  width: min(520px, 90vw); background: rgba(5,8,16,0.8);
+  border: 1px solid rgba(56,189,248,0.25); border-radius: 8px;
+  padding: 0.45rem 0.85rem; display: flex; align-items: center; gap: 0.55rem;
+  font-family: 'Fira Code', monospace; font-size: 0.72rem; color: #38bdf8;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5); margin-bottom: 1.25rem;
+}
+.terminal-prompt { color: #818cf8; font-weight: 900; }
+#gen-terminal-line { color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Rotating Tip */
+.gen-overlay-tip {
+  font-size: 0.76rem; color: #64748b; font-weight: 600; max-width: 440px;
+  line-height: 1.5; text-align: center; transition: opacity 0.3s;
+}
+
+/* Floating Starfield Particles */
+.gen-particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.gen-particle { position: absolute; border-radius: 50%; animation: particleFloat linear infinite; }
+@keyframes particleFloat {
+  0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero-box">
+  <h1>WebCraft AI Multi-Thread Synthesis</h1>
+  <p>Experience the ultra-fast, multi-threaded 3D animated loading experience. Generates 3 style variations concurrently with live telemetry.</p>
+  <button class="trigger-btn" onclick="startDemo()">⚡ Launch 3D Loading Demo</button>
+</div>
+
+<!-- ═══ 3D GENERATION OVERLAY ═══ -->
+<div id="gen-overlay">
+  <!-- Top Cyber Status Bar -->
+  <div class="gen-hud-bar">
+    <div class="gen-hud-left">
+      <span class="gen-hud-dot"></span>
+      <span class="gen-hud-mono">AI ENGINE: MULTI-THREADED PARALLEL</span>
+    </div>
+    <div class="gen-hud-right">
+      <span class="gen-hud-badge">⚡ 3X ACCELERATED</span>
+      <span class="gen-hud-mono" id="gen-hud-time">0.0s</span>
+    </div>
+  </div>
+
+  <!-- Floating particles (injected by JS) -->
+  <div class="gen-particles" id="gen-particles"></div>
+
+  <!-- 3D Gyroscope & Quantum Cube Scene -->
+  <div class="gen-stage-wrap">
+    <div class="gen-cube-scene">
+      <div class="gen-rings">
+        <div class="gen-ring gen-ring-1"></div>
+        <div class="gen-ring gen-ring-2"></div>
+        <div class="gen-ring gen-ring-3"></div>
+      </div>
+      <div class="gen-cube">
+        <div class="gen-cube-face front">✦</div>
+        <div class="gen-cube-face back">🎨</div>
+        <div class="gen-cube-face right">⚡</div>
+        <div class="gen-cube-face left">🚀</div>
+        <div class="gen-cube-face top">💡</div>
+        <div class="gen-cube-face bottom">🌐</div>
+        <div class="gen-cube-core"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content & Progress -->
+  <div class="gen-overlay-content">
+    <div class="gen-overlay-title">Synthesizing 3 Style Variations</div>
+    <div class="gen-overlay-stage">
+      <span class="stage-dot"></span>
+      <span id="gen-overlay-text">Allocating parallel neural threads…</span>
+    </div>
+
+    <!-- Live Percentage Counter -->
+    <div class="gen-pct-wrap">
+      <span id="gen-pct-num">0</span><span class="pct-symbol">%</span>
+    </div>
+
+    <!-- Glowing Progress Track -->
+    <div class="gen-overlay-track">
+      <div class="gen-overlay-fill" id="gen-overlay-fill"></div>
+    </div>
+
+    <!-- Parallel 3-Variation Badges -->
+    <div class="gen-var-status" id="gen-var-status">
+      <div class="gen-vcard" id="gvcard-0">
+        <span class="gvcard-name">1. Minimal Modern</span>
+        <span class="gvcard-state" id="gvcard-state-0">⚡ Generating…</span>
+      </div>
+      <div class="gen-vcard" id="gvcard-1">
+        <span class="gvcard-name">2. Bold Dynamic</span>
+        <span class="gvcard-state" id="gvcard-state-1">⚡ Generating…</span>
+      </div>
+      <div class="gen-vcard" id="gvcard-2">
+        <span class="gvcard-name">3. Luxury Dark</span>
+        <span class="gvcard-state" id="gvcard-state-2">⚡ Generating…</span>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Terminal Line -->
+    <div class="gen-terminal-box">
+      <span class="terminal-prompt">&gt;</span>
+      <span id="gen-terminal-line">Dispatching prompts to Puter AI cluster...</span>
+    </div>
+
+    <!-- Rotating Tip -->
+    <div id="gen-overlay-tip" class="gen-overlay-tip">
+      ✦ Multi-threaded parallel synthesis generates all 3 variations simultaneously
+    </div>
+  </div>
+</div>
+
+<script>
+const TIPS = [
+  '⚡ Parallel multi-threading generates all 3 variations simultaneously',
+  '🎨 Synthesizing bespoke typography, color palettes, and responsive grids…',
+  '⚡ Validating clean, semantic HTML5, CSS3, and interactive components…',
+  '🔐 Preparing client-side interactive preview and CMS structures…',
+  '🌐 Calibrating viewports for ultra-fast mobile, tablet, and desktop rendering…',
+  '🚀 Finalizing assembly — almost ready for instant live preview…',
+];
+
+function startDemo() {
+  const overlay = document.getElementById('gen-overlay');
+  const fill = document.getElementById('gen-overlay-fill');
+  const text = document.getElementById('gen-overlay-text');
+  const pctNum = document.getElementById('gen-pct-num');
+  const timeEl = document.getElementById('gen-hud-time');
+  const termLine = document.getElementById('gen-terminal-line');
+
+  // Reset
+  fill.style.width = '8%';
+  pctNum.textContent = '8';
+  text.textContent = 'Connecting to Puter multi-core cluster…';
+  termLine.textContent = 'Allocating 3 parallel compute worker threads...';
+  [0, 1, 2].forEach(i => {
+    const card = document.getElementById(`gvcard-${i}`);
+    const state = document.getElementById(`gvcard-state-${i}`);
+    card.classList.remove('ready');
+    state.textContent = '⚡ Generating…';
+  });
+
+  // Spawn starfield particles
+  const pc = document.getElementById('gen-particles');
+  pc.innerHTML = '';
+  const colors = ['#6366f1','#a855f7','#10b981','#38bdf8','#f59e0b','#ec4899'];
+  for (let i = 0; i < 35; i++) {
+    const p = document.createElement('div');
+    p.className = 'gen-particle';
+    const sz = Math.random() * 4 + 2, dur = Math.random() * 6 + 4, del = Math.random() * 5, left = Math.random() * 100;
+    p.style.cssText = `width:${sz}px;height:${sz}px;left:${left}%;background:${colors[~~(Math.random()*colors.length)]};animation-duration:${dur}s;animation-delay:${del}s;opacity:0.6;`;
+    pc.appendChild(p);
+  }
+
+  overlay.classList.add('active');
+
+  // Stopwatch
+  const t0 = Date.now();
+  const hudTimer = setInterval(() => {
+    timeEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + 's';
+  }, 100);
+
+  // Rotate tips
+  let tipIdx = 0;
+  const tipEl = document.getElementById('gen-overlay-tip');
+  const tipTimer = setInterval(() => {
+    tipIdx = (tipIdx + 1) % TIPS.length;
+    tipEl.style.opacity = '0';
+    setTimeout(() => { tipEl.textContent = TIPS[tipIdx]; tipEl.style.opacity = '1'; }, 250);
+  }, 2800);
+
+  // Parallel progress milestones
+  setTimeout(() => {
+    fill.style.width = '35%';
+    pctNum.textContent = '35';
+    text.textContent = 'Concurrent synthesis in progress…';
+    termLine.textContent = '[Thread 1-3] Streaming layout matrices & semantic nodes...';
+  }, 1200);
+
+  setTimeout(() => {
+    fill.style.width = '55%';
+    pctNum.textContent = '55';
+    document.getElementById('gvcard-0').classList.add('ready');
+    document.getElementById('gvcard-state-0').textContent = '✓ Ready';
+    text.textContent = 'Variation 1/3 synthesized: "Minimal Modern" ready!';
+    termLine.textContent = '[Thread 1] Complete! Compiling responsive breakpoints for 2 & 3...';
+  }, 2600);
+
+  setTimeout(() => {
+    fill.style.width = '78%';
+    pctNum.textContent = '78';
+    document.getElementById('gvcard-1').classList.add('ready');
+    document.getElementById('gvcard-state-1').textContent = '✓ Ready';
+    text.textContent = 'Variation 2/3 synthesized: "Bold Dynamic" ready!';
+    termLine.textContent = '[Thread 2] Complete! Polishing luxury dark color tokens...';
+  }, 3800);
+
+  setTimeout(() => {
+    fill.style.width = '96%';
+    pctNum.textContent = '96';
+    document.getElementById('gvcard-2').classList.add('ready');
+    document.getElementById('gvcard-state-2').textContent = '✓ Ready';
+    text.textContent = 'Variation 3/3 synthesized: "Luxury Dark" ready!';
+    termLine.textContent = '[Thread 3] Complete! Assembling variations grid...';
+  }, 4900);
+
+  setTimeout(() => {
+    clearInterval(hudTimer);
+    clearInterval(tipTimer);
+    fill.style.width = '100%';
+    pctNum.textContent = '100';
+    text.textContent = '✓ All 3 variations synthesized & ready!';
+    termLine.textContent = 'Synthesis finished in ' + ((Date.now() - t0)/1000).toFixed(1) + 's. Launching interactive workspace...';
+  }, 5800);
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+  }, 6800);
+}
+</script>
+</body>
+</html>

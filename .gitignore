@@ -1,0 +1,30 @@
+# ── Secrets & local config (NEVER push real credentials) ──
+config/app.php
+config/database.php
+config/paypal.php
+config/mail.php
+config/platform-admin.php
+.env
+.env.*
+!.env.example
+
+# ── Runtime user data (accounts, orders, uploads, caches) ──
+storage/*
+!storage/.htaccess
+!storage/notifications/.gitkeep
+
+# ── Generated published sites (build output) ──
+published/*
+!published/index.php
+
+# ── Local test / debug output (generated artifacts) ──
+test_generated.html
+
+# ── OS / editor / logs ──
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+*.log
+*.tmp
+*.bak

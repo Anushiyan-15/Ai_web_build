@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════════════
+# WebCraft AI — Apache Wildcard Subdomain & Routing Configuration
+# ═══════════════════════════════════════════════════════════════
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Prevent direct access to sensitive folders
+    RewriteRule ^storage/.*$ - [F,L]
+    RewriteRule ^config/.*$ - [F,L]
+    RewriteRule ^database/.*$ - [F,L]
+
+    # Wildcard Domain Routing:
+    # If the request is for a subdomain (e.g. client1.yourdomain.com),
+    # forward it through wildcard-router.php
+    RewriteCond %{HTTP_HOST} ^([a-zA-Z0-9\-_]+)\.(.+)\.([a-zA-Z]{2,})$ [NC]
+    RewriteCond %{HTTP_HOST} !^(www|mail|cpanel|webmail|api)\. [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ wildcard-router.php [QSA,L]
+</IfModule>
+
+# MIME type handling
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType application/javascript .js
+    AddType application/json .json
+</IfModule>
