@@ -217,7 +217,10 @@ if ($action === 'fast_edit') {
         echo json_encode(['success' => false, 'error' => 'Missing current_html or instruction']);
         exit;
     }
-    [$ok, $out, $used, $errors, $usage] = gemini_edit_html($html, $instruction, $biz);
+    // AI-chat model: gemini-* honored as preferred (default lite);
+    // 'opencode-fallback' means skip Gemini → let the OpenCode lane handle it.
+    $fastModel = ($model && stripos($model, 'gemini') === 0) ? $model : null;
+    [$ok, $out, $used, $errors, $usage] = gemini_edit_html($html, $instruction, $biz, $fastModel);
     if ($ok) {
         echo json_encode([
             'success' => true, 'engine' => 'gemini', 'model' => $used,

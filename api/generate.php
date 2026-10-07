@@ -39,6 +39,15 @@ $resolvedModel = (defined('GEMINI_MODEL') && GEMINI_MODEL)
     ? GEMINI_MODEL
     : 'gemini-3.5-flash-lite'; // single-model policy: lite ONLY
 
+// AI-chat model override: honor a client-requested gemini-* model
+// (dropdown default is gemini-3.5-flash-lite). Anything else falls
+// back to the server default so generation never breaks.
+$requestedChatModel = isset($req['model']) && is_string($req['model']) ? trim($req['model']) : '';
+if ($requestedChatModel !== '' && stripos($requestedChatModel, 'gemini') === 0
+    && preg_match('/^[a-z0-9][a-z0-9._-]*$/i', $requestedChatModel)) {
+    $resolvedModel = $requestedChatModel;
+}
+
 // ── Sanitize helper ───────────────────────────────────────────
 $sanitize = function ($v) {
     return htmlspecialchars(strip_tags(trim((string)($v ?? ''))), ENT_QUOTES, 'UTF-8');
@@ -2106,6 +2115,73 @@ if ($action === 'update_details') {
 }
 
 // ═══════════════════════════════════════════════════════════════
+//  ACTION: ask — advice/audit/content TEXT (never modifies website)
+//  Copilot ASK mode: {instruction, context{brand,page,target,history,file}, model?}
+//  Returns {success, reply, model}. Gemini primary, OpenCode fallback.
+// ═══════════════════════════════════════════════════════════════
+if ($action === 'ask') {
+    $instruction = trim($req['instruction'] ?? $req['q'] ?? '');
+    $ctx = is_array($req['context'] ?? null) ? $req['context'] : [];
+    if ($instruction === '') {
+        echo json_encode(['success' => false, 'error' => 'Missing instruction']);
+        exit;
+    }
+    $brand   = trim((string)($ctx['brand'] ?? ''));
+    $page    = trim((string)($ctx['page'] ?? ''));
+    $target  = trim((string)($ctx['target'] ?? ''));
+    $history = trim((string)($ctx['history'] ?? ''));
+    $fileCtx = trim((string)($ctx['file'] ?? ''));
+    if (strlen($fileCtx) > 6000) $fileCtx = substr($fileCtx, 0, 6000);
+    $system = "You are WebCraft AI Copilot — a website designer, copywriter, developer and UX advisor in one. "
+        . "ADVISE ONLY: never output HTML/CSS code blocks unless the user explicitly asks for code. "
+        . "Reply in the user's language (English, Tanglish/Tamil, or Sinhala — match what they wrote). "
+        . "Be concise: short heading + max 5 bullets. No banned clichés (seamless, unleash, elevate, game-changer, delve, tapestry). "
+        . "Use the business context for specific advice; never invent business facts (phone, address, prices) that are not given.";
+    $askModel = isset($req['model']) && is_string($req['model']) ? trim($req['model']) : '';
+    // 'opencode-fallback' selection skips Gemini so the other model is tried.
+    $useGemini = ($askModel !== 'opencode-fallback') && !empty($apiKey) && strlen($apiKey) > 10;
+    $user = "USER REQUEST: {$instruction}\n\n"
+        . ($brand !== '' ? "BUSINESS CONTEXT:\n{$brand}\n\n" : '')
+        . ($page !== '' ? "CURRENT PAGE: {$page}\n\n" : '')
+        . ($target !== '' ? "AI TARGET:\n" . substr($target, 0, 4000) . "\n\n" : '')
+        . ($history !== '' ? "RECENT CONVERSATION:\n" . substr($history, 0, 2000) . "\n\n" : '')
+        . ($fileCtx !== '' ? "ATTACHED FILE CONTENT (use for copy/answers):\n" . $fileCtx . "\n\n" : '')
+        . "Now respond helpfully.";
+    if ($useGemini) {
+        require_once dirname(__DIR__) . '/includes/GeminiService.php';
+        [$ok, $text, $err, $u] = gemini_chat_once($resolvedModel, $system, $user, 0.7, 1500, 25);
+        if ($ok && trim($text) !== '') {
+            echo json_encode(['success' => true, 'reply' => trim($text), 'model' => $resolvedModel, 'source' => 'gemini'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $askError = $err;
+    } else {
+        $askError = 'No Gemini API key configured.';
+    }
+    try {
+        if (!function_exists('opencode_chat_fallback')) {
+            $svc = dirname(__DIR__) . '/includes/OpenCodeService.php';
+            if (file_exists($svc)) require_once $svc;
+        }
+        if (function_exists('opencode_chat_fallback')) {
+            [$ocOk, $ocText, $ocUsed, $ocErrors] = opencode_chat_fallback(null, [
+                ['role' => 'system', 'content' => $system],
+                ['role' => 'user', 'content' => $user],
+            ], 0.7, 1500, 60);
+            if ($ocOk && trim($ocText) !== '') {
+                echo json_encode(['success' => true, 'reply' => trim($ocText), 'model' => $ocUsed, 'source' => 'opencode_fallback'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            $askError = implode(' | ', array_slice((array)$ocErrors, 0, 2));
+        }
+    } catch (Throwable $e) {
+        $askError = $e->getMessage();
+    }
+    echo json_encode(['success' => false, 'error' => 'AI unavailable', 'errors' => [$askError ?? 'all lanes failed']], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  ACTION: rewrite_text  (with honest fallback)
 // ═══════════════════════════════════════════════════════════════
 if ($action === 'rewrite_text') {
@@ -2179,36 +2255,42 @@ if ($action === 'refine') {
 
     $geminiError = null;
     $opencodeError = null;
+    $selectedHtml = trim($req['selected_html'] ?? '');
 
-    // ── 0. Try OpenCode Zen first (all free models + FlowCraft edit skills) ──
-    try {
-        if (!function_exists('opencode_edit_html')) {
-            $svc = dirname(__DIR__) . '/includes/OpenCodeService.php';
-            if (file_exists($svc)) require_once $svc;
-        }
-        if (function_exists('opencode_edit_html')) {
-            $ocModel = isset($req['model']) && is_string($req['model']) ? trim($req['model']) : null;
-            [$ocOk, $ocHtml, $ocUsed, $ocErrors] = opencode_edit_html($currentHTML, $instruction, 'Website', $ocModel ?: null);
-            if ($ocOk && trim($ocHtml) !== trim($currentHTML)) {
-                echo json_encode([
-                    'success' => true,
-                    'html' => $ocHtml,
-                    'source' => 'opencode',
-                    'model' => $ocUsed,
-                    'taste_audit' => function_exists('taste_audit_html') ? taste_audit_html($ocHtml) : null,
-                    'response_msg' => "✨ OpenCode AI applied your refinement: \"{$instruction}\"."
-                ], JSON_UNESCAPED_UNICODE);
-                exit;
+    // ── 1. Try Gemini FIRST (Primary AI Chat Engine) ──
+    if (!empty($apiKey) && strlen($apiKey) > 10) {
+        if (!empty($selectedHtml) && strlen($selectedHtml) > 5) {
+            $snipPrompt = "You are Google Gemini, an elite UI/UX designer and web developer. "
+                        . "Update the following HTML element based on the user's instruction.\n\n"
+                        . "USER INSTRUCTION: {$instruction}\n\n"
+                        . "CRITICAL REQUIREMENTS:\n"
+                        . "1. Return ONLY the updated element HTML (e.g. <section>...</section>, <div>...</div>, or <button>...</button>).\n"
+                        . "2. Preserve the existing classes, tags, and IDs unless instructed to change them.\n"
+                        . "3. Do NOT include markdown code fences (no ```html). Output only the raw HTML element.\n\n"
+                        . "CURRENT ELEMENT HTML:\n" . substr($selectedHtml, 0, 10000);
+
+            list($ok, $aiText, $code, $errMsg) = callGemini($apiKey, $resolvedModel, $snipPrompt, 8000);
+            if ($ok && !empty($aiText)) {
+                $cleanSnip = trim($aiText);
+                if (preg_match('/```(?:html)?\s*([\s\S]*?)```/i', $cleanSnip, $sm)) $cleanSnip = trim($sm[1]);
+                $firstTag = strpos($cleanSnip, '<');
+                if ($firstTag !== false && $firstTag > 0) $cleanSnip = substr($cleanSnip, $firstTag);
+                if (!empty($cleanSnip) && str_contains($cleanSnip, '<')) {
+                    echo json_encode([
+                        'success' => true,
+                        'is_snippet' => true,
+                        'html' => $cleanSnip,
+                        'source' => 'gemini_snippet',
+                        'model' => $resolvedModel,
+                        'response_msg' => "✨ Gemini updated the selected element: \"{$instruction}\"."
+                    ], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
             }
-            $opencodeError = implode(' | ', array_slice((array)$ocErrors, 0, 2));
-            if ($opencodeError !== '') error_log('[generate.php refine] OpenCode failed: ' . substr($opencodeError, 0, 300));
         }
-    } catch (Throwable $e) {
-        $opencodeError = $e->getMessage();
-        error_log('[generate.php refine] OpenCode exception: ' . $opencodeError);
     }
 
-    // ── 1. Try Gemini next ──
+    // ── Gemini Full Document Edit ──
     if (!empty($apiKey) && strlen($apiKey) > 10) {
         $prompt = "You are Google Gemini, an elite full-stack web developer and UI/UX designer. "
                 . "The user wants to refine their single-file HTML website with the following instruction.\n\n"
@@ -2254,6 +2336,7 @@ if ($action === 'refine') {
                     'success' => true,
                     'html' => $aiText,
                     'source' => 'gemini',
+                    'model' => $resolvedModel,
                     'taste_audit' => function_exists('taste_audit_html') ? taste_audit_html($aiText) : null,
                     'response_msg' => "✨ Gemini applied your refinement: \"{$instruction}\"."
                 ], JSON_UNESCAPED_UNICODE);
@@ -2264,6 +2347,34 @@ if ($action === 'refine') {
         }
     } else {
         $geminiError = 'No Gemini API key configured.';
+    }
+
+    // ── 2. Fallback to OpenCode (Zen API) if Gemini failed ──
+    try {
+        if (!function_exists('opencode_edit_html')) {
+            $svc = dirname(__DIR__) . '/includes/OpenCodeService.php';
+            if (file_exists($svc)) require_once $svc;
+        }
+        if (function_exists('opencode_edit_html')) {
+            $ocModel = isset($req['model']) && is_string($req['model']) && stripos($req['model'], 'gemini') === false ? trim($req['model']) : null;
+            [$ocOk, $ocHtml, $ocUsed, $ocErrors] = opencode_edit_html($currentHTML, $instruction, 'Website', $ocModel ?: null);
+            if ($ocOk && trim($ocHtml) !== trim($currentHTML)) {
+                echo json_encode([
+                    'success' => true,
+                    'html' => $ocHtml,
+                    'source' => 'opencode_fallback',
+                    'model' => $ocUsed,
+                    'taste_audit' => function_exists('taste_audit_html') ? taste_audit_html($ocHtml) : null,
+                    'response_msg' => "✨ OpenCode AI (fallback) applied: \"{$instruction}\"."
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            $opencodeError = implode(' | ', array_slice((array)$ocErrors, 0, 2));
+            if ($opencodeError !== '') error_log('[generate.php refine] OpenCode fallback failed: ' . substr($opencodeError, 0, 300));
+        }
+    } catch (Throwable $e) {
+        $opencodeError = $e->getMessage();
+        error_log('[generate.php refine] OpenCode fallback exception: ' . $opencodeError);
     }
 
     // ── 2. Smart engine fallback WITH change tracking ──

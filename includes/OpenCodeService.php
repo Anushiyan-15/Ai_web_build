@@ -811,7 +811,16 @@ function opencode_edit_snippet(string $selectedHtml, string $instruction, string
         defined('OPENCODE_TIMEOUT') ? (int)OPENCODE_TIMEOUT : 90
     );
     if (!$ok) return [false, '', null, $errs, $usage];
-    $snippet = trim(preg_replace('/^```(?:html)?\s*/i', '', preg_replace('/```\s*$/', '', trim($text))));
+    $snippet = trim($text);
+    if (preg_match('/```(?:html)?\s*([\s\S]*?)```/i', $text, $m)) {
+        $snippet = trim($m[1]);
+    } else {
+        $snippet = trim(preg_replace('/^```(?:html)?\s*/i', '', preg_replace('/```\s*$/', '', $snippet)));
+    }
+    // If there is still leading commentary before the first HTML tag, strip it
+    if (preg_match('/(<(?:section|div|header|footer|main|nav|article|aside|h[1-6]|p|button|a|img|form|ul|ol|table|span)[^>]*>[\s\S]*)/i', $snippet, $tm)) {
+        $snippet = trim($tm[1]);
+    }
     if (strlen($snippet) < 10 || stripos($snippet, '<') === false) {
         return [false, '', null, ['AI snippet edit returned no HTML'], $usage];
     }

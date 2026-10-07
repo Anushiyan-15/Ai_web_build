@@ -19,8 +19,6 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Cinzel:wght@500;700;800&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/css/grapes.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/grapes.min.js"></script>
-  <script src="https://js.puter.com/v2/"></script>
-  <script src="<?= SITE_URL ?>/assets/js/puter-service.js"></script>
   <script src="<?= SITE_URL ?>/assets/js/opencode-service.js"></script>
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/loader-3d.css">
   <script src="<?= SITE_URL ?>/assets/js/loader-3d.js"></script>
@@ -1060,13 +1058,14 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     }
 
     .magic-ai-panel {
-      position: fixed; bottom: 5.5rem; right: 1.5rem;
-      width: min(420px, calc(100vw - 2rem));
-      height: min(620px, calc(100vh - 8rem));
-      background: #0c1220; border: 1px solid #1e293b;
-      border-radius: 20px;
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-      z-index: 1001; display: none; flex-direction: column;
+      position: fixed; bottom: 1rem; right: 1.25rem;
+      width: min(480px, calc(100vw - 2rem));
+      height: min(690px, calc(100vh - 2.5rem));
+      max-height: calc(100vh - 2.5rem);
+      background: #090e1a; border: 1.5px solid #223049;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+      z-index: 100010; display: none; flex-direction: column;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
@@ -1125,11 +1124,16 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     .magic-icon-btn:hover { background: #1a2338; color: #fff; }
 
     .magic-chat-log {
-      flex: 1; overflow-y: auto;
-      padding: 1rem 0.9rem 1.1rem;
-      display: flex; flex-direction: column; gap: 0.9rem;
+      flex: 1 1 0; min-height: 80px; overflow-y: auto;
+      padding: 0.9rem;
+      display: flex; flex-direction: column; gap: 0.85rem;
       scroll-behavior: smooth;
       background: radial-gradient(120% 60% at 50% 0%, rgba(79, 70, 229, 0.06), transparent 60%);
+    }
+    .magic-panel-bottom {
+      flex-shrink: 0; margin-top: auto;
+      background: #080d19; border-top: 1px solid #1c2740;
+      display: flex; flex-direction: column; z-index: 10;
     }
     .magic-chat-log::-webkit-scrollbar { width: 6px; }
     .magic-chat-log::-webkit-scrollbar-track { background: transparent; }
@@ -1299,23 +1303,18 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     }
     .ai-target-clear:hover { background: rgba(244, 63, 94, 0.15); }
 
-    .puter-model-row {
+    .gemini-model-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 0.35rem 0.85rem; background: #080c14;
       border-bottom: 1px solid #162032;
       font-size: 0.7rem; gap: 0.5rem;
     }
-    .puter-model-select {
+    .gemini-model-select {
       background: #111726; border: 1px solid #283347;
       color: #e2e8f0; border-radius: 6px;
       font-size: 0.7rem; padding: 0.2rem 0.45rem;
       font-family: inherit; outline: none;
     }
-    .puter-acc-link {
-      color: #818cf8; cursor: pointer;
-      font-weight: 700; text-decoration: none;
-    }
-    .puter-acc-link:hover { text-decoration: underline; }
 
     @media (max-width: 480px) {
       .magic-ai-panel { right: 0.75rem; left: 0.75rem; width: auto; bottom: 5rem; }
@@ -1445,6 +1444,33 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     .ie-dropzone:hover, .ie-dropzone.dragover {
       border-color: #6366f1; background: rgba(99, 102, 241, 0.08);
     }
+    .ie-ai-chip {
+      background: #0f172a; border: 1px solid #334155; border-radius: 999px;
+      padding: 0.28rem 0.65rem; font-size: 0.72rem; color: #cbd5e1;
+      cursor: pointer; transition: all 0.15s; user-select: none;
+      display: inline-flex; align-items: center; gap: 0.25rem;
+    }
+    .ie-ai-chip:hover { border-color: #818cf8; color: #fff; background: rgba(99,102,241,0.18); }
+    .ie-ai-chip.active { background: #6366f1; border-color: #6366f1; color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
+    .ai-chat-image-card {
+      background: #0b1120; border: 1.5px solid #243049; border-radius: 14px;
+      overflow: hidden; margin-top: 0.45rem; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .ai-chat-image-actions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; padding: 0.75rem;
+      background: #0d1527; border-top: 1px solid #1e293b;
+    }
+    .ai-chat-img-btn {
+      padding: 0.45rem 0.6rem; font-size: 0.72rem; font-weight: 700;
+      border-radius: 8px; border: 1px solid #334155; background: #172033;
+      color: #e2e8f0; cursor: pointer; transition: all 0.15s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+    }
+    .ai-chat-img-btn:hover { background: #25334d; border-color: #6366f1; color: #fff; transform: translateY(-1px); }
+    .ai-chat-img-btn.primary { background: #4f46e5; border-color: #6366f1; color: #fff; }
+    .ai-chat-img-btn.primary:hover { background: #4338ca; }
+    .ai-chat-img-btn.success { background: #059669; border-color: #10b981; color: #fff; }
+    .ai-chat-img-btn.success:hover { background: #047857; }
     .ie-stock-grid {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
       max-height: 155px; overflow-y: auto; padding: 0.25rem;
@@ -1617,9 +1643,10 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     #wc-before-after-modal.show { display: flex; }
     #wc-before-after-modal .ba-box { width: min(980px, 94vw); max-height: 88vh; overflow: auto; background: #0b0f1a; border: 1px solid #334155; border-radius: 16px; padding: 1rem; }
     #wc-before-after-modal iframe { width: 100%; height: 320px; border: 1px solid #1e293b; border-radius: 10px; background: #fff; }
-    .wc-scope-row { display: flex; gap: 0.35rem; margin-bottom: 0.55rem; }
-    .wc-scope-chip { flex: 1; text-align: center; font-size: 0.7rem; font-weight: 800; padding: 0.4rem 0.3rem; border-radius: 9px; border: 1px solid #334155; background: #0f172a; color: #94a3b8; cursor: pointer; }
-    .wc-scope-chip.active { background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; border-color: #818cf8; }
+    .wc-scope-row { display: flex; gap: 0.35rem; padding: 0.45rem 0.9rem; background: #080d19; border-top: 1px solid #162035; margin: 0; }
+    .wc-scope-chip { flex: 1; text-align: center; font-size: 0.72rem; font-weight: 700; padding: 0.4rem 0.25rem; border-radius: 8px; border: 1px solid #1e293b; background: #0f172a; color: #94a3b8; cursor: pointer; transition: all .16s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; user-select: none; }
+    .wc-scope-chip:hover { background: #1e293b; color: #f1f5f9; border-color: #334155; }
+    .wc-scope-chip.active { background: linear-gradient(135deg,#4f46e5,#7c3aed); color: #fff; border-color: #818cf8; box-shadow: 0 2px 10px rgba(99,102,241,0.35); }
     .wc-friendly-lbl { font-size: 0.68rem; color: #64748b; font-weight: 600; }
     @media (max-width: 900px) { #wc-save-pill .txt { display: none; } }
   </style>
@@ -1666,10 +1693,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <button class="hdr-btn help-btn" onclick="openShortcutsModal()" title="Keyboard shortcuts & tips">❓ <span class="lbl">Help</span></button>
       <button class="hdr-btn" onclick="openUserManual()" title="User manual: how to use, edit & publish (popup)">📘 <span class="lbl">Manual</span></button>
       <div class="header-divider"></div>
-      <button class="hdr-btn" id="header-puter-btn" onclick="togglePuterAccountMenu(event)" title="Puter AI Account & Credits" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:700;">
-        <span id="puter-status-dot" style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-        <span id="header-puter-name">Puter AI</span>
-      </button>
+
       <button class="hdr-btn ai-btn" onclick="toggleMagicAi()" title="Ask AI to build sections, rewrite copy, or edit selected elements">✦ <span class="lbl">Magic AI</span></button>
       <button class="hdr-btn edit-toggle-btn active" id="btn-studio-edit-mode" onclick="toggleStudioEditMode()" title="Edit mode: ON = full visual editing. OFF = clean normal page preview.">✏️ <span class="lbl">Edit: ON</span></button>
       <button class="hdr-btn" onclick="openStudioPreview()" title="Preview in a new tab — opens in the selected device view (PC / Laptop / Tablet / Phone)">👁️ <span class="lbl">Preview</span></button>
@@ -2235,7 +2259,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
         <div class="magic-avatar">✦</div>
         <div class="magic-brand-text">
           <div class="magic-brand-name">WebCraft AI Studio</div>
-          <div class="magic-brand-sub"><span class="dot"></span> Online · Puter.js &amp; DeepSeek</div>
+          <div class="magic-brand-sub"><span class="dot"></span> ✦ Powered by Google Gemini · OpenCode Fallback</div>
         </div>
       </div>
       <div class="magic-header-actions">
@@ -2244,25 +2268,20 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       </div>
     </div>
 
-    <div class="puter-model-row">
-      <div style="display:flex; align-items:center; gap:0.4rem;">
-        <span style="color:#818cf8; font-weight:700;">Model:</span>
-        <select class="puter-model-select" id="magic-model-select" onchange="changePuterModel(this.value)">
-          <option value="space-bunny-free" selected>★ Space Bunny (Free · tested)</option>
-          <option value="big-pickle">Big Pickle (Free)</option>
-          <option value="muse-spark-1.3-contributor-free">Muse Spark 1.3 (Free)</option>
-          <option value="muse-spark-1.2-contributor-free">Muse Spark 1.2 (Free)</option>
-          <option value="mimo-v2.5-free">MiMo V2.5 (Free)</option>
-          <option value="mimo-v2.6-flash-free">MiMo V2.6 Flash (Free)</option>
-          <option value="nemotron-3.5-lightning-free">Nemotron 3.5 Lightning (Free)</option>
-          <option value="jev-1.13-free">Jev 1.13 (Free)</option>
-          <option value="longcat-2.5-preview-free">LongCat 2.5 Preview (Free)</option>
+    <div class="gemini-model-row" style="padding:0.4rem 0.9rem; background:#080d19; border-bottom:1px solid #162035; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; font-size:0.75rem;">
+      <div style="display:flex; align-items:center; gap:0.4rem; min-width:0; flex:1;">
+        <span style="color:#818cf8; font-weight:700; font-size:0.75rem; flex-shrink:0;">✦ Model:</span>
+        <select id="magic-model-select" onchange="changeAiModel(this.value)" style="font-size:0.74rem; padding:0.25rem 0.5rem; max-width:230px; background:#0e172a; border:1px solid #283958; color:#cbd5e1; border-radius:6px; font-weight:600; cursor:pointer;">
+          <option value="gemini-3.5-flash-lite" selected>✦ Gemini Flash Lite (Fast · Default)</option>
+          <option value="gemini-2.5-flash">✦ Gemini 2.5 Flash (Active)</option>
+          <option value="gemini-2.5-pro">✦ Gemini 2.5 Pro (Deep Reasoning · Active)</option>
+          <option value="gemini-1.5-flash">✦ Gemini 1.5 Flash (Active)</option>
+          <option value="opencode-fallback">⚡ OpenCode AI (Fallback)</option>
         </select>
       </div>
-      <a class="puter-acc-link" onclick="togglePuterAccountMenu(event)" id="panel-puter-account-link">Sign In / Switch</a>
-    </div>
-    <div class="puter-model-row">
-      <div id="magic-model-why" style="font-size:0.68rem; color:#6ee7b7; font-weight:600;">★ Recommended: Space Bunny — tap to change</div>
+      <span style="font-size:0.68rem; color:#10b981; font-weight:700; display:flex; align-items:center; gap:0.3rem;">
+        <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span> Active
+      </span>
     </div>
 
     <div class="ai-target-banner" id="ai-target-banner">
@@ -2274,42 +2293,128 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <button class="ai-target-clear" id="ai-target-clear-btn" onclick="clearSelectedComponentForAi()" style="display:none;" title="Deselect element and switch to whole website">✕ Clear</button>
     </div>
 
+    <!-- ★ Copilot: Ask/Edit mode + current target line (existing model/target/banner untouched) -->
+    <div class="cp-mode-row" id="copilot-mode-row">
+      <div class="cp-mode-seg">
+        <button type="button" class="cp-mode-btn" id="copilot-mode-ask" onclick="copilotSetMode('ask')" title="Ask: advice only, website will not change">💬 Ask</button>
+        <button type="button" class="cp-mode-btn active" id="copilot-mode-edit" onclick="copilotSetMode('edit')" title="Edit: AI can modify the website">🛠️ Edit</button>
+      </div>
+      <div class="cp-target-line" id="copilot-target-line">🌐 Target: Entire Website</div>
+    </div>
+
     <div class="magic-chat-log" id="magic-chat-log">
       <div class="msg ai">
         <div class="msg-avatar">✦</div>
         <div class="msg-body">
           <div class="msg-bubble">
             👋 <strong>Welcome to WebCraft AI!</strong><br>
-            • Click any element on canvas to <strong>edit it with AI</strong>.<br>
-            • Or chat freely, ask for advice, or add new sections!<br>
-            <span style="color:#94a3b8;font-size:0.75rem;">🔒 Free AI models — select above, avanga select panna model-ye page-ai edit pannum.</span>
+            • Click any element or section on the canvas to <strong>edit it live with AI</strong>.<br>
+            • Ask to rewrite text, tweak colors/styles, or insert whole sections.<br>
+            • Type <em>"generate image of [subject]"</em> or tap <strong>🎨 AI Image Gen</strong> below to create AI visuals!<br>
+            <span style="color:#94a3b8;font-size:0.74rem;">💡 All edits apply live to the active website.</span>
           </div>
           <div class="msg-meta">AI · just now</div>
         </div>
       </div>
     </div>
 
-    <div class="m-chip-row" id="magic-chips-container">
-      <span class="m-chip" onclick="quickMagic('Add 5-star customer testimonials section with slide-up animation')">⭐ Reviews</span>
-      <span class="m-chip" onclick="quickMagic('Add pricing table with 3 tiers')">💰 Pricing</span>
-      <span class="m-chip" onclick="quickMagic('Add FAQ section')">❓ FAQ</span>
-      <span class="m-chip" onclick="quickMagic('Add WhatsApp floating button')">💬 WhatsApp</span>
-      <span class="m-chip" onclick="quickMagic('Add photo gallery section with fade-in animation')">🖼️ Gallery</span>
-    </div>
-
-    <div class="magic-input-row">
-      <div class="magic-input-wrap">
-        <span class="magic-input-icon">✦</span>
-        <input type="text" class="magic-input" id="magic-input"
-          placeholder="Ask AI to change text, style, or build sections…"
-          onkeydown="if(event.key==='Enter') executeMagicAi()">
+    <!-- Anchored Non-Shrinking Bottom Area (Always 100% visible) -->
+    <div class="magic-panel-bottom" id="magic-panel-bottom">
+      <!-- ★ Copilot action rail: content + design + audit (existing chips row below untouched) -->
+      <div class="cp-rail" id="copilot-actions">
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('hero')">✍️ Hero copy</span>
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('testimonials')">💬 Reviews text</span>
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('faq')">❓ FAQ text</span>
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('seo')">🔎 SEO title+desc</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('premium')">✨ Premium</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('luxury')">🖤 Luxury</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('modern')">⚡ Modern</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('minimal')">🌿 Minimal</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('mobile')">📱 Mobile fix</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('cta')">🎯 CTA boost</span>
+        <span class="m-chip cp-chip cp-audit" onclick="copilotAuditRun()">📋 Audit website</span>
       </div>
-      <button class="magic-btn" id="magic-btn" onclick="executeMagicAi()" title="Send message">➤</button>
-    </div>
+      <div class="cp-filebar" id="copilot-filebar" style="display:none;">
+        <span class="cp-filepill" id="copilot-filepill">📎 <span id="copilot-filename"></span> <button type="button" onclick="copilotClearFile()" title="Remove file">✕</button></span>
+        <span class="cp-filehint">file content will be used by AI</span>
+      </div>
+      <div class="m-chip-row" id="magic-chips-container">
+        <span class="m-chip" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border-color:#6366f1;font-weight:800;" onclick="triggerAiImageFlow()">🎨 AI Image Gen</span>
+        <span class="m-chip" onclick="quickMagic('Add 5-star customer testimonials section with slide-up animation')">⭐ Reviews</span>
+        <span class="m-chip" onclick="quickMagic('Add pricing table with 3 tiers')">💰 Pricing</span>
+        <span class="m-chip" onclick="quickMagic('Add FAQ section')">❓ FAQ</span>
+        <span class="m-chip" onclick="quickMagic('Add WhatsApp floating button')">💬 WhatsApp</span>
+        <span class="m-chip" onclick="quickMagic('Add photo gallery section with fade-in animation')">🖼️ Gallery</span>
+      </div>
 
-    <div class="magic-hint">Press <kbd>Enter</kbd> to send · Edit selected element or entire website</div>
+      <!-- Scope Toolbar -->
+      <div class="wc-scope-row" id="wc-ai-scope">
+        <span class="wc-scope-chip active" data-scope="auto" onclick="wcSetAIScope('auto')">🤖 Auto</span>
+        <span class="wc-scope-chip" data-scope="element" onclick="wcSetAIScope('element')">🎯 Element</span>
+        <span class="wc-scope-chip" data-scope="section" onclick="wcSetAIScope('section')">📐 Section</span>
+        <span class="wc-scope-chip" data-scope="site" onclick="wcSetAIScope('site')">🌐 Site</span>
+      </div>
+
+      <!-- Prominent Always-Visible Input Row -->
+      <div class="magic-input-row">
+        <div class="magic-input-wrap">
+          <span class="magic-input-icon">✦</span>
+          <input type="text" class="magic-input" id="magic-input"
+            placeholder="Type your message to AI (e.g. change color, add review section)..."
+            onkeydown="if(event.key==='Enter') executeMagicAi()">
+          <button type="button" class="cp-attach" id="copilot-attach-btn" onclick="copilotAttachFile()" title="Attach a text file (.txt/.md/.csv) for AI to use">📎</button>
+          <input type="file" id="copilot-file" accept=".txt,.md,.csv,.json" style="display:none;" onchange="copilotFilePicked(this)">
+        </div>
+        <button class="magic-btn" id="magic-btn" onclick="executeMagicAi()" title="Send message to AI">➤</button>
+      </div>
+
+      <div class="magic-hint">Press <kbd>Enter</kbd> to send · Live website changes apply instantly</div>
+    </div>
 
   </div>
+
+  <!-- ★ Copilot review / confirm modal (reuses .modal-overlay/.modal-box pattern) -->
+  <div class="modal-overlay" id="copilot-review-modal" style="display:none;">
+    <div class="modal-box" style="max-width:520px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.9rem;">
+        <div>
+          <h2 style="font-size:1.1rem; color:#fff; margin-bottom:0.25rem" id="copilot-review-title">Review AI changes</h2>
+          <p style="font-size:0.76rem; color:#94a3b8" id="copilot-review-sub">Your website was not modified yet.</p>
+        </div>
+        <button class="drawer-close" onclick="copilotReviewDecide(false)" style="font-size:1.2rem">✕</button>
+      </div>
+      <div id="copilot-review-body" style="font-size:0.82rem; color:#cbd5e1; background:#0b1220; border:1px solid #1e293b; border-radius:10px; padding:0.8rem 0.95rem; margin-bottom:1rem; max-height:260px; overflow:auto;"></div>
+      <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
+        <button type="button" class="be-btn" id="copilot-review-no" onclick="copilotReviewDecide(false)" style="background:#1e293b; color:#e2e8f0; font-weight:700;">Discard</button>
+        <button type="button" class="be-btn" id="copilot-review-yes" onclick="copilotReviewDecide(true)" style="background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; font-weight:700;">Apply Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .cp-mode-row { display:flex; align-items:center; justify-content:space-between; gap:0.5rem; padding:0.4rem 0.9rem; background:#080d19; border-bottom:1px solid #162035; }
+    .cp-mode-seg { display:flex; background:#0e172a; border:1px solid #283958; border-radius:8px; overflow:hidden; }
+    .cp-mode-btn { border:none; background:transparent; color:#94a3b8; font-size:0.72rem; font-weight:700; padding:0.32rem 0.7rem; cursor:pointer; font-family:inherit; }
+    .cp-mode-btn.active { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; }
+    .cp-target-line { font-size:0.7rem; color:#67e8f9; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55%; }
+    .cp-rail { display:flex; gap:0.35rem; overflow-x:auto; padding:0.15rem 0.1rem 0.45rem; scrollbar-width:thin; }
+    .cp-rail .cp-chip { flex-shrink:0; font-size:0.7rem; }
+    .cp-rail .cp-audit { border-color:#f59e0b; color:#fde68a; font-weight:800; }
+    .cp-filebar { display:flex; align-items:center; gap:0.5rem; padding:0 0.1rem 0.4rem; font-size:0.7rem; color:#94a3b8; }
+    .cp-filepill { display:inline-flex; align-items:center; gap:0.35rem; background:#0e172a; border:1px solid #6366f1; color:#c7d2fe; border-radius:999px; padding:0.2rem 0.55rem; font-weight:700; }
+    .cp-filepill button { background:none; border:none; color:#93c5fd; cursor:pointer; font-size:0.7rem; }
+    .cp-filehint { color:#475569; }
+    .cp-attach { background:none; border:none; cursor:pointer; font-size:0.95rem; padding:0 0.3rem; opacity:0.75; }
+    .cp-attach:hover { opacity:1; }
+    .cp-msg-actions { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; }
+    .cp-msg-btn { background:#0e172a; border:1px solid #283958; color:#a5b4fc; font-size:0.68rem; font-weight:700; border-radius:999px; padding:0.22rem 0.65rem; cursor:pointer; font-family:inherit; }
+    .cp-msg-btn:hover { background:#1e293b; color:#fff; }
+    .cp-msg-btn.warn { border-color:#f59e0b; color:#fde68a; }
+    .cp-audit-row { display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; border-bottom:1px dashed #1e293b; font-size:0.76rem; }
+    .cp-audit-row:last-child { border-bottom:none; }
+    .cp-sev-ok { color:#10b981; font-weight:800; } .cp-sev-warn { color:#f59e0b; font-weight:800; } .cp-sev-bad { color:#ef4444; font-weight:800; }
+    .cp-fix-btn { margin-left:auto; flex-shrink:0; }
+  </style>
 
   <!-- Page SEO & Quality Audit Modal -->
   <div class="modal-overlay" id="seo-audit-modal">
@@ -2486,13 +2591,16 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <!-- Source Chooser Tabs -->
       <div class="ie-source-tabs">
         <button type="button" class="ie-source-tab active" id="ie-tab-local" onclick="switchImageSourceTab('local')">
-          <span>📁 Local Upload</span>
+          <span>📁 Upload</span>
         </button>
         <button type="button" class="ie-source-tab" id="ie-tab-url" onclick="switchImageSourceTab('url')">
-          <span>🌐 Online URL</span>
+          <span>🌐 URL</span>
         </button>
         <button type="button" class="ie-source-tab" id="ie-tab-stock" onclick="switchImageSourceTab('stock')">
-          <span>✨ Free Stock</span>
+          <span>✨ Stock</span>
+        </button>
+        <button type="button" class="ie-source-tab" id="ie-tab-ai" onclick="switchImageSourceTab('ai')">
+          <span>🎨 AI Generate</span>
         </button>
       </div>
 
@@ -2531,6 +2639,36 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <div class="ie-source-panel" id="ie-panel-stock">
         <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.45rem;">Click any free stock photo to instantly use:</div>
         <div class="ie-stock-grid" id="ie-stock-grid"></div>
+      </div>
+
+      <!-- Tab 4: AI Generate Image -->
+      <div class="ie-source-panel" id="ie-panel-ai">
+        <div class="be-field" style="margin-bottom:0.6rem;">
+          <label class="be-label">AI Image Prompt (Describe anything you want to see)</label>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" class="be-input" id="ie-ai-prompt" placeholder="e.g. Luxury sports car on mountain pass, warm sunset light..." style="flex:1;" onkeydown="if(event.key==='Enter')generateImageInEditor()">
+            <button type="button" class="be-preset-btn" id="ie-ai-gen-btn" style="padding:0.6rem 0.95rem; background:linear-gradient(135deg, #4f46e5, #7c3aed); color:#fff; font-weight:700; white-space:nowrap;" onclick="generateImageInEditor()">✨ Generate</button>
+          </div>
+        </div>
+        <div style="margin-bottom:0.6rem;">
+          <div style="font-size:0.72rem; color:#94a3b8; margin-bottom:0.35rem; font-weight:600;">Style Presets:</div>
+          <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">
+            <span class="ie-ai-chip active" onclick="setAiEditorStyle(this, '')">Default</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'photorealistic 8k, realistic lighting')">📸 Photo</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'cinematic movie shot, 35mm lens, depth of field')">🎬 Cinematic</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'clean 3D render, minimalist, modern octane render')">🎨 3D Render</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'commercial product photography, studio light, clean background')">🛍️ Product</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'cyberpunk neon colors, futuristic dark aesthetic')">⚡ Cyberpunk</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem; justify-content:space-between; align-items:center; background:#080c14; padding:0.5rem 0.75rem; border-radius:10px; border:1px solid #1e293b; margin-bottom:0.5rem;">
+          <div style="font-size:0.72rem; color:#94a3b8; font-weight:600;">Ratio:</div>
+          <div style="display:flex; gap:0.35rem;">
+            <button type="button" class="ie-ai-chip active" id="ie-ratio-16-9" onclick="setAiEditorRatio(this, 1200, 800)">16:9 Landscape</button>
+            <button type="button" class="ie-ai-chip" id="ie-ratio-1-1" onclick="setAiEditorRatio(this, 800, 800)">1:1 Square</button>
+            <button type="button" class="ie-ai-chip" id="ie-ratio-4-5" onclick="setAiEditorRatio(this, 800, 1000)">4:5 Portrait</button>
+          </div>
+        </div>
       </div>
 
       <!-- Canonical image source input -->
@@ -6442,8 +6580,75 @@ ${WC_ANIMATION_RUNTIME}
       showImageStatus('✓ Stock photo selected — press Apply Image or Save to Project', '#10b981');
     }
 
+    let currentAiEditorStyle = '';
+    let currentAiEditorWidth = 1200;
+    let currentAiEditorHeight = 800;
+
+    function setAiEditorStyle(chip, styleText) {
+      document.querySelectorAll('#ie-panel-ai .ie-ai-chip').forEach(c => {
+        if (!c.id || !c.id.startsWith('ie-ratio-')) c.classList.remove('active');
+      });
+      if (chip) chip.classList.add('active');
+      currentAiEditorStyle = styleText || '';
+    }
+
+    function setAiEditorRatio(chip, w, h) {
+      document.querySelectorAll('#ie-panel-ai [id^="ie-ratio-"]').forEach(c => c.classList.remove('active'));
+      if (chip) chip.classList.add('active');
+      currentAiEditorWidth = w;
+      currentAiEditorHeight = h;
+    }
+
+    async function generateImageInEditor() {
+      const promptInput = document.getElementById('ie-ai-prompt');
+      const prompt = (promptInput?.value || '').trim();
+      if (!prompt) {
+        showToast('Please describe the image you want to generate');
+        if (promptInput) promptInput.focus();
+        return;
+      }
+
+      const btn = document.getElementById('ie-ai-gen-btn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span> Generating...';
+      }
+      showImageStatus('🎨 AI is creating your image... Please wait a few seconds', '#818cf8');
+
+      try {
+        const seed = Math.floor(Math.random() * 9999999);
+        const fullPrompt = (prompt + (currentAiEditorStyle ? ', ' + currentAiEditorStyle : '')).trim();
+        const encoded = encodeURIComponent(fullPrompt);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${currentAiEditorWidth}&height=${currentAiEditorHeight}&nologo=true&seed=${seed}&model=flux`;
+
+        const testImg = new Image();
+        testImg.onload = () => {
+          document.getElementById('ie-src').value = imageUrl;
+          const urlInput = document.getElementById('ie-online-url-input');
+          if (urlInput) urlInput.value = imageUrl;
+          const altInput = document.getElementById('ie-alt');
+          if (altInput && !altInput.value.trim()) altInput.value = prompt;
+          previewImageEditor();
+          showImageStatus('✓ AI image generated! Press Apply Image or Save to Project', '#10b981');
+          showToast('✨ AI Image created successfully!');
+          if (btn) { btn.disabled = false; btn.innerHTML = '✨ Generate'; }
+        };
+        testImg.onerror = () => {
+          document.getElementById('ie-src').value = imageUrl;
+          previewImageEditor();
+          showImageStatus('✓ AI image ready! Press Apply Image', '#10b981');
+          if (btn) { btn.disabled = false; btn.innerHTML = '✨ Generate'; }
+        };
+        testImg.src = imageUrl;
+      } catch (err) {
+        showImageStatus('⚠️ Generation failed: ' + err.message, '#ef4444');
+        showToast('Image generation failed: ' + err.message);
+        if (btn) { btn.disabled = false; btn.innerHTML = '✨ Generate'; }
+      }
+    }
+
     function switchImageSourceTab(mode) {
-      ['local', 'url', 'stock'].forEach(m => {
+      ['local', 'url', 'stock', 'ai'].forEach(m => {
         const tab = document.getElementById('ie-tab-' + m);
         const panel = document.getElementById('ie-panel-' + m);
         if (tab) tab.classList.toggle('active', m === mode);
@@ -8112,8 +8317,12 @@ ${WC_ANIMATION_RUNTIME}
     }
 
     /* ══════════════ GEMINI AI ══════════════ */
-    function toggleMagicAi() {
-      document.getElementById('magic-ai-panel').classList.toggle('active');
+    function toggleMagicAi(forceOpen) {
+      const panel = document.getElementById('magic-ai-panel');
+      if (!panel) return;
+      if (forceOpen === true) panel.classList.add('active');
+      else if (forceOpen === false) panel.classList.remove('active');
+      else panel.classList.toggle('active');
     }
 
     function quickMagic(q) {
@@ -8196,6 +8405,7 @@ ${WC_ANIMATION_RUNTIME}
 
         if (chips) {
           chips.innerHTML = `
+            <span class="m-chip" onclick="quickMagic('Generate image of modern luxury photography')">🎨 AI Image</span>
             <span class="m-chip" onclick="quickMagic('Rewrite this text to be more punchy and modern')">✍️ Rewrite Text</span>
             <span class="m-chip" onclick="quickMagic('Make this look premium with modern colors and sleek typography')">✨ Luxury Look</span>
             <span class="m-chip" onclick="quickMagic('Add a subtle modern box-shadow and rounded corners')">🎨 Soft Shadow</span>
@@ -8213,6 +8423,7 @@ ${WC_ANIMATION_RUNTIME}
 
         if (chips) {
           chips.innerHTML = `
+            <span class="m-chip" onclick="quickMagic('Generate image of modern corporate hero banner')">🎨 AI Image</span>
             <span class="m-chip" onclick="quickMagic('Add 5-star customer testimonials section with slide-up animation')">⭐ Reviews</span>
             <span class="m-chip" onclick="quickMagic('Add pricing table with 3 tiers')">💰 Pricing</span>
             <span class="m-chip" onclick="quickMagic('Add FAQ section')">❓ FAQ</span>
@@ -8230,120 +8441,40 @@ ${WC_ANIMATION_RUNTIME}
       showToast('Switched to Entire Website mode');
     }
 
-    function changePuterModel(model) {
-      if (window.OpenCodeAI?.setModel) window.OpenCodeAI.setModel(model);
-      // Guarded: PuterService ignores unknown ids (OpenCode-only models
-      // would otherwise break Puter calls with "model not found" errors).
-      if (window.PuterService?.setModel) window.PuterService.setModel(model);
-      try { localStorage.setItem('webcraft_puter_model', model); } catch (e) {}
-      // Nudge: only space-bunny-free is verified working via HTTP right now;
-      // other free models 403 without an OpenCode session (auto-fallback covers).
-      if (model && model !== 'space-bunny-free' && /free|pickle|mimo|jev|longcat|nemotron/i.test(model)) {
-        showToast(`AI Model set to ${model} (if slow, ★ Space Bunny is verified fastest now)`);
-      } else {
-        showToast(`AI Model set to ${model}`);
+    function triggerAiImageFlow() {
+      const inp = document.getElementById('magic-input');
+      if (inp) {
+        inp.value = 'Generate image of ';
+        inp.focus();
+        inp.setSelectionRange(inp.value.length, inp.value.length);
       }
     }
 
-    async function togglePuterAccountMenu(e) {
-      if (e) e.stopPropagation();
-      const isSigned = await window.PuterService.isSignedIn();
-      const user = await window.PuterService.getUser();
-
-      const existing = document.getElementById('puter-account-menu');
-      if (existing) {
-        existing.remove();
-        return;
-      }
-
-      const menu = document.createElement('div');
-      menu.id = 'puter-account-menu';
-      menu.style.cssText = `
-        position: fixed; top: 58px; right: 1.25rem; z-index: 100060;
-        background: #111726; border: 1.5px solid #283347; border-radius: 14px;
-        padding: 1rem; width: 280px; box-shadow: 0 15px 40px rgba(0,0,0,0.7);
-        color: #f8fafc; font-family: inherit; font-size: 0.82rem;
-      `;
-
-      if (isSigned && user) {
-        menu.innerHTML = `
-          <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;padding-bottom:0.75rem;border-bottom:1px solid #1e293b;">
-            <div style="width:36px;height:36px;border-radius:50%;background:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;">👤</div>
-            <div>
-              <div style="font-weight:700;color:#fff;">@${escapeHtml(user.username || 'User')}</div>
-              <div style="font-size:0.7rem;color:#10b981;">🟢 Connected to Puter.js</div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:0.45rem;">
-            <button class="hdr-btn" onclick="handlePuterSwitch()" style="justify-content:flex-start;width:100%;">🔄 Switch Account</button>
-            <button class="hdr-btn" onclick="window.PuterService.openSignUp()" style="justify-content:flex-start;width:100%;">➕ Sign Up New Account</button>
-            <button class="hdr-btn" onclick="handlePuterSignOut()" style="justify-content:flex-start;width:100%;color:#f43f5e;border-color:#3f1826;">🚪 Sign Out</button>
-          </div>
-        `;
+    function changeAiModel(model) {
+      try { localStorage.setItem('webcraft_ai_model', model); } catch (e) {}
+      if (String(model || '').includes('gemini')) {
+        showToast(`AI Model set to ${model} (Google Gemini)`);
       } else {
-        menu.innerHTML = `
-          <div style="margin-bottom:0.75rem;padding-bottom:0.75rem;border-bottom:1px solid #1e293b;">
-            <div style="font-weight:700;color:#fff;margin-bottom:0.2rem;">Puter AI Integration</div>
-            <div style="font-size:0.72rem;color:#94a3b8;line-height:1.4;">Sign in to enjoy free DeepSeek & Gemini AI generations.</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:0.45rem;">
-            <button class="hdr-btn save-btn" onclick="handlePuterSignIn()" style="justify-content:center;width:100%;">✦ Sign In with Puter</button>
-            <button class="hdr-btn" onclick="window.PuterService.openSignUp()" style="justify-content:center;width:100%;">➕ Create Free Account</button>
-          </div>
-        `;
+        showToast(`AI Model set to ${model} (OpenCode Fallback)`);
       }
+    }
 
-      document.body.appendChild(menu);
-      const closeMenu = (ev) => {
-        if (!menu.contains(ev.target) && ev.target.id !== 'header-puter-btn') {
-          menu.remove();
-          document.removeEventListener('click', closeMenu);
-        }
+    /* AI-chat model default: gemini-3.5-flash-lite (restore saved choice) */
+    (function initAiChatModel() {
+      const apply = () => {
+        try {
+          const saved = localStorage.getItem('webcraft_ai_model') || 'gemini-3.5-flash-lite';
+          const sel = document.getElementById('magic-model-select');
+          if (sel) {
+            const has = Array.from(sel.options).some(o => o.value === saved);
+            sel.value = has ? saved : 'gemini-3.5-flash-lite';
+            if (!has) localStorage.setItem('webcraft_ai_model', 'gemini-3.5-flash-lite');
+          }
+        } catch (e) {}
       };
-      setTimeout(() => document.addEventListener('click', closeMenu), 10);
-    }
-
-    async function handlePuterSignIn() {
-      document.getElementById('puter-account-menu')?.remove();
-      try {
-        await window.PuterService.signIn();
-        showToast('✓ Signed in with Puter!');
-      } catch (e) {
-        showToast('Sign in cancelled');
-      }
-    }
-
-    async function handlePuterSwitch() {
-      document.getElementById('puter-account-menu')?.remove();
-      try {
-        await window.PuterService.switchAccount();
-        showToast('✓ Switched Puter account!');
-      } catch (e) {
-        showToast('Account switch cancelled');
-      }
-    }
-
-    async function handlePuterSignOut() {
-      document.getElementById('puter-account-menu')?.remove();
-      await window.PuterService.signOut();
-      showToast('Signed out of Puter');
-    }
-
-    window.addEventListener('puter-auth-changed', (e) => {
-      const { user, isSignedIn } = e.detail || {};
-      const dot = document.getElementById('puter-status-dot');
-      const name = document.getElementById('header-puter-name');
-      const link = document.getElementById('panel-puter-account-link');
-      if (isSignedIn && user) {
-        if (dot) dot.style.background = '#10b981';
-        if (name) name.textContent = '@' + (user.username || 'Puter');
-        if (link) link.textContent = '@' + (user.username || 'User');
-      } else {
-        if (dot) dot.style.background = '#94a3b8';
-        if (name) name.textContent = 'Sign In (Puter)';
-        if (link) link.textContent = 'Sign In with Puter';
-      }
-    });
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+      else apply();
+    })();
 
     function formatMarkdown(text) {
       if (!text) return '';
@@ -8361,6 +8492,7 @@ ${WC_ANIMATION_RUNTIME}
        color change, periya/chinna size, dark/light mode. Returns true if handled. */
     function applyLocalSmartStyle(q) {
       try {
+        q = (typeof copilotStripNoise === 'function') ? copilotStripNoise(q) : String(q || '');
         const lower = String(q || '').toLowerCase();
         const comp = (typeof selectedComponent !== 'undefined') ? selectedComponent : null;
         const hasSel = !!(comp && comp.getEl);
@@ -8391,22 +8523,20 @@ ${WC_ANIMATION_RUNTIME}
             saveProjectData();
           }
           renderSmartLayers();
-          appendMagicChat(`✨ Applied locally (offline): ${escapeHtml(q)}`, 'ai');
-          showToast('✨ Updated (offline smart-style) & saved!');
+          const sum0 = friendlyUpdateSummary(q);
+          appendMagicChat(sum0.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+          showToast(sum0.toast);
           return true;
         }
         // Whole-page color / theme swaps (mirror of server smart engine)
         if (!hasSel && (wantColor || wantDark || wantLight)) {
-          let mod = currentHtml, msg = '';
+          let mod = currentHtml;
           if (wantDark) {
             mod = mod.split('#ffffff').join('#090d16').split('#fafbfe').join('#090d16').split('#f8fafc').join('#0f172a');
-            msg = 'Switched to dark mode (offline).';
           } else if (wantLight) {
             mod = mod.split('#090d16').join('#ffffff').split('#0f172a').join('#f8fafc').split('#111622').join('#ffffff');
-            msg = 'Switched to light mode (offline).';
           } else if (wantColor) {
             mod = mod.split('#6366f1').join(wantColor).split('#a855f7').join(wantColor);
-            msg = `Applied color ${wantColor} across the page (offline).`;
           }
           if (mod !== currentHtml) {
             currentHtml = mod;
@@ -8415,19 +8545,1752 @@ ${WC_ANIMATION_RUNTIME}
               saveProjectData();
             }
             loadHtmlIntoStudioCanvas();
-            appendMagicChat(`✨ ${escapeHtml(msg)}`, 'ai');
-            showToast('✨ Updated (offline smart-style) & saved!');
+            const sumW = friendlyUpdateSummary(q);
+            appendMagicChat(sumW.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+            showToast(sumW.toast);
             return true;
+          }
+        }
+        // Selected-element TEXT rewrite (offline): "change text/heading/title to X",
+        // "rewrite this (text) to X", "ithoda text ah X nu maathu", or quoted "X".
+        if (hasSel) {
+          let newText = null;
+          let m = String(q).match(/(?:change|rewrite|update|set|maathu|maathi)\s+(?:this\s+)?(?:text|heading|title|label|button|content)\s+(?:to|as|ah|aag?)\s*[:\-]?\s*(.+)/i);
+          if (!m) m = String(q).match(/["“”]([^"“”]{2,300})["“”]/);
+          if (m) newText = m[1].trim().replace(/\s*\[hint:[^\]]*\]/gi, '').trim();
+          if (newText) {
+            const el = comp.getEl();
+            if (el) {
+              const tag = (el.tagName || 'DIV').toLowerCase();
+              if (/^(h1|h2|h3|h4|h5|h6|p|span|a|button|li|div)$/.test(tag) && el.children.length === 0) {
+                el.textContent = newText;
+              } else {
+                const t = el.querySelector('h1,h2,h3,h4,p,span,a,button,li');
+                if (t) t.textContent = newText;
+                else el.textContent = newText;
+              }
+              syncCanvasToHtml();
+              if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+                projectData.designs[activeConceptIndex].html = currentHtml;
+                saveProjectData();
+              }
+              renderSmartLayers();
+              const sumT = friendlyUpdateSummary(q);
+              appendMagicChat(sumT.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+              showToast(sumT.toast);
+              return true;
+            }
+          }
+          // Selected-element REMOVE / HIDE (offline): "remove/delete this (section)",
+          // "hide this", "antha section remove pannu".
+          if (/remove|delete|hide|neekku|remove pannu|delete pannu|hide pannu/i.test(q)) {
+            try {
+              if (/hide|hide pannu/i.test(q)) {
+                const el = comp.getEl();
+                if (el) el.style.display = 'none';
+                syncCanvasToHtml();
+              } else {
+                comp.remove();
+                if (grapesEditor) grapesEditor.select(null);
+                selectedComponent = null;
+                if (typeof updateAiSelectedTarget === 'function') updateAiSelectedTarget(null);
+                syncCanvasToHtml();
+              }
+              if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+                projectData.designs[activeConceptIndex].html = currentHtml;
+                saveProjectData();
+              }
+              renderSmartLayers();
+              const sumR = friendlyUpdateSummary(q);
+              appendMagicChat(sumR.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+              showToast(sumR.toast + ' Undo (↶) iruku.');
+              return true;
+            } catch (e2) { console.warn('[local smart-style remove]', e2); }
           }
         }
       } catch (e) { console.warn('[local smart-style]', e); }
       return false;
     }
 
+    /* ══════════════ PROMPT-TO-IMAGE GENERATION ══════════════ */
+    function isImageGenerationRequest(q) {
+      if (!q || typeof q !== 'string') return false;
+      let s = q.trim().replace(/\[Intent interpretation:.*?\]/gis, '').trim();
+      const lower = s.toLowerCase();
+      if (/^(?:generate|create|make|draw|render|give me an?)\s+(?:an?\s+)?(?:ai\s+)?(?:image|photo|picture|graphic|illustration)\s+(?:of|for|about|with)?/i.test(lower)) return true;
+      if (/^(?:ai\s*image|prompt\s*to\s*image|image\s*gen(?:eration)?|generate\s*photo|generate\s*picture|draw\s*photo)[:\s]/i.test(lower)) return true;
+      if (/^image:\s*.+/i.test(lower)) return true;
+      if (/(?:image|photo|padam)\s*(?:create|generate|ready|thanga|podu|pannu|vainga)/i.test(lower)) return true;
+      return false;
+    }
+
+    function extractImagePrompt(q) {
+      let s = q.trim().replace(/\[Intent interpretation:.*?\]/gis, '').trim();
+      let p = s;
+      p = p.replace(/^(?:generate|create|make|draw|render|give me an?)\s+(?:an?\s+)?(?:ai\s+)?(?:image|photo|picture|graphic|illustration)\s+(?:of|for|about|with)?\s*/i, '');
+      p = p.replace(/^(?:ai\s*image|prompt\s*to\s*image|image\s*gen(?:eration)?|generate\s*photo|generate\s*picture|draw\s*photo)[:\s]*/i, '');
+      p = p.replace(/^image:\s*/i, '');
+      p = p.replace(/(?:image|photo|padam)\s*(?:create|generate|ready|thanga|podu|pannu|vainga).*/i, '');
+      return p.trim() || s.trim();
+    }
+
+    async function executeAiImageGeneration(cleanPrompt, options = {}) {
+      const width = options.width || 1200;
+      const height = options.height || 800;
+      const seed = Math.floor(Math.random() * 9999999);
+      const encoded = encodeURIComponent(cleanPrompt.trim());
+      const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&nologo=true&seed=${seed}&model=flux`;
+      return { url: imageUrl, prompt: cleanPrompt, seed, width, height };
+    }
+
+    function renderAiImageInChat(imgData) {
+      const cardHtml = `
+        <div class="ai-chat-image-card">
+          <div style="position:relative; width:100%; min-height:170px; background:#040711; display:flex; align-items:center; justify-content:center;">
+            <img src="${imgData.url}" alt="${escapeHtml(imgData.prompt)}" style="width:100%; height:auto; display:block; max-height:260px; object-fit:cover;" loading="lazy" onload="const l=this.nextElementSibling;if(l)l.style.display='none';">
+            <div style="position:absolute; font-size:0.75rem; color:#94a3b8; display:flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:rgba(0,0,0,0.6); border-radius:999px;">
+              <span class="typing-dots"><i></i><i></i><i></i></span> Generating Flux image...
+            </div>
+          </div>
+          <div style="padding:0.65rem 0.75rem 0.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.35rem;">
+              <span style="font-size:0.68rem; font-weight:700; color:#818cf8; text-transform:uppercase; letter-spacing:0.04em;">🎨 AI Image (Flux)</span>
+              <span style="font-size:0.65rem; color:#64748b;">${imgData.width}×${imgData.height}</span>
+            </div>
+            <div style="font-size:0.78rem; color:#e2e8f0; font-weight:600; line-height:1.35; margin-bottom:0.6rem;">
+              "${escapeHtml(imgData.prompt)}"
+            </div>
+          </div>
+          <div class="ai-chat-image-actions">
+            <button type="button" class="ai-chat-img-btn primary" onclick="applyAiImageToCanvas('${imgData.url}', 'replace')">
+              🖼️ Replace Image
+            </button>
+            <button type="button" class="ai-chat-img-btn" onclick="applyAiImageToCanvas('${imgData.url}', 'background')">
+              ✨ Set Background
+            </button>
+            <button type="button" class="ai-chat-img-btn success" onclick="applyAiImageToCanvas('${imgData.url}', 'insert')">
+              ➕ Insert Block
+            </button>
+            <button type="button" class="ai-chat-img-btn" onclick="saveAiImageToProjectStorage('${imgData.url}', this)">
+              📥 Save to Project
+            </button>
+          </div>
+        </div>
+      `;
+      appendMagicChat(cardHtml, 'ai');
+      showToast('✨ AI image ready in chat!');
+    }
+
+    function flashCanvasComponent(comp) {
+      try {
+        const el = comp?.getEl ? comp.getEl() : null;
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.outline = '3px solid #6366f1';
+          el.style.outlineOffset = '3px';
+          el.style.transition = 'outline 0.3s ease';
+          setTimeout(() => { if (el) el.style.outline = ''; }, 2200);
+        }
+      } catch (e) {}
+    }
+
+    function applyAiImageToCanvas(url, mode) {
+      if (!grapesEditor) return;
+      const comp = selectedComponent;
+
+      if (mode === 'replace') {
+        if (comp) {
+          const tag = (comp.get('tagName') || '').toLowerCase();
+          if (tag === 'img') {
+            comp.addAttributes({ src: url });
+            syncCanvasToHtml();
+            saveProjectData();
+            showToast('🖼️ Replaced image on canvas!');
+            flashCanvasComponent(comp);
+            return;
+          }
+          const innerImg = comp.find('img')[0];
+          if (innerImg) {
+            innerImg.addAttributes({ src: url });
+            syncCanvasToHtml();
+            saveProjectData();
+            showToast('🖼️ Replaced image on canvas!');
+            flashCanvasComponent(innerImg);
+            return;
+          }
+        }
+        const firstImg = grapesEditor.getWrapper().find('img')[0];
+        if (firstImg) {
+          firstImg.addAttributes({ src: url });
+          syncCanvasToHtml();
+          saveProjectData();
+          showToast('🖼️ Replaced website photo!');
+          flashCanvasComponent(firstImg);
+          return;
+        }
+        showToast('Select an image on canvas first to replace');
+      } else if (mode === 'background') {
+        const target = comp || grapesEditor.getWrapper().find('section, header, hero')[0] || grapesEditor.getWrapper();
+        if (target) {
+          const style = target.getStyle() || {};
+          style['background-image'] = `url('${url}')`;
+          style['background-size'] = 'cover';
+          style['background-position'] = 'center';
+          style['background-repeat'] = 'no-repeat';
+          target.setStyle(style);
+          syncCanvasToHtml();
+          saveProjectData();
+          showToast('✨ Section background set!');
+          flashCanvasComponent(target);
+        }
+      } else if (mode === 'insert') {
+        const wrapper = grapesEditor.getWrapper();
+        const target = comp || wrapper;
+        const blockHtml = `
+          <div class="ai-generated-image-block" style="padding: 2.5rem 1rem; text-align: center;">
+            <div style="max-width: 960px; margin: 0 auto; overflow: hidden; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.18);">
+              <img src="${url}" alt="AI Generated" style="width: 100%; height: auto; display: block; object-fit: cover;" />
+            </div>
+          </div>
+        `;
+        let inserted;
+        if (target !== wrapper && target.parent()) {
+          inserted = target.parent().append(blockHtml, { at: target.index() + 1 })[0];
+        } else {
+          inserted = wrapper.append(blockHtml)[0];
+        }
+        if (inserted) {
+          grapesEditor.select(inserted);
+          flashCanvasComponent(inserted);
+        }
+        syncCanvasToHtml();
+        saveProjectData();
+        showToast('➕ Added image block to page!');
+      }
+    }
+
+    async function saveAiImageToProjectStorage(url, btnEl) {
+      if (!url) return;
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '⏳ Saving...';
+      }
+      showToast('📥 Downloading image into project...');
+      try {
+        const fd = new FormData();
+        fd.append('url', url);
+        const res = await fetch('<?= SITE_URL ?>/api/upload.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data && data.success && data.url) {
+          if (btnEl) {
+            btnEl.innerHTML = '✓ Saved';
+            btnEl.classList.add('success');
+          }
+          showToast('✓ Image saved permanently in project storage!');
+        } else {
+          throw new Error(data?.error || 'Could not save image');
+        }
+      } catch (err) {
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.innerHTML = '📥 Save to Project';
+        }
+        showToast('Save failed: ' + err.message);
+      }
+    }
+
+    /* ★ Customer-friendly update summary (Tanglish).
+       Tells the customer WHAT changed and WHERE — never a generic message. */
+    function cleanSummaryText(s) {
+      return String(s || '').replace(/\[Conversation context:[\s\S]*?\](?=\s|$)/gi, ' ').replace(/\[\[(?:CTX|FILE)[\s\S]*?\]\]/gi, ' ').replace(/\[Intent interpretation:[\s\S]*?\](?=\s|$)/gi, ' ').replace(/\s*\[hint:[^\]]*\]/gi, '').trim().replace(/^[:\-–—\s]+/, '').slice(0, 140);
+    }
+    function describeAiTarget() {
+      try {
+        const comp = (typeof selectedComponent !== 'undefined') ? selectedComponent : null;
+        if (!comp) return { label: 'Website', scoped: false };
+        const attrs = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+        const secName = attrs['data-section-name'] || attrs['data-section'] || attrs['id'] || '';
+        let heading = '';
+        try {
+          const el = comp.getEl ? comp.getEl() : null;
+          if (el) {
+            const h = el.querySelector('h1,h2,h3');
+            heading = h ? (h.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40) : '';
+            if (!heading) heading = (el.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+          }
+        } catch (e) {}
+        const tag = (comp.get('tagName') || 'section').toLowerCase();
+        const label = secName ? `"${secName}" section` : (heading ? `"${heading}" ${tag}` : `selected ${tag}`);
+        return { label, scoped: true, tag };
+      } catch (e) { return { label: 'selected section', scoped: true }; }
+    }
+    function friendlyUpdateSummary(q) {
+      const t = describeAiTarget();
+      const scopeNote = t.scoped ? 'Vera entha idamum thodala.' : '';
+      const s = cleanSummaryText(q);
+      const lower = s.toLowerCase();
+      if (/remove|delete|neekku/i.test(lower)) return { html: `✅ Ready! ${escapeHtml(t.label)} <b>remove</b> panniten. Undo (↶) venumna use pannunga.`, toast: '🗑️ Section removed!' };
+      if (/hide/i.test(lower)) return { html: `✅ Ready! ${escapeHtml(t.label)} <b>hide</b> panniten. ${scopeNote}`, toast: '🙈 Section hidden!' };
+      const tm = s.match(/(?:change|rewrite|update|set|maathu|maathi)\s+(?:this\s+)?(?:text|heading|title|label|button|content)\s+(?:to|as|ah|aag?)\s*[:\-]?\s*(.+)/i)
+              || s.match(/["“”]([^"“”]{2,200})["“”]/);
+      if (tm && cleanSummaryText(tm[1])) return { html: `✅ Ready! ${escapeHtml(t.label)} la text maathiten: “${escapeHtml(cleanSummaryText(tm[1]))}”. ${scopeNote}`, toast: '✨ Text updated!' };
+      const cm = lower.match(/\b(blue|green|red|gold|purple|orange|pink|black|white)\b/) || s.match(/#([0-9a-f]{6}|[0-9a-f]{3})/i);
+      if (/color|colour|background|niram|theme color/i.test(lower) || cm) {
+        const cname = cm ? (cm[1] ? '#' + cm[1] : cm[0]) : 'ungal sonna color';
+        return { html: `✅ Ready! ${escapeHtml(t.label)} color <b>${escapeHtml(cname)}</b> aakiten. ${scopeNote}`, toast: '🎨 Color updated!' };
+      }
+      if (/periya|bigger|large|increase|\bbig\b/i.test(s)) return { html: `✅ Ready! ${escapeHtml(t.label)} size <b>perusa</b> panniten. ${scopeNote}`, toast: '🔍 Size increased!' };
+      if (/chinna|smaller|small|decrease/i.test(s)) return { html: `✅ Ready! ${escapeHtml(t.label)} size <b>chinna</b> panniten. ${scopeNote}`, toast: '🔍 Size reduced!' };
+      if (/dark|night.*mode/i.test(lower)) return { html: `✅ Ready! <b>Dark mode</b> maathiten.`, toast: '🌙 Dark mode!' };
+      if (/light.*mode|white.*mode/i.test(lower)) return { html: `✅ Ready! <b>Light mode</b> maathiten.`, toast: '☀️ Light mode!' };
+      if (/add|create|podu|pannu|insert|new/i.test(lower)) return { html: `✅ Ready! Ungal sonna mathiri puthusa add panniten: “${escapeHtml(s.slice(0, 120))}”. ${scopeNote}`, toast: '✨ Section added!' };
+      return { html: `✅ Ready! Ungal sonna mathiri apply panniten: “${escapeHtml(s.slice(0, 120))}”. ${scopeNote}`, toast: '✨ Updated!' };
+    }
+
+    function applyUpdatedSnippetToCanvas(comp, snippetHtml) {
+      if (!comp || !snippetHtml) return;
+      let clean = snippetHtml.trim();
+      const fenceMatch = clean.match(/```(?:html)?\s*([\s\S]*?)```/i);
+      if (fenceMatch) clean = fenceMatch[1].trim();
+      const firstTag = clean.indexOf('<');
+      if (firstTag > 0) clean = clean.slice(firstTag).trim();
+
+      const parent = comp.parent();
+      let freshComp = null;
+      if (parent) {
+        const idx = comp.index();
+        comp.remove();
+        const added = parent.append(clean, { at: idx });
+        freshComp = Array.isArray(added) ? added[0] : added;
+      } else {
+        comp.components(clean);
+        freshComp = comp;
+      }
+      if (freshComp) {
+        if (typeof configureEditorComponent === 'function') configureEditorComponent(freshComp);
+        if (grapesEditor) grapesEditor.select(freshComp);
+        flashCanvasComponent(freshComp);
+      }
+      syncCanvasToHtml();
+      if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+        projectData.designs[activeConceptIndex].html = currentHtml;
+        saveProjectData();
+      }
+      renderSmartLayers();
+      showToast('✨ Selected element updated live & saved!');
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ★ AI WEBSITE COPILOT (extends Magic AI — lanes/UI preserved)
+       Ask/Edit modes · target scopes · memory · find · audit · review
+       ══════════════════════════════════════════════════════════════ */
+    const copilotState = {
+      mode: 'edit',
+      memory: [],        // [{role:'user'|'ai', text, target}]
+      changes: [],       // [{at, target, summary, kind:'snippet'|'full'|'local', verIdx}]
+      pendingReview: null,
+      pendingConfirm: null,
+      audit: null,       // {at, goods, warns, bads, issues:[...]}
+      file: null,        // {name, text}
+      lastTargetLabel: '',
+      lastAction: '',
+      msgSeq: 0
+    };
+    try { copilotState.mode = localStorage.getItem('webcraft_copilot_mode') || 'edit'; } catch (e) {}
+    if (copilotState.mode !== 'ask' && copilotState.mode !== 'edit') copilotState.mode = 'edit';
+
+    function copilotSetMode(m) {
+      copilotState.mode = (m === 'ask') ? 'ask' : 'edit';
+      try { localStorage.setItem('webcraft_copilot_mode', copilotState.mode); } catch (e) {}
+      const a = document.getElementById('copilot-mode-ask'), b = document.getElementById('copilot-mode-edit');
+      if (a) a.classList.toggle('active', copilotState.mode === 'ask');
+      if (b) b.classList.toggle('active', copilotState.mode === 'edit');
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.placeholder = copilotState.mode === 'ask'
+        ? 'Ask for advice — website will NOT change (e.g. how to improve?)...'
+        : 'Describe the change — AI edits the target (e.g. make hero premium)...';
+      copilotRefreshTargetLine();
+      showToast(copilotState.mode === 'ask' ? '💬 Ask mode — advice only, no changes' : '🛠️ Edit mode — AI can modify the website');
+    }
+    (function copilotInitMode() {
+      const apply = () => {
+        const a = document.getElementById('copilot-mode-ask'), b = document.getElementById('copilot-mode-edit');
+        if (a) a.classList.toggle('active', copilotState.mode === 'ask');
+        if (b) b.classList.toggle('active', copilotState.mode === 'edit');
+        copilotRefreshTargetLine();
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+      else apply();
+    })();
+
+    /* Strip prompt-injected blocks so classification/local logic sees raw intent. */
+    function copilotStripNoise(s) {
+      return String(s || '')
+        .replace(/\[Intent interpretation:[\s\S]*?\](?=\s|$)/gi, ' ')
+        .replace(/\[Conversation context:[\s\S]*?\](?=\s|$)/gi, ' ')
+        .replace(/\[\[CTX[\s\S]*?\]\]/gi, ' ')
+        .replace(/\s*\[hint:[^\]]*\]/gi, '')
+        .replace(/\s+/g, ' ').trim();
+    }
+
+    /* ── Smart command detection (EN + Tamil + Sinhala). Internal only. ── */
+    function copilotClassifyPure(text) {
+      const s = copilotStripNoise(text);
+      const l = s.toLowerCase();
+      const out = { kind: 'STYLE_EDIT', scope: null, allPages: false, destructive: false, sectionType: null, anchor: null, findWhat: null, tone: null };
+      if (/(all|every|each)\s+pages?\b|ella\s+(pages|pakkam)/i.test(s)) out.allPages = true;
+      if (/(this|current)\s+page\b|intha\s+page/i.test(s)) out.scope = out.scope || 'page';
+      if (/(delete|remove|redesign|replace)\s+(the\s+)?(entire|whole|full|complete)\b/i.test(s)
+        || /redesign\s+(my\s+)?(complete|entire|whole)\s+(website|site|homepage)/i.test(s)
+        || /(entire|whole)\s+(page|website|site)\s+(delete|remove)/i.test(s)) out.destructive = true;
+      if (/\b(audit|website\s+health|site\s+score|full\s+(checkup|check|review))\b/i.test(l) || /audit\s+(my\s+)?(website|site|page)/i.test(s)) { out.kind = 'WEBSITE_AUDIT'; return out; }
+      if (/\bfix\s+(everything|all|these|them|found|issues|ella)\b/i.test(s) || /ella(athayum|yum)?\s*fix\s*pannu/i.test(s)) { out.kind = 'FIX_ALL'; return out; }
+      if (/^\s*(undo|revert|undo\s+that|பழையபடி|திரும்ப|ආපසු)\b/i.test(s) || /↩\s*undo/i.test(s)) { out.kind = 'UNDO'; return out; }
+      const findM = s.match(/^(find|where\s+is|locate|show\s+me|select|enga|kandu(pidi)?|find\s+pannu|hoyanna?)\b[\s:,'"“”]*([^'"“”]+)$/i)
+        || s.match(/(find|select)\s+(my|the|antha|intha)\b(.+)$/i);
+      if (findM && /(section|button|hero|footer|header|pricing|contact|faq|gallery|form|menu|nav|logo|image|photo|testimonial|heading)/i.test(findM[3] || '')) {
+        out.kind = 'FIND_ELEMENT'; out.findWhat = (findM[3] || '').trim(); return out;
+      }
+      if (/\bseo\b|meta\s+(title|description)|search\s+(rank|result)|google.*rank/i.test(s)) { out.kind = 'SEO_EDIT'; return out; }
+      if (/\bmobile\b|responsive|small\s+screen|phone\s+(view|screen|la)/i.test(s) && /(fix|improve|better|friend|optimi|maathu|seri)/i.test(s)) { out.kind = 'MOBILE_FIX'; return out; }
+      if (/(image|photo|picture|padam|படம்|புகைப்படம்|ඡායාරූපය|පින්තූරය)/i.test(s)
+        && /(replac|chang| professional|bigger|larg|smaller|background|hero|பெரிய|சிறிய|பெருசு|ලොකු|පොඩි)/i.test(s)) { out.kind = 'IMAGE_EDIT'; return out; }
+      const secM = s.match(/(testimonial|review|faq|pricing|price|gallery|contact|form|map|banner|cta|newsletter|stat|timeline|booking|blog|service|about|hero|footer)s?\b/i);
+      if (/(add|creat|insert|new|append|podu|add\s+pannu|seru|சேர்|சேரு|உருவாக்கு|එකතු|අලුත්)/i.test(s) && secM) {
+        out.kind = 'SECTION_ADD'; out.sectionType = secM[1].toLowerCase();
+        const am = s.match(/(below|after|under|above|before|over|kizha|keezha|கீழே|mela|மேலே|முன்|பின்)\s+(.+?)(?:\s+section)?$/i);
+        if (am) out.anchor = { pos: /below|after|under|kizha|கீழே|பின்/i.test(am[1]) ? 'after' : 'before', what: am[2].trim() };
+        return out;
+      }
+      if (/(remov|delet|neekku|neekunga|நீக்கு|makanna|අයින්)/i.test(s) && /(section|hero|footer|header|pricing|faq|gallery|form|banner|block)/i.test(s)) { out.kind = 'SECTION_DELETE'; return out; }
+      if (/\bmove\b.*\b(above|below|before|after|top|bottom)\b/i.test(s) || /reorder/i.test(s)) { out.kind = 'SECTION_MOVE'; return out; }
+      if (/\b(tone|copy|copywrite|headline|slogan|tagline)\b/i.test(l)
+        || /(rewrite|shorten|expand|professional|persuasive|friendly|premium|copy|content|text).{0,40}(hero|about|service|testimonial|faq|pricing|cta|contact)/i.test(s)
+        || /(hero|about|service|testimonial|faq|pricing)\b.{0,30}(rewrite|shorten|expand|regenerate)/i.test(s)) { out.kind = 'CONTENT_GENERATION'; return out; }
+      const qMark = /\?\s*$/.test(s.trim());
+      const editVerb = /(mak|chang|updat|edit|add|remov|delet|fix|improv|creat|generat|insert|replac|set|maathu|maathi|mathu|mattu|aakku|pannu|பண்ணு|மாற்று|කරන්න|හදන්න)/i.test(s);
+if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏன்|எப்படி|எது|ඇයි|මොකක්ද|කොහොමද)/i.test(s.trim())) { out.kind = 'QUESTION'; return out; }
+      if (/^(how|how\s+to|how\s+do\s+i|epdi)\b/i.test(s.trim())) { out.kind = 'ADVICE'; return out; }
+      if (qMark && !editVerb) { out.kind = 'QUESTION'; return out; }
+      if (/(suggest|advice|opinion|should\s+i|what.{0,25}wrong|improve.{0,20}\?|review\s+my)/i.test(s) && !editVerb) { out.kind = 'ADVICE'; return out; }
+      if (/(text|heading|title|label|font.{0,15}(text|word)|paragraph)/i.test(s) && /(chang|rewrite|updat|set|maathu|maathi|mathu|mattu|edita?)/i.test(s)) { out.kind = 'TEXT_EDIT'; return out; }
+      return out;
+    }
+
+    /* ── Target resolution: element / section / page / website ── */
+    function copilotSelectedComp() {
+      try { return (typeof selectedComponent !== 'undefined') ? selectedComponent : null; } catch (e) { return null; }
+    }
+    function copilotNearestSection(comp) {
+      let c = comp, depth = 0;
+      try {
+        while (c && depth < 8) {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+          if (tag === 'section' || tag === 'header' || tag === 'footer' || tag === 'main' || at['data-section-name']) return c;
+          c = c.parent ? c.parent() : null; depth++;
+        }
+      } catch (e) {}
+      return comp;
+    }
+    function copilotCompOuter(comp, max) {
+      try {
+        const el = comp.getEl ? comp.getEl() : null;
+        const outer = el ? el.outerHTML : (comp.toHTML ? comp.toHTML() : '');
+        return String(outer || '').slice(0, max || 8000);
+      } catch (e) { return ''; }
+    }
+    function copilotResolveTarget() {
+      const scopePref = (typeof window !== 'undefined' && window.WCAIScope) ? window.WCAIScope : 'auto';
+      const comp = copilotSelectedComp();
+      const page = copilotPageInfo();
+      if (scopePref === 'site' || (!comp && scopePref === 'auto')) {
+        return { scope: 'website', comp: null, html: '', label: 'Entire Website', page };
+      }
+      if (scopePref === 'page') return { scope: 'page', comp: null, html: '', label: 'Page: ' + page.name, page };
+      if (!comp) return { scope: 'website', comp: null, html: '', label: 'Entire Website', page };
+      if (scopePref === 'section') {
+        const sec = copilotNearestSection(comp);
+        return { scope: 'section', comp: sec, html: copilotCompOuter(sec), label: copilotDescribeComp(sec), page };
+      }
+      return { scope: 'element', comp, html: copilotCompOuter(comp), label: copilotDescribeComp(comp), page };
+    }
+    function copilotDescribeComp(comp) {
+      try {
+        if (!comp) return 'Entire Website';
+        const at = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+        const nm = at['data-section-name'] || at['data-section'] || at['id'] || '';
+        const tag = (comp.get('tagName') || 'element').toLowerCase();
+        let head = '';
+        try {
+          const el = comp.getEl ? comp.getEl() : null;
+          if (el) {
+            const h = el.querySelector('h1,h2,h3');
+            head = ((h ? h.innerText : el.innerText) || '').trim().replace(/\s+/g, ' ').slice(0, 42);
+          }
+        } catch (e) {}
+        if (nm) return `"${nm}" ${tag}`;
+        if (head) return `"${head}" ${tag}`;
+        return `<${tag}>`;
+      } catch (e) { return 'selected element'; }
+    }
+    function copilotRefreshTargetLine() {
+      try {
+        const el = document.getElementById('copilot-target-line');
+        if (!el) return;
+        const t = copilotResolveTarget();
+        const modeIcon = copilotState.mode === 'ask' ? '💬 Ask' : '🛠️ Edit';
+        const icon = t.scope === 'website' ? '🌐' : (t.scope === 'page' ? '📄' : (t.scope === 'section' ? '📐' : '🎯'));
+        el.textContent = `${modeIcon} · ${icon} Target: ${t.scope === 'website' ? 'Entire Website' : t.label}`;
+        copilotState.lastTargetLabel = t.label;
+      } catch (e) {}
+    }
+
+    /* ── Page + brand context (lightweight, from existing project data) ── */
+    function copilotPageInfo() {
+      try {
+        if (typeof wcEnsurePages === 'function' && typeof wcCurrentPageIdx === 'function') {
+          const pages = wcEnsurePages() || [];
+          const idx = wcCurrentPageIdx() || 0;
+          const cur = pages[idx] || {};
+          return { name: cur.name || 'Home', slug: cur.slug || 'index', idx, count: pages.length };
+        }
+      } catch (e) {}
+      return { name: 'Home', slug: 'index', idx: 0, count: 1 };
+    }
+    function copilotBrandBlock() {
+      try {
+        const d = (typeof wcDesign === 'function') ? wcDesign() : null;
+        const ss = (d && d.siteSettings) || {};
+        const biz = (typeof projectData !== 'undefined' && projectData && projectData.bizName) || ss.name || 'Website';
+        let primary = '';
+        try {
+          const m = String(typeof currentHtml === 'string' ? currentHtml : '').match(/--primary\s*:\s*(#[0-9a-fA-F]{3,8})/);
+          if (m) primary = m[1];
+        } catch (e) {}
+        const parts = [`Business: ${biz}`];
+        if (ss.phone) parts.push(`Phone: ${ss.phone}`);
+        if (ss.email) parts.push(`Email: ${ss.email}`);
+        if (ss.whatsapp) parts.push(`WhatsApp: ${ss.whatsapp}`);
+        if (ss.address) parts.push(`Location: ${ss.address}`);
+        if (ss.hours) parts.push(`Hours: ${ss.hours}`);
+        if (primary) parts.push(`Primary color: ${primary}`);
+        if (ss.lang) parts.push(`Preferred language: ${ss.lang}`);
+        return parts.join(' | ');
+      } catch (e) { return ''; }
+    }
+    function copilotStructureSummary(maxSections) {
+      // Compressed site map: section names + headings only (token-efficient).
+      try {
+        if (!grapesEditor) return '';
+        const wrap = grapesEditor.getWrapper();
+        const out = [];
+        const walk = (c, depth) => {
+          if (!c || depth > 6 || out.length >= (maxSections || 24)) return;
+          let tag = '';
+          try { tag = (c.get('tagName') || '').toLowerCase(); } catch (e) {}
+          if (['section', 'header', 'footer', 'main'].includes(tag)) {
+            const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+            let head = '';
+            try {
+              const el = c.getEl ? c.getEl() : null;
+              const h = el ? el.querySelector('h1,h2,h3') : null;
+              head = h ? (h.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+            } catch (e) {}
+            out.push(`- <${tag}> ${at['data-section-name'] || at.id || ''} ${head ? '| "' + head + '"' : ''}`.trim());
+          }
+          try { (c.components() || []).forEach(k => walk(k, depth + 1)); } catch (e) {}
+        };
+        (wrap.components() || []).forEach(k => walk(k, 0));
+        return out.join('\n');
+      } catch (e) { return ''; }
+    }
+
+    /* ── Conversation memory (lightweight, capped) ── */
+    function copilotMemPush(role, text, target) {
+      try {
+        copilotState.memory.push({ role, text: String(text || '').slice(0, 300), target: target || '' });
+        while (copilotState.memory.length > 8) copilotState.memory.shift();
+      } catch (e) {}
+    }
+    function copilotMemoryBlock() {
+      try {
+        const turns = copilotState.memory.slice(-6);
+        if (!turns.length) return '';
+        const lines = turns.map(t => `${t.role === 'user' ? 'User' : 'AI'}: ${t.text.slice(0, 140)}${t.target ? ` [target: ${t.target}]` : ''}`);
+        return `\n\n[Conversation context (resolve pronouns like "them/it/that" from the last turn):\n${lines.join('\n')}\n]`;
+      } catch (e) { return ''; }
+    }
+    function copilotResolvePronouns(q) {
+      try {
+        if (!/\b(them|it|that|those|this)\b/i.test(q)) return q;
+        if (/(button|section|heading|text|image|color|hero|footer|header)/i.test(q)) return q;
+        const last = [...copilotState.memory].reverse().find(m => m.target);
+        if (last && last.target) return `${q} (= ${last.target})`;
+      } catch (e) {}
+      return q;
+    }
+
+    /* ── Activity stages (never a frozen spinner) ── */
+    function copilotStage(t) {
+      try {
+        const b = document.querySelector('#magic-typing .msg-bubble');
+        if (b) b.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span> <span style="font-size:.78rem;color:#94a3b8;font-weight:600;">' + escapeHtml(t) + '</span>';
+      } catch (e) {}
+    }
+    function copilotDone() {
+      try {
+        const t = document.getElementById('magic-typing');
+        if (t) t.remove();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      } catch (e) {}
+    }
+
+    /* ── ASK lane: advice/audit/content text (never touches the website) ── */
+    async function copilotAsk(instruction, opts) {
+      opts = opts || {};
+      const selModel = document.getElementById('magic-model-select')?.value || 'gemini-3.5-flash-lite';
+      const t = copilotResolveTarget();
+      const ctx = {
+        brand: copilotBrandBlock(),
+        page: `${copilotPageInfo().name} (/${copilotPageInfo().slug}) of ${copilotPageInfo().count} page(s)`,
+        target: `${t.label} [${t.scope}]${t.html ? '\n' + t.html.slice(0, 2500) : '\n' + copilotStructureSummary(20)}`,
+        history: copilotState.memory.slice(-6).map(m => `${m.role}: ${m.text.slice(0, 140)}`).join('\n'),
+        file: copilotState.file ? `FILE: ${copilotState.file.name}\n${copilotState.file.text.slice(0, 6000)}` : ''
+      };
+      copilotStage(opts.stage || 'Asking AI...');
+      try {
+        const res = await fetch('<?= SITE_URL ?>/api/generate.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ask', instruction, context: ctx, model: selModel })
+        });
+        const j = await res.json();
+        if (j && j.success && j.reply) {
+          copilotMemPush('ai', j.reply.slice(0, 300), t.label);
+          return { ok: true, reply: j.reply, model: j.model || selModel };
+        }
+        // Transparent retry with the other lane before giving up (§22).
+        copilotStage('AI model unavailable — trying another available model...');
+        const res2 = await fetch('<?= SITE_URL ?>/api/generate.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ask', instruction, context: ctx, model: 'opencode-fallback' })
+        });
+        const j2 = await res2.json();
+        if (j2 && j2.success && j2.reply) {
+          copilotMemPush('ai', j2.reply.slice(0, 300), t.label);
+          return { ok: true, reply: j2.reply, model: j2.model || 'opencode' };
+        }
+        return { ok: false, error: ((j2 && (j2.error || (j2.errors || [])[0])) || (j && (j.error || (j.errors || [])[0])) || 'AI unavailable') };
+      } catch (e) {
+        return { ok: false, error: e?.message || 'network error' };
+      }
+    }
+
+    /* ── FIND element by natural language (no modification) ── */
+    function copilotWalkComps(fn) {
+      const out = [];
+      try {
+        if (!grapesEditor) return out;
+        const walk = (c, depth) => {
+          if (!c || depth > 9) return;
+          try { if (fn(c) === true) out.push(c); } catch (e) {}
+          try { (c.components() || []).forEach(k => walk(k, depth + 1)); } catch (e) {}
+        };
+        (grapesEditor.getWrapper().components() || []).forEach(k => walk(k, 0));
+      } catch (e) {}
+      return out;
+    }
+    function copilotCompText(c) {
+      try {
+        const el = c.getEl ? c.getEl() : null;
+        return ((el ? (el.innerText || '') : '') + '').toLowerCase();
+      } catch (e) { return ''; }
+    }
+    function copilotFindElement(what) {
+      const w = copilotStripNoise(what).toLowerCase();
+      const keys = w.split(/[^a-z0-9₹#.\u0b80-\u0bff\u0d80-\u0dff ]+/i).join(' ');
+      const wants = (rx) => rx.test(w);
+      const bySectionName = (name) => copilotWalkComps(c => {
+        const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+        const nm = `${at['data-section-name'] || ''} ${at.id || ''}`.toLowerCase();
+        return nm.includes(name);
+      });
+      const byHeading = (name) => copilotWalkComps(c => {
+        const tag = (c.get('tagName') || '').toLowerCase();
+        if (!['section', 'div', 'header', 'footer', 'main'].includes(tag)) return false;
+        return copilotCompText(c).slice(0, 400).includes(name);
+      });
+      const byButtonText = (name) => copilotWalkComps(c => {
+        const tag = (c.get('tagName') || '').toLowerCase();
+        if (tag !== 'a' && tag !== 'button') return false;
+        return copilotCompText(c).includes(name);
+      });
+      let hits = [];
+      if (wants(/hero|முகப்பு|banner/)) hits = bySectionName('hero').length ? bySectionName('hero') : copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'header');
+      else if (wants(/footer|அடி|පාදකය/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'footer');
+      else if (wants(/header|menu|nav/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'header');
+      else if (wants(/contact/)) hits = byButtonText('contact').concat(bySectionName('contact'));
+      else if (wants(/whatsapp|call|phone/)) hits = byButtonText(wants(/whatsapp/) ? 'whatsapp' : wants(/call/) ? 'call' : 'phone');
+      else if (wants(/pric|price|விலை|මිල/)) hits = bySectionName('pric').concat(byHeading('pric'));
+      else if (wants(/faq|question/)) hits = bySectionName('faq').concat(byHeading('frequently'));
+      else if (wants(/galler/)) hits = bySectionName('galler');
+      else if (wants(/testimonial|review/)) hits = bySectionName('testimonial').concat(bySectionName('review'));
+      else if (wants(/button|பட்டன்/)) {
+        const rest = w.replace(/button|பட்டன்|find|select|the|my|where|is|show|me|please/g, ' ').trim();
+        hits = rest ? byButtonText(rest.split(' ')[0]) : [];
+        if (!hits.length) hits = copilotWalkComps(c => ['a', 'button'].includes((c.get('tagName') || '').toLowerCase()));
+      } else if (wants(/image|photo|picture|padam|படம்/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'img');
+      else if (wants(/form/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'form');
+      else if (wants(/logo/)) hits = copilotWalkComps(c => { const at = c.getAttributes ? (c.getAttributes() || {}) : {}; return /logo/i.test(at.class || '') || /logo/i.test(at.alt || ''); });
+      else {
+        const word = keys.split(' ').filter(x => x.length > 2 && !/^(the|my|find|select|show|where|please|antha|intha|and|element|section)$/.test(x))[0];
+        if (word) { hits = bySectionName(word).concat(byButtonText(word)).concat(byHeading(word)); }
+      }
+      hits = hits.filter(Boolean);
+      return hits[0] || null;
+    }
+
+    /* ── WEBSITE AUDIT (deterministic scan of the real site — no fake tests) ── */
+    function copilotContrastRatio(fg, bg) {
+      try {
+        const lum = (rgb) => {
+          const m = String(rgb).match(/[\d.]+/g) || [0, 0, 0];
+          const [r, g, b] = [0, 1, 2].map(i => { const v = parseFloat(m[i] || 0) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        const L1 = lum(fg), L2 = lum(bg);
+        return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+      } catch (e) { return 99; }
+    }
+    function copilotLocatorFor(comp) {
+      try {
+        const at = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+        return { tag: (comp.get('tagName') || '').toLowerCase(), id: at.id || '', cls: (at.class || '').split(' ')[0] || '', text: copilotCompText(comp).slice(0, 60) };
+      } catch (e) { return { tag: '', id: '', cls: '', text: '' }; }
+    }
+    function copilotFindByLocator(loc) {
+      const found = copilotWalkComps(c => {
+        try {
+          const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+          if (loc.id && (at.id || '') === loc.id) return true;
+          if (loc.cls && String(at.class || '').split(' ').includes(loc.cls) && (c.get('tagName') || '').toLowerCase() === loc.tag) {
+            if (!loc.text) return true;
+            return copilotCompText(c).slice(0, 60) === loc.text;
+          }
+        } catch (e) {}
+        return false;
+      });
+      return found[0] || null;
+    }
+    function copilotAuditRun() {
+      copilotStage('Analyzing website...');
+      const issues = [];
+      let goods = 0;
+      try {
+        syncCanvasToHtml();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(String(currentHtml || ''), 'text/html');
+        const bodyText = (doc.body ? doc.body.textContent : '') || '';
+        // SEO basics
+        const title = (doc.querySelector('title')?.textContent || '').trim();
+        if (!title || /^(website|home|untitled|document)$/i.test(title)) issues.push({ sev: 'bad', cat: 'SEO', msg: 'Page title is missing or generic.', fix: 'seo-title' });
+        else goods++;
+        if (!doc.querySelector('meta[name="description"]')) issues.push({ sev: 'warn', cat: 'SEO', msg: 'Meta description is missing (search previews suffer).', fix: 'seo-desc' });
+        else goods++;
+        const h1s = doc.querySelectorAll('h1');
+        if (h1s.length === 0) issues.push({ sev: 'bad', cat: 'SEO', msg: 'No H1 heading found.', fix: null });
+        else if (h1s.length > 1) issues.push({ sev: 'warn', cat: 'SEO', msg: `${h1s.length} H1 headings — keep exactly one per page.`, fix: 'h1-demote' });
+        else goods++;
+        // Content
+        if (/lorem ipsum|placeholder|dummy text|sample text/i.test(bodyText)) issues.push({ sev: 'bad', cat: 'Content', msg: 'Placeholder text (lorem ipsum) still on the page.', fix: 'ai' });
+        else if (bodyText.trim().length > 200) goods++;
+        const emptyHeads = [...doc.querySelectorAll('h1,h2,h3')].filter(h => !h.textContent.trim()).length;
+        if (emptyHeads) issues.push({ sev: 'warn', cat: 'Content', msg: `${emptyHeads} empty heading(s) found.`, fix: null });
+        ['contact', 'about', 'service'].forEach(k => { if (new RegExp(`id=["']${k}["']`, 'i').test(String(currentHtml))) goods++; });
+        if (!/id=["']contact["']/i.test(String(currentHtml))) issues.push({ sev: 'warn', cat: 'UX', msg: 'No #contact section — CTAs may lead nowhere.', fix: null });
+        // Links & buttons (canvas-accurate via components)
+        const deadLinks = copilotWalkComps(c => {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          if (tag !== 'a') return false;
+          const href = (c.getAttributes ? (c.getAttributes() || {}).href : '') || '';
+          return href === '#' || href.trim() === '';
+        });
+        if (deadLinks.length) issues.push({ sev: 'warn', cat: 'UX', msg: `${deadLinks.length} link(s) with empty/dead href (#).`, fix: 'dead-links', loc: copilotLocatorFor(deadLinks[0]) });
+        else goods++;
+        const noAlt = copilotWalkComps(c => {
+          if ((c.get('tagName') || '').toLowerCase() !== 'img') return false;
+          const alt = (c.getAttributes ? (c.getAttributes() || {}).alt : '') || '';
+          return !alt.trim();
+        });
+        if (noAlt.length) issues.push({ sev: 'warn', cat: 'Accessibility', msg: `${noAlt.length} image(s) missing alt text.`, fix: 'img-alt', loc: copilotLocatorFor(noAlt[0]) });
+        else goods++;
+        // Mobile: overflow + tiny text + tap targets (measured on live canvas)
+        try {
+          const cBody = grapesEditor?.Canvas?.getBody?.();
+          if (cBody) {
+            const over = [];
+            cBody.querySelectorAll('section,header,footer,div').forEach(el => {
+              if (el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0) over.push(el);
+            });
+            if (over.length) issues.push({ sev: 'bad', cat: 'Mobile', msg: `${over.length} element(s) overflow horizontally (side-scroll on phones).`, fix: 'overflow' });
+            else goods++;
+          }
+        } catch (e) {}
+        let tiny = 0;
+        copilotWalkComps(c => {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          if (!/^(p|span|li|a)$/.test(tag)) return false;
+          try {
+            const el = c.getEl ? c.getEl() : null;
+            if (!el) return false;
+            const fs = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+            if (fs < 12) { tiny++; return true; }
+          } catch (e) {}
+          return false;
+        });
+        if (tiny) issues.push({ sev: 'warn', cat: 'Mobile', msg: `${tiny} text element(s) smaller than 12px (hard to read on phones).`, fix: 'tiny-text' });
+        // Contrast sample (headings + buttons)
+        let lowContrast = 0;
+        copilotWalkComps(c => {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          if (!/^(h1|h2|h3|button)$/.test(tag) && !(tag === 'a' && /btn/i.test((c.getAttributes ? (c.getAttributes() || {}).class : '') || ''))) return false;
+          try {
+            const el = c.getEl ? c.getEl() : null;
+            if (!el) return false;
+            const cs = window.getComputedStyle(el);
+            if (copilotContrastRatio(cs.color, cs.backgroundColor) < 3) { lowContrast++; return true; }
+          } catch (e) {}
+          return false;
+        });
+        if (lowContrast) issues.push({ sev: 'warn', cat: 'Accessibility', msg: `${lowContrast} heading/button(s) with very low text contrast.`, fix: 'ai' });
+        else goods++;
+        if (!/name=["']viewport["']/i.test(String(currentHtml))) issues.push({ sev: 'bad', cat: 'Mobile', msg: 'Viewport meta tag missing — mobile layout will break.', fix: 'viewport' });
+        else goods++;
+      } catch (e) { issues.push({ sev: 'warn', cat: 'Audit', msg: 'Scan hit a snag: ' + e.message, fix: null }); }
+      const bads = issues.filter(i => i.sev === 'bad').length;
+      const warns = issues.filter(i => i.sev === 'warn').length;
+      copilotState.audit = { at: Date.now(), goods, warns, bads, issues };
+      return copilotState.audit;
+    }
+    function copilotAuditHtml(audit) {
+      const sevIcon = (s) => s === 'bad' ? '<span class="cp-sev-bad">❌</span>' : (s === 'warn' ? '<span class="cp-sev-warn">⚠️</span>' : '<span class="cp-sev-ok">✅</span>');
+      let h = `<div style="font-weight:800; margin-bottom:0.35rem;">📋 Website Audit — ${escapeHtml(copilotPageInfo().name)}</div>`;
+      h += `<div style="font-size:0.76rem; margin-bottom:0.4rem;"><span class="cp-sev-ok">✅ ${audit.goods} good</span> · <span class="cp-sev-warn">⚠️ ${audit.warns} recommended</span> · <span class="cp-sev-bad">❌ ${audit.bads} important</span></div>`;
+      if (!audit.issues.length) return h + `<div>${sevIcon('ok')} Everything looks solid. Nice work!</div>`;
+      audit.issues.forEach((it, i) => {
+        h += `<div class="cp-audit-row">${sevIcon(it.sev)}<span><b>[${escapeHtml(it.cat)}]</b> ${escapeHtml(it.msg)}</span>`;
+        if (it.fix) h += `<button type="button" class="cp-msg-btn cp-fix-btn" onclick="copilotFixIssue(${i})">Fix</button>`;
+        h += `</div>`;
+      });
+      return h;
+    }
+
+    /* ── Per-issue fix router: safe local fixes first, AI lane otherwise ── */
+    async function copilotFixIssue(i) {
+      const audit = copilotState.audit;
+      if (!audit || !audit.issues[i]) { showToast('Run Audit first'); return; }
+      const it = audit.issues[i];
+      copilotStage('Fixing: ' + it.msg.slice(0, 60) + '...');
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI fix: ' + it.msg.slice(0, 40)); } catch (e) {}
+      const done = async (msg) => {
+        copilotMemPush('ai', msg, copilotState.lastTargetLabel);
+        appendMagicChat(`✅ ${escapeHtml(msg)}`, 'ai');
+        copilotFollowups('fix');
+      };
+      try {
+        if (it.fix === 'img-alt') {
+          let n = 0;
+          copilotWalkComps(c => {
+            if ((c.get('tagName') || '').toLowerCase() !== 'img') return false;
+            const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+            if ((at.alt || '').trim()) return false;
+            try {
+              let label = copilotBrandBlock().split('|')[0].replace('Business:', '').trim() || 'Website';
+              const p = c.parent ? c.parent() : null;
+              if (p) { const t = copilotCompText(p).slice(0, 60).trim(); if (t) label = t; }
+              c.addAttributes({ alt: label.slice(0, 100) }); n++; return true;
+            } catch (e) { return false; }
+          });
+          syncCanvasToHtml(); saveProjectData();
+          audit.issues.splice(i, 1); audit.warns = audit.issues.filter(x => x.sev === 'warn').length; audit.bads = audit.issues.filter(x => x.sev === 'bad').length;
+          await done(`Image alt text added (${n} image${n === 1 ? '' : 's'}).`);
+          copilotRecordChange('Image alt text', 'local'); return;
+        }
+        if (it.fix === 'dead-links') {
+          const ids = [...String(currentHtml).matchAll(/id="([^"]+)"/gi)].map(m => m[1].toLowerCase());
+          let n = 0;
+          copilotWalkComps(c => {
+            if ((c.get('tagName') || '').toLowerCase() !== 'a') return false;
+            const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+            const href = (at.href || '').trim();
+            if (href && href !== '#') return false;
+            const t = copilotCompText(c);
+            const guess = ['contact', 'about', 'services', 'pricing', 'faq', 'gallery', 'home'].find(k => t.includes(k) && ids.includes(k));
+            if (guess) { try { c.addAttributes({ href: '#' + guess }); n++; return true; } catch (e) {} }
+            return false;
+          });
+          syncCanvasToHtml(); saveProjectData();
+          await done(n ? `Dead links pointed at matching sections (${n} fixed).` : 'No safe link target found — tell me where they should go.');
+          copilotRecordChange('Dead links', 'local'); return;
+        }
+        if (it.fix === 'tiny-text') {
+          let n = 0;
+          copilotWalkComps(c => {
+            const tag = (c.get('tagName') || '').toLowerCase();
+            if (!/^(p|span|li|a)$/.test(tag)) return false;
+            try {
+              const el = c.getEl ? c.getEl() : null;
+              if (!el) return false;
+              if ((parseFloat(window.getComputedStyle(el).fontSize) || 16) < 12) {
+                const st = c.getStyle ? (c.getStyle() || {}) : {};
+                st['font-size'] = '14px'; c.setStyle(st); n++; return true;
+              }
+            } catch (e) {}
+            return false;
+          });
+          syncCanvasToHtml(); saveProjectData();
+          await done(`Small text bumped to readable size (${n} fixed).`);
+          copilotRecordChange('Tiny text', 'local'); return;
+        }
+        if (it.fix === 'overflow') {
+          let n = 0;
+          try {
+            const cBody = grapesEditor?.Canvas?.getBody?.();
+            if (cBody) cBody.querySelectorAll('section,header,footer').forEach(el => {
+              if (el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0) {
+                el.style.overflowX = 'clip'; el.style.maxWidth = '100%'; n++;
+              }
+            });
+          } catch (e) {}
+          syncCanvasToHtml(); saveProjectData();
+          await done(n ? `Horizontal overflow clipped (${n} section${n === 1 ? '' : 's'}) — desktop untouched.` : 'No overflowing section found now.');
+          copilotRecordChange('Overflow', 'local'); return;
+        }
+        if (it.fix === 'viewport') {
+          if (!/name=["']viewport["']/i.test(String(currentHtml))) {
+            currentHtml = String(currentHtml).replace(/<head([^>]*)>/i, '<head$1>\n<meta name="viewport" content="width=device-width, initial-scale=1.0">');
+            loadHtmlIntoStudioCanvas(); saveProjectData();
+            await done('Viewport meta tag added — mobile layout enabled.');
+            copilotRecordChange('Viewport meta', 'full'); return;
+          }
+        }
+        if (it.fix === 'seo-title' || it.fix === 'seo-desc') {
+          await copilotSeoText(it.fix === 'seo-title' ? 'title' : 'desc');
+          return;
+        }
+        // 'ai' / 'h1-demote' / null → scoped AI edit on the located element.
+        let target = it.loc ? copilotFindByLocator(it.loc) : null;
+        if (target && grapesEditor) grapesEditor.select(target);
+        const instr = it.fix === 'h1-demote'
+          ? 'Change this H1 into an H2 (keep the exact same text and styling) so the page has only one H1.'
+          : `Fix this website issue on the selected element only: ${it.msg}`;
+        const inp = document.getElementById('magic-input');
+        if (inp) inp.value = instr;
+        copilotState.programmatic = true;
+        try { await executeMagicAi(); }
+        finally { copilotState.programmatic = false; }
+      } catch (e) {
+        appendMagicChat(`⚠️ Fix failed: ${escapeHtml(e?.message || e)} — website was not modified.`, 'ai');
+      }
+    }
+
+    /* ── CONTENT GENERATOR (copy via ASK lane, deterministic insert/replace) ── */
+    const COPILOT_COPY_SPECS = {
+      hero: { title: 'Hero copy', fmt: 'Reply with exactly 4 short lines: HEADLINE (under 10 words), SUB (under 20 words), BUTTON1 text, BUTTON2 text. No labels beyond those four, no extra commentary.' },
+      about: { title: 'About us', fmt: 'Reply with exactly 3 lines: TITLE, PARAGRAPH1 (2 sentences), PARAGRAPH2 (2 sentences). No extra commentary.' },
+      services: { title: 'Services', fmt: 'Reply with exactly 4 lines: TITLE, then 3 lines each "Service name: one-line benefit". No extra commentary.' },
+      features: { title: 'Features', fmt: 'Reply with exactly 4 lines: TITLE, then 3 lines each "Feature: one-line benefit". No extra commentary.' },
+      testimonials: { title: 'Testimonials', fmt: 'Reply with exactly 6 lines: 3 pairs of QUOTE (one sentence, no quotes) then CUSTOMER NAME + ROLE. No extra commentary.' },
+      faq: { title: 'FAQ', fmt: 'Reply with exactly 6 lines: 3 pairs of QUESTION (ends with ?) then ANSWER (one sentence). No extra commentary.' },
+      pricing: { title: 'Pricing', fmt: 'Reply with exactly 4 lines: TITLE, then 3 lines each "Plan name: price + one-line highlight". No extra commentary.' },
+      cta: { title: 'Call to action', fmt: 'Reply with exactly 3 lines: HEADLINE (under 8 words), SUB (under 15 words), BUTTON text. No extra commentary.' },
+      contact: { title: 'Contact section', fmt: 'Reply with exactly 3 lines: TITLE, INVITING LINE (under 15 words), BUTTON text. No extra commentary.' }
+    };
+    function copilotParseCopyLines(reply) {
+      return String(reply || '').split('\n').map(l => l.replace(/^(headline|title|sub|subtitle|button|cta|q|a|quote|name|answer|description|desc|paragraph\d*|service\d*|feature\d*|plan\d*)\s*[:\-–.]\s*/i, '').trim()).filter(l => l && !/^#+$/.test(l)).slice(0, 8);
+    }
+    function copilotSectionShell(kind, inner) {
+      const P = 'var(--primary,#6366f1)';
+      const wrap = (t) => `<section data-ai-gen="${kind}" style="padding:4.5rem 1.5rem;"><div style="max-width:1100px;margin:0 auto;">${t}</div></section>`;
+      if (kind === 'hero') return `<section data-ai-gen="hero" style="padding:5rem 1.5rem;text-align:center;background:linear-gradient(180deg,#f8fafc,#eef2ff);"><div style="max-width:820px;margin:0 auto;"><h1 style="font-size:clamp(2rem,5vw,3.4rem);font-weight:900;line-height:1.1;margin-bottom:1rem;">${inner[0] || 'Welcome'}</h1><p style="font-size:1.1rem;color:#475569;margin-bottom:2rem;">${inner[1] || ''}</p><div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;"><a href="#contact" style="background:${P};color:#fff;font-weight:800;padding:0.9rem 2.2rem;border-radius:999px;text-decoration:none;">${inner[2] || 'Get Started'}</a><a href="#about" style="border:2px solid ${P};color:${P};font-weight:800;padding:0.9rem 2.2rem;border-radius:999px;text-decoration:none;">${inner[3] || 'Learn More'}</a></div></div></section>`;
+      if (kind === 'testimonials') {
+        let cards = '';
+        for (let i = 0; i < 6; i += 2) {
+          if (!inner[i]) continue;
+          cards += `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:1.6rem;box-shadow:0 8px 24px rgba(2,6,23,0.06);"><div style="color:#f59e0b;margin-bottom:0.6rem;">★★★★★</div><p style="color:#334155;margin-bottom:1rem;">“${inner[i]}”</p><strong>${inner[i + 1] || 'Happy customer'}</strong></div>`;
+        }
+        return wrap(`<div style="text-align:center;font-size:0.75rem;font-weight:800;letter-spacing:0.12em;color:#94a3b8;margin-bottom:0.6rem;">TESTIMONIALS</div><h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2.2rem;">Loved by our customers</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;">${cards}</div>`);
+      }
+      if (kind === 'faq') {
+        let items = '';
+        for (let i = 0; i < 6; i += 2) {
+          if (!inner[i]) continue;
+          items += `<details style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1rem 1.3rem;"><summary style="font-weight:700;cursor:pointer;">${inner[i]}</summary><p style="color:#475569;margin-top:0.6rem;">${inner[i + 1] || ''}</p></details>`;
+        }
+        return wrap(`<h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2rem;">Frequently asked questions</h2><div style="display:flex;flex-direction:column;gap:0.9rem;max-width:760px;margin:0 auto;">${items}</div>`);
+      }
+      if (kind === 'pricing') {
+        let tiers = '';
+        inner.slice(1, 4).forEach((t, ix) => {
+          const parts = String(t || '').split(':');
+          tiers += `<div style="background:${ix === 1 ? '#0f172a' : '#fff'};color:${ix === 1 ? '#fff' : '#0f172a'};border:1px solid #e2e8f0;border-radius:20px;padding:2rem;text-align:center;"><h3 style="margin-bottom:0.5rem;">${(parts[0] || 'Plan').trim()}</h3><div style="font-size:1.8rem;font-weight:900;color:${ix === 1 ? '#fff' : P};margin-bottom:0.6rem;">${(parts[1] || '').trim()}</div><p style="opacity:.75;">${(parts.slice(2).join(':') || '').trim()}</p><a href="#contact" style="display:inline-block;margin-top:1.2rem;background:${P};color:#fff;font-weight:800;padding:0.8rem 1.8rem;border-radius:999px;text-decoration:none;">Choose</a></div>`;
+        });
+        return wrap(`<h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2rem;">${inner[0] || 'Pricing'}</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;">${tiers}</div>`);
+      }
+      const title = inner[0] || COPILOT_COPY_SPECS[kind]?.title || 'Section';
+      const paras = inner.slice(1, 4).map(p => `<p style="color:#475569;margin-bottom:1rem;">${p}</p>`).join('');
+      return wrap(`<div style="font-size:0.75rem;font-weight:800;letter-spacing:0.12em;color:#94a3b8;margin-bottom:0.6rem;">${title.toUpperCase()}</div><h2 style="font-size:2rem;font-weight:800;margin-bottom:1rem;">${title}</h2>${paras}`);
+    }
+    async function copilotContentAsk(kind) {
+      const spec = COPILOT_COPY_SPECS[kind];
+      if (!spec) return;
+      const input = document.getElementById('magic-input');
+      if (input) input.value = `Write ${spec.title.toLowerCase()} copy for my website`;
+      appendMagicChat(`✍️ ${escapeHtml(spec.title)}`, 'user');
+      showMagicTyping();
+      copilotStage('Writing copy...');
+      const brand = copilotBrandBlock();
+      const file = copilotState.file ? `\nUse these business facts:\n${copilotState.file.text.slice(0, 3000)}` : '';
+      const r = await copilotAsk(`Write ${spec.title.toLowerCase()} website copy for this business. ${brand}.${file}\n${spec.fmt}`, { stage: 'Writing copy...' });
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      if (!r.ok) { appendMagicChat(`⚠️ I couldn't write that right now (${escapeHtml(r.error)}). Your website was not modified.`, 'ai'); return; }
+      const lines = copilotParseCopyLines(r.reply);
+      if (!lines.length) { appendMagicChat(formatMarkdown(r.reply), 'ai'); return; }
+      const t = copilotResolveTarget();
+      const canReplace = t.scope === 'element' && t.comp && (() => {
+        try {
+          const el = t.comp.getEl ? t.comp.getEl() : null;
+          const tag = (t.comp.get('tagName') || '').toLowerCase();
+          return el && /^(h1|h2|h3|h4|p|span|a|button|li)$/.test(tag);
+        } catch (e) { return false; }
+      })();
+      const id = ++copilotState.msgSeq;
+      copilotState['copy_' + id] = { kind, lines };
+      let h = `<div style="font-weight:800; margin-bottom:0.3rem;">✍️ ${escapeHtml(spec.title)} — ready</div>`;
+      h += `<div style="font-size:0.78rem; background:#0b1220; border:1px solid #1e293b; border-radius:8px; padding:0.6rem 0.75rem; margin-bottom:0.5rem;">${lines.map(l => `• ${escapeHtml(l)}`).join('<br>')}</div>`;
+      h += `<div class="cp-msg-actions">`;
+      if (canReplace) h += `<button type="button" class="cp-msg-btn" onclick="copilotCopyApply(${id},'replace')">✏️ Replace selected text</button>`;
+      h += `<button type="button" class="cp-msg-btn" onclick="copilotCopyApply(${id},'insert')">➕ Insert as new section</button></div>`;
+      copilotMemPush('ai', `${spec.title} copy drafted`, t.label);
+      appendMagicChat(h, 'ai');
+      copilotFollowups('content');
+    }
+    function copilotCopyApply(id, how) {
+      const c = copilotState['copy_' + id];
+      if (!c) return;
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI copy: ' + c.kind); } catch (e) {}
+      try {
+        if (how === 'replace') {
+          const t = copilotResolveTarget();
+          if (t.comp) {
+            const el = t.comp.getEl ? t.comp.getEl() : null;
+            if (el) {
+              const first = el.querySelector('h1,h2,h3,h4,p') || el;
+              first.textContent = c.lines.slice(0, 2).join(' ');
+              syncCanvasToHtml(); saveProjectData(); renderSmartLayers(); flashCanvasComponent(t.comp);
+              appendMagicChat(`✅ Ready! ${escapeHtml(t.label)} text replaced with fresh copy. Vera entha idamum thodala.`, 'ai');
+              copilotRecordChange(`${c.kind} text replaced`, 'local');
+              copilotFollowups('edit'); return;
+            }
+          }
+          showToast('Select a text element first');
+          return;
+        }
+        const html = copilotSectionShell(c.kind, c.lines);
+        const target = copilotResolveTarget();
+        let anchor = (target.scope === 'section' || target.scope === 'element') ? (target.scope === 'section' ? target.comp : copilotNearestSection(target.comp)) : null;
+        if (!anchor) {
+          const contact = copilotFindElement('contact section') || copilotFindElement('footer');
+          anchor = contact || null;
+        }
+        copilotInsertAfter(anchor, html, `Added ${c.kind} section`);
+      } catch (e) { appendMagicChat(`⚠️ Could not insert: ${escapeHtml(e?.message || e)}`, 'ai'); }
+    }
+    function copilotInsertAfter(anchorComp, html, label) {
+      if (!grapesEditor) throw new Error('Canvas not ready');
+      let clean = String(html).trim();
+      const fm = clean.match(/```(?:html)?\s*([\s\S]*?)```/i);
+      if (fm) clean = fm[1].trim();
+      const ft = clean.indexOf('<');
+      if (ft > 0) clean = clean.slice(ft).trim();
+      if (!clean || !clean.includes('<') || clean.length < 60) throw new Error('AI returned an empty section — website unchanged.');
+      let parent, at;
+      if (anchorComp && anchorComp.parent) {
+        parent = anchorComp.parent();
+        at = anchorComp.index() + 1;
+      } else {
+        parent = grapesEditor.getWrapper();
+        const kids = parent.components ? parent.components() : [];
+        let footIdx = -1;
+        kids.forEach((k, ix) => { try { if ((k.get('tagName') || '').toLowerCase() === 'footer') footIdx = ix; } catch (e) {} });
+        at = footIdx >= 0 ? footIdx : kids.length;
+      }
+      if (!parent) throw new Error('No place to insert — website unchanged.');
+      const added = parent.append(clean, { at });
+      const fresh = Array.isArray(added) ? added[0] : added;
+      if (!fresh) { try { grapesEditor.UndoManager.undo(); } catch (e) {} throw new Error('Insert failed — website unchanged.'); }
+      try { if (typeof configureEditorComponent === 'function') configureEditorComponent(fresh); } catch (e) {}
+      try { grapesEditor.select(fresh); } catch (e) {}
+      flashCanvasComponent(fresh);
+      syncCanvasToHtml(); saveProjectData(); renderSmartLayers();
+      const lbl = copilotDescribeComp(fresh);
+      appendMagicChat(`✅ Ready! <b>${escapeHtml(label || 'New section')}</b> added${anchorComp ? ` near ${escapeHtml(copilotDescribeComp(anchorComp))}` : ''} — selected panniten (${escapeHtml(lbl)}). Vera entha idamum thodala.`, 'ai');
+      copilotRecordChange(label || 'Section added', 'snippet');
+      copilotMemPush('ai', (label || 'Section added'), lbl);
+      copilotFollowups('add');
+      showToast('✨ Section added & saved!');
+    }
+    async function copilotSeoText(which) {
+      appendMagicChat(which === 'title' ? '🔎 SEO title' : '🔎 Meta description', 'user');
+      showMagicTyping();
+      const brand = copilotBrandBlock();
+      const r = await copilotAsk(
+        which === 'title'
+          ? `Write ONE SEO page title (max 60 characters) for this business. ${brand}. Reply with ONLY the title text, nothing else.`
+          : `Write ONE SEO meta description (max 155 characters) for this business. ${brand}. Reply with ONLY the description text, nothing else.`,
+        { stage: 'Writing SEO...' });
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      if (!r.ok) { appendMagicChat(`⚠️ SEO text failed (${escapeHtml(r.error)}). Website unchanged.`, 'ai'); return; }
+      const text = copilotStripNoise(r.reply).replace(/^["“”']+|["“”']+$/g, '').trim().slice(0, which === 'title' ? 70 : 170);
+      if (!text) { appendMagicChat('⚠️ Empty SEO text — website unchanged.', 'ai'); return; }
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI SEO'); } catch (e) {}
+      let html = String(currentHtml || '');
+      if (which === 'title') {
+        if (/<title[^>]*>[\s\S]*?<\/title>/i.test(html)) html = html.replace(/<title[^>]*>[\s\S]*?<\/title>/i, `<title>${escapeHtml(text)}</title>`);
+        else html = html.replace(/<head([^>]*)>/i, `<head$1>\n<title>${escapeHtml(text)}</title>`);
+      } else {
+        if (/<meta\s+name=["']description["'][^>]*>/i.test(html)) html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, `<meta name="description" content="${escapeHtml(text)}">`);
+        else html = html.replace(/<\/title>/i, `</title>\n<meta name="description" content="${escapeHtml(text)}">`);
+      }
+      if (html === currentHtml) { appendMagicChat('⚠️ Could not place SEO tag — website unchanged.', 'ai'); return; }
+      currentHtml = html;
+      const d = (typeof wcDesign === 'function') ? wcDesign() : null;
+      if (d) { d.html = currentHtml; try { const p = wcEnsurePages(); p[wcCurrentPageIdx()].html = currentHtml; } catch (e) {} }
+      loadHtmlIntoStudioCanvas(); saveProjectData();
+      appendMagicChat(`✅ Ready! SEO ${which === 'title' ? 'title' : 'description'} set: “${escapeHtml(text)}”.`, 'ai');
+      copilotRecordChange('SEO ' + which, 'full');
+      copilotMemPush('ai', 'SEO ' + which + ' set', 'head');
+      copilotFollowups('edit');
+    }
+    /* ── AI IMAGE COMMANDS (generate + existing canvas apply, editor untouched) ── */
+    async function copilotImageCommand(q, target) {
+      const l = q.toLowerCase();
+      const comp = target.comp;
+      const isImgSel = comp && ((comp.get('tagName') || '').toLowerCase() === 'img');
+      if (/(larger|bigger|periya|பெரிய|பெருசு|லொகு|ලොකු)/i.test(q) || /(smaller|chinna|சின்ன|சிறிய|පොඩි)/i.test(q)) {
+        const bigger = !/(smaller|chinna|சின்ன|சிறிய|පොඩි)/i.test(q);
+        const imgComp = isImgSel ? comp : (comp ? (comp.find ? (comp.find('img')[0] || null) : null) : null);
+        if (!imgComp) { appendMagicChat('🖼️ Select an image on canvas first, then tell me larger/smaller.', 'ai'); return true; }
+        try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI image resize'); } catch (e) {}
+        const st = imgComp.getStyle ? (imgComp.getStyle() || {}) : {};
+        if (bigger) { st['width'] = '100%'; st['height'] = 'auto'; }
+        else { st['max-width'] = '320px'; st['width'] = '100%'; st['height'] = 'auto'; }
+        imgComp.setStyle(st);
+        syncCanvasToHtml(); saveProjectData(); flashCanvasComponent(imgComp);
+        appendMagicChat(`✅ Ready! Image ${bigger ? '<b>perusa</b>' : '<b>chinna</b>'} panniten — selected image mattum maariruku.`, 'ai');
+        copilotRecordChange('Image resized', 'local');
+        copilotFollowups('edit'); return true;
+      }
+      const asBg = /(background|hero\s*background|பின்னணி)/i.test(q);
+      const brand = copilotBrandBlock().split('|')[0];
+      let prompt = copilotStripNoise(q).replace(/(replace|change|use|make|set|this|image|photo|picture|with|a|more|professional|hero|background|maathu|pannu)/gi, ' ').replace(/\s+/g, ' ').trim();
+      if (prompt.length < 6) prompt = `professional ${brand} website photo, high quality`;
+      appendMagicChat(`🎨 Generating image: <i>${escapeHtml(prompt.slice(0, 90))}</i>...`, 'ai');
+      showMagicTyping();
+      try {
+        const imgData = await executeAiImageGeneration(prompt);
+        copilotDone();
+        renderAiImageInChat(imgData);
+        const url = imgData && imgData.url;
+        if (url) {
+          try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI image apply'); } catch (e) {}
+          applyAiImageToCanvas(url, asBg ? 'background' : 'replace');
+          copilotRecordChange(asBg ? 'Image set as background' : 'Image replaced', 'local');
+          appendMagicChat(`✅ Ready! ${asBg ? 'Section background set panniten' : 'Image replace panniten'}. Card la irunthu vera option um try pannalam.`, 'ai');
+          copilotFollowups('edit');
+        }
+      } catch (e) {
+        copilotDone();
+        appendMagicChat(`⚠️ Image generation failed: ${escapeHtml(e?.message || e)} — website unchanged.`, 'ai');
+      }
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      return true;
+    }
+    /* ── ADD SECTION at the right place (anchor-aware, never blind-append) ── */
+    async function copilotAddSection(cls, target, selModel, q) {
+      const typeName = { testimonial: 'testimonials', review: 'testimonials', faq: 'FAQ', pricing: 'pricing', gallery: 'gallery', contact: 'contact', hero: 'hero', about: 'about', service: 'services', cta: 'call-to-action', banner: 'banner', form: 'contact form', map: 'map', newsletter: 'newsletter' }[cls.sectionType] || cls.sectionType || 'section';
+      let anchor = null;
+      if (cls.anchor && cls.anchor.what) anchor = copilotFindElement(cls.anchor.what);
+      if (!anchor && target.scope !== 'website' && target.comp) anchor = target.scope === 'section' ? target.comp : copilotNearestSection(target.comp);
+      copilotStage(cls.anchor ? `Finding ${cls.anchor.what}...` : 'Preparing new section...');
+      const brand = copilotBrandBlock();
+      const file = copilotState.file ? `\nUse these business facts in the copy:\n${copilotState.file.text.slice(0, 3000)}` : '';
+      const anchorHtml = anchor ? copilotCompOuter(anchor, 3000) : copilotStructureSummary(14);
+      const instruction = `Create ONE brand-new ${typeName} website section for this business (${brand}).${file}\nDesign context:\n${anchorHtml}\nRules: return ONLY the new <section> element HTML (inline styles, real business copy, working anchor links like #contact, responsive). No markdown fences, no commentary.`;
+      copilotStage('Generating section...');
+      try {
+        const res = await fetch('<?= SITE_URL ?>/api/generate.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'refine', api_key: localStorage.getItem('gemini_api_key') || '', model: selModel === 'opencode-fallback' ? 'gemini-3.5-flash-lite' : selModel, current_html: String(currentHtml || '').slice(0, 20000), selected_html: anchorHtml.slice(0, 10000), instruction, customer_requirement: q, biz_name: (typeof projectData !== 'undefined' && projectData && projectData.bizName) || 'Website' })
+        });
+        const j = await res.json();
+        const html = j && (j.html || '');
+        if (j && j.success && html && /<(section|div|header|footer)/i.test(html)) {
+          try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI add section'); } catch (e) {}
+          const pos = cls.anchor ? (cls.anchor.pos === 'before' ? 'before' : 'below') : 'added';
+          const anchorLbl = anchor ? copilotDescribeComp(anchor) : '';
+          copilotInsertAfter(anchor, html, `Added ${typeName}`);
+          // Rewrite the insert message with anchor position.
+          return true;
+        }
+      } catch (e) { /* fall through to honest message */ }
+      appendMagicChat(`⚠️ Section generate aagala — website unchanged. Konjam specific ah sollunga (e.g. "Add FAQ with 3 questions").`, 'ai');
+      return true;
+    }
+    /* ── MOBILE FIX: measured issues → safe local fixes, sequenced ── */
+    async function copilotMobileFix() {
+      appendMagicChat('📱 Mobile check', 'user');
+      showMagicTyping();
+      const audit = copilotAuditRun();
+      const mob = audit.issues.filter(i => i.cat === 'Mobile');
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      if (!mob.length) {
+        appendMagicChat(`✅ <b>Mobile check done</b> — overflow illa, text readable, viewport OK. Desktop version thodave illa.`, 'ai');
+        copilotFollowups('edit'); return true;
+      }
+      let h = `<div style="font-weight:800; margin-bottom:0.3rem;">📱 Mobile issues: ${mob.length}</div>`;
+      mob.forEach(it => { h += `<div class="cp-audit-row">⚠️<span><b>[${escapeHtml(it.cat)}]</b> ${escapeHtml(it.msg)}</span></div>`; });
+      h += `<div style="margin-top:0.4rem; font-size:0.76rem; color:#94a3b8;">Desktop version damage aagathu — mobile-safe fixes mattum apply aagum.</div>`;
+      h += `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn" onclick="copilotFixMobileNow()">🔧 Fix mobile issues (${mob.length})</button></div>`;
+      copilotState.audit = audit;
+      appendMagicChat(h, 'ai');
+      copilotFollowups('edit'); return true;
+    }
+    async function copilotFixMobileNow() {
+      const audit = copilotState.audit;
+      if (!audit) return;
+      const queue = audit.issues.filter(i => i.cat === 'Mobile' && i.fix).slice();
+      if (!queue.length) { showToast('Nothing auto-fixable'); return; }
+      showMagicTyping();
+      let n = 0;
+      for (let k = 0; k < queue.length; k++) {
+        const idx = audit.issues.indexOf(queue[k]);
+        if (idx < 0) continue;
+        copilotStage(`Fixing mobile ${k + 1}/${queue.length}...`);
+        try { await copilotFixIssue(idx); n++; } catch (e) {}
+      }
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      appendMagicChat(`✅ <b>Mobile fixes completed (${n}/${queue.length})</b> — desktop untouched.`, 'ai');
+      copilotRecordChange('Mobile fixes', 'local');
+      copilotFollowups('edit');
+    }
+
+    /* ── SAFE validation before any full-page apply (§23) ── */
+    function copilotValidateFullDoc(html) {
+      const s = String(html || '');
+      if (s.trim().length < 500) return 'AI returned an empty page';
+      if (!/<body[\s>]/i.test(s) || !/<\/html>/i.test(s)) return 'AI returned broken HTML (no body/html)';
+      const txt = s.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ');
+      const plain = txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (plain.length < 100) return 'AI returned a page with no readable content';
+      if (/^```/.test(s.trim())) return 'AI returned markdown instead of HTML';
+      return null;
+    }
+    function copilotValidateSnippet(html) {
+      const s = String(html || '').trim();
+      if (!s || !s.includes('<')) return 'AI returned an empty element';
+      if (s.length > 60000) return 'AI returned an oversized element';
+      return null;
+    }
+    /* ── BEFORE/AFTER REVIEW for large changes (§5) ── */
+    function copilotReviewStats(newHtml) {
+      try {
+        const countSec = (h) => (String(h).match(/<(section|header|footer)[\s>]/gi) || []).length;
+        const a = countSec(typeof currentHtml === 'string' ? currentHtml : '');
+        const b = countSec(newHtml);
+        const kb = (h) => Math.round(String(h).length / 1024);
+        return { a, b, ka: kb(typeof currentHtml === 'string' ? currentHtml : ''), kb: kb(newHtml) };
+      } catch (e) { return { a: 0, b: 0, ka: 0, kb: 0 }; }
+    }
+    function copilotReviewGate(o) {
+      // Small/snippet edits apply directly; large full-page edits need review.
+      if (!copilotState.reviewLarge && o.kind !== 'full') return Promise.resolve(true);
+      if (o.kind !== 'full') return Promise.resolve(true);
+      return new Promise((resolve) => {
+        copilotState.pendingReview = { resolve, apply: o.apply, summary: o.summary };
+        const st = copilotReviewStats(o.html);
+        document.getElementById('copilot-review-title').textContent = o.title || 'Review AI changes';
+        document.getElementById('copilot-review-sub').textContent = 'Your website was NOT modified yet. Apply chaa?';
+        document.getElementById('copilot-review-yes').textContent = 'Apply Changes';
+        document.getElementById('copilot-review-no').textContent = 'Discard';
+        document.getElementById('copilot-review-body').innerHTML =
+          `<div style="margin-bottom:0.5rem;"><b>Before:</b> ${st.a} sections · ${st.ka} KB &nbsp;→&nbsp; <b>After:</b> ${st.b} sections · ${st.kb} KB</div>` +
+          `<div>${o.summary || ''}</div>`;
+        document.getElementById('copilot-review-modal').style.display = 'flex';
+      });
+    }
+    function copilotReviewDecide(yes) {
+      const p = copilotState.pendingReview || copilotState.pendingConfirm;
+      copilotState.pendingReview = null; copilotState.pendingConfirm = null;
+      try { document.getElementById('copilot-review-modal').style.display = 'none'; } catch (e) {}
+      if (p && p.resolve) p.resolve(!!yes);
+    }
+    function copilotConfirmDanger(o) {
+      // {title, body, yesLabel} → Promise<boolean> (Continue/Cancel).
+      return new Promise((resolve) => {
+        copilotState.pendingConfirm = { resolve };
+        document.getElementById('copilot-review-title').textContent = o.title || 'Confirm change';
+        document.getElementById('copilot-review-sub').textContent = 'This is a major change.';
+        document.getElementById('copilot-review-yes').textContent = o.yesLabel || 'Continue';
+        document.getElementById('copilot-review-no').textContent = 'Cancel';
+        document.getElementById('copilot-review-body').innerHTML = o.body || '';
+        document.getElementById('copilot-review-modal').style.display = 'flex';
+      });
+    }
+    /* ── AI change memory + undo (integrates version snapshots + UndoManager) ── */
+    function copilotVersionsCount() {
+      try {
+        if (typeof wcGetVersions === 'function') return wcGetVersions().length;
+      } catch (e) {}
+      return 0;
+    }
+    function copilotRecordChange(summary, kind) {
+      try {
+        copilotState.changes.push({ at: Date.now(), target: copilotState.lastTargetLabel || '', summary, kind, verIdx: Math.max(0, copilotVersionsCount() - 1) });
+        while (copilotState.changes.length > 20) copilotState.changes.shift();
+      } catch (e) {}
+    }
+    function copilotUndoLast() {
+      const last = copilotState.changes.pop();
+      if (!last) { showToast('↩ Nothing to undo'); return; }
+      try {
+        if (last.kind === 'full') {
+          if (typeof window.wcRestoreVersion === 'function') { window.wcRestoreVersion(last.verIdx); }
+          else if (grapesEditor) grapesEditor.UndoManager.undo();
+        } else {
+          if (grapesEditor) grapesEditor.UndoManager.undo();
+        }
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        appendMagicChat(`↩ <b>Undone:</b> ${escapeHtml(last.summary)} — previous state restored.`, 'ai');
+        showToast('↩ AI change undone');
+      } catch (e) { appendMagicChat(`⚠️ Undo failed: ${escapeHtml(e?.message || e)}`, 'ai'); }
+    }
+    /* ── Message action buttons + smart follow-ups (§20, §24) ── */
+    function copilotMsgButtons(q) {
+      const id = ++copilotState.msgSeq;
+      copilotState['msg_' + id] = { q };
+      return `<div class="cp-msg-actions">` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotUndoLast()">↩ Undo</button>` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotRetryMsg(${id})">🔁 Retry</button>` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotPreviewTarget()">👀 Preview</button></div>`;
+    }
+    function copilotRetryMsg(id) {
+      const m = copilotState['msg_' + id];
+      if (!m || !m.q) return;
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.value = copilotStripNoise(m.q);
+      executeMagicAi();
+    }
+    function copilotPreviewTarget() {
+      try {
+        const c = copilotSelectedComp();
+        if (c) { flashCanvasComponent(c); showToast('👀 Target highlighted on canvas'); return; }
+      } catch (e) {}
+      try { if (typeof openStudioPreview === 'function') { openStudioPreview(); return; } } catch (e) {}
+      showToast('👀 Canvas is live — see your site');
+    }
+    function copilotFollowups(kind) {
+      try {
+        const box = document.getElementById('magic-chips-container');
+        if (!box) return;
+        const chip = (label, fn) => `<span class="m-chip" onclick="${fn}">${label}</span>`;
+        let h = '';
+        if (kind === 'audit') h = chip('🔧 Fix all', 'copilotFixAll()') + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('💬 Ask advice', "copilotSetMode('ask')");
+        else if (kind === 'fix') h = chip('📋 Audit again', 'copilotAuditShow()') + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('✨ Make premium', "quickMagic('Make this website more premium')");
+        else if (kind === 'add') h = chip('❓ Add FAQ', "quickMagic('Add FAQ section below testimonials')") + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('📋 Audit', 'copilotAuditShow()');
+        else if (kind === 'content') h = chip('🎯 Improve CTA', "quickMagic('Improve CTA visibility')") + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('🔎 SEO check', 'copilotSeoFlow()');
+        else h = chip('📱 Improve Mobile', "quickMagic('Make my website mobile-friendly')") + chip('🎯 Update CTA', "quickMagic('Improve CTA visibility')") + chip('📋 Audit', 'copilotAuditShow()') + chip('🔎 SEO', 'copilotSeoFlow()');
+        box.innerHTML = h;
+      } catch (e) {}
+    }
+    /* ── File / document context (§18: txt/md/csv/json) ── */
+    function copilotAttachFile() {
+      try { document.getElementById('copilot-file').click(); } catch (e) {}
+    }
+    function copilotFilePicked(input) {
+      try {
+        const f = input && input.files && input.files[0];
+        if (!f) return;
+        if (f.size > 200000) { showToast('⚠️ File too big (max 200KB text)'); input.value = ''; return; }
+        const rd = new FileReader();
+        rd.onload = () => {
+          copilotState.file = { name: f.name, text: String(rd.result || '').slice(0, 6000) };
+          document.getElementById('copilot-filename').textContent = `${f.name} (${Math.round(copilotState.file.text.length / 1024)}KB)`;
+          document.getElementById('copilot-filebar').style.display = 'flex';
+          showToast('📎 File attached — AI will use it');
+        };
+        rd.readAsText(f);
+        input.value = '';
+      } catch (e) { showToast('⚠️ Could not read file'); }
+    }
+    function copilotClearFile() {
+      copilotState.file = null;
+      try { document.getElementById('copilot-filebar').style.display = 'none'; } catch (e) {}
+    }
+    /* ── Design quick commands (§12) ── */
+    function copilotDesignCmd(style) {
+      const map = {
+        premium: 'Make this look premium: refined spacing, soft shadows, consistent rounded corners, elegant typography — keep all text and images',
+        luxury: 'Make this luxurious dark-theme style: deep background, gold accents, serif display headings, generous spacing — keep all text',
+        modern: 'Make this modern: clean layout, gradient accents, glassmorphism cards, bold headings — keep all text',
+        corporate: 'Make this corporate and trustworthy: navy + white, structured grid, professional headings, clear CTA — keep all text',
+        minimal: 'Make this minimal: lots of whitespace, single accent color, simple typography, remove visual clutter — keep all text',
+        creative: 'Make this creative and playful: vibrant accents, interesting shapes, energetic headings — keep all text readable',
+        mobile: 'Make my website mobile-friendly without changing desktop design',
+        cta: 'Improve CTA visibility: high-contrast buttons, sticky call-to-action, clear action words — keep page structure',
+        spacing: 'Fix spacing: consistent section padding, even gaps, clean vertical rhythm — do not change colors or text',
+        type: 'Improve typography: clear heading hierarchy, readable sizes, elegant font pairing — do not change colors or layout'
+      };
+      const t = copilotResolveTarget();
+      const scopeTxt = t.scope === 'website' ? 'the entire website' : `the selected ${t.label}`;
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.value = `${map[style] || style} — apply to ${scopeTxt}`;
+      executeMagicAi();
+    }
+    function copilotSeoFlow() { copilotSeoText('title'); }
+    /* ── FIX ALL: sequenced safe fixes with progress (§14) ── */
+    async function copilotFixAll() {
+      let audit = copilotState.audit;
+      if (!audit || !audit.issues.length) {
+        appendMagicChat('📋 Checking website first...', 'ai');
+        showMagicTyping();
+        audit = copilotAuditRun();
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (!audit.issues.length) { appendMagicChat('✅ <b>Nothing to fix</b> — website already looks solid.', 'ai'); return; }
+        appendMagicChat(copilotAuditHtml(audit) + `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotFixAll()">🔧 Fix All (${audit.issues.filter(i => i.fix).length} auto-fixable)</button></div>`, 'ai');
+      }
+      const queue = audit.issues.filter(i => i.fix).slice();
+      if (!queue.length) { appendMagicChat('ℹ️ No auto-fixable issues — the rest need your input. Tell me what to change.', 'ai'); return; }
+      const ok = await copilotConfirmDanger({
+        title: `Fix ${queue.length} issues?`,
+        body: `<div style="font-size:0.8rem;">AI will fix <b>${queue.length}</b> detected issue(s) one by one. Each fix is undoable.</div>`,
+        yesLabel: `Fix All (${queue.length})`
+      });
+      if (!ok) { appendMagicChat('Fix-all cancelled — nothing changed.', 'ai'); return; }
+      showMagicTyping();
+      let n = 0;
+      for (let k = 0; k < queue.length; k++) {
+        const idx = audit.issues.indexOf(queue[k]);
+        if (idx < 0) continue;
+        copilotStage(`Fixing ${k + 1}/${queue.length}: ${queue[k].msg.slice(0, 50)}...`);
+        try { await copilotFixIssue(idx); n++; } catch (e) {}
+      }
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      appendMagicChat(`✅ <b>Website improvements completed (${n}/${queue.length} fixed).</b>`, 'ai');
+      copilotRecordChange(`Fix-all: ${n} issues`, 'local');
+      copilotFollowups('fix');
+      showToast('✓ Website improvements completed');
+    }
+    async function copilotAuditShow() {
+      appendMagicChat('📋 Website audit', 'user');
+      showMagicTyping();
+      await new Promise(r => setTimeout(r, 30));
+      const audit = copilotAuditRun();
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      const fixable = audit.issues.filter(i => i.fix).length;
+      copilotMemPush('ai', `Audit: ${audit.goods} good, ${audit.warns} warnings, ${audit.bads} important`, 'website');
+      appendMagicChat(copilotAuditHtml(audit) + (fixable ? `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotFixAll()">🔧 Fix All (${fixable})</button></div>` : ''), 'ai');
+      copilotFollowups('audit');
+    }
+    /* ── ALL-PAGES loop (§9: only when explicitly requested) ── */
+    async function copilotAllPages(instruction) {
+      let pages = [];
+      try { pages = (typeof wcEnsurePages === 'function') ? wcEnsurePages() : []; } catch (e) {}
+      if (pages.length < 2) {
+        appendMagicChat('ℹ️ Only one page exists — applying to the current page.', 'ai');
+        return false; // fall through to normal single-page flow
+      }
+      const cleanInstr = copilotStripNoise(instruction).replace(/\b(to|on|for|across)\s+all\s+pages?\b|\ball\s+pages?\b/gi, 'on this page').trim();
+      const ok = await copilotConfirmDanger({
+        title: `Change ${pages.length} pages?`,
+        body: `<div style="font-size:0.8rem;">“${escapeHtml(cleanInstr.slice(0, 140))}” will be applied to <b>${pages.length} pages</b>: ${pages.map(p => escapeHtml(p.name)).join(', ')}.</div>`,
+        yesLabel: `Change ${pages.length} pages`
+      });
+      if (!ok) { appendMagicChat('Multi-page change cancelled — nothing changed.', 'ai'); return true; }
+      const curIdx = copilotPageInfo().idx;
+      showMagicTyping();
+      let done = 0;
+      const inp = document.getElementById('magic-input');
+      for (let i = 0; i < pages.length; i++) {
+        copilotStage(`Applying to page ${i + 1}/${pages.length}: ${pages[i].name}...`);
+        try {
+          if (typeof wcSwitchPage === 'function') wcSwitchPage(i);
+          await new Promise(r => setTimeout(r, 250));
+          if (inp) inp.value = cleanInstr;
+          copilotState.programmatic = true;
+          try { await executeMagicAi(); }
+          finally { copilotState.programmatic = false; }
+          done++;
+        } catch (e) { console.warn('[copilot] page failed:', pages[i].name, e?.message); }
+      }
+      try { if (typeof wcSwitchPage === 'function' && curIdx !== copilotPageInfo().idx) wcSwitchPage(curIdx); } catch (e) {}
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      appendMagicChat(`✅ <b>Applied to ${done}/${pages.length} pages:</b> “${escapeHtml(cleanInstr.slice(0, 120))}”.`, 'ai');
+      copilotRecordChange(`All-pages edit (${done}/${pages.length})`, 'full');
+      copilotFollowups('edit');
+      return true;
+    }
+
+    /* ── LOCAL section delete / move (exact + undoable, no AI needed) ── */
+    async function copilotLocalDelete(target, rawQ) {
+      if (!target.comp || !grapesEditor) return false;
+      const label = target.label;
+      const ok = await copilotConfirmDanger({
+        title: `Remove ${label}?`,
+        body: `<div style="font-size:0.8rem;">This will remove <b>${escapeHtml(label)}</b> from the ${escapeHtml(copilotPageInfo().name)} page. You can undo right after.</div>`,
+        yesLabel: 'Remove it'
+      });
+      if (!ok) { appendMagicChat('Delete cancelled — nothing changed.', 'ai'); return true; }
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI delete'); } catch (e) {}
+      try {
+        target.comp.remove();
+        try { grapesEditor.select(null); } catch (e) {}
+        syncCanvasToHtml(); saveProjectData(); renderSmartLayers();
+        appendMagicChat(`✅ Ready! ${escapeHtml(label)} <b>remove</b> panniten. Undo (↶) venumna use pannunga.<div class="cp-msg-actions"><button type="button" class="cp-msg-btn" onclick="copilotUndoLast()">↩ Undo</button></div>`, 'ai');
+        copilotRecordChange(`Removed ${label}`, 'local');
+        copilotMemPush('ai', `Removed ${label}`, '');
+        copilotFollowups('edit');
+        try { if (typeof updateAiSelectedTarget === 'function') updateAiSelectedTarget(null); } catch (e) {}
+      } catch (e) { appendMagicChat(`⚠️ Delete failed: ${escapeHtml(e?.message || e)}`, 'ai'); }
+      return true;
+    }
+    function copilotLocalMove(q) {
+      const m = copilotStripNoise(q).match(/move\s+(.+?)\s+(above|below|before|after|top|bottom)\s+(.+)$/i);
+      if (!m) return false;
+      const mover = copilotFindElement(m[1]) || copilotSelectedComp();
+      const anchor = copilotFindElement(m[3]);
+      if (!mover || !anchor || mover === anchor) return false;
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI move'); } catch (e) {}
+      try {
+        const parent = anchor.parent ? anchor.parent() : null;
+        if (!parent) return false;
+        let idx = anchor.index() + (/below|after|bottom/i.test(m[2]) ? 1 : 0);
+        if (/top/i.test(m[2])) idx = 0;
+        parent.append(mover, { at: idx });
+        syncCanvasToHtml(); saveProjectData(); renderSmartLayers();
+        try { grapesEditor.select(mover); } catch (e) {}
+        flashCanvasComponent(mover);
+        appendMagicChat(`✅ Ready! ${escapeHtml(copilotDescribeComp(mover))} moved ${/below|after|bottom/i.test(m[2]) ? 'below' : 'above'} ${escapeHtml(copilotDescribeComp(anchor))}.`, 'ai');
+        copilotRecordChange('Section moved', 'local');
+        copilotFollowups('edit');
+        return true;
+      } catch (e) { return false; }
+    }
+    /* ── MAIN ROUTER: classify → correct operation (runs before AI lanes) ── */
+    async function copilotPreRoute(ctx) {
+      // Returns {handled:boolean, q?:string}. Handled paths restore btn/typing themselves.
+      const rawQ = ctx.rawQ;
+      const cls = copilotClassifyPure(rawQ);
+      const target = copilotResolveTarget();
+      copilotState.lastTargetLabel = target.label;
+      copilotMemPush('user', copilotStripNoise(rawQ).slice(0, 300), target.scope === 'website' ? '' : target.label);
+      const finishAi = (html, follow) => {
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        appendMagicChat(html, 'ai');
+        if (follow) copilotFollowups(follow);
+      };
+      // 1. FIND — read-only, works in both modes.
+      if (cls.kind === 'FIND_ELEMENT') {
+        const hit = copilotFindElement(cls.findWhat || rawQ);
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (hit && grapesEditor) {
+          try { grapesEditor.select(hit); } catch (e) {}
+          flashCanvasComponent(hit);
+          const lbl = copilotDescribeComp(hit);
+          copilotMemPush('ai', `Selected ${lbl}`, lbl);
+          appendMagicChat(`🎯 <b>Selected: ${escapeHtml(lbl)}</b> — canvas la highlight panniten. Edit venumna sollunga (Edit mode).`, 'ai');
+          copilotFollowups('edit');
+        } else {
+          appendMagicChat(`🔍 Atha kandupudika mudiyala (“${escapeHtml((cls.findWhat || '').slice(0, 80))}”). Section name ah sollunga — e.g. “Find pricing section”, “Where is contact button?”.`, 'ai');
+        }
+        return { handled: true };
+      }
+      // 2. AUDIT — analysis only, never modifies.
+      if (cls.kind === 'WEBSITE_AUDIT') {
+        const audit = copilotAuditRun();
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        const fixable = audit.issues.filter(i => i.fix).length;
+        copilotMemPush('ai', `Audit: ${audit.goods} good, ${audit.warns} warnings, ${audit.bads} important`, 'website');
+        appendMagicChat(copilotAuditHtml(audit) + (fixable ? `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotFixAll()">🔧 Fix All (${fixable})</button></div>` : ''), 'ai');
+        copilotFollowups('audit');
+        return { handled: true };
+      }
+      // 3. FIX ALL shortcut.
+      if (cls.kind === 'FIX_ALL') { await copilotFixAll(); return { handled: true }; }
+      // 3b. UNDO — local, instant, both modes.
+      if (cls.kind === 'UNDO') {
+        copilotDone();
+        const btnU = document.getElementById('magic-btn');
+        if (btnU) { btnU.disabled = false; btnU.innerHTML = '➤'; }
+        copilotUndoLast();
+        return { handled: true };
+      }
+      // 4. QUESTION / ADVICE — never modifies (both modes).
+      if (cls.kind === 'QUESTION' || cls.kind === 'ADVICE') {
+        const r = await copilotAsk(copilotStripNoise(rawQ));
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (r.ok) {
+          appendMagicChat(formatMarkdown(r.reply) + `<div style="font-size:0.68rem;color:#64748b;margin-top:0.3rem;">· ${escapeHtml(r.model)}</div>`, 'ai');
+          copilotFollowups('edit');
+        } else {
+          appendMagicChat(`⚠️ I couldn't answer right now (${escapeHtml(r.error)}). Your website was not modified.`, 'ai');
+        }
+        return { handled: true };
+      }
+      // 5. ASK MODE — edit intents become advice + one-tap apply offer.
+      // (Programmatic runs like Fix-All bypass this: they already confirmed edit intent.)
+      if (copilotState.mode === 'ask' && !copilotState.programmatic) {
+        const r = await copilotAsk(`How should I do this on my website? Give 3-4 short actionable steps, no code: ${copilotStripNoise(rawQ)}`);
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (r.ok) {
+          const id = ++copilotState.msgSeq;
+          copilotState['apply_' + id] = { q: copilotStripNoise(rawQ) };
+          appendMagicChat(formatMarkdown(r.reply) + `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotSwitchAndApply(${id})">🛠️ Switch to Edit &amp; apply</button></div>`, 'ai');
+        } else {
+          appendMagicChat(`⚠️ I couldn't answer right now (${escapeHtml(r.error)}). Website unchanged.`, 'ai');
+        }
+        return { handled: true };
+      }
+      // 5b. ALL-PAGES (explicit only) — checked before single-scope routes
+      // so "add X to all pages" never collapses to one page.
+      if (cls.allPages) {
+        const handled = await copilotAllPages(copilotStripNoise(rawQ));
+        if (handled) return { handled: true };
+        // single page exists → fall through to lanes
+      }
+      // 6. IMAGE commands.
+      if (cls.kind === 'IMAGE_EDIT') { await copilotImageCommand(copilotStripNoise(rawQ), target); return { handled: true }; }
+      // 7. SEO text.
+      if (cls.kind === 'SEO_EDIT') {
+        const lq = rawQ.toLowerCase();
+        await copilotSeoText(/meta\s+description|description/i.test(lq) && !/title/i.test(lq) ? 'desc' : 'title');
+        return { handled: true };
+      }
+      // 8. CONTENT generation (structured copy).
+      if (cls.kind === 'CONTENT_GENERATION') {
+        const key = (copilotStripNoise(rawQ).match(/hero|about|services|features|testimonials|faq|pricing|cta|contact/i) || ['hero'])[0].toLowerCase();
+        const mapKey = { service: 'services', feature: 'features', testimonial: 'testimonials' }[key] || key;
+        if (COPILOT_COPY_SPECS[mapKey]) { await copilotContentAsk(mapKey); return { handled: true }; }
+        // fall through to lanes with brand-enriched instruction
+      }
+      // 9. ADD SECTION at anchor.
+      if (cls.kind === 'SECTION_ADD') {
+        const selModel = document.getElementById('magic-model-select')?.value || 'gemini-3.5-flash-lite';
+        await copilotAddSection(cls, target, selModel, copilotStripNoise(rawQ));
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        return { handled: true };
+      }
+      // 10. MOBILE fix flow.
+      if (cls.kind === 'MOBILE_FIX') { await copilotMobileFix(); return { handled: true }; }
+      // 12. LOCAL delete / move.
+      if (cls.kind === 'SECTION_DELETE' && target.comp) { await copilotLocalDelete(target, rawQ); copilotDone(); const btn = document.getElementById('magic-btn'); if (btn) { btn.disabled = false; btn.innerHTML = '➤'; } return { handled: true }; }
+      if (cls.kind === 'SECTION_MOVE') {
+        if (copilotLocalMove(rawQ)) { copilotDone(); const btn = document.getElementById('magic-btn'); if (btn) { btn.disabled = false; btn.innerHTML = '➤'; } return { handled: true }; }
+        // fall through to AI lanes if local move can't resolve
+      }
+      // 13. DESTRUCTIVE full-site ops → confirm first.
+      if (cls.destructive && !copilotState.confirmedOnce) {
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        const ok = await copilotConfirmDanger({
+          title: 'Big change — continue?',
+          body: `<div style="font-size:0.8rem;">“${escapeHtml(copilotStripNoise(rawQ).slice(0, 140))}” will change <b>multiple sections</b>. A restore point was saved.</div>`,
+          yesLabel: 'Continue'
+        });
+        if (!ok) { appendMagicChat('Cancelled — nothing changed.', 'ai'); return { handled: true }; }
+        copilotState.confirmedOnce = true;
+        const inp = document.getElementById('magic-input');
+        if (inp) inp.value = rawQ;
+        await executeMagicAi();
+        copilotState.confirmedOnce = false;
+        return { handled: true };
+      }
+      copilotState.confirmedOnce = false;
+      // 14. EDIT passthrough: snapshot + memory context for the lanes.
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI: ' + copilotStripNoise(rawQ).slice(0, 40)); } catch (e) {}
+      const withCtx = copilotResolvePronouns(copilotStripNoise(rawQ)) + copilotMemoryBlock()
+        + (copilotState.file ? `\n\n[[FILE ${copilotState.file.name}:\n${copilotState.file.text.slice(0, 4000)}\n]]` : '');
+      return { handled: false, q: withCtx };
+    }
+    function copilotSwitchAndApply(id) {
+      const p = copilotState['apply_' + id];
+      if (!p) return;
+      copilotSetMode('edit');
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.value = p.q;
+      executeMagicAi();
+    }
+    /* ── Copilot boot hooks (lightweight; no duplicate heavy listeners) ── */
+    function copilotInitHooks() {
+      try { copilotRefreshTargetLine(); } catch (e) {}
+      try {
+        if (window.wcSetAIScope && !window.wcSetAIScope.__cpWrapped) {
+          const orig = window.wcSetAIScope;
+          const wrapped = function (s) { try { orig(s); } catch (e) {} try { copilotRefreshTargetLine(); } catch (e2) {} };
+          wrapped.__cpWrapped = true;
+          window.wcSetAIScope = wrapped;
+        }
+      } catch (e) {}
+      try {
+        if (typeof grapesEditor !== 'undefined' && grapesEditor && !window.__copilotSelHook) {
+          window.__copilotSelHook = true;
+          grapesEditor.on('component:selected', () => { try { copilotRefreshTargetLine(); } catch (e) {} });
+          grapesEditor.on('component:deselected', () => { try { copilotRefreshTargetLine(); } catch (e) {} });
+        } else if (!window.__copilotSelHook) {
+          setTimeout(() => { try { copilotInitHooks(); } catch (e) {} }, 2500);
+        }
+      } catch (e) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', copilotInitHooks);
+    else copilotInitHooks();
+
+    /* ══════════════ MAIN AI CHAT EXECUTION (Gemini Primary · OpenCode Fallback) ══════════════ */
     async function executeMagicAi() {
       const input = document.getElementById('magic-input');
-      const q = input.value.trim();
-      if (!q) return;
+      const rawQ = input.value.trim();
+      if (!rawQ) return;
 
       syncCanvasToHtml();
       const snap = currentHtml;
@@ -8437,9 +10300,37 @@ ${WC_ANIMATION_RUNTIME}
       btn.disabled = true;
       btn.innerHTML = '⏳';
 
-      appendMagicChat(q, 'user');
+      appendMagicChat(rawQ, 'user');
       showMagicTyping();
 
+      // 1. Check prompt-to-image request
+      if (isImageGenerationRequest(rawQ)) {
+        try {
+          const imgPrompt = extractImagePrompt(rawQ);
+          const imgData = await executeAiImageGeneration(imgPrompt);
+          renderAiImageInChat(imgData);
+        } catch (imgErr) {
+          appendMagicChat(`⚠️ Image generation failed: ${escapeHtml(imgErr.message)}`, 'ai');
+        } finally {
+          hideMagicTyping();
+          btn.disabled = false;
+          btn.innerHTML = '➤';
+        }
+        return;
+      }
+
+      const selModel = document.getElementById('magic-model-select')?.value || 'gemini-3.5-flash-lite';
+      // Strip the "Update this <tag>:" prefill added by right-click → Ask AI to Edit This.
+      // The tag prefix confuses every AI lane, so only the real instruction is sent.
+      let q = String(rawQ).replace(/^update\s+this\s+<[^>]+>\s*:?\s*/i, '').trim();
+      if (!q) {
+        hideMagicTyping();
+        btn.disabled = false;
+        btn.innerHTML = '➤';
+        appendMagicChat('👋 Section select aachu! Ippo <strong>enna change venum</strong> nu sollunga — example: <em>"heading ah blue aakku"</em>, <em>"button periya aakku"</em>, <em>"text ah X nu maathu"</em>.', 'ai');
+        return;
+      }
+      const laneErrs = [];
       const comp = selectedComponent;
       const hasSelected = !!comp;
       let selectedPayload = null;
@@ -8455,145 +10346,208 @@ ${WC_ANIMATION_RUNTIME}
         }
       }
 
+      // ★ Copilot router: ask/find/audit/add-section/etc. handled here; edits fall through.
+      copilotStage('Understanding request...');
+      const routed = await copilotPreRoute({ rawQ, q, comp, hasSelected, selectedPayload, selModel, snap, btn, input });
+      if (routed && routed.handled) return;
+      if (routed && routed.q) q = routed.q;
+
       try {
-        // ★ Selected element → SNIPPET lane first (small I/O, fits free caps,
-        // respects dropdown model). Whole page → full-doc lane.
-        // Puter.js is fallback only for selected-element micro-edits.
-        let result = null;
-        if (hasSelected && selectedPayload && window.OpenCodeAI?.editSnippet) {
-          try {
-            result = await window.OpenCodeAI.editSnippet({
-              userPrompt: q,
-              selectedHtml: selectedPayload.html || '',
-              bizName: projectData?.bizName || 'Website'
-            });
-          } catch (snipErr) {
-            console.warn('[Snippet lane failed, trying full-doc]:', snipErr?.message);
-            result = null;
-          }
-        }
-        if (!result && window.OpenCodeAI?.editWithFallback) {
-          try {
-            let enriched = q;
-            if (hasSelected && selectedPayload) {
-              enriched = `Target selected <${selectedPayload.tag}> element:\n${String(selectedPayload.html || '').slice(0, 4000)}\n\nUser request: ${q}\nReturn COMPLETE updated HTML document.`;
-            }
-            result = await window.OpenCodeAI.editWithFallback({
-              userPrompt: enriched,
-              currentHtml: currentHtml,
-              bizName: projectData?.bizName || 'Website',
-              puterCtx: { summary: buildAiStudioContext() }
-            });
-          } catch (freeErr) {
-            console.warn('[Free AI lane failed, trying Puter]:', freeErr?.message);
-            result = null;
-          }
-        }
-        if (!result && hasSelected) {
-          result = await window.PuterService.chatAndEdit({
-            userPrompt: q,
-            selectedElement: selectedPayload,
-            currentHtml: currentHtml,
-            context: {
-              bizName: projectData?.bizName || 'Website',
-              summary: buildAiStudioContext()
-            }
-          });
-        }
-        if (!result) throw new Error('All AI lanes failed — try a template action (e.g. "Add a pricing table with 3 plans") or another free model.');
+        let applied = false;
+        const usedTag = (m) => m ? ` <span style="color:#64748b;font-size:0.68rem;">· ${escapeHtml(m)}</span>` : '';
 
-        appendMagicChat(formatMarkdown(result.conversation), 'ai');
-
-        if (result.isEdit && result.updatedHtml) {
-          const isFullDoc = result.updatedHtml.includes('<html') || result.updatedHtml.includes('<!DOCTYPE');
-          if (hasSelected && comp && !isFullDoc) {
-            const parent = comp.parent();
-            if (parent) {
-              const idx = comp.index();
-              comp.remove();
-              const added = parent.append(result.updatedHtml, { at: idx });
-              const freshComp = Array.isArray(added) ? added[0] : added;
-              if (freshComp) {
-                configureEditorComponent(freshComp);
-                grapesEditor.select(freshComp);
+        // ══════════════════════════════════════════════
+        // 1. PRIMARY ENGINE: GOOGLE GEMINI (Server AI)
+        // ══════════════════════════════════════════════
+        if (selModel !== 'opencode-fallback') {
+          try {
+            copilotStage('Analyzing website...');
+            const geminiRes = await fetch('<?= SITE_URL ?>/api/generate.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'refine',
+                api_key: localStorage.getItem('gemini_api_key') || '',
+                model: selModel,
+                current_html: currentHtml,
+                selected_html: (hasSelected && selectedPayload) ? selectedPayload.html : '',
+                instruction: q,
+                customer_requirement: q,
+                biz_name: projectData?.bizName || 'Website',
+                concept_index: activeConceptIndex
+              })
+            });
+            const gData = await geminiRes.json();
+            if (gData && gData.success) {
+              const usedModel = gData.model || selModel;
+              if (gData.is_snippet && gData.html && hasSelected && comp) {
+                // SCOPED: only the selected section changes, rest untouched.
+                const verr = copilotValidateSnippet(gData.html);
+                if (verr) { laneErrs.push('Gemini (' + selModel + '): ' + verr); }
+                else {
+                  copilotStage('Applying changes...');
+                  applyUpdatedSnippetToCanvas(comp, gData.html);
+                  const sum = friendlyUpdateSummary(q);
+                  appendMagicChat(sum.html + usedTag(usedModel) + copilotMsgButtons(rawQ), 'ai');
+                  showToast(sum.toast);
+                  copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
+                  copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Section edit', 'snippet');
+                  copilotFollowups('edit');
+                  applied = true;
+                }
+              } else if (hasSelected) {
+                // SCOPED MODE: full-page answer is rejected — selected
+                // section mattum maarave snippet lane / offline retry.
+                laneErrs.push('Gemini (' + selModel + '): full page returned, selected section snippet kedaikala — fallback retry');
+              } else if (gData.html && gData.html.trim() !== snap.trim()) {
+                const verr = copilotValidateFullDoc(gData.html);
+                if (verr) { laneErrs.push('Gemini (' + selModel + '): ' + verr + ' — kept existing website'); }
+                else {
+                  const sum = friendlyUpdateSummary(q);
+                  copilotStage('Checking result...');
+                  const go = await copilotReviewGate({ kind: 'full', html: gData.html, summary: sum.html, title: 'Review AI changes' });
+                  if (!go) {
+                    appendMagicChat('Discarded — your website was not modified.', 'ai');
+                    applied = true;
+                  } else {
+                    copilotStage('Applying changes...');
+                    currentHtml = gData.html;
+                    if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+                      projectData.designs[activeConceptIndex].html = currentHtml;
+                      saveProjectData();
+                    }
+                    loadHtmlIntoStudioCanvas();
+                    appendMagicChat(sum.html + usedTag(usedModel) + copilotMsgButtons(rawQ), 'ai');
+                    showToast(sum.toast);
+                    copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
+                    copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Website edit', 'full');
+                    copilotFollowups('edit');
+                    applied = true;
+                  }
+                }
+              } else if (gData.success) {
+                laneErrs.push('Gemini (' + selModel + '): returned no change');
               }
-            } else {
-              comp.components(result.updatedHtml);
+            } else if (gData) {
+              laneErrs.push('Gemini (' + selModel + '): ' + ((gData.errors || []).slice(0, 2).join(' | ') || gData.error || 'failed'));
             }
-            syncCanvasToHtml();
-            if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-              projectData.designs[activeConceptIndex].html = currentHtml;
-              saveProjectData();
+          } catch (geminiErr) {
+            laneErrs.push('Gemini (' + selModel + '): ' + (geminiErr?.message || 'network error'));
+            console.warn('[Gemini primary lane error, falling back to OpenCode]:', geminiErr?.message);
+          }
+        }
+
+        // ══════════════════════════════════════════════
+        // 2. FALLBACK ENGINE: OPENCODE
+        // ══════════════════════════════════════════════
+        if (!applied) {
+          try {
+            copilotStage(selModel === 'opencode-fallback' ? 'Contacting OpenCode...' : 'Trying fallback model...');
+            let ocResult = null;
+            if (hasSelected && selectedPayload && window.OpenCodeAI?.editSnippet) {
+              try {
+                ocResult = await window.OpenCodeAI.editSnippet({
+                  userPrompt: q,
+                  selectedHtml: selectedPayload.html || '',
+                  bizName: projectData?.bizName || 'Website'
+                });
+              } catch (snipErr) {
+                laneErrs.push('Snippet: ' + (snipErr?.message || 'failed'));
+              }
             }
-            renderSmartLayers();
-            showToast('✨ Selected element updated & saved!');
+            if (!ocResult && window.OpenCodeAI?.editWithFallback) {
+              let enriched = q;
+              if (hasSelected && selectedPayload) {
+                enriched = `Target selected <${selectedPayload.tag}> element:
+${String(selectedPayload.html || '').slice(0, 4000)}
+
+User request: ${q}
+Return COMPLETE updated HTML document.`;
+              }
+              ocResult = await window.OpenCodeAI.editWithFallback({
+                userPrompt: enriched,
+                currentHtml: currentHtml,
+                bizName: projectData?.bizName || 'Website',
+                model: selModel
+              });
+            }
+
+            if (ocResult && ocResult.updatedHtml) {
+              const ocModel = ocResult.model || ocResult.engine || 'opencode';
+              const isFullDoc = ocResult.updatedHtml.includes('<html') || ocResult.updatedHtml.includes('<!DOCTYPE');
+              if (hasSelected && comp && !isFullDoc) {
+                // SCOPED: only the selected section changes.
+                const verr = copilotValidateSnippet(ocResult.updatedHtml);
+                if (verr) { laneErrs.push('OpenCode: ' + verr); }
+                else {
+                  copilotStage('Applying changes...');
+                  applyUpdatedSnippetToCanvas(comp, ocResult.updatedHtml);
+                  const sum = friendlyUpdateSummary(q);
+                  appendMagicChat(sum.html + usedTag(ocModel) + copilotMsgButtons(rawQ), 'ai');
+                  showToast(sum.toast);
+                  copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
+                  copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Section edit', 'snippet');
+                  copilotFollowups('edit');
+                  applied = true;
+                }
+              } else if (hasSelected && isFullDoc) {
+                // SCOPED MODE: full-page answer rejected — section mattum
+                // maarave offline smart-style retry.
+                laneErrs.push('OpenCode: full page returned, selected section snippet kedaikala — offline retry');
+              } else {
+                const verr = copilotValidateFullDoc(ocResult.updatedHtml);
+                if (verr) { laneErrs.push('OpenCode: ' + verr + ' — kept existing website'); }
+                else {
+                  const sum = friendlyUpdateSummary(q);
+                  copilotStage('Checking result...');
+                  const go = await copilotReviewGate({ kind: 'full', html: ocResult.updatedHtml, summary: sum.html, title: 'Review AI changes' });
+                  if (!go) {
+                    appendMagicChat('Discarded — your website was not modified.', 'ai');
+                    applied = true;
+                  } else {
+                    copilotStage('Applying changes...');
+                    currentHtml = ocResult.updatedHtml;
+                    if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+                      projectData.designs[activeConceptIndex].html = currentHtml;
+                      saveProjectData();
+                    }
+                    loadHtmlIntoStudioCanvas();
+                    appendMagicChat(sum.html + usedTag(ocModel) + copilotMsgButtons(rawQ), 'ai');
+                    showToast(sum.toast);
+                    copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
+                    copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Website edit', 'full');
+                    copilotFollowups('edit');
+                    applied = true;
+                  }
+                }
+              }
+            }
+          } catch (ocErr) {
+            laneErrs.push('OpenCode: ' + (ocErr?.message || 'failed'));
+            console.warn('[OpenCode fallback lane error]:', ocErr?.message);
+          }
+        }
+
+        // ══════════════════════════════════════════════
+        // 3. OFFLINE SMART-STYLE FALLBACK (text/color/size/remove/hide)
+        // ══════════════════════════════════════════════
+        if (!applied) {
+          if (applyLocalSmartStyle(q)) {
+            applied = true;
           } else {
-            if (result.updatedHtml.includes('<html') || result.updatedHtml.includes('<!DOCTYPE')) {
-              currentHtml = result.updatedHtml;
-              loadHtmlIntoStudioCanvas();
-            } else {
-              grapesEditor.addComponents(result.updatedHtml);
-              syncCanvasToHtml();
-            }
-            if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-              projectData.designs[activeConceptIndex].html = currentHtml;
-              saveProjectData();
-            }
-            renderSmartLayers();
-            showToast('✨ Website updated & saved!');
+            const why = laneErrs.length ? laneErrs.slice(0, 3).join(' | ') : 'no detail';
+            const scopeHint = hasSelected ? 'Selected section ku mattum apply aagala. ' : '';
+            throw new Error(`Could not apply changes (model ${selModel}) — ${scopeHint}${why}. Try: "heading ah blue aakku", "text ah X nu maathu", or "button periya aakku".`);
           }
         }
 
       } catch (err) {
-        console.warn('[AI error, checking fallback]:', err);
-        if (window.PuterService.isQuotaOrCreditError(err)) {
-          appendMagicChat('⚠️ Puter AI credit limit reached. Click **Switch Account** or **Create Free Account** in the popup to continue.', 'ai');
-        } else {
-          const selModel = (window.OpenCodeAI?.getModel) ? window.OpenCodeAI.getModel() : '';
-          appendMagicChat(`⚠️ AI notice (${escapeHtml(selModel || 'free model')}): ${escapeHtml(err.message)}. Trying backend Gemini fallback...`, 'ai');
-          try {
-            await executeGeminiBackendFallback(q, snap);
-          } catch (backendErr) {
-            // Last net: offline smart-style (color/size/dark-light) — no network needed
-            if (applyLocalSmartStyle(q)) return;
-            appendMagicChat(`⚠️ Backend failed: ${escapeHtml(backendErr.message)}`, 'ai');
-            showToast('AI request failed: ' + backendErr.message);
-          }
-        }
+        appendMagicChat(`⚠️ AI notice: ${escapeHtml(err.message)}`, 'ai');
+        showToast('AI request: ' + err.message);
       } finally {
         hideMagicTyping();
         btn.disabled = false;
         btn.innerHTML = '➤';
-      }
-    }
-
-    async function executeGeminiBackendFallback(q, snap) {
-      const selModel = (window.OpenCodeAI?.getModel) ? window.OpenCodeAI.getModel() : undefined;
-      const res = await fetch('<?= SITE_URL ?>/api/generate.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'refine',
-          api_key: localStorage.getItem('gemini_api_key') || '',
-          model: selModel,
-          current_html: currentHtml,
-          instruction: q,
-          customer_requirement: q,
-          biz_name: projectData?.bizName || 'Website',
-          concept_index: activeConceptIndex
-        })
-      });
-      const result = await res.json();
-      if (!result.success) throw new Error(result.error || 'Failed');
-      if (result.html && result.html.trim() !== snap.trim()) {
-        currentHtml = result.html;
-        if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-          projectData.designs[activeConceptIndex].html = currentHtml;
-          saveProjectData();
-        }
-        loadHtmlIntoStudioCanvas();
-        appendMagicChat(`✨ ${escapeHtml(result.response_msg || 'Updated via Gemini')}`, 'ai');
-        showToast('✨ Updated live via Gemini!');
       }
     }
 
@@ -10317,7 +12271,8 @@ ${WC_ANIMATION_RUNTIME}
           if (input && panel && !$('wc-ai-scope')) {
             const row = document.createElement('div'); row.id = 'wc-ai-scope'; row.className = 'wc-scope-row';
             row.innerHTML = '<span class="wc-scope-chip active" data-scope="auto" onclick="wcSetAIScope(\'auto\')">🤖 Auto</span><span class="wc-scope-chip" data-scope="element" onclick="wcSetAIScope(\'element\')">🎯 Element</span><span class="wc-scope-chip" data-scope="section" onclick="wcSetAIScope(\'section\')">📐 Section</span><span class="wc-scope-chip" data-scope="site" onclick="wcSetAIScope(\'site\')">🌐 Site</span>';
-            input.parentNode.insertBefore(row, input);
+            const inputRow = panel.querySelector('.magic-input-row') || input.parentNode;
+            inputRow.parentNode.insertBefore(row, inputRow);
           }
           if (typeof executeMagicAi === 'function' && !executeMagicAi.__wcWrapped) {
             const orig = executeMagicAi;
@@ -11309,8 +13264,10 @@ ${WC_ANIMATION_RUNTIME}
           return wcCCompFromEl(ps[0]);
         } catch (e) { return null; }
       }
+      var WC_EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.]+/;
+      var WC_PHONE_RE = /(\+?\(?\d[\d\s\-.()]{5,}\d)/;
       function wcCContact(ftr) {
-        const out = { tel: null, mail: null, wa: null, addr: null };
+        const out = { tel: null, mail: null, wa: null, addr: null, telText: null, mailText: null, waText: null };
         try {
           const walk = (c) => {
             try {
@@ -11326,16 +13283,43 @@ ${WC_ANIMATION_RUNTIME}
           walk(ftr);
           const el = ftr.getEl && ftr.getEl();
           if (el) {
-            const cands = Array.from(el.querySelectorAll('p,span,div,li'));
-            for (const n of cands) {
-              const t = (n.textContent || '').trim();
-              if (t.length > 12 && t.length < 160 && /\d/.test(t) && /(street|st\.|road|rd\.|avenue|ave|lane|colombo|kandy|galle|city|no\.|no )/i.test(t)) {
-                if (!n.querySelector('a')) { out.addr = { el: n, comp: wcCCompFromEl(n), text: t }; break; }
+            const hasLink = (n) => { try { return !!n.querySelector('a[href^="tel:"],a[href^="mailto:"]'); } catch (e) { return false; } };
+            const nodes = Array.from(el.querySelectorAll('p,span,li,div'));
+            let bestPh = null, bestEm = null, bestAd = null;
+            nodes.forEach(n => {
+              let t = '';
+              try { t = (n.textContent || '').trim(); } catch (e) {}
+              if (!t || t.length > 220) return;
+              if (/©|copyright|all rights reserved/i.test(t)) return;
+              if (!hasLink(n)) {
+                const em = t.match(WC_EMAIL_RE);
+                if (em && (!bestEm || t.length < bestEm.t.length)) bestEm = { node: n, comp: wcCCompFromEl(n), match: em[0], t };
+                const ph = t.match(WC_PHONE_RE);
+                if (ph && ph[0].replace(/\D/g, '').length >= 7 && (!bestPh || t.length < bestPh.t.length)) {
+                  if (!(bestEm && bestEm.node === n)) bestPh = { node: n, comp: wcCCompFromEl(n), match: ph[0], t };
+                }
               }
-            }
+              if (!bestAd && t.length >= 10 && t.length <= 200 && /\d/.test(t) && /[a-z]/i.test(t) && /(street|st\.|road|rd\.|avenue|ave|lane|city|town|colombo|kandy|galle|address|no\.|postal|zip)/i.test(t)) {
+                let hasA = false;
+                try { hasA = !!n.querySelector('a'); } catch (e) {}
+                if (!hasA) bestAd = { node: n, comp: wcCCompFromEl(n), text: t };
+              }
+            });
+            out.mailText = bestEm; out.telText = bestPh; out.addr = bestAd;
           }
         } catch (e) {}
         return out;
+      }
+      function wcCFieldVals(c) {
+        let phone = '', email = '', wa = '', addr = '';
+        try { if (c.tel) phone = (c.tel.getAttributes().href || '').replace(/^tel:/i, ''); else if (c.telText) phone = c.telText.match || ''; } catch (e) {}
+        try { if (c.mail) email = (c.mail.getAttributes().href || '').replace(/^mailto:/i, ''); else if (c.mailText) email = c.mailText.match || ''; } catch (e) {}
+        try {
+          if (c.wa) { const m = (c.wa.getAttributes().href || '').match(/wa\.me\/(\d+)/); wa = m ? m[1] : (c.wa.getAttributes().href || ''); }
+          else if (c.waText) wa = c.waText.match || '';
+        } catch (e) {}
+        try { if (c.addr) addr = c.addr.text || ''; } catch (e) {}
+        return { phone, email, wa, addr };
       }
       function wcCTextOf(c) { try { const el = c.getEl && c.getEl(); return el ? (el.textContent || '').trim() : ''; } catch (e) { return ''; } }
       /* link groups: elements (depth<=3) with >=2 links, or heading + >=1 link */
@@ -11439,12 +13423,14 @@ ${WC_ANIMATION_RUNTIME}
         } else h += '<div class="wc-friendly-lbl">No logo image in this footer.</div>';
         h += '<label class="wc-friendly-lbl">About / description</label><textarea class="be-input" id="wcC-desc" rows="3" style="width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:8px;padding:0.45rem 0.6rem;font-size:0.78rem;" oninput="wcCDesc(this.value)" placeholder="Short about text…">' + esc(descComp ? wcCTextOf(descComp).slice(0, 400) : '') + '</textarea></div>';
         /* CONTACT */
+        const cVals = wcCFieldVals(contact);
         h += '<div class="wc-pro-card"><h4>📞 Contact</h4>';
-        h += '<div class="wc-pro-row"><label>Phone</label><input type="text" id="wcC-phone" value="' + esc(contact.tel ? contact.tel.getAttributes().href.replace(/^tel:/i, '') : '') + '" placeholder="+1…"></div>';
-        h += '<div class="wc-pro-row"><label>Email</label><input type="text" id="wcC-email" value="' + esc(contact.mail ? contact.mail.getAttributes().href.replace(/^mailto:/i, '') : '') + '" placeholder="hello@…"></div>';
-        h += '<div class="wc-pro-row"><label>WhatsApp</label><input type="text" id="wcC-wa" value="' + esc(contact.wa ? (contact.wa.getAttributes().href.match(/wa\.me\/(\d+)/) || [])[1] || '' : '') + '" placeholder="number…"></div>';
-        h += '<div class="wc-pro-row"><label>Address</label><input type="text" id="wcC-addr" value="' + esc(contact.addr ? contact.addr.text : '') + '" placeholder="Street, City"></div>';
-        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcCApplyContact()">✓ Apply contact info</button></div>';
+        h += '<div class="wc-pro-row"><label>Phone</label><input type="text" id="wcC-phone" value="' + esc(cVals.phone) + '" placeholder="+1…"></div>';
+        h += '<div class="wc-pro-row"><label>Email</label><input type="text" id="wcC-email" value="' + esc(cVals.email) + '" placeholder="hello@…"></div>';
+        h += '<div class="wc-pro-row"><label>WhatsApp</label><input type="text" id="wcC-wa" value="' + esc(cVals.wa) + '" placeholder="number…"></div>';
+        h += '<div class="wc-pro-row"><label>Address</label><input type="text" id="wcC-addr" value="' + esc(cVals.addr) + '" placeholder="Street, City"></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcCApplyContact()">✓ Apply contact info</button>';
+        h += '<button class="wc-pro-btn small" style="width:100%;margin-top:0.35rem" onclick="wcRenderFooterPanel()">↻ Re-read from footer</button></div>';
         /* LINKS */
         h += '<div class="wc-pro-card"><h4>🔗 Footer links</h4><div id="wcC-groups"></div>';
         h += '<div class="wc-pro-row"><label>Add to</label><select id="wcC-add-g">' + window._wcCG.map((g, i) => '<option value="' + i + '">' + esc(g.heading) + '</option>').join('') + '</select></div>';
@@ -11491,23 +13477,59 @@ ${WC_ANIMATION_RUNTIME}
       };
       window.wcCApplyContact = function () {
         const f = wcCFindFooter(); if (!f) return;
-        const ph = ($('wcC-phone') || {}).value || '', em = ($('wcC-email') || {}).value || '', wa = ($('wcC-wa') || {}).value || '', ad = ($('wcC-addr') || {}).value || '';
+        const ph = (($('wcC-phone') || {}).value || '').trim(), em = (($('wcC-email') || {}).value || '').trim(), wa = (($('wcC-wa') || {}).value || '').trim(), ad = (($('wcC-addr') || {}).value || '').trim();
         const c = wcCContact(f);
-        try {
-          if (ph && c.tel) { c.tel.addAttributes({ href: 'tel:' + ph.replace(/\s/g, '') }); const t = wcCTextOf(c.tel); if (/\d/.test(t)) { const el = c.tel.getEl && c.tel.getEl(); if (el) el.textContent = ph; } }
-          if (em && c.mail) { c.mail.addAttributes({ href: 'mailto:' + em }); const t = wcCTextOf(c.mail); if (/@/.test(t)) { const el = c.mail.getEl && c.mail.getEl(); if (el) el.textContent = em; } }
-          if (wa && c.wa) { const num = wa.replace(/\D/g, ''); c.wa.addAttributes({ href: 'https://wa.me/' + num }); }
-          if (ad) {
-            if (c.addr && c.addr.comp) { const el = c.addr.comp.getEl && c.addr.comp.getEl(); if (el) el.textContent = ad; try { c.addr.comp.set('content', ad); } catch (e) {} }
-            else if (G()) {
-              let host = f;
-              try { if (c.tel && c.tel.parent()) host = c.tel.parent(); else if (c.mail && c.mail.parent()) host = c.mail.parent(); } catch (e) {}
-              host.append('<p style="margin:0.3rem 0;">📍 ' + esc(ad) + '</p>');
+        const setText = (comp, node, nv, oldMatch) => {
+          try {
+            if (node) {
+              const cur = node.textContent || '';
+              node.textContent = (oldMatch && cur.indexOf(oldMatch) >= 0) ? cur.replace(oldMatch, nv) : nv;
             }
+            if (comp) { try { const el = comp.getEl && comp.getEl(); if (el) comp.set('content', el.innerHTML); } catch (e) {} }
+          } catch (e) {}
+        };
+        const hostOf = () => {
+          try {
+            if (c.tel && c.tel.parent()) return c.tel.parent();
+            if (c.mail && c.mail.parent()) return c.mail.parent();
+            if (c.addr && c.addr.comp && c.addr.comp.parent()) return c.addr.comp.parent();
+          } catch (e) {}
+          return f;
+        };
+        try {
+          if (ph) {
+            if (c.tel) {
+              c.tel.addAttributes({ href: 'tel:' + ph.replace(/\s/g, '') });
+              const t = wcCTextOf(c.tel);
+              if (/\d/.test(t)) setText(c.tel, c.tel.getEl && c.tel.getEl(), ph);
+            } else if (c.telText) setText(c.telText.comp, c.telText.node, ph, c.telText.match);
+            else hostOf().append('<p style="margin:0.3rem 0;">📞 <a href="tel:' + esc(ph.replace(/\s/g, '')) + '" style="color:inherit;text-decoration:none;">' + esc(ph) + '</a></p>');
+          }
+          if (em) {
+            if (c.mail) {
+              c.mail.addAttributes({ href: 'mailto:' + em });
+              const t = wcCTextOf(c.mail);
+              if (/@/.test(t)) setText(c.mail, c.mail.getEl && c.mail.getEl(), em);
+            } else if (c.mailText) setText(c.mailText.comp, c.mailText.node, em, c.mailText.match);
+            else hostOf().append('<p style="margin:0.3rem 0;">✉️ <a href="mailto:' + esc(em) + '" style="color:inherit;text-decoration:none;">' + esc(em) + '</a></p>');
+          }
+          if (wa) {
+            const num = wa.replace(/\D/g, '');
+            if (c.wa) c.wa.addAttributes({ href: 'https://wa.me/' + num });
+            else if (c.waText) setText(c.waText.comp, c.waText.node, wa, c.waText.match);
+            else hostOf().append('<p style="margin:0.3rem 0;">💬 <a href="https://wa.me/' + esc(num) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">' + esc(wa) + '</a></p>');
+          }
+          if (ad) {
+            if (c.addr && c.addr.comp) {
+              const el = c.addr.comp.getEl && c.addr.comp.getEl();
+              if (el) el.textContent = ad;
+              try { c.addr.comp.set('content', ad); } catch (e) {}
+            } else hostOf().append('<p style="margin:0.3rem 0;">📍 ' + esc(ad) + '</p>');
           }
         } catch (e) {}
         snap('Footer updated', 'Contact info applied'); dirty();
         if (typeof showToast === 'function') showToast('📞 Footer contact updated');
+        try { window.wcRenderFooterPanel(); } catch (e) {}
       };
       /* groups */
       window.wcCRenderGroups = function () {

@@ -280,15 +280,22 @@ or a full-page replacement). If it's a question, answer conversationally.
       return { conversation: '✨ Updated the website with your changes.', isEdit: true, updatedHtml: txt };
     }
 
+    // Check for HTML block anywhere inside the text
+    const tagMatch = txt.match(/(<(?:section|div|header|footer|main|nav|article|aside|h[1-6]|p|button|a|img|form|ul|ol|table|span|html|!DOCTYPE)[^>]*>[\s\S]*)/i);
+    if (tagMatch && looksLikeHtml(tagMatch[1])) {
+      const convo = txt.slice(0, tagMatch.index).trim() || '✨ Updated element with your changes.';
+      return { conversation: convo, isEdit: true, updatedHtml: tagMatch[1].trim() };
+    }
+
     return { conversation: txt, isEdit: false, updatedHtml: '' };
   }
 
   function looksLikeHtml(s) {
     const t = String(s || '').trim();
-    if (!t || t.length < 20) return false;
-    if (/^<(section|div|header|footer|main|nav|article|aside|h[1-6]|p|button|a|img|form|ul|ol|table|span|html|!DOCTYPE)/i.test(t)) return true;
+    if (!t || t.length < 3) return false;
+    if (/^<(?:section|div|header|footer|main|nav|article|aside|h[1-6]|p|button|a|img|form|ul|ol|table|span|html|!DOCTYPE)/i.test(t)) return true;
     const tagCount = (t.match(/<[a-z][^>]*>/gi) || []).length;
-    return tagCount > 8;
+    return tagCount >= 1 && (t.includes('</') || t.includes('/>') || t.includes('<img'));
   }
 
   function stripCode(s) {

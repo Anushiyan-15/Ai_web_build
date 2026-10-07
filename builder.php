@@ -1628,6 +1628,19 @@ body.builder-focus .resume-banner { top: 12px; }
 
   <div class="puter-model-row">
     <div style="display:flex; align-items:center; gap:0.4rem; width:100%;">
+      <span style="color:#818cf8; font-weight:700; flex-shrink:0;" title="AI model for chat edits">✦ Model:</span>
+      <select class="puter-model-select" id="ai-model-select" onchange="changeAiModel(this.value)" style="flex:1; min-width:0;">
+        <option value="gemini-3.5-flash-lite" selected>✦ Gemini Flash Lite (Fast · Default)</option>
+        <option value="gemini-2.5-flash">✦ Gemini 2.5 Flash</option>
+        <option value="gemini-2.5-pro">✦ Gemini 2.5 Pro (Deep Reasoning)</option>
+        <option value="gemini-1.5-flash">✦ Gemini 1.5 Flash</option>
+        <option value="opencode-fallback">⚡ OpenCode AI (Fallback)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="puter-model-row">
+    <div style="display:flex; align-items:center; gap:0.4rem; width:100%;">
       <span style="color:#10b981; font-weight:700;" title="AI edits apply to this website">🎯 Editing:</span>
       <select class="puter-model-select" id="ai-target-select" onchange="setAiTargetVariation(this.value)" style="flex:1; min-width:0;">
         <option value="0">Variation 1</option>
@@ -3478,7 +3491,8 @@ async function generateWithMode(mode) {
         ocTokens = oc.tokens || 0;
         if (oc.designs.length === 3) {
           concepts = oc.designs;
-          engineNote = 'Gemini ×2 + OpenCode AI';
+          const hasOpenCode = concepts.some(c => ((c.meta && c.meta.engine) || '').includes('opencode'));
+          engineNote = hasOpenCode ? 'Gemini ×2 + Space Bunny' : '3× Gemini AI (Fast)';
         } else if (oc.designs.length > 0) {
           // PARTIAL: 1-2 AI ready (3rd timed out/failed) → keep the AI
           // ones, fill ONLY missing variations with server templates.
@@ -4150,7 +4164,8 @@ async function showSubDesigns(conceptIndex) {
       subTokens = r.tokens || 0;
       if (r.designs.length === 3) {
         subs = r.designs;
-        engineNote = 'Gemini ×2 + OpenCode AI';
+        const hasOpenCode = subs.some(c => ((c.meta && c.meta.engine) || '').includes('opencode'));
+        engineNote = hasOpenCode ? 'Gemini ×2 + Space Bunny' : '3× Gemini AI (Fast)';
       } else if (r.designs.length > 0) {
         // PARTIAL: keep ready AI layouts in their own slots, fill ONLY
         // missing slots with templates (index-merge would misplace a
@@ -4630,6 +4645,38 @@ function setAiTargetVariation(v) {
     restoreIntoWorkspace();
   }
 }
+/* ★ AI chat model: gemini-3.5-flash-lite is the default (persisted) */
+const AI_CHAT_DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+function getAiChatModel() {
+  try {
+    const sel = document.getElementById('ai-model-select');
+    if (sel && sel.value) return sel.value;
+    return localStorage.getItem('webcraft_ai_model') || AI_CHAT_DEFAULT_MODEL;
+  } catch (e) { return AI_CHAT_DEFAULT_MODEL; }
+}
+function changeAiModel(model) {
+  try { localStorage.setItem('webcraft_ai_model', model); } catch (e) {}
+  if (String(model || '').includes('gemini')) {
+    showToast(`AI Model set to ${model} (Google Gemini)`);
+  } else {
+    showToast(`AI Model set to ${model} (OpenCode Fallback)`);
+  }
+}
+(function initAiChatModel() {
+  const apply = () => {
+    try {
+      const saved = localStorage.getItem('webcraft_ai_model') || AI_CHAT_DEFAULT_MODEL;
+      const sel = document.getElementById('ai-model-select');
+      if (sel) {
+        const has = Array.from(sel.options).some(o => o.value === saved);
+        sel.value = has ? saved : AI_CHAT_DEFAULT_MODEL;
+        if (!has) localStorage.setItem('webcraft_ai_model', AI_CHAT_DEFAULT_MODEL);
+      }
+    } catch (e) {}
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
 function getTimeStr() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 function appendUserChatMessage(msg) {
   const log = document.getElementById('ai-chat-log');
@@ -4796,7 +4843,7 @@ async function executeRefine() {
     const bizName = document.getElementById('biz_name')?.value || 'Website';
     if (!window.OpenCodeAI?.editWithFallback) throw new Error('AI service not available');
     const res = await window.OpenCodeAI.editWithFallback({
-      userPrompt: enriched, currentHtml: snapHtml, bizName
+      userPrompt: enriched, currentHtml: snapHtml, bizName, model: getAiChatModel()
     });
     document.getElementById('ai-typing-indicator')?.remove();
     appendGeminiChatMessage(formatMarkdown(res.conversation));
