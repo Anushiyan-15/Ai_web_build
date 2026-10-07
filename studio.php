@@ -2263,6 +2263,8 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
         </div>
       </div>
       <div class="magic-header-actions">
+        <button class="magic-icon-btn" onclick="openUserManual()" title="User manual — what AI can do + all guides">📘</button>
+        <button class="magic-icon-btn" onclick="copilotShowHistory()" title="AI change history">🕘</button>
         <button class="magic-icon-btn" onclick="clearMagicChat()" title="Clear chat">🗑</button>
         <button class="magic-icon-btn" onclick="toggleMagicAi()" title="Close panel">✕</button>
       </div>
@@ -2374,7 +2376,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
   </div>
 
   <!-- ★ Copilot review / confirm modal (reuses .modal-overlay/.modal-box pattern) -->
-  <div class="modal-overlay" id="copilot-review-modal" style="display:none;">
+  <div class="modal-overlay" id="copilot-review-modal" style="display:none; z-index:100020;">
     <div class="modal-box" style="max-width:520px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.9rem;">
         <div>
@@ -2414,7 +2416,27 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     .cp-audit-row:last-child { border-bottom:none; }
     .cp-sev-ok { color:#10b981; font-weight:800; } .cp-sev-warn { color:#f59e0b; font-weight:800; } .cp-sev-bad { color:#ef4444; font-weight:800; }
     .cp-fix-btn { margin-left:auto; flex-shrink:0; }
+    .cp-hist-row { display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px dashed #1e293b; font-size:0.76rem; }
+    .cp-hist-row:last-child { border-bottom:none; }
+    .cp-hist-time { color:#64748b; font-size:0.68rem; flex-shrink:0; }
   </style>
+
+  <!-- ★ Copilot AI history modal: past chats stay in the log, past changes are here -->
+  <div class="modal-overlay" id="copilot-history-modal" style="display:none; z-index:100020;">
+    <div class="modal-box" style="max-width:520px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.9rem;">
+        <div>
+          <h2 style="font-size:1.1rem; color:#fff; margin-bottom:0.25rem">🕘 AI Chat History</h2>
+          <p style="font-size:0.76rem; color:#94a3b8">Pazhaya chats ah open pannalam + every AI change ah restore pannalam.</p>
+        </div>
+        <button class="drawer-close" onclick="document.getElementById('copilot-history-modal').style.display='none'" style="font-size:1.2rem">✕</button>
+      </div>
+      <div id="copilot-history-body" style="font-size:0.8rem; color:#cbd5e1; background:#0b1220; border:1px solid #1e293b; border-radius:10px; padding:0.8rem 0.95rem; margin-bottom:1rem; max-height:300px; overflow:auto;"></div>
+      <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
+        <button type="button" class="be-btn" onclick="document.getElementById('copilot-history-modal').style.display='none'" style="background:#1e293b; color:#e2e8f0; font-weight:700;">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Page SEO & Quality Audit Modal -->
   <div class="modal-overlay" id="seo-audit-modal">
@@ -5066,6 +5088,7 @@ p{color:#64748b;max-width:520px;line-height:1.6}
     function switchStudioConcept(index) {
       if (!projectData.designs[index]) return;
       syncCanvasToHtml();
+      try { copilotWriteChatLog(copilotChatKey()); } catch (e) {}
       activeConceptIndex = index;
       const d = projectData.designs[index];
       if (currentStudioView === 'admin' && d.adminHtml) {
@@ -5081,6 +5104,15 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       showCanvasLoading();
       loadHtmlIntoStudioCanvas();
       showToast(`Switched to Concept ${index + 1}`);
+      try {
+        const log = document.getElementById('magic-chat-log');
+        if (log) log.innerHTML = '';
+        if (!copilotLoadChatLog(copilotChatKey())) {
+          appendMagicChat('👋 <strong>Welcome to WebCraft AI!</strong><br>• Click any element or section on the canvas to <strong>edit it live with AI</strong>.<br>• Ask to rewrite text, tweak colors/styles, or insert whole sections.<br><span style="color:#94a3b8;font-size:0.74rem;">💡 All edits apply live to the active website.</span>', 'ai');
+        }
+        copilotLoadChanges();
+        copilotRefreshTargetLine();
+      } catch (e) {}
     }
 
     function switchStudioView(view) {
@@ -9864,25 +9896,205 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
       } catch (e) {}
       return 0;
     }
+    function copilotChatKey() {
+      try { return 'webcraft_ai_chat::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+      catch (e) { return 'webcraft_ai_chat::c0'; }
+    }
+    function copilotChangesKey() {
+      try { return 'webcraft_ai_changes::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+      catch (e) { return 'webcraft_ai_changes::c0'; }
+    }
+    let __copilotChatSaveT = null;
+    function copilotCollectLogHtml(maxRows) {
+      try {
+        const log = document.getElementById('magic-chat-log');
+        if (!log) return '';
+        const div = document.createElement('div');
+        [...log.children].forEach(r => {
+          if (!r.classList || !r.classList.contains('msg') || r.id === 'magic-typing') return;
+          const c = r.cloneNode(true);
+          c.querySelectorAll('.ai-chat-image-card').forEach(card => {
+            const ph = document.createElement('div');
+            ph.style.cssText = 'font-size:.75rem;color:#94a3b8;';
+            ph.textContent = '🖼️ [AI image — open canvas/downloads to view]';
+            card.replaceWith(ph);
+          });
+          div.appendChild(c);
+        });
+        while (div.children.length > (maxRows || 60)) div.removeChild(div.firstChild);
+        return div.innerHTML;
+      } catch (e) { return ''; }
+    }
+    function copilotWriteChatLog(key) {
+      try {
+        const html = copilotCollectLogHtml(60);
+        if (!html || html.length < 20 || html.length > 90000) return false;
+        localStorage.setItem(key || copilotChatKey(), JSON.stringify({ savedAt: Date.now(), html }));
+        return true;
+      } catch (e) { return false; }
+    }
+    function copilotSaveChat() {
+      try {
+        clearTimeout(__copilotChatSaveT);
+        __copilotChatSaveT = setTimeout(() => copilotWriteChatLog(), 400);
+      } catch (e) {}
+    }
+    function copilotLoadChatLog(key) {
+      try {
+        const raw = localStorage.getItem(key || copilotChatKey());
+        if (!raw) return false;
+        const o = JSON.parse(raw);
+        const log = document.getElementById('magic-chat-log');
+        if (!log || !o.html || o.html.length < 20) return false;
+        if (log.querySelectorAll(':scope > .msg').length > 1) return false; // live chat wins
+        log.innerHTML = o.html;
+        log.scrollTop = log.scrollHeight;
+        return true;
+      } catch (e) { return false; }
+    }
+    function copilotPersistChanges() {
+      try { localStorage.setItem(copilotChangesKey(), JSON.stringify(copilotState.changes.slice(-20))); } catch (e) {}
+    }
+    function copilotLoadChanges() {
+      try {
+        const raw = localStorage.getItem(copilotChangesKey());
+        if (!raw) return;
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) copilotState.changes = arr.slice(-20).map(c => ({ at: c.at || 0, target: c.target || '', summary: c.summary || '', kind: c.kind || 'snippet', verIdx: c.verIdx || 0, sess: false }));
+      } catch (e) {}
+    }
+    /* ── Past chat sessions: auto-archived on clear/new/view (max 5, quota-safe) ── */
+    function copilotSessionsKey() {
+      try { return 'webcraft_ai_chats::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+      catch (e) { return 'webcraft_ai_chats::c0'; }
+    }
+    function copilotGetSessions() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(copilotSessionsKey()) || '[]');
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }
+    }
+    function copilotPutSessions(arr) {
+      try {
+        localStorage.setItem(copilotSessionsKey(), JSON.stringify((arr || []).slice(0, 5)));
+        return true;
+      } catch (e) { return false; }
+    }
+    function copilotSessionTitle(html) {
+      try {
+        const div = document.createElement('div');
+        div.innerHTML = String(html || '');
+        const u = div.querySelector('.msg.user .msg-bubble');
+        const t = ((u && u.textContent) || '').trim().replace(/\s+/g, ' ').slice(0, 46);
+        return t || 'Chat';
+      } catch (e) { return 'Chat'; }
+    }
+    function copilotArchiveCurrentChat() {
+      try {
+        const html = copilotCollectLogHtml(30);
+        const log = document.getElementById('magic-chat-log');
+        const count = log ? log.querySelectorAll(':scope > .msg').length : 0;
+        if (!html || count <= 2) return false; // welcome-only → nothing worth keeping
+        const sessions = copilotGetSessions();
+        if (sessions.length && sessions[0].html === html) return false; // already archived
+        sessions.unshift({ at: Date.now(), title: copilotSessionTitle(html), html: html.slice(0, 30000) });
+        return copilotPutSessions(sessions.slice(0, 5));
+      } catch (e) { return false; }
+    }
+    function copilotViewSession(i) {
+      try {
+        const sessions = copilotGetSessions();
+        const s = sessions[i];
+        if (!s) return;
+        copilotArchiveCurrentChat();
+        const log = document.getElementById('magic-chat-log');
+        if (log) { log.innerHTML = s.html; log.scrollTop = log.scrollHeight; }
+        copilotWriteChatLog();
+        document.getElementById('copilot-history-modal').style.display = 'none';
+        toggleMagicAi(true);
+        showToast('💬 Old chat opened — continue from here');
+      } catch (e) { showToast('Could not open chat'); }
+    }
+    function copilotNewChat() {
+      try {
+        copilotArchiveCurrentChat();
+        const log = document.getElementById('magic-chat-log');
+        if (log) log.innerHTML = '';
+        try { localStorage.removeItem(copilotChatKey()); } catch (e) {}
+        appendMagicChat('👋 <strong>New chat started!</strong><br>Pazhaya chat 🕘 History la safe ah iruku — eppo venunalum paarkalam.', 'ai');
+        document.getElementById('copilot-history-modal').style.display = 'none';
+        toggleMagicAi(true);
+      } catch (e) {}
+    }
+    function copilotShowHistory() {
+      try {
+        const box = document.getElementById('copilot-history-body');
+        const sessions = copilotGetSessions();
+        let h = `<div style="font-weight:800; margin-bottom:0.35rem;">💬 Past chats (${sessions.length})</div>`;
+        if (!sessions.length) {
+          h += `<div style="color:#94a3b8; margin-bottom:0.6rem;">Innum archive aana chat illa. Clear / New chat kuduthaanga inga save aagum.</div>`;
+        } else {
+          sessions.forEach((s, i) => {
+            const when = s.at ? new Date(s.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            h += `<div class="cp-hist-row"><span class="cp-hist-time">${escapeHtml(when)}</span>` +
+              `<span><b>${escapeHtml(String(s.title || 'Chat').slice(0, 60))}</b></span>` +
+              `<button type="button" class="cp-msg-btn cp-fix-btn" onclick="copilotViewSession(${i})">👁 View</button></div>`;
+          });
+        }
+        h += `<div class="cp-msg-actions" style="margin:0.4rem 0 0.8rem;"><button type="button" class="cp-msg-btn" onclick="copilotNewChat()">➕ New chat</button></div>`;
+        h += `<div style="font-weight:800; margin-bottom:0.35rem;">🛠️ AI changes</div>`;
+        const list = (copilotState.changes || []).slice().reverse();
+        if (!list.length) {
+          h += '<div style="color:#94a3b8;">No AI changes yet for this website.</div>';
+        } else {
+          h += list.map((c) => {
+            const idx = copilotState.changes.indexOf(c);
+            const when = c.at ? new Date(c.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            return `<div class="cp-hist-row"><span class="cp-hist-time">${escapeHtml(when)}</span>` +
+              `<span><b>${escapeHtml(c.summary.slice(0, 80))}</b>${c.target ? `<br><span style="color:#67e8f9;">🎯 ${escapeHtml(String(c.target).slice(0, 60))}</span>` : ''}</span>` +
+              `<button type="button" class="cp-msg-btn cp-fix-btn" onclick="copilotRestoreChange(${idx})">↩ Restore</button></div>`;
+          }).join('');
+        }
+        box.innerHTML = h;
+        document.getElementById('copilot-history-modal').style.display = 'flex';
+      } catch (e) { showToast('History unavailable'); }
+    }
+    function copilotRestoreChange(idx) {
+      const c = copilotState.changes[idx];
+      if (!c) return;
+      try {
+        if (typeof window.wcRestoreVersion === 'function') window.wcRestoreVersion(c.verIdx || 0);
+        else if (grapesEditor) grapesEditor.UndoManager.undo();
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        appendMagicChat(`↩ <b>Restored:</b> “${escapeHtml(c.summary.slice(0, 90))}” point ku thirumbi ponen.`, 'ai');
+        showToast('↩ Restored to earlier point');
+      } catch (e) { appendMagicChat(`⚠️ Restore failed: ${escapeHtml(e?.message || e)}`, 'ai'); }
+    }
     function copilotRecordChange(summary, kind) {
       try {
-        copilotState.changes.push({ at: Date.now(), target: copilotState.lastTargetLabel || '', summary, kind, verIdx: Math.max(0, copilotVersionsCount() - 1) });
+        copilotState.changes.push({ at: Date.now(), target: copilotState.lastTargetLabel || '', summary, kind, verIdx: Math.max(0, copilotVersionsCount() - 1), sess: true });
         while (copilotState.changes.length > 20) copilotState.changes.shift();
+        copilotPersistChanges();
       } catch (e) {}
     }
     function copilotUndoLast() {
       const last = copilotState.changes.pop();
       if (!last) { showToast('↩ Nothing to undo'); return; }
+      copilotPersistChanges();
       try {
-        if (last.kind === 'full') {
-          if (typeof window.wcRestoreVersion === 'function') { window.wcRestoreVersion(last.verIdx); }
-          else if (grapesEditor) grapesEditor.UndoManager.undo();
+        // Same-session snippet/local edits → fast canvas undo; everything else
+        // (full pages, older sessions) → version restore to the saved point.
+        if ((last.kind === 'snippet' || last.kind === 'local') && last.sess && grapesEditor) {
+          try { grapesEditor.UndoManager.undo(); }
+          catch (e) { if (typeof window.wcRestoreVersion === 'function') window.wcRestoreVersion(last.verIdx); }
         } else {
-          if (grapesEditor) grapesEditor.UndoManager.undo();
+          if (typeof window.wcRestoreVersion === 'function') window.wcRestoreVersion(last.verIdx);
+          else if (grapesEditor) grapesEditor.UndoManager.undo();
         }
         try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
         try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
-        appendMagicChat(`↩ <b>Undone:</b> ${escapeHtml(last.summary)} — previous state restored.`, 'ai');
+        appendMagicChat(`↩ <b>Undone:</b> ${escapeHtml(last.summary)} — old website thirumbi vanthiruchu.`, 'ai');
         showToast('↩ AI change undone');
       } catch (e) { appendMagicChat(`⚠️ Undo failed: ${escapeHtml(e?.message || e)}`, 'ai'); }
     }
@@ -10105,6 +10317,13 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
         return true;
       } catch (e) { return false; }
     }
+    function copilotUnderstoodLine(rawQ, cls) {
+      try {
+        const short = copilotStripNoise(rawQ).slice(0, 90);
+        const kindWord = (cls && cls.kind === 'QUESTION') ? 'kelvi' : ((cls && cls.kind === 'ADVICE') ? 'yosanai' : 'request');
+        return `<div style="font-size:.7rem;color:#67e8f9;margin-bottom:.3rem;">🎯 Purinjathu (${kindWord}): “${escapeHtml(short)}”</div>`;
+      } catch (e) { return ''; }
+    }
     /* ── MAIN ROUTER: classify → correct operation (runs before AI lanes) ── */
     async function copilotPreRoute(ctx) {
       // Returns {handled:boolean, q?:string}. Handled paths restore btn/typing themselves.
@@ -10167,7 +10386,7 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
         const btn = document.getElementById('magic-btn');
         if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
         if (r.ok) {
-          appendMagicChat(formatMarkdown(r.reply) + `<div style="font-size:0.68rem;color:#64748b;margin-top:0.3rem;">· ${escapeHtml(r.model)}</div>`, 'ai');
+          appendMagicChat(copilotUnderstoodLine(rawQ, cls) + formatMarkdown(r.reply) + `<div style="font-size:0.68rem;color:#64748b;margin-top:0.3rem;">· ${escapeHtml(r.model)}</div>`, 'ai');
           copilotFollowups('edit');
         } else {
           appendMagicChat(`⚠️ I couldn't answer right now (${escapeHtml(r.error)}). Your website was not modified.`, 'ai');
@@ -10184,7 +10403,7 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
         if (r.ok) {
           const id = ++copilotState.msgSeq;
           copilotState['apply_' + id] = { q: copilotStripNoise(rawQ) };
-          appendMagicChat(formatMarkdown(r.reply) + `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotSwitchAndApply(${id})">🛠️ Switch to Edit &amp; apply</button></div>`, 'ai');
+          appendMagicChat(copilotUnderstoodLine(rawQ, cls) + formatMarkdown(r.reply) + `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotSwitchAndApply(${id})">🛠️ Switch to Edit &amp; apply</button></div>`, 'ai');
         } else {
           appendMagicChat(`⚠️ I couldn't answer right now (${escapeHtml(r.error)}). Website unchanged.`, 'ai');
         }
@@ -10243,8 +10462,8 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
         copilotState.confirmedOnce = true;
         const inp = document.getElementById('magic-input');
         if (inp) inp.value = rawQ;
-        await executeMagicAi();
-        copilotState.confirmedOnce = false;
+        try { await executeMagicAi(); }
+        finally { copilotState.confirmedOnce = false; }
         return { handled: true };
       }
       copilotState.confirmedOnce = false;
@@ -10265,6 +10484,8 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
     /* ── Copilot boot hooks (lightweight; no duplicate heavy listeners) ── */
     function copilotInitHooks() {
       try { copilotRefreshTargetLine(); } catch (e) {}
+      try { copilotLoadChanges(); } catch (e) {}
+      try { copilotLoadChatLog(); } catch (e) {}
       try {
         if (window.wcSetAIScope && !window.wcSetAIScope.__cpWrapped) {
           const orig = window.wcSetAIScope;
@@ -10347,10 +10568,15 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
       }
 
       // ★ Copilot router: ask/find/audit/add-section/etc. handled here; edits fall through.
+      // Guarded: a router bug must never freeze the send button — fall back to plain lanes.
       copilotStage('Understanding request...');
-      const routed = await copilotPreRoute({ rawQ, q, comp, hasSelected, selectedPayload, selModel, snap, btn, input });
-      if (routed && routed.handled) return;
-      if (routed && routed.q) q = routed.q;
+      try {
+        const routed = await copilotPreRoute({ rawQ, q, comp, hasSelected, selectedPayload, selModel, snap, btn, input });
+        if (routed && routed.handled) return;
+        if (routed && routed.q) q = routed.q;
+      } catch (routeErr) {
+        console.warn('[copilot] router failed, using plain lanes:', routeErr?.message);
+      }
 
       try {
         let applied = false;
@@ -10589,6 +10815,7 @@ Return COMPLETE updated HTML document.`;
       row.appendChild(body);
       log.appendChild(row);
       log.scrollTop = log.scrollHeight;
+      try { copilotSaveChat(); } catch (e) {}
     }
 
     function showMagicTyping() {
@@ -10610,8 +10837,10 @@ Return COMPLETE updated HTML document.`;
     function clearMagicChat() {
       const log = document.getElementById('magic-chat-log');
       if (!log) return;
+      try { copilotArchiveCurrentChat(); } catch (e) {}
       log.innerHTML = '';
-      appendMagicChat('🧹 Chat cleared. What should I build next?', 'ai');
+      try { localStorage.removeItem(copilotChatKey()); } catch (e) {}
+      appendMagicChat('🧹 Chat cleared — pazhaya chat 🕘 History la iruku, paarkalam.', 'ai');
     }
 
     /* ══════════════ TOP BAR & CANVAS FEATURE RIBBON ══════════════ */
