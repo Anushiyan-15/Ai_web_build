@@ -3224,6 +3224,10 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     /* ══════════════════════════════════════════════════
        CORE STATE
     ══════════════════════════════════════════════════ */
+    // ★ API base for api/*.php fetch calls (opencode-service.js reads this
+    // lazily per request). Without it, calls go to /api/... at domain root
+    // → HTTP 404 and every OpenCode lane fails.
+    if (typeof SITE_URL === 'undefined') { var SITE_URL = <?= json_encode(defined('SITE_URL') ? SITE_URL : '') ?>; }
     let grapesEditor = null;
     let activeConceptIndex = 0;
     let currentStudioView = 'site'; // 'site' | 'admin'
@@ -6281,6 +6285,22 @@ ${WC_ANIMATION_RUNTIME}
         const canvasDoc = grapesEditor.Canvas?.getDocument();
         if (!canvasDoc || canvasDoc.__ctxBound) return;
         canvasDoc.__ctxBound = true;
+        /* ★ Empty-link guard: an <a href=""> click inside the canvas would
+           resolve against the Studio URL and load Studio inside itself
+           (the "back into Studio" loop). Stop exactly those; everything
+           else behaves natively so the canvas stays a real preview. */
+        canvasDoc.addEventListener('click', (e) => {
+          try {
+            const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+            if (!a) return;
+            const href = (a.getAttribute('href') || '').trim();
+            if (href === '' || (href.charAt(0) !== '#' && /^\?[^#]*$/.test(href))) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof showToast === 'function') showToast('🔗 Empty link — set a real URL in Settings to test it');
+            }
+          } catch (err) {}
+        }, true);
         canvasDoc.addEventListener('contextmenu', (e) => {
           if (!studioEditMode) return; // normal preview: let links/menus behave natively
           e.preventDefault();
@@ -8977,6 +8997,8 @@ ${WC_ANIMATION_RUNTIME}
         || /(entire|whole)\s+(page|website|site)\s+(delete|remove)/i.test(s)) out.destructive = true;
       if (/\b(audit|website\s+health|site\s+score|full\s+(checkup|check|review))\b/i.test(l) || /audit\s+(my\s+)?(website|site|page)/i.test(s)) { out.kind = 'WEBSITE_AUDIT'; return out; }
       if (/\bfix\s+(everything|all|these|them|found|issues|ella)\b/i.test(s) || /ella(athayum|yum)?\s*fix\s*pannu/i.test(s)) { out.kind = 'FIX_ALL'; return out; }
+      if (/^\s*(hi+|hii+|hello+|hey+|yo|vanakkam|namaste|good\s*(morning|afternoon|evening|day)|allo+)\s*[!.👋🙏]*\s*$/i.test(s)) { out.kind = 'GREETING'; return out; }
+      if (/^\s*(thanks?|thank\s*you|nandri|shukriya)\b/i.test(s) && s.length < 40 && !/(mak|chang|add|fix|edit|pannu|maathu)/i.test(s)) { out.kind = 'THANKS'; return out; }
       if (/^\s*(undo|revert|undo\s+that|பழையபடி|திரும்ப|ආපසු)\b/i.test(s) || /↩\s*undo/i.test(s)) { out.kind = 'UNDO'; return out; }
       const findM = s.match(/^(find|where\s+is|locate|show\s+me|select|enga|kandu(pidi)?|find\s+pannu|hoyanna?)\b[\s:,'"“”]*([^'"“”]+)$/i)
         || s.match(/(find|select)\s+(my|the|antha|intha)\b(.+)$/i);
@@ -10324,6 +10346,168 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
         return `<div style="font-size:.7rem;color:#67e8f9;margin-bottom:.3rem;">🎯 Purinjathu (${kindWord}): “${escapeHtml(short)}”</div>`;
       } catch (e) { return ''; }
     }
+    /* ── PROPOSAL FLOW: preview first, apply only on customer OK ──
+       AI result → previewable page → [👀 Preview] [✅ Apply] [✕ Discard].
+       Nothing touches the canvas until Apply. Fix-all/all-pages runs
+       (programmatic) keep the direct-apply path. */
+    function copilotUsedTag(m) {
+      return m ? ` <span style="color:#64748b;font-size:0.68rem;">· ${escapeHtml(m)}</span>` : '';
+    }
+    function friendlyProposalSummary(q) {
+      try {
+        const t = describeAiTarget();
+        const s = cleanSummaryText(q);
+        return `👀 <b>Preview ready!</b> ${escapeHtml(t.label)} ku oru change ready panniten: “${escapeHtml(s.slice(0, 120))}”. <b>Preview</b> paarunga — pudicha <b>✅ Apply</b> kudunga (illa na ✕ Discard). Vera ethavum maarala.`;
+      } catch (e) { return '👀 <b>Preview ready!</b> Paarunga, pudicha Apply kudunga.'; }
+    }
+    function copilotProposalButtons(id) {
+      return `<div class="cp-msg-actions">` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotProposalPreview(${id})">👀 Preview</button>` +
+        `<button type="button" class="cp-msg-btn warn" onclick="copilotProposalDecide(${id},true)">✅ Apply</button>` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotProposalDecide(${id},false)">✕ Discard</button></div>`;
+    }
+    function copilotBuildSnippetPreview(snapHtml, comp, snippetHtml) {
+      // Splice the proposed snippet into a COPY of the pre-edit page so the
+      // customer previews exactly what Apply would do. Canvas untouched.
+      try {
+        let tag = 'div', id = '', secName = '', text = '';
+        try {
+          tag = (comp.get('tagName') || 'div').toLowerCase();
+          const at = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+          id = at.id || ''; secName = at['data-section-name'] || '';
+          const el = comp.getEl ? comp.getEl() : null;
+          text = el ? (el.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+        } catch (e) {}
+        const doc = new DOMParser().parseFromString(String(snapHtml || ''), 'text/html');
+        if (!doc || !doc.body) return null;
+        let el = null;
+        if (id) { try { el = doc.getElementById(id); } catch (e) {} }
+        if (!el && secName) { try { el = doc.querySelector('[data-section-name="' + String(secName).replace(/"/g, '') + '"]'); } catch (e) {} }
+        if (!el && text) {
+          const needle = text.slice(0, 40);
+          const all = [...doc.body.querySelectorAll(tag + ',section,div')];
+          el = all.find(x => ((x.textContent || '').replace(/\s+/g, ' ').indexOf(needle) !== -1)) || null;
+        }
+        if (!el) return null;
+        const tpl = document.createElement('template');
+        tpl.innerHTML = String(snippetHtml).trim();
+        const node = tpl.content.firstElementChild;
+        if (!node) return null;
+        el.replaceWith(node);
+        return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+      } catch (e) { return null; }
+    }
+    async function copilotProposalPreview(id) {
+      const p = copilotState['prop_' + id];
+      if (!p || !(p.previewHtml || p.html)) { showToast('Proposal expired — request ah thirumba anupunga'); return; }
+      const html = String(p.previewHtml || p.html);
+      // Open synchronously (popup-blocker safe), navigate after upload.
+      let win = null;
+      try { win = window.open('', '_blank'); } catch (e) {}
+      const postUrl = async () => {
+        try {
+          const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+          const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 15000) : null;
+          const res = await fetch('<?= SITE_URL ?>/preview.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html: html.slice(0, 7 * 1024 * 1024) }),
+            signal: ctrl ? ctrl.signal : undefined
+          });
+          if (timer) clearTimeout(timer);
+          const j = await res.json();
+          if (j && j.success && j.url) return j.url;
+        } catch (e) {}
+        return null;
+      };
+      const url = await postUrl();
+      if (url) {
+        if (win) { try { win.location.href = url; } catch (e) { window.open(url, '_blank'); } }
+        else window.open(url, '_blank');
+      } else {
+        if (win) { try { win.close(); } catch (e) {} }
+        showToast('⚠️ Preview build failed — Apply panna canvas la paaralam (Undo iruku)');
+      }
+    }
+    function copilotApplySnippetNow(targetComp, snippetHtml, modelLabel, qText) {
+      applyUpdatedSnippetToCanvas(targetComp, snippetHtml);
+      const sum = friendlyUpdateSummary(qText);
+      appendMagicChat(sum.html + copilotUsedTag(modelLabel) + copilotMsgButtons(qText), 'ai');
+      showToast(sum.toast);
+      copilotMemPush('ai', cleanSummaryText(qText).slice(0, 200), copilotState.lastTargetLabel);
+      copilotRecordChange(cleanSummaryText(qText).slice(0, 120) || 'Section edit', 'snippet');
+      copilotFollowups('edit');
+    }
+    function copilotApplyFullNow(fullHtml, modelLabel, qText) {
+      currentHtml = fullHtml;
+      if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+        projectData.designs[activeConceptIndex].html = currentHtml;
+        saveProjectData();
+      }
+      loadHtmlIntoStudioCanvas();
+      const sum = friendlyUpdateSummary(qText);
+      appendMagicChat(sum.html + copilotUsedTag(modelLabel) + copilotMsgButtons(qText), 'ai');
+      showToast(sum.toast);
+      copilotMemPush('ai', cleanSummaryText(qText).slice(0, 200), copilotState.lastTargetLabel);
+      copilotRecordChange(cleanSummaryText(qText).slice(0, 120) || 'Website edit', 'full');
+      copilotFollowups('edit');
+    }
+    function copilotProposeChange(o) {
+      // o: {kind:'snippet'|'full', snippet?, html?, previewHtml, comp?, model, q}
+      // Returns true (caller marks applied — proposal IS the handled outcome).
+      const pid = ++copilotState.msgSeq;
+      let cidx = 0, pgidx = 0;
+      try { cidx = (typeof activeConceptIndex === 'number') ? activeConceptIndex : 0; } catch (e) {}
+      try { pgidx = copilotPageInfo().idx || 0; } catch (e) {}
+      copilotState['prop_' + pid] = {
+        kind: o.kind, snippet: o.snippet || null, html: o.html || null,
+        previewHtml: o.previewHtml || o.html || null,
+        compRef: o.comp || null, loc: o.comp ? copilotLocatorFor(o.comp) : null,
+        model: o.model || '', q: cleanSummaryText(o.q || ''),
+        target: copilotState.lastTargetLabel || '', cidx, pgidx
+      };
+      appendMagicChat(friendlyProposalSummary(o.q) + copilotUsedTag(o.model) + copilotProposalButtons(pid), 'ai');
+      showToast('👀 Preview ready — paarunga, OK na Apply');
+      return true;
+    }
+    async function copilotProposalDecide(id, go) {
+      const p = copilotState['prop_' + id];
+      if (!p) { showToast('Proposal expired — request ah thirumba anupunga'); return; }
+      delete copilotState['prop_' + id];
+      if (p.target) { try { copilotState.lastTargetLabel = p.target; } catch (e) {} }
+      if (!go) {
+        appendMagicChat('✕ Discarded — website unchanged. Vera ethavathu try pannalam.', 'ai');
+        return;
+      }
+      try {
+        let cc = 0, pp = 0;
+        try { cc = (typeof activeConceptIndex === 'number') ? activeConceptIndex : 0; } catch (e) {}
+        try { pp = copilotPageInfo().idx || 0; } catch (e) {}
+        if (cc !== (p.cidx || 0) || pp !== (p.pgidx || 0)) {
+          appendMagicChat('⚠️ Page/concept maariruchu — intha proposal expired. Request ah thirumba anupunga, pudhu preview tharen.', 'ai');
+          return;
+        }
+      } catch (e) {}
+      if (p.kind === 'snippet') {
+        let target = null;
+        try {
+          const el = p.compRef && p.compRef.getEl ? p.compRef.getEl() : null;
+          const cdoc = (typeof grapesEditor !== 'undefined' && grapesEditor && grapesEditor.Canvas && grapesEditor.Canvas.getDocument) ? grapesEditor.Canvas.getDocument() : null;
+          if (el && cdoc && cdoc.contains(el)) target = p.compRef;
+        } catch (e) {}
+        if (!target && p.loc) { try { target = copilotFindByLocator(p.loc); } catch (e) {} }
+        if (!target) { appendMagicChat('⚠️ Antha section ippo canvas la illa (vera edit nadanthirku pola) — request ah thirumba anupunga.', 'ai'); return; }
+        const verr = copilotValidateSnippet(p.snippet);
+        if (verr) { appendMagicChat(`⚠️ ${escapeHtml(verr)} — website unchanged.`, 'ai'); return; }
+        try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI apply: ' + String(p.q).slice(0, 40)); } catch (e) {}
+        copilotApplySnippetNow(target, p.snippet, p.model, p.q);
+      } else {
+        const verr = copilotValidateFullDoc(p.html);
+        if (verr) { appendMagicChat(`⚠️ ${escapeHtml(verr)} — website unchanged.`, 'ai'); return; }
+        try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI apply: ' + String(p.q).slice(0, 40)); } catch (e) {}
+        copilotApplyFullNow(p.html, p.model, p.q);
+      }
+    }
+
     /* ── MAIN ROUTER: classify → correct operation (runs before AI lanes) ── */
     async function copilotPreRoute(ctx) {
       // Returns {handled:boolean, q?:string}. Handled paths restore btn/typing themselves.
@@ -10332,6 +10516,14 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
       const target = copilotResolveTarget();
       copilotState.lastTargetLabel = target.label;
       copilotMemPush('user', copilotStripNoise(rawQ).slice(0, 300), target.scope === 'website' ? '' : target.label);
+      // Too short to act on — instant nudge, zero network (fast).
+      if (copilotStripNoise(rawQ).length < 2) {
+        copilotDone();
+        const btnS = document.getElementById('magic-btn');
+        if (btnS) { btnS.disabled = false; btnS.innerHTML = '➤'; }
+        appendMagicChat(`👋 Konjam detail ah sollunga — example: <i>"heading ah blue aakku"</i>, <i>"pricing section add pannu"</i>, illa <i>"audit my website"</i>.`, 'ai');
+        return { handled: true };
+      }
       const finishAi = (html, follow) => {
         copilotDone();
         const btn = document.getElementById('magic-btn');
@@ -10377,6 +10569,22 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
         const btnU = document.getElementById('magic-btn');
         if (btnU) { btnU.disabled = false; btnU.innerHTML = '➤'; }
         copilotUndoLast();
+        return { handled: true };
+      }
+      // 3c. GREETING / THANKS — instant local reply, zero network (fast).
+      if (cls.kind === 'GREETING' || cls.kind === 'THANKS') {
+        copilotDone();
+        const btnG = document.getElementById('magic-btn');
+        if (btnG) { btnG.disabled = false; btnG.innerHTML = '➤'; }
+        const biz = (typeof projectData !== 'undefined' && projectData && projectData.bizName) || '';
+        if (cls.kind === 'GREETING') {
+          copilotMemPush('ai', 'Greeted user', '');
+          appendMagicChat(`👋 Vanakkam${biz ? ' — <b>' + escapeHtml(biz) + '</b>' : ''}! Naan unga <b>Website Copilot</b>. Section ah select panni sollunga, illa direct ah sollunga:<br>• <i>"hero ah premium aakku"</i> • <i>"pricing add pannu"</i> • <i>"audit my website"</i><br><span style="color:#94a3b8;font-size:.74rem;">💬 Advice mattum venumna Ask mode ku maathunga.</span>`, 'ai');
+        } else {
+          copilotMemPush('ai', 'Acknowledged thanks', '');
+          appendMagicChat(`😊 Nandri! Vera ethavathu venumna sollunga — text, color, section, image, mobile fix, audit, ellaame pannalam.`, 'ai');
+        }
+        copilotFollowups('edit');
         return { handled: true };
       }
       // 4. QUESTION / ADVICE — never modifies (both modes).
@@ -10467,6 +10675,37 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
         return { handled: true };
       }
       copilotState.confirmedOnce = false;
+      // 13b. VAGUE edit (no actionable detail) → instant clarification.
+      // "edit this features in my web" mathiri vague request ah 60s lanes la
+      // odi fail panna veikkaama, udane specific ah kekurom (zero network).
+      {
+        const stripped = copilotStripNoise(rawQ);
+        const hasDetail = /(color|colour|text|heading|title|button|image|photo|add|remov|delet|fix|dark|light|big|small|periya|chinna|larg|premium|luxury|modern|minimal|corporate|creative|mobile|audit|seo|pric|faq|galler|contact|hide|move|blue|green|red|gold|purple|orange|pink|font|size|round|shadow|background|cent(er|re)|bold|spacing|align)/i.test(stripped);
+        if (!hasDetail) {
+          const frame = stripped
+            .replace(/^(please\s+|kindly\s+)?(edit|update|change|make|fix|improve|ithai?|anthai?|inthai?)\b[\s,]*/i, '')
+            .replace(/\b(this|that|it|these|those|my|web|website|site|section|page|la|le|in|on|oru|konjam|please)\b/gi, ' ')
+            .replace(/\s+/g, ' ').trim();
+          const meaningful = frame.split(' ').filter(w => w.length > 1);
+          if (meaningful.length <= 2) {
+            copilotDone();
+            const btnV = document.getElementById('magic-btn');
+            if (btnV) { btnV.disabled = false; btnV.innerHTML = '➤'; }
+            const guess = meaningful.join(' ');
+            let hit = null;
+            try { hit = guess ? copilotFindElement(guess) : null; } catch (e) {}
+            if (hit && typeof grapesEditor !== 'undefined' && grapesEditor) {
+              try { grapesEditor.select(hit); } catch (e) {}
+              try { flashCanvasComponent(hit); } catch (e) {}
+            }
+            const lbl = hit ? copilotDescribeComp(hit) : (guess ? `"${guess}" part` : 'antha part');
+            copilotMemPush('ai', 'Asked clarification for vague request', lbl);
+            appendMagicChat(`🤔 Konjam specific ah sollunga — <b>${escapeHtml(lbl)}</b> la <b>enna</b> maaranum?<br>• <i>"color blue aakku"</i> • <i>"text ah X nu maathu"</i> • <i>"button periya aakku"</i>${hit ? '<br>👆 Section ah select panniten — ippo instruction kudunga.' : ''}`, 'ai');
+            copilotFollowups('edit');
+            return { handled: true };
+          }
+        }
+      }
       // 14. EDIT passthrough: snapshot + memory context for the lanes.
       try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI: ' + copilotStripNoise(rawQ).slice(0, 40)); } catch (e) {}
       const withCtx = copilotResolvePronouns(copilotStripNoise(rawQ)) + copilotMemoryBlock()
@@ -10580,7 +10819,6 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
 
       try {
         let applied = false;
-        const usedTag = (m) => m ? ` <span style="color:#64748b;font-size:0.68rem;">· ${escapeHtml(m)}</span>` : '';
 
         // ══════════════════════════════════════════════
         // 1. PRIMARY ENGINE: GOOGLE GEMINI (Server AI)
@@ -10607,18 +10845,24 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
             if (gData && gData.success) {
               const usedModel = gData.model || selModel;
               if (gData.is_snippet && gData.html && hasSelected && comp) {
-                // SCOPED: only the selected section changes, rest untouched.
+                // PROPOSE FIRST: preview paar → OK na Apply (canvas untouched till then).
                 const verr = copilotValidateSnippet(gData.html);
                 if (verr) { laneErrs.push('Gemini (' + selModel + '): ' + verr); }
-                else {
+                else if (copilotState.programmatic) {
                   copilotStage('Applying changes...');
-                  applyUpdatedSnippetToCanvas(comp, gData.html);
-                  const sum = friendlyUpdateSummary(q);
-                  appendMagicChat(sum.html + usedTag(usedModel) + copilotMsgButtons(rawQ), 'ai');
-                  showToast(sum.toast);
-                  copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
-                  copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Section edit', 'snippet');
-                  copilotFollowups('edit');
+                  copilotApplySnippetNow(comp, gData.html, usedModel, q);
+                  applied = true;
+                }
+                else {
+                  copilotStage('Preparing preview...');
+                  const previewHtml = copilotBuildSnippetPreview(snap, comp, gData.html);
+                  if (!previewHtml) {
+                    // Splice failed (rare) → direct apply, honest + undoable.
+                    copilotApplySnippetNow(comp, gData.html, usedModel, q);
+                    appendMagicChat('ℹ️ Preview build aagala — direct ah apply panniten. Pudikkalana ↩ Undo.', 'ai');
+                  } else {
+                    copilotProposeChange({ kind: 'snippet', snippet: gData.html, previewHtml, comp, model: usedModel, q });
+                  }
                   applied = true;
                 }
               } else if (hasSelected) {
@@ -10628,28 +10872,16 @@ if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏ
               } else if (gData.html && gData.html.trim() !== snap.trim()) {
                 const verr = copilotValidateFullDoc(gData.html);
                 if (verr) { laneErrs.push('Gemini (' + selModel + '): ' + verr + ' — kept existing website'); }
+                else if (copilotState.programmatic) {
+                  copilotStage('Applying changes...');
+                  copilotApplyFullNow(gData.html, usedModel, q);
+                  applied = true;
+                }
                 else {
-                  const sum = friendlyUpdateSummary(q);
-                  copilotStage('Checking result...');
-                  const go = await copilotReviewGate({ kind: 'full', html: gData.html, summary: sum.html, title: 'Review AI changes' });
-                  if (!go) {
-                    appendMagicChat('Discarded — your website was not modified.', 'ai');
-                    applied = true;
-                  } else {
-                    copilotStage('Applying changes...');
-                    currentHtml = gData.html;
-                    if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-                      projectData.designs[activeConceptIndex].html = currentHtml;
-                      saveProjectData();
-                    }
-                    loadHtmlIntoStudioCanvas();
-                    appendMagicChat(sum.html + usedTag(usedModel) + copilotMsgButtons(rawQ), 'ai');
-                    showToast(sum.toast);
-                    copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
-                    copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Website edit', 'full');
-                    copilotFollowups('edit');
-                    applied = true;
-                  }
+                  // PROPOSE FIRST: preview paar → OK na Apply.
+                  copilotStage('Preparing preview...');
+                  copilotProposeChange({ kind: 'full', html: gData.html, previewHtml: gData.html, model: usedModel, q });
+                  applied = true;
                 }
               } else if (gData.success) {
                 laneErrs.push('Gemini (' + selModel + '): returned no change');
@@ -10702,18 +10934,23 @@ Return COMPLETE updated HTML document.`;
               const ocModel = ocResult.model || ocResult.engine || 'opencode';
               const isFullDoc = ocResult.updatedHtml.includes('<html') || ocResult.updatedHtml.includes('<!DOCTYPE');
               if (hasSelected && comp && !isFullDoc) {
-                // SCOPED: only the selected section changes.
+                // PROPOSE FIRST: preview paar → OK na Apply.
                 const verr = copilotValidateSnippet(ocResult.updatedHtml);
                 if (verr) { laneErrs.push('OpenCode: ' + verr); }
-                else {
+                else if (copilotState.programmatic) {
                   copilotStage('Applying changes...');
-                  applyUpdatedSnippetToCanvas(comp, ocResult.updatedHtml);
-                  const sum = friendlyUpdateSummary(q);
-                  appendMagicChat(sum.html + usedTag(ocModel) + copilotMsgButtons(rawQ), 'ai');
-                  showToast(sum.toast);
-                  copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
-                  copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Section edit', 'snippet');
-                  copilotFollowups('edit');
+                  copilotApplySnippetNow(comp, ocResult.updatedHtml, ocModel, q);
+                  applied = true;
+                }
+                else {
+                  copilotStage('Preparing preview...');
+                  const previewHtml = copilotBuildSnippetPreview(snap, comp, ocResult.updatedHtml);
+                  if (!previewHtml) {
+                    copilotApplySnippetNow(comp, ocResult.updatedHtml, ocModel, q);
+                    appendMagicChat('ℹ️ Preview build aagala — direct ah apply panniten. Pudikkalana ↩ Undo.', 'ai');
+                  } else {
+                    copilotProposeChange({ kind: 'snippet', snippet: ocResult.updatedHtml, previewHtml, comp, model: ocModel, q });
+                  }
                   applied = true;
                 }
               } else if (hasSelected && isFullDoc) {
@@ -10723,28 +10960,16 @@ Return COMPLETE updated HTML document.`;
               } else {
                 const verr = copilotValidateFullDoc(ocResult.updatedHtml);
                 if (verr) { laneErrs.push('OpenCode: ' + verr + ' — kept existing website'); }
+                else if (copilotState.programmatic) {
+                  copilotStage('Applying changes...');
+                  copilotApplyFullNow(ocResult.updatedHtml, ocModel, q);
+                  applied = true;
+                }
                 else {
-                  const sum = friendlyUpdateSummary(q);
-                  copilotStage('Checking result...');
-                  const go = await copilotReviewGate({ kind: 'full', html: ocResult.updatedHtml, summary: sum.html, title: 'Review AI changes' });
-                  if (!go) {
-                    appendMagicChat('Discarded — your website was not modified.', 'ai');
-                    applied = true;
-                  } else {
-                    copilotStage('Applying changes...');
-                    currentHtml = ocResult.updatedHtml;
-                    if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-                      projectData.designs[activeConceptIndex].html = currentHtml;
-                      saveProjectData();
-                    }
-                    loadHtmlIntoStudioCanvas();
-                    appendMagicChat(sum.html + usedTag(ocModel) + copilotMsgButtons(rawQ), 'ai');
-                    showToast(sum.toast);
-                    copilotMemPush('ai', cleanSummaryText(q).slice(0, 200), copilotState.lastTargetLabel);
-                    copilotRecordChange(cleanSummaryText(q).slice(0, 120) || 'Website edit', 'full');
-                    copilotFollowups('edit');
-                    applied = true;
-                  }
+                  // PROPOSE FIRST: preview paar → OK na Apply.
+                  copilotStage('Preparing preview...');
+                  copilotProposeChange({ kind: 'full', html: ocResult.updatedHtml, previewHtml: ocResult.updatedHtml, model: ocModel, q });
+                  applied = true;
                 }
               }
             }
@@ -10761,7 +10986,10 @@ Return COMPLETE updated HTML document.`;
           if (applyLocalSmartStyle(q)) {
             applied = true;
           } else {
-            const why = laneErrs.length ? laneErrs.slice(0, 3).join(' | ') : 'no detail';
+            // Short + clean reasons only (strip prompt blocks, cap length).
+            const why = laneErrs.length
+              ? laneErrs.slice(0, 3).map(e => copilotStripNoise(String(e)).slice(0, 150)).join(' | ')
+              : 'no detail';
             const scopeHint = hasSelected ? 'Selected section ku mattum apply aagala. ' : '';
             throw new Error(`Could not apply changes (model ${selModel}) — ${scopeHint}${why}. Try: "heading ah blue aakku", "text ah X nu maathu", or "button periya aakku".`);
           }
@@ -11110,7 +11338,7 @@ Return COMPLETE updated HTML document.`;
       if (outlines) grapesEditor.runCommand('core:component-outline');
     }
 
-    function openStudioPreview() {
+    async function openStudioPreview() {
       syncCanvasToHtml();
       // Preview opens in the SELECTED device view (not always full PC width),
       // so the customer sees exactly what was chosen: PC / Laptop / Tablet / Phone.
@@ -11140,9 +11368,29 @@ Return COMPLETE updated HTML document.`;
       win.document.open();
       win.document.write(shell);
       win.document.close();
+      // Real-URL preview (preview.php): the frame gets a true http(s) base URL,
+      // so header clicks behave like the published site — #anchors scroll,
+      // page links 404 honestly, and nothing can loop back into Studio.
+      // Falls back to the classic srcdoc preview when offline/oversized.
+      let frameUrl = null;
+      try {
+        const html = String(currentHtml || '');
+        if (html.length > 100 && html.length <= 7 * 1024 * 1024) {
+          const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+          const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 15000) : null;
+          const res = await fetch('<?= SITE_URL ?>/preview.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html }),
+            signal: ctrl ? ctrl.signal : undefined
+          });
+          if (timer) clearTimeout(timer);
+          const j = await res.json();
+          if (j && j.success && j.url) frameUrl = j.url;
+        }
+      } catch (e) { console.warn('[preview] URL preview failed, using srcdoc fallback'); }
       // srcdoc via property (no HTML-escaping pitfalls with inline scripts).
       const frame = win.document.getElementById('pv-frame');
-      if (frame) frame.srcdoc = currentHtml;
+      if (frame) { if (frameUrl) frame.src = frameUrl; else frame.srcdoc = currentHtml; }
     }
 
     function toggleFullscreen() {

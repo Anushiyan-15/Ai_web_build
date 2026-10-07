@@ -3601,6 +3601,21 @@ function display3Designs(concepts, bizName) {
     grid.appendChild(card);
     setTimeout(() => { const f = document.getElementById(`d${i}-iframe`); if (f) f.srcdoc = sanitizeHtmlOutput(withWorkspaceNavFix(c.html)); }, 40);
   });
+  /* ★ Normal view shows AI output too: preload the workspace with Concept 1
+     (same mapping as Select & Edit). The picker stays in charge — user can
+     still open any card's Full Preview or Select & Edit another variation. */
+  if (!generatedDesigns.length && concepts.length) {
+    generatedDesigns = concepts.map(x => ({
+      name: x.name, description: x.description, badge: x.badge, html: x.html,
+      adminHtml: x.adminHtml || null, phpBackend: x.phpBackend || null,
+      sqlSchema: x.sqlSchema || null, history: []
+    }));
+    activeDesignIndex = 0;
+    currentHtml = generatedDesigns[0].html || '';
+    try { updateLiveIframe(currentHtml); } catch (e) {}
+    [0, 1, 2].forEach(i => document.getElementById(`tab-d${i}`)?.classList.toggle('active', i === 0));
+    try { updateUndoBtn(); } catch (e) {}
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
   saveSessionNow();
 }
@@ -4687,14 +4702,39 @@ function appendUserChatMessage(msg) {
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
 }
-function appendGeminiChatMessage(msg) {
+function appendGeminiChatMessage(msg, buttonsHtml) {
   const log = document.getElementById('ai-chat-log');
   if (!log) return;
   const row = document.createElement('div');
   row.className = 'msg ai';
-  row.innerHTML = `<div class="msg-avatar">✦</div><div class="msg-body"><div class="msg-bubble">${msg}</div><div class="msg-meta">AI · ${getTimeStr()}<button class="msg-copy" type="button" onclick="copyMsg(this)">Copy</button></div></div>`;
+  row.innerHTML = `<div class="msg-avatar">✦</div><div class="msg-body"><div class="msg-bubble">${msg}${buttonsHtml || ''}</div><div class="msg-meta">AI · ${getTimeStr()}<button class="msg-copy" type="button" onclick="copyMsg(this)">Copy</button></div></div>`;
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
+}
+/* ★ Chat preview button: opens a FRESH preview of the just-edited result
+   (reads currentHtml at click time, so it never shows stale content). */
+function aiChatPreviewBtn() {
+  return `<div style="margin-top:.55rem;"><button type="button" onclick="openAiChatPreview()" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;font-size:.72rem;font-weight:800;border-radius:999px;padding:.4rem 1rem;cursor:pointer;font-family:inherit;">👀 Preview this change</button></div>`;
+}
+/* ★ Real-URL chat preview (preview.php): behaves like the published site —
+   header clicks scroll / 404 honestly instead of looping back into Builder.
+   Falls back to the classic blob preview when the page is huge or offline. */
+async function openAiChatPreview() {
+  const html = String(currentHtml || '');
+  if (html.length < 100) { showToast('⚠️ Nothing to preview yet'); return; }
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 15000);
+    const res = await fetch(SITE_URL + '/preview.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html: html.slice(0, 7 * 1024 * 1024) }),
+      signal: ctrl.signal
+    });
+    clearTimeout(timer);
+    const j = await res.json();
+    if (j && j.success && j.url) { window.open(j.url, '_blank'); return; }
+  } catch (e) { console.warn('[preview] URL preview failed, using blob fallback:', e?.message); }
+  openInNewTab();
 }
 function copyMsg(btn) {
   const bubble = btn.closest('.msg-body')?.querySelector('.msg-bubble');
@@ -4846,7 +4886,7 @@ async function executeRefine() {
       userPrompt: enriched, currentHtml: snapHtml, bizName, model: getAiChatModel()
     });
     document.getElementById('ai-typing-indicator')?.remove();
-    appendGeminiChatMessage(formatMarkdown(res.conversation));
+    appendGeminiChatMessage(formatMarkdown(res.conversation) + (res.isEdit && res.updatedHtml ? aiChatPreviewBtn() : ''));
     if (res.isEdit && res.updatedHtml) {
       if (isAdmin) {
         c.adminHtml = res.updatedHtml;

@@ -2637,9 +2637,18 @@ if ($action === 'refine') {
         if ($geminiError) {
             $hint .= "Gemini failed: {$geminiError}. ";
         }
+        // Never leak prompt-injected context blocks or huge text into the
+        // user-facing error — short clean instruction only.
+        $shortInstr = (string)$instruction;
+        $shortInstr = preg_replace('/\[Conversation context:.*$/s', '', $shortInstr);
+        $shortInstr = preg_replace('/\[\[(?:CTX|FILE).*?\]\]/s', '', $shortInstr);
+        $shortInstr = preg_replace('/\[(?:Intent interpretation|hint):[^\]]*\]/i', '', $shortInstr);
+        $shortInstr = trim(preg_replace('/\s+/', ' ', $shortInstr));
+        if (strlen($shortInstr) > 120) $shortInstr = substr($shortInstr, 0, 120) . '…';
+        if ($shortInstr === '') $shortInstr = '(empty instruction)';
         echo json_encode([
             'success' => false,
-            'error' => $hint . "I couldn't figure out how to apply \"{$instruction}\" to this website. Try a specific instruction like:\n" .
+            'error' => $hint . "I couldn't figure out how to apply \"{$shortInstr}\" to this website. Try a specific instruction like:\n" .
                 "• \"Add a pricing table with 3 tiers\"\n" .
                 "• \"Add 5-star customer reviews\"\n" .
                 "• \"Add an FAQ section\"\n" .
