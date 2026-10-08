@@ -287,6 +287,12 @@ function taste_apply_safety_net(string $html): string {
             $html .= $style;
         }
     }
+    // Auto-fix dead links: href="#" -> href="#contact"
+    if (stripos($html, 'href="#"') !== false) {
+        $html = str_ireplace('href="#"', 'href="#contact"', $html);
+    }
+    // Auto-fix missing image alt attributes for accessibility & instant audit pass
+    $html = preg_replace('/<img(?![^>]*alt=)([^>]*?)>/i', '<img alt="Visual showcase"$1>', $html);
     // Reveal watchdog: CSS-default-hidden `.reveal{opacity:0}` + IO, but no
     // watchdog yet → inject one idempotent script before </body>.
     if (stripos($html, 'wcl-reveal-watchdog') === false

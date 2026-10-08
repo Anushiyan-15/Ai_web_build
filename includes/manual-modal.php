@@ -9,7 +9,7 @@
 // except localhost (blank dark modal — the iframe background showing through).
 ?>
 <style>
-.uman-overlay{display:none;position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1.25rem;}
+.uman-overlay{display:none;position:fixed;inset:0;z-index:100020;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1.25rem;}
 .uman-overlay.open{display:flex;animation:umanIn .25s cubic-bezier(.22,1,.36,1);}
 @keyframes umanIn{from{opacity:0;transform:scale(.98);}to{opacity:1;transform:scale(1);}}
 .uman-box{background:#111622;border:1.5px solid #28334d;border-radius:18px;width:min(1020px,96vw);height:min(88vh,900px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.7);}
@@ -45,24 +45,49 @@
 </div>
 <script>
 (function(){
-  var umanLoaded = false, umanTimer = null;
+  var umanLoaded = false, umanTimer = null, umanRetried = false, umanSrcSet = false;
+  function umanFrameSrc(cacheBust){
+    // Relative like the full-page link (works on any host/port/scheme).
+    return 'manual.php' + (cacheBust ? '?open=' + Date.now() : '');
+  }
   window.openUserManual = function(){
     try{
       var f = document.getElementById('uman-frame');
-      if(f && !f.getAttribute('src')) f.src = 'manual.php';
+      // If a previous load already succeeded, just reopen instantly.
+      if(f && f.getAttribute('src') && umanLoaded){
+        document.getElementById('uman-overlay').classList.add('open');
+        return;
+      }
+      // Previous load never completed (slow/stuck first load) → force a fresh
+      // navigation with a cache-busting URL; re-assigning the identical URL
+      // would NOT reload.
+      if(f) { try{ f.removeAttribute('src'); }catch(e){} f.src = umanFrameSrc(umanSrcSet); umanSrcSet = true; }
       var l = document.getElementById('uman-loading');
       if(l) l.style.display = 'flex';
-      umanLoaded = false;
+      umanLoaded = false; umanRetried = false;
       document.getElementById('uman-overlay').classList.add('open');
-      if(umanTimer) clearTimeout(umanTimer);
-      umanTimer = setTimeout(function(){
-        if(!umanLoaded){
-          var l2 = document.getElementById('uman-loading');
-          if(l2) l2.innerHTML = '⚠️ Manual did not load inside the popup.<br><span><a href="manual.php" target="_blank" rel="noopener">Open full page ↗</a> instead.</span>';
-        }
-      }, 9000);
+      umanArmTimer();
     }catch(e){}
   };
+  function umanArmTimer(){
+    if(umanTimer) clearTimeout(umanTimer);
+    umanTimer = setTimeout(function(){
+      if(umanLoaded) return;
+      // One automatic retry with a fresh URL (beats slow first-load / stuck navigation).
+      if(!umanRetried){
+        umanRetried = true;
+        try{
+          var f = document.getElementById('uman-frame');
+          if(f){ f.removeAttribute('src'); f.src = umanFrameSrc(true); }
+          console.warn('[manual] iframe slow — retrying with fresh URL');
+        }catch(e){}
+        umanArmTimer();
+        return;
+      }
+      var l2 = document.getElementById('uman-loading');
+      if(l2) l2.innerHTML = '⚠️ Manual did not load inside the popup.<br><span><a href="manual.php" target="_blank" rel="noopener">Open full page ↗</a> instead.</span>';
+    }, 9000);
+  }
   window.umanFrameLoaded = function(){
     umanLoaded = true;
     if(umanTimer){ clearTimeout(umanTimer); umanTimer = null; }
@@ -75,5 +100,15 @@
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape'){ try{ closeUserManual(); }catch(err){} }
   });
+  // Background preload: by the time the user clicks 📘, the manual is already
+  // cached, so the popup opens instantly even on a slow first load.
+  function umanPreload(){
+    try{
+      var f = document.getElementById('uman-frame');
+      if(f && !f.getAttribute('src')){ f.src = umanFrameSrc(false); umanSrcSet = true; }
+    }catch(e){}
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(umanPreload, 2500); });
+  else setTimeout(umanPreload, 2500);
 })();
 </script>

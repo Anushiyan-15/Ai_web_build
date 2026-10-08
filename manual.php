@@ -47,6 +47,19 @@ th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid #1e293b;vertic
 th{color:#818cf8;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;}
 td{color:#cbd5e1;}
 .uman-foot{text-align:center;color:#475569;font-size:.75rem;padding:2rem 1rem;}
+.uman-toc a.uf-start{border:1px solid rgba(99,102,241,.5);color:#c7d2fe;background:rgba(99,102,241,.1);}
+.uflow{list-style:none;margin:1rem 0 0;padding:0;}
+.uflow li{position:relative;padding:0 0 .4rem 3rem;min-height:2.2rem;}
+.uflow li::before{content:attr(data-n);position:absolute;left:0;top:.35rem;width:2rem;height:2rem;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:900;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.uflow li::after{content:'↓';position:absolute;left:.55rem;top:2.7rem;color:#6366f1;font-weight:900;font-size:.9rem;}
+.uflow li:last-child::after{display:none;}
+.uflow li:last-child{padding-bottom:0;}
+.uf-next{display:inline-block;font-size:.72rem;font-weight:700;color:#a5b4fc;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);border-radius:999px;padding:.15rem .65rem;margin:.45rem .4rem .1rem 0;text-decoration:none;}
+a.uf-next:hover{background:rgba(99,102,241,.25);color:#fff;}
+.uf-ways{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0 .2rem;}
+.uf-way{flex:1;min-width:150px;background:#0c1220;border:1px solid #1e293b;border-radius:10px;padding:.55rem .7rem;font-size:.78rem;color:#cbd5e1;text-decoration:none;}
+.uf-way b{display:block;color:#fff;font-size:.8rem;margin-bottom:.15rem;}
+.uf-way:hover{border-color:#6366f1;}
 @media(max-width:860px){
   .uman-layout{flex-direction:column;}
   .uman-toc{position:static;width:100%;max-height:none;padding:1rem 1.25rem 0;display:flex;flex-wrap:wrap;gap:.35rem;}
@@ -64,6 +77,8 @@ td{color:#cbd5e1;}
 </header>
 <div class="uman-layout">
   <nav class="uman-toc" id="uman-toc">
+    <strong>Start here</strong>
+    <a class="uf-start" href="#uman-flow">🗺️ Workflow chart: step-by-step path</a>
     <strong>Manual 1 · Create</strong>
     <a href="#uman-account">1 · Account: sign up &amp; log in</a>
     <a href="#uman-wizard">2 · Describe your business (Steps 1–3)</a>
@@ -84,6 +99,44 @@ td{color:#cbd5e1;}
       <h2>👋 What can you do here?</h2>
       <p><b>Manual 1</b> takes you from zero to 3 AI-designed websites. <b>Manual 2</b> shows how to edit every word, picture and section yourself — by typing, by chatting with AI, or in the drag-and-drop Studio. Finish with Publish and share your live link. Each section tells you <b>exactly where each button lives</b>.</p>
     </div>
+
+    <section class="uman-sec" id="uman-flow">
+      <h2>🗺️ Workflow chart — follow this path, top to bottom</h2>
+      <p>Parthavudane puriyum: <b>melirunthu keezha</b> — itha mudichathum aduthathukku ponga. Ella step um keezha irukura full guide oda link aachu.</p>
+      <ol class="uflow">
+        <li data-n="1">
+          <div class="uman-card"><b>👤 Account — sign up &amp; log in</b><br>Email + code + password, or Google/Facebook/Instagram. Generate ku munnadi must.<br><a class="uf-next" href="#uman-account">Open guide →</a></div>
+        </li>
+        <li data-n="2">
+          <div class="uman-card"><b>📝 Describe — business in 4 steps</b><br>Name, tagline, style, colour, sections. Real words ezhuthunga — AI athaye use pannum.<br><a class="uf-next" href="#uman-wizard">Open guide →</a></div>
+        </li>
+        <li data-n="3">
+          <div class="uman-card"><b>⚡ Generate — mode + 3 AI websites</b><br>Static / Admin / Database mode pick panni <b>✦ Generate</b>. ~1–2 min, loader % kaatum.<br><a class="uf-next" href="#uman-generate">Open guide →</a></div>
+        </li>
+        <li data-n="4">
+          <div class="uman-card"><b>🎨 Pick — card ah preview panni Select &amp; Edit</b><br>Phone view la compare panni pudichatha <b>Select &amp; Edit →</b>.<br><a class="uf-next" href="#uman-pick">Open guide →</a></div>
+        </li>
+        <li data-n="5">
+          <div class="uman-card"><b>✏️ Edit — moonu vazhi, ethuvum ok</b>
+            <div class="uf-ways">
+              <a class="uf-way" href="#uman-builder"><b>⌨️ Type directly</b>✏️ Edit ON → text ah click panni type pannunga.</a>
+              <a class="uf-way" href="#uman-ai"><b>✦ AI chat</b>“pricing table add pannu” — sollunga, AI seiyum.</a>
+              <a class="uf-way" href="#uman-studio"><b>🎨 Studio</b>Drag-and-drop + Magic AI copilot (audit, history, undo).</a>
+            </div>
+          </div>
+        </li>
+        <li data-n="6">
+          <div class="uman-card"><b>📱 Check — phone / tablet / PC</b><br>Preview bar buttons la ella size layum paarunga, mobile ah AI kita fix pannunga.<br><a class="uf-next" href="#uman-devices">Open guide →</a></div>
+        </li>
+        <li data-n="7">
+          <div class="uman-card"><b>🚀 Publish — pay &amp; go live</b><br><b>🚀 Save &amp; Publish</b> → 5 steps → live link share pannunga.<br><a class="uf-next" href="#uman-publish">Open guide →</a></div>
+        </li>
+        <li data-n="8">
+          <div class="uman-card"><b>🛠️ Manage — dashboard &amp; admin</b><br>Sites, stats, admin panel — ellame inga irunthu run pannunga.<br><a class="uf-next" href="#uman-portal">Open guide →</a></div>
+        </li>
+      </ol>
+      <div class="uman-tip">Stuck? <a href="#uman-faq"><b>FAQ &amp; fixes</b></a> section la common problems + AI “could not apply” fix iruku.</div>
+    </section>
 
     <div class="uman-part" id="uman-part1"><b>📗 Manual 1 · Create your website</b><span>account → describe → generate → pick — about 5 minutes</span></div>
 
@@ -192,9 +245,11 @@ td{color:#cbd5e1;}
       <h2>6 · AI Co-Pilot chat (✦ button, bottom-right)</h2>
       <p>Press <b>✦ WebCraft AI</b>. Write in plain English or Tanglish — “Add a pricing table with 3 plans”, “hero-oda colour maathu”, “footer la WhatsApp add pannu”. Or tap a chip: <b>⭐ Reviews · 💰 Pricing · ❓ FAQ · 💬 WhatsApp · 👥 Team · 🌙 Dark Mode</b>.</p>
       <ul>
+        <li><b>✦ Model</b> (top of the panel, default Gemini Flash Lite) — change it anytime; AI chat uses it for every edit.</li>
         <li><b>🎯 Editing target</b> (top of the panel) — check <b>which variation</b> the AI will change before sending.</li>
         <li><b>🎤 Mic</b> — dictate (Tamil / English / Hindi); <b>➤</b> sends (Enter works too).</li>
         <li>Wrong result? <b>↶ Undo AI</b> in the toolbar reverts it.</li>
+        <li>In <b>Studio</b>, the same AI is far more powerful — Ask/Edit modes, audit, history, section insert (§7 below).</li>
       </ul>
       <div class="uman-tip">One change per message works best (“make buttons bigger” beats a 5-item list). Wait for the reply before the next edit.</div>
     </section>
@@ -212,10 +267,33 @@ td{color:#cbd5e1;}
       <h3>Panels around the canvas</h3>
       <ul>
         <li><b>Left icon rail (13):</b> 🧱 Elements · 🃏 Cards · ⭐ Shapes · 📁 Media · ✍️ Text · 🎬 Anim · 🌐 Lang · 🎨 Styles · ⚙️ Settings · 📑 Layers · 📝 Forms · 🛍️ Shop · 📄 Pages. Click one, pick a block, it drops on the canvas. <b>🔍 Search blocks</b> finds things fast.</li>
+        <li><b>⭐ Shapes (20):</b> circle, arch, blob, hexagon, star, square, ellipse, pill, triangle, pentagon, octagon, slant, trapezoid, arrow, chevron, plus, speech, leaf… — every shape already holds a picture. <b>Drag any stock/uploaded image onto a shape</b> and it fits inside automatically; or select the shape and click an image (or right-click → Change Card / Shape Image).</li>
         <li><b>Right ⚡ Quick Actions:</b> contextual buttons for the selection (Edit, Style, Clone, Delete, Image, Animate, AI Edit…). Nothing selected? It shows tips instead.</li>
         <li><b>Header:</b> devices 🖥/📱/📲 + ribbon (adds 💻 1200px laptop) · ↶ ↷ undo/redo · ⬚ outlines · ⛶ fullscreen · ❓ Help (all shortcuts) · ✦ Magic AI · 👁️ Preview (new tab at current width) · <b>✏️ Edit ON/OFF</b> (OFF = clean normal page, nothing selectable).</li>
       </ul>
       <div class="uman-tip">Everything auto-saves to the browser — press <b>✓ Save</b> (or ← Back) and it syncs back to the Builder automatically.</div>
+      <h3>✦ Magic AI Copilot — just talk normally (English, Tanglish, Tamil, Sinhala)</h3>
+      <div class="uman-where">Open it with the header <b>✦ Magic AI</b> button or the floating <b>✦</b> button (bottom-right). The panel has: <b>✦ Model</b> dropdown (default Gemini Flash Lite) · <b>💬 Ask / 🛠️ Edit</b> mode toggle · target line (🎯/📐/📄/🌐) · scope chips <b>Auto · Element · Section · Site</b> · chat · action rails · input with <b>📎 file attach</b>.</div>
+      <table>
+        <tr><th>What to say</th><th>AI does</th></tr>
+        <tr><td>“Make this hero more premium” (select the hero first)</td><td>Edits <b>only that section</b> — rest untouched. Success message tells you exactly what changed.</td></tr>
+        <tr><td>“Add testimonials below services”</td><td>Builds the section and inserts it <b>at the right spot</b> (never blind-appended), then selects it.</td></tr>
+        <tr><td>“Find the contact button” / “Where is the pricing?”</td><td><b>Selects + highlights</b> it on canvas. Nothing changes.</td></tr>
+        <tr><td>“How can I improve this website?” (💬 Ask mode)</td><td>Advice only — website <b>never changes</b> in Ask mode. Edit-mode how-questions offer one-tap “Switch to Edit &amp; apply”.</td></tr>
+        <tr><td>“Audit my website” → <b>🔧 Fix All</b></td><td>Real scan: SEO, UX, mobile overflow, tiny text, alt text, links, contrast — ✅/⚠️/❌ counts, then fixes one by one with progress.</td></tr>
+        <tr><td>“Make my website mobile-friendly”</td><td>Measures the canvas, fixes overflow/tiny text/viewport — <b>desktop untouched</b>.</td></tr>
+        <tr><td>“Write hero copy” / “FAQ text” / “SEO title”</td><td>Writes business-specific copy (uses your business info + attached file) → <b>Replace selected text</b> or <b>Insert as section</b>.</td></tr>
+        <tr><td>“Replace this hero image” / “Make this image larger”</td><td>Generates/replaces via the normal image flow, or resizes the selected image.</td></tr>
+        <tr><td>“Change phone on all pages”</td><td>Confirms (“Change 4 pages?”) then applies page by page. Single-page requests never touch other pages.</td></tr>
+        <tr><td>“Undo that” / ↩ Undo button</td><td>Reverts the last AI change — old website comes back. 🕘 History restores any earlier point.</td></tr>
+      </table>
+      <ul>
+        <li><b>Selection = precision:</b> select an element/section first and AI edits only that. Nothing selected = whole page (big changes ask <b>Apply / Discard</b> first; deletes ask <b>Continue / Cancel</b>).</li>
+        <li><b>🕘 History (panel header):</b> past chats (auto-archived, max 5) can be re-opened; every AI change listed with ↩ Restore. Chat auto-saves per design, survives reload.</li>
+        <li><b>📎 Attach</b> a .txt/.md/.csv (menu, price list…) then say “use this info” — AI copies from your file, never invents prices/phones.</li>
+        <li><b>After every change:</b> Undo · Retry · Preview buttons + smart next-step chips (Mobile, CTA, Audit…).</li>
+      </ul>
+      <div class="uman-tip">Tanglish + Tamil + Sinhala work: “intha button perusa pannu”, “இந்த heading-ஐ professional ஆக மாற்று”, “hero premium karanna”. One change per message, wait for the reply.</div>
     </section>
 
     <section class="uman-sec" id="uman-devices">
@@ -262,6 +340,7 @@ td{color:#cbd5e1;}
         <tr><td>A card says 📄 TEMPLATE</td><td>That AI slot failed (e.g. timed out) and a premium template filled in — the other cards are still AI. Retry Generate for a full-AI trio.</td></tr>
         <tr><td>My edit is not showing</td><td>Builder: <b>↺ Reload</b> re-renders. Edit-mode typing: toggle <b>✏️ Edit OFF</b> to save. Studio: press <b>✓ Save</b>.</td></tr>
         <tr><td>AI changed the wrong design</td><td>Check the <b>🎯 Editing</b> dropdown first, then <b>↶ Undo AI</b> and retry.</td></tr>
+        <tr><td>AI says “could not apply changes”</td><td>The message now names the real reason. Usually: select the section first, then be specific (“heading ah blue aakku”). Studio 🕘 History can restore anything.</td></tr>
         <tr><td>Stats show 0 and never count</td><td>Scroll them into view — counting triggers on scroll. Reduced-motion shows final values instantly.</td></tr>
         <tr><td>Mobile layout looks off</td><td>Switch to 📲 Phone preview and fix stacking, font sizes, section padding there.</td></tr>
         <tr><td>Social login says “not set up”</td><td>The site owner must add provider keys (config/social.php). Email + code login always works.</td></tr>

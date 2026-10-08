@@ -19,8 +19,6 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Cinzel:wght@500;700;800&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/css/grapes.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/grapes.min.js"></script>
-  <script src="https://js.puter.com/v2/"></script>
-  <script src="<?= SITE_URL ?>/assets/js/puter-service.js"></script>
   <script src="<?= SITE_URL ?>/assets/js/opencode-service.js"></script>
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/loader-3d.css">
   <script src="<?= SITE_URL ?>/assets/js/loader-3d.js"></script>
@@ -1060,13 +1058,14 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     }
 
     .magic-ai-panel {
-      position: fixed; bottom: 5.5rem; right: 1.5rem;
-      width: min(420px, calc(100vw - 2rem));
-      height: min(620px, calc(100vh - 8rem));
-      background: #0c1220; border: 1px solid #1e293b;
-      border-radius: 20px;
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-      z-index: 1001; display: none; flex-direction: column;
+      position: fixed; bottom: 1rem; right: 1.25rem;
+      width: min(480px, calc(100vw - 2rem));
+      height: min(690px, calc(100vh - 2.5rem));
+      max-height: calc(100vh - 2.5rem);
+      background: #090e1a; border: 1.5px solid #223049;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+      z-index: 100010; display: none; flex-direction: column;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
@@ -1125,11 +1124,16 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     .magic-icon-btn:hover { background: #1a2338; color: #fff; }
 
     .magic-chat-log {
-      flex: 1; overflow-y: auto;
-      padding: 1rem 0.9rem 1.1rem;
-      display: flex; flex-direction: column; gap: 0.9rem;
+      flex: 1 1 0; min-height: 80px; overflow-y: auto;
+      padding: 0.9rem;
+      display: flex; flex-direction: column; gap: 0.85rem;
       scroll-behavior: smooth;
       background: radial-gradient(120% 60% at 50% 0%, rgba(79, 70, 229, 0.06), transparent 60%);
+    }
+    .magic-panel-bottom {
+      flex-shrink: 0; margin-top: auto;
+      background: #080d19; border-top: 1px solid #1c2740;
+      display: flex; flex-direction: column; z-index: 10;
     }
     .magic-chat-log::-webkit-scrollbar { width: 6px; }
     .magic-chat-log::-webkit-scrollbar-track { background: transparent; }
@@ -1299,23 +1303,18 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     }
     .ai-target-clear:hover { background: rgba(244, 63, 94, 0.15); }
 
-    .puter-model-row {
+    .gemini-model-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 0.35rem 0.85rem; background: #080c14;
       border-bottom: 1px solid #162032;
       font-size: 0.7rem; gap: 0.5rem;
     }
-    .puter-model-select {
+    .gemini-model-select {
       background: #111726; border: 1px solid #283347;
       color: #e2e8f0; border-radius: 6px;
       font-size: 0.7rem; padding: 0.2rem 0.45rem;
       font-family: inherit; outline: none;
     }
-    .puter-acc-link {
-      color: #818cf8; cursor: pointer;
-      font-weight: 700; text-decoration: none;
-    }
-    .puter-acc-link:hover { text-decoration: underline; }
 
     @media (max-width: 480px) {
       .magic-ai-panel { right: 0.75rem; left: 0.75rem; width: auto; bottom: 5rem; }
@@ -1445,6 +1444,33 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     .ie-dropzone:hover, .ie-dropzone.dragover {
       border-color: #6366f1; background: rgba(99, 102, 241, 0.08);
     }
+    .ie-ai-chip {
+      background: #0f172a; border: 1px solid #334155; border-radius: 999px;
+      padding: 0.28rem 0.65rem; font-size: 0.72rem; color: #cbd5e1;
+      cursor: pointer; transition: all 0.15s; user-select: none;
+      display: inline-flex; align-items: center; gap: 0.25rem;
+    }
+    .ie-ai-chip:hover { border-color: #818cf8; color: #fff; background: rgba(99,102,241,0.18); }
+    .ie-ai-chip.active { background: #6366f1; border-color: #6366f1; color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
+    .ai-chat-image-card {
+      background: #0b1120; border: 1.5px solid #243049; border-radius: 14px;
+      overflow: hidden; margin-top: 0.45rem; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .ai-chat-image-actions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; padding: 0.75rem;
+      background: #0d1527; border-top: 1px solid #1e293b;
+    }
+    .ai-chat-img-btn {
+      padding: 0.45rem 0.6rem; font-size: 0.72rem; font-weight: 700;
+      border-radius: 8px; border: 1px solid #334155; background: #172033;
+      color: #e2e8f0; cursor: pointer; transition: all 0.15s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+    }
+    .ai-chat-img-btn:hover { background: #25334d; border-color: #6366f1; color: #fff; transform: translateY(-1px); }
+    .ai-chat-img-btn.primary { background: #4f46e5; border-color: #6366f1; color: #fff; }
+    .ai-chat-img-btn.primary:hover { background: #4338ca; }
+    .ai-chat-img-btn.success { background: #059669; border-color: #10b981; color: #fff; }
+    .ai-chat-img-btn.success:hover { background: #047857; }
     .ie-stock-grid {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
       max-height: 155px; overflow-y: auto; padding: 0.25rem;
@@ -1563,6 +1589,66 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       max-width: calc(100vw - 3rem);
     }
     .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ═══════════ WC PRO — premium Canva-style layer (additive, safe) ═══════════ */
+    .rail-group-lbl { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #475569; text-align: center; margin: 0.55rem 0 0.15rem; }
+    #wc-save-pill { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; font-weight: 800; padding: 0.32rem 0.7rem; border-radius: 999px; border: 1px solid #283347; background: #111726; color: #94a3b8; white-space: nowrap; }
+    #wc-save-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,.8); }
+    #wc-save-pill.saving .dot { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,.8); }
+    #wc-save-pill.dirty .dot { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,.8); }
+    .wc-pro-card { background: linear-gradient(180deg,#0d1424,#0a0f1c); border: 1.5px solid #243049; border-radius: 12px; padding: 0.85rem; margin-bottom: 0.8rem; }
+    .wc-pro-card h4 { font-size: 0.75rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
+    .wc-pro-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.55rem; font-size: 0.78rem; color: #cbd5e1; }
+    .wc-pro-row label { flex: 1; font-weight: 600; }
+    .wc-pro-row input[type="color"] { width: 38px; height: 28px; border: 1px solid #334155; border-radius: 8px; background: #0a0f1c; padding: 2px; cursor: pointer; }
+    .wc-pro-row input[type="text"], .wc-pro-row input[type="number"], .wc-pro-row select { background: #0a0f1c; border: 1px solid #283347; color: #e2e8f0; border-radius: 8px; padding: 0.35rem 0.5rem; font-size: 0.76rem; font-family: inherit; max-width: 130px; }
+    .wc-pro-row input[type="range"] { flex: 1; accent-color: #6366f1; }
+    .wc-pro-val { font-size: 0.7rem; color: #818cf8; font-weight: 800; min-width: 44px; text-align: right; }
+    .wc-pro-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .wc-pro-btn { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 9px; padding: 0.45rem 0.6rem; font-size: 0.74rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .wc-pro-btn:hover { border-color: #6366f1; background: #1e1b4b; }
+    .wc-pro-btn.primary { background: linear-gradient(135deg,#6366f1,#8b5cf6); border-color: #818cf8; color: #fff; }
+    .wc-pro-btn.danger { color: #f87171; border-color: #7f1d1d; }
+    .wc-pro-btn.small { padding: 0.3rem 0.5rem; font-size: 0.7rem; }
+    .wc-pro-details { border: 1px solid #1e293b; border-radius: 10px; margin-bottom: 0.6rem; overflow: hidden; }
+    .wc-pro-details summary { cursor: pointer; padding: 0.55rem 0.75rem; font-size: 0.76rem; font-weight: 800; color: #a5b4fc; background: #0a0f1c; list-style: none; }
+    .wc-pro-details summary::-webkit-details-marker { display: none; }
+    .wc-pro-details .wc-pro-details-body { padding: 0.7rem 0.75rem; }
+    .wc-dev-badge { display: inline-block; font-size: 0.62rem; font-weight: 800; padding: 0.12rem 0.45rem; border-radius: 999px; background: #1e1b4b; border: 1px solid #6366f1; color: #c7d2fe; margin-left: 0.35rem; vertical-align: middle; }
+    .wc-dev-badge.on { background: linear-gradient(135deg,#ec4899,#8b5cf6); border-color: #f472b6; color: #fff; }
+    .wc-vis-row { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .wc-vis-chip { font-size: 0.68rem; font-weight: 800; padding: 0.28rem 0.55rem; border-radius: 999px; border: 1px solid #334155; background: #0f172a; color: #94a3b8; cursor: pointer; }
+    .wc-vis-chip.active { background: #1e1b4b; border-color: #ef4444; color: #fca5a5; }
+    #wc-text-toolbar { position: fixed; z-index: 9000; display: none; align-items: center; gap: 2px; background: #111726; border: 1.5px solid #334155; border-radius: 12px; padding: 5px 6px; box-shadow: 0 12px 32px rgba(0,0,0,.6); max-width: calc(100vw - 20px); flex-wrap: wrap; }
+    #wc-text-toolbar.show { display: flex; }
+    #wc-text-toolbar button, #wc-text-toolbar select, #wc-text-toolbar input[type="color"] { background: transparent; border: 1px solid transparent; color: #e2e8f0; border-radius: 7px; padding: 5px 7px; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+    #wc-text-toolbar button:hover { background: #1e293b; border-color: #6366f1; }
+    #wc-text-toolbar button.on { background: #312e81; border-color: #818cf8; }
+    #wc-text-toolbar select { border-color: #283347; font-size: 0.72rem; max-width: 110px; }
+    #wc-text-toolbar input[type="color"] { width: 30px; height: 26px; padding: 1px; }
+    .wc-align-guides { position: absolute; inset: 0; pointer-events: none; z-index: 400; display: none; }
+    .wc-align-guides.show { display: block; }
+    .wc-guide-line { position: absolute; background: #22d3ee; box-shadow: 0 0 6px rgba(34,211,238,.9); }
+    .wc-guide-line.v { width: 1px; top: 0; bottom: 0; }
+    .wc-guide-line.h { height: 1px; left: 0; right: 0; }
+    .wc-sec-item { background: #0a0f1c; border: 1px solid #1e293b; border-radius: 10px; padding: 0.55rem 0.6rem; margin-bottom: 0.5rem; }
+    .wc-sec-item.locked { border-color: #f59e0b; }
+    .wc-sec-item.hidden-sec { opacity: 0.55; }
+    .wc-sec-item-top { display: flex; align-items: center; gap: 0.45rem; }
+    .wc-sec-item-name { flex: 1; font-size: 0.76rem; font-weight: 700; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wc-sec-item-btns { display: flex; gap: 0.25rem; flex-wrap: wrap; margin-top: 0.45rem; }
+    .wc-ver-item { display: flex; align-items: center; gap: 0.5rem; background: #0a0f1c; border: 1px solid #1e293b; border-radius: 10px; padding: 0.5rem 0.6rem; margin-bottom: 0.45rem; font-size: 0.74rem; }
+    .wc-ver-item .t { flex: 1; color: #cbd5e1; font-weight: 600; }
+    #wc-before-after-modal { position: fixed; inset: 0; z-index: 9500; display: none; align-items: center; justify-content: center; background: rgba(2,6,16,.75); backdrop-filter: blur(4px); }
+    #wc-before-after-modal.show { display: flex; }
+    #wc-before-after-modal .ba-box { width: min(980px, 94vw); max-height: 88vh; overflow: auto; background: #0b0f1a; border: 1px solid #334155; border-radius: 16px; padding: 1rem; }
+    #wc-before-after-modal iframe { width: 100%; height: 320px; border: 1px solid #1e293b; border-radius: 10px; background: #fff; }
+    .wc-scope-row { display: flex; gap: 0.35rem; padding: 0.45rem 0.9rem; background: #080d19; border-top: 1px solid #162035; margin: 0; }
+    .wc-scope-chip { flex: 1; text-align: center; font-size: 0.72rem; font-weight: 700; padding: 0.4rem 0.25rem; border-radius: 8px; border: 1px solid #1e293b; background: #0f172a; color: #94a3b8; cursor: pointer; transition: all .16s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; user-select: none; }
+    .wc-scope-chip:hover { background: #1e293b; color: #f1f5f9; border-color: #334155; }
+    .wc-scope-chip.active { background: linear-gradient(135deg,#4f46e5,#7c3aed); color: #fff; border-color: #818cf8; box-shadow: 0 2px 10px rgba(99,102,241,0.35); }
+    .wc-friendly-lbl { font-size: 0.68rem; color: #64748b; font-weight: 600; }
+    @media (max-width: 900px) { #wc-save-pill .txt { display: none; } }
   </style>
 </head>
 
@@ -1607,10 +1693,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <button class="hdr-btn help-btn" onclick="openShortcutsModal()" title="Keyboard shortcuts & tips">❓ <span class="lbl">Help</span></button>
       <button class="hdr-btn" onclick="openUserManual()" title="User manual: how to use, edit & publish (popup)">📘 <span class="lbl">Manual</span></button>
       <div class="header-divider"></div>
-      <button class="hdr-btn" id="header-puter-btn" onclick="togglePuterAccountMenu(event)" title="Puter AI Account & Credits" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:700;">
-        <span id="puter-status-dot" style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-        <span id="header-puter-name">Puter AI</span>
-      </button>
+
       <button class="hdr-btn ai-btn" onclick="toggleMagicAi()" title="Ask AI to build sections, rewrite copy, or edit selected elements">✦ <span class="lbl">Magic AI</span></button>
       <button class="hdr-btn edit-toggle-btn active" id="btn-studio-edit-mode" onclick="toggleStudioEditMode()" title="Edit mode: ON = full visual editing. OFF = clean normal page preview.">✏️ <span class="lbl">Edit: ON</span></button>
       <button class="hdr-btn" onclick="openStudioPreview()" title="Preview in a new tab — opens in the selected device view (PC / Laptop / Tablet / Phone)">👁️ <span class="lbl">Preview</span></button>
@@ -1633,6 +1716,13 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <div class="rail-item" id="rail-forms" onclick="openBlockCategory('Forms', 'rail-forms')"><span class="icon">📝</span><span>Forms</span></div>
       <div class="rail-item" id="rail-shop" onclick="openBlockCategory('Shop', 'rail-shop')"><span class="icon">🛍️</span><span>Shop</span></div>
       <div class="rail-item" id="rail-pages" onclick="switchDrawerTab('pages')"><span class="icon">📄</span><span>Pages</span></div>
+      <div class="rail-item" id="rail-theme" onclick="wcOpenTab('theme')"><span class="icon">🎨</span><span>Theme</span></div>
+      <div class="rail-item" id="rail-header" onclick="wcOpenTab('header')"><span class="icon">🏷️</span><span>Header</span></div>
+      <div class="rail-item" id="rail-footer" onclick="wcOpenTab('footer')"><span class="icon">🦶</span><span>Footer</span></div>
+      <div class="rail-item" id="rail-settings" onclick="wcOpenTab('settings')"><span class="icon">⚙️</span><span>Site</span></div>
+      <div class="rail-item" id="rail-seo" onclick="wcOpenTab('seo')"><span class="icon">🚀</span><span>SEO</span></div>
+      <div class="rail-item" id="rail-history" onclick="wcOpenTab('history')"><span class="icon">🕘</span><span>History</span></div>
+      <div class="rail-item" id="rail-saved" onclick="wcOpenTab('saved')"><span class="icon">💎</span><span>My Sec</span></div>
     </aside>
 
     <div class="canva-drawer" id="canva-drawer">
@@ -2005,7 +2095,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
             <button class="cfr-tool-btn" onclick="openBlockCategory('Cards', 'rail-cards')" title="Quick Insert Cards (Photo, Profile, Side Cards)" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:800; padding:0.3rem 0.6rem;">
               🃏 <span class="cfr-tool-lbl">+ Card</span>
             </button>
-            <button class="cfr-tool-btn" onclick="openBlockCategory('Shapes', 'rail-shapes')" title="Quick Insert Shapes (Circle, Arch, Blob, Hexagon, Star)" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:800; padding:0.3rem 0.6rem;">
+            <button class="cfr-tool-btn" onclick="openBlockCategory('Shapes', 'rail-shapes')" title="Quick Insert Shapes (20 shapes — drag any image onto a shape to fit it)" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:800; padding:0.3rem 0.6rem;">
               ⭐ <span class="cfr-tool-lbl">+ Shape</span>
             </button>
           </div>
@@ -2096,7 +2186,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
         <hr class="ctx-divider">
         <div class="ctx-quick-btns">
           <button class="ctx-quick-btn" onclick="openBlockCategory('Cards', 'rail-cards')" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:700;"><span class="qb-icon">🃏</span> Insert Card (Photo / Profile)</button>
-          <button class="ctx-quick-btn" onclick="openBlockCategory('Shapes', 'rail-shapes')" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:700;"><span class="qb-icon">⭐</span> Insert Shape (Circle, Arch, Star)</button>
+          <button class="ctx-quick-btn" onclick="openBlockCategory('Shapes', 'rail-shapes')" style="background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; font-weight:700;"><span class="qb-icon">⭐</span> Insert Shape (20 shapes — drag image in to fit)</button>
           <button class="ctx-quick-btn" onclick="switchDrawerTab('blocks')"><span class="qb-icon">🧱</span> All Elements &amp; Blocks</button>
           <button class="ctx-quick-btn" onclick="switchDrawerTab('uploads')"><span class="qb-icon">📁</span> Upload Image</button>
           <button class="ctx-quick-btn" onclick="toggleMagicAi()"><span class="qb-icon">✦</span> Ask AI</button>
@@ -2169,34 +2259,31 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
         <div class="magic-avatar">✦</div>
         <div class="magic-brand-text">
           <div class="magic-brand-name">WebCraft AI Studio</div>
-          <div class="magic-brand-sub"><span class="dot"></span> Online · Puter.js &amp; DeepSeek</div>
+          <div class="magic-brand-sub"><span class="dot"></span> ✦ Powered by Google Gemini · OpenCode Fallback</div>
         </div>
       </div>
       <div class="magic-header-actions">
+        <button class="magic-icon-btn" onclick="openUserManual()" title="User manual — what AI can do + all guides">📘</button>
+        <button class="magic-icon-btn" onclick="copilotShowHistory()" title="AI change history">🕘</button>
         <button class="magic-icon-btn" onclick="clearMagicChat()" title="Clear chat">🗑</button>
         <button class="magic-icon-btn" onclick="toggleMagicAi()" title="Close panel">✕</button>
       </div>
     </div>
 
-    <div class="puter-model-row">
-      <div style="display:flex; align-items:center; gap:0.4rem;">
-        <span style="color:#818cf8; font-weight:700;">Model:</span>
-        <select class="puter-model-select" id="magic-model-select" onchange="changePuterModel(this.value)">
-          <option value="space-bunny-free" selected>★ Space Bunny (Free · tested)</option>
-          <option value="big-pickle">Big Pickle (Free)</option>
-          <option value="muse-spark-1.3-contributor-free">Muse Spark 1.3 (Free)</option>
-          <option value="muse-spark-1.2-contributor-free">Muse Spark 1.2 (Free)</option>
-          <option value="mimo-v2.5-free">MiMo V2.5 (Free)</option>
-          <option value="mimo-v2.6-flash-free">MiMo V2.6 Flash (Free)</option>
-          <option value="nemotron-3.5-lightning-free">Nemotron 3.5 Lightning (Free)</option>
-          <option value="jev-1.13-free">Jev 1.13 (Free)</option>
-          <option value="longcat-2.5-preview-free">LongCat 2.5 Preview (Free)</option>
+    <div class="gemini-model-row" style="padding:0.4rem 0.9rem; background:#080d19; border-bottom:1px solid #162035; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; font-size:0.75rem;">
+      <div style="display:flex; align-items:center; gap:0.4rem; min-width:0; flex:1;">
+        <span style="color:#818cf8; font-weight:700; font-size:0.75rem; flex-shrink:0;">✦ Model:</span>
+        <select id="magic-model-select" onchange="changeAiModel(this.value)" style="font-size:0.74rem; padding:0.25rem 0.5rem; max-width:230px; background:#0e172a; border:1px solid #283958; color:#cbd5e1; border-radius:6px; font-weight:600; cursor:pointer;">
+          <option value="gemini-3.5-flash-lite" selected>✦ Gemini Flash Lite (Fast · Default)</option>
+          <option value="gemini-2.5-flash">✦ Gemini 2.5 Flash (Active)</option>
+          <option value="gemini-2.5-pro">✦ Gemini 2.5 Pro (Deep Reasoning · Active)</option>
+          <option value="gemini-1.5-flash">✦ Gemini 1.5 Flash (Active)</option>
+          <option value="opencode-fallback">⚡ OpenCode AI (Fallback)</option>
         </select>
       </div>
-      <a class="puter-acc-link" onclick="togglePuterAccountMenu(event)" id="panel-puter-account-link">Sign In / Switch</a>
-    </div>
-    <div class="puter-model-row">
-      <div id="magic-model-why" style="font-size:0.68rem; color:#6ee7b7; font-weight:600;">★ Recommended: Space Bunny — tap to change</div>
+      <span style="font-size:0.68rem; color:#10b981; font-weight:700; display:flex; align-items:center; gap:0.3rem;">
+        <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span> Active
+      </span>
     </div>
 
     <div class="ai-target-banner" id="ai-target-banner">
@@ -2208,41 +2295,147 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <button class="ai-target-clear" id="ai-target-clear-btn" onclick="clearSelectedComponentForAi()" style="display:none;" title="Deselect element and switch to whole website">✕ Clear</button>
     </div>
 
+    <!-- ★ Copilot: Ask/Edit mode + current target line (existing model/target/banner untouched) -->
+    <div class="cp-mode-row" id="copilot-mode-row">
+      <div class="cp-mode-seg">
+        <button type="button" class="cp-mode-btn" id="copilot-mode-ask" onclick="copilotSetMode('ask')" title="Ask: advice only, website will not change">💬 Ask</button>
+        <button type="button" class="cp-mode-btn active" id="copilot-mode-edit" onclick="copilotSetMode('edit')" title="Edit: AI can modify the website">🛠️ Edit</button>
+      </div>
+      <div class="cp-target-line" id="copilot-target-line">🌐 Target: Entire Website</div>
+    </div>
+
     <div class="magic-chat-log" id="magic-chat-log">
       <div class="msg ai">
         <div class="msg-avatar">✦</div>
         <div class="msg-body">
           <div class="msg-bubble">
             👋 <strong>Welcome to WebCraft AI!</strong><br>
-            • Click any element on canvas to <strong>edit it with AI</strong>.<br>
-            • Or chat freely, ask for advice, or add new sections!<br>
-            <span style="color:#94a3b8;font-size:0.75rem;">🔒 Free AI models — select above, avanga select panna model-ye page-ai edit pannum.</span>
+            • Click any element or section on the canvas to <strong>edit it live with AI</strong>.<br>
+            • Ask to rewrite text, tweak colors/styles, or insert whole sections.<br>
+            • Type <em>"generate image of [subject]"</em> or tap <strong>🎨 AI Image Gen</strong> below to create AI visuals!<br>
+            <span style="color:#94a3b8;font-size:0.74rem;">💡 All edits apply live to the active website.</span>
           </div>
           <div class="msg-meta">AI · just now</div>
         </div>
       </div>
     </div>
 
-    <div class="m-chip-row" id="magic-chips-container">
-      <span class="m-chip" onclick="quickMagic('Add 5-star customer testimonials section with slide-up animation')">⭐ Reviews</span>
-      <span class="m-chip" onclick="quickMagic('Add pricing table with 3 tiers')">💰 Pricing</span>
-      <span class="m-chip" onclick="quickMagic('Add FAQ section')">❓ FAQ</span>
-      <span class="m-chip" onclick="quickMagic('Add WhatsApp floating button')">💬 WhatsApp</span>
-      <span class="m-chip" onclick="quickMagic('Add photo gallery section with fade-in animation')">🖼️ Gallery</span>
-    </div>
-
-    <div class="magic-input-row">
-      <div class="magic-input-wrap">
-        <span class="magic-input-icon">✦</span>
-        <input type="text" class="magic-input" id="magic-input"
-          placeholder="Ask AI to change text, style, or build sections…"
-          onkeydown="if(event.key==='Enter') executeMagicAi()">
+    <!-- Anchored Non-Shrinking Bottom Area (Always 100% visible) -->
+    <div class="magic-panel-bottom" id="magic-panel-bottom">
+      <!-- ★ Copilot action rail: content + design + audit (existing chips row below untouched) -->
+      <div class="cp-rail" id="copilot-actions">
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('hero')">✍️ Hero copy</span>
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('testimonials')">💬 Reviews text</span>
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('faq')">❓ FAQ text</span>
+        <span class="m-chip cp-chip" onclick="copilotContentAsk('seo')">🔎 SEO title+desc</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('premium')">✨ Premium</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('luxury')">🖤 Luxury</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('modern')">⚡ Modern</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('minimal')">🌿 Minimal</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('mobile')">📱 Mobile fix</span>
+        <span class="m-chip cp-chip" onclick="copilotDesignCmd('cta')">🎯 CTA boost</span>
+        <span class="m-chip cp-chip cp-audit" onclick="copilotAuditRun()">📋 Audit website</span>
       </div>
-      <button class="magic-btn" id="magic-btn" onclick="executeMagicAi()" title="Send message">➤</button>
+      <div class="cp-filebar" id="copilot-filebar" style="display:none;">
+        <span class="cp-filepill" id="copilot-filepill">📎 <span id="copilot-filename"></span> <button type="button" onclick="copilotClearFile()" title="Remove file">✕</button></span>
+        <span class="cp-filehint">file content will be used by AI</span>
+      </div>
+      <div class="m-chip-row" id="magic-chips-container">
+        <span class="m-chip" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border-color:#6366f1;font-weight:800;" onclick="triggerAiImageFlow()">🎨 AI Image Gen</span>
+        <span class="m-chip" onclick="quickMagic('Add 5-star customer testimonials section with slide-up animation')">⭐ Reviews</span>
+        <span class="m-chip" onclick="quickMagic('Add pricing table with 3 tiers')">💰 Pricing</span>
+        <span class="m-chip" onclick="quickMagic('Add FAQ section')">❓ FAQ</span>
+        <span class="m-chip" onclick="quickMagic('Add WhatsApp floating button')">💬 WhatsApp</span>
+        <span class="m-chip" onclick="quickMagic('Add photo gallery section with fade-in animation')">🖼️ Gallery</span>
+      </div>
+
+      <!-- Scope Toolbar -->
+      <div class="wc-scope-row" id="wc-ai-scope">
+        <span class="wc-scope-chip active" data-scope="auto" onclick="wcSetAIScope('auto')">🤖 Auto</span>
+        <span class="wc-scope-chip" data-scope="element" onclick="wcSetAIScope('element')">🎯 Element</span>
+        <span class="wc-scope-chip" data-scope="section" onclick="wcSetAIScope('section')">📐 Section</span>
+        <span class="wc-scope-chip" data-scope="site" onclick="wcSetAIScope('site')">🌐 Site</span>
+      </div>
+
+      <!-- Prominent Always-Visible Input Row -->
+      <div class="magic-input-row">
+        <div class="magic-input-wrap">
+          <span class="magic-input-icon">✦</span>
+          <input type="text" class="magic-input" id="magic-input"
+            placeholder="Type your message to AI (e.g. change color, add review section)..."
+            onkeydown="if(event.key==='Enter') executeMagicAi()">
+          <button type="button" class="cp-attach" id="copilot-attach-btn" onclick="copilotAttachFile()" title="Attach a text file (.txt/.md/.csv) for AI to use">📎</button>
+          <input type="file" id="copilot-file" accept=".txt,.md,.csv,.json" style="display:none;" onchange="copilotFilePicked(this)">
+        </div>
+        <button class="magic-btn" id="magic-btn" onclick="executeMagicAi()" title="Send message to AI">➤</button>
+      </div>
+
+      <div class="magic-hint">Press <kbd>Enter</kbd> to send · Live website changes apply instantly</div>
     </div>
 
-    <div class="magic-hint">Press <kbd>Enter</kbd> to send · Edit selected element or entire website</div>
+  </div>
 
+  <!-- ★ Copilot review / confirm modal (reuses .modal-overlay/.modal-box pattern) -->
+  <div class="modal-overlay" id="copilot-review-modal" style="display:none; z-index:100020;">
+    <div class="modal-box" style="max-width:520px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.9rem;">
+        <div>
+          <h2 style="font-size:1.1rem; color:#fff; margin-bottom:0.25rem" id="copilot-review-title">Review AI changes</h2>
+          <p style="font-size:0.76rem; color:#94a3b8" id="copilot-review-sub">Your website was not modified yet.</p>
+        </div>
+        <button class="drawer-close" onclick="copilotReviewDecide(false)" style="font-size:1.2rem">✕</button>
+      </div>
+      <div id="copilot-review-body" style="font-size:0.82rem; color:#cbd5e1; background:#0b1220; border:1px solid #1e293b; border-radius:10px; padding:0.8rem 0.95rem; margin-bottom:1rem; max-height:260px; overflow:auto;"></div>
+      <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
+        <button type="button" class="be-btn" id="copilot-review-no" onclick="copilotReviewDecide(false)" style="background:#1e293b; color:#e2e8f0; font-weight:700;">Discard</button>
+        <button type="button" class="be-btn" id="copilot-review-yes" onclick="copilotReviewDecide(true)" style="background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; font-weight:700;">Apply Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .cp-mode-row { display:flex; align-items:center; justify-content:space-between; gap:0.5rem; padding:0.4rem 0.9rem; background:#080d19; border-bottom:1px solid #162035; }
+    .cp-mode-seg { display:flex; background:#0e172a; border:1px solid #283958; border-radius:8px; overflow:hidden; }
+    .cp-mode-btn { border:none; background:transparent; color:#94a3b8; font-size:0.72rem; font-weight:700; padding:0.32rem 0.7rem; cursor:pointer; font-family:inherit; }
+    .cp-mode-btn.active { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; }
+    .cp-target-line { font-size:0.7rem; color:#67e8f9; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55%; }
+    .cp-rail { display:flex; gap:0.35rem; overflow-x:auto; padding:0.15rem 0.1rem 0.45rem; scrollbar-width:thin; }
+    .cp-rail .cp-chip { flex-shrink:0; font-size:0.7rem; }
+    .cp-rail .cp-audit { border-color:#f59e0b; color:#fde68a; font-weight:800; }
+    .cp-filebar { display:flex; align-items:center; gap:0.5rem; padding:0 0.1rem 0.4rem; font-size:0.7rem; color:#94a3b8; }
+    .cp-filepill { display:inline-flex; align-items:center; gap:0.35rem; background:#0e172a; border:1px solid #6366f1; color:#c7d2fe; border-radius:999px; padding:0.2rem 0.55rem; font-weight:700; }
+    .cp-filepill button { background:none; border:none; color:#93c5fd; cursor:pointer; font-size:0.7rem; }
+    .cp-filehint { color:#475569; }
+    .cp-attach { background:none; border:none; cursor:pointer; font-size:0.95rem; padding:0 0.3rem; opacity:0.75; }
+    .cp-attach:hover { opacity:1; }
+    .cp-msg-actions { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; }
+    .cp-msg-btn { background:#0e172a; border:1px solid #283958; color:#a5b4fc; font-size:0.68rem; font-weight:700; border-radius:999px; padding:0.22rem 0.65rem; cursor:pointer; font-family:inherit; }
+    .cp-msg-btn:hover { background:#1e293b; color:#fff; }
+    .cp-msg-btn.warn { border-color:#f59e0b; color:#fde68a; }
+    .cp-audit-row { display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; border-bottom:1px dashed #1e293b; font-size:0.76rem; }
+    .cp-audit-row:last-child { border-bottom:none; }
+    .cp-sev-ok { color:#10b981; font-weight:800; } .cp-sev-warn { color:#f59e0b; font-weight:800; } .cp-sev-bad { color:#ef4444; font-weight:800; }
+    .cp-fix-btn { margin-left:auto; flex-shrink:0; }
+    .cp-hist-row { display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px dashed #1e293b; font-size:0.76rem; }
+    .cp-hist-row:last-child { border-bottom:none; }
+    .cp-hist-time { color:#64748b; font-size:0.68rem; flex-shrink:0; }
+  </style>
+
+  <!-- ★ Copilot AI history modal: past chats stay in the log, past changes are here -->
+  <div class="modal-overlay" id="copilot-history-modal" style="display:none; z-index:100020;">
+    <div class="modal-box" style="max-width:520px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.9rem;">
+        <div>
+          <h2 style="font-size:1.1rem; color:#fff; margin-bottom:0.25rem">🕘 AI Chat History</h2>
+          <p style="font-size:0.76rem; color:#94a3b8">Pazhaya chats ah open pannalam + every AI change ah restore pannalam.</p>
+        </div>
+        <button class="drawer-close" onclick="document.getElementById('copilot-history-modal').style.display='none'" style="font-size:1.2rem">✕</button>
+      </div>
+      <div id="copilot-history-body" style="font-size:0.8rem; color:#cbd5e1; background:#0b1220; border:1px solid #1e293b; border-radius:10px; padding:0.8rem 0.95rem; margin-bottom:1rem; max-height:300px; overflow:auto;"></div>
+      <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
+        <button type="button" class="be-btn" onclick="document.getElementById('copilot-history-modal').style.display='none'" style="background:#1e293b; color:#e2e8f0; font-weight:700;">Close</button>
+      </div>
+    </div>
   </div>
 
   <!-- Page SEO & Quality Audit Modal -->
@@ -2420,13 +2613,16 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <!-- Source Chooser Tabs -->
       <div class="ie-source-tabs">
         <button type="button" class="ie-source-tab active" id="ie-tab-local" onclick="switchImageSourceTab('local')">
-          <span>📁 Local Upload</span>
+          <span>📁 Upload</span>
         </button>
         <button type="button" class="ie-source-tab" id="ie-tab-url" onclick="switchImageSourceTab('url')">
-          <span>🌐 Online URL</span>
+          <span>🌐 URL</span>
         </button>
         <button type="button" class="ie-source-tab" id="ie-tab-stock" onclick="switchImageSourceTab('stock')">
-          <span>✨ Free Stock</span>
+          <span>✨ Stock</span>
+        </button>
+        <button type="button" class="ie-source-tab" id="ie-tab-ai" onclick="switchImageSourceTab('ai')">
+          <span>🎨 AI Generate</span>
         </button>
       </div>
 
@@ -2465,6 +2661,36 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <div class="ie-source-panel" id="ie-panel-stock">
         <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.45rem;">Click any free stock photo to instantly use:</div>
         <div class="ie-stock-grid" id="ie-stock-grid"></div>
+      </div>
+
+      <!-- Tab 4: AI Generate Image -->
+      <div class="ie-source-panel" id="ie-panel-ai">
+        <div class="be-field" style="margin-bottom:0.6rem;">
+          <label class="be-label">AI Image Prompt (Describe anything you want to see)</label>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" class="be-input" id="ie-ai-prompt" placeholder="e.g. Luxury sports car on mountain pass, warm sunset light..." style="flex:1;" onkeydown="if(event.key==='Enter')generateImageInEditor()">
+            <button type="button" class="be-preset-btn" id="ie-ai-gen-btn" style="padding:0.6rem 0.95rem; background:linear-gradient(135deg, #4f46e5, #7c3aed); color:#fff; font-weight:700; white-space:nowrap;" onclick="generateImageInEditor()">✨ Generate</button>
+          </div>
+        </div>
+        <div style="margin-bottom:0.6rem;">
+          <div style="font-size:0.72rem; color:#94a3b8; margin-bottom:0.35rem; font-weight:600;">Style Presets:</div>
+          <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">
+            <span class="ie-ai-chip active" onclick="setAiEditorStyle(this, '')">Default</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'photorealistic 8k, realistic lighting')">📸 Photo</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'cinematic movie shot, 35mm lens, depth of field')">🎬 Cinematic</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'clean 3D render, minimalist, modern octane render')">🎨 3D Render</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'commercial product photography, studio light, clean background')">🛍️ Product</span>
+            <span class="ie-ai-chip" onclick="setAiEditorStyle(this, 'cyberpunk neon colors, futuristic dark aesthetic')">⚡ Cyberpunk</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem; justify-content:space-between; align-items:center; background:#080c14; padding:0.5rem 0.75rem; border-radius:10px; border:1px solid #1e293b; margin-bottom:0.5rem;">
+          <div style="font-size:0.72rem; color:#94a3b8; font-weight:600;">Ratio:</div>
+          <div style="display:flex; gap:0.35rem;">
+            <button type="button" class="ie-ai-chip active" id="ie-ratio-16-9" onclick="setAiEditorRatio(this, 1200, 800)">16:9 Landscape</button>
+            <button type="button" class="ie-ai-chip" id="ie-ratio-1-1" onclick="setAiEditorRatio(this, 800, 800)">1:1 Square</button>
+            <button type="button" class="ie-ai-chip" id="ie-ratio-4-5" onclick="setAiEditorRatio(this, 800, 1000)">4:5 Portrait</button>
+          </div>
+        </div>
       </div>
 
       <!-- Canonical image source input -->
@@ -2998,6 +3224,10 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     /* ══════════════════════════════════════════════════
        CORE STATE
     ══════════════════════════════════════════════════ */
+    // ★ API base for api/*.php fetch calls (opencode-service.js reads this
+    // lazily per request). Without it, calls go to /api/... at domain root
+    // → HTTP 404 and every OpenCode lane fails.
+    if (typeof SITE_URL === 'undefined') { var SITE_URL = <?= json_encode(defined('SITE_URL') ? SITE_URL : '') ?>; }
     let grapesEditor = null;
     let activeConceptIndex = 0;
     let currentStudioView = 'site'; // 'site' | 'admin'
@@ -3019,6 +3249,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
     let themeLocked = false;
     let userUploadedImages = [];
     let activeDraggedImage = null;
+    let lastDropShapeFit = false;
     let lastStudioStyleInjector = null;
 
     /* ══════════════════════════════════════════════════
@@ -4861,6 +5092,7 @@ p{color:#64748b;max-width:520px;line-height:1.6}
     function switchStudioConcept(index) {
       if (!projectData.designs[index]) return;
       syncCanvasToHtml();
+      try { copilotWriteChatLog(copilotChatKey()); } catch (e) {}
       activeConceptIndex = index;
       const d = projectData.designs[index];
       if (currentStudioView === 'admin' && d.adminHtml) {
@@ -4876,6 +5108,15 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       showCanvasLoading();
       loadHtmlIntoStudioCanvas();
       showToast(`Switched to Concept ${index + 1}`);
+      try {
+        const log = document.getElementById('magic-chat-log');
+        if (log) log.innerHTML = '';
+        if (!copilotLoadChatLog(copilotChatKey())) {
+          appendMagicChat('👋 <strong>Welcome to WebCraft AI!</strong><br>• Click any element or section on the canvas to <strong>edit it live with AI</strong>.<br>• Ask to rewrite text, tweak colors/styles, or insert whole sections.<br><span style="color:#94a3b8;font-size:0.74rem;">💡 All edits apply live to the active website.</span>', 'ai');
+        }
+        copilotLoadChanges();
+        copilotRefreshTargetLine();
+      } catch (e) {}
     }
 
     function switchStudioView(view) {
@@ -5073,8 +5314,33 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       }
     }
 
+    /* ★ Swap a shape/card inner image so the picture fits the shape
+       (object-fit:cover inside the clipped wrapper). Persists to both
+       the GrapesJS model and the live canvas element, then saves. */
+    function setShapeImageSrc(imgComp, url, alt) {
+      if (!imgComp || !url) return false;
+      try {
+        imgComp.set('src', url);
+        imgComp.setAttributes(Object.assign({}, imgComp.getAttributes(), { src: url, alt: alt || '' }));
+        const le = imgComp.getEl && imgComp.getEl();
+        if (le && le.tagName === 'IMG') le.setAttribute('src', url);
+        if (imgComp.view && imgComp.view.render) imgComp.view.render();
+        try { grapesEditor.select(imgComp); } catch (e) {}
+        return true;
+      } catch (e) { return false; }
+    }
+
     function handleImageClick(url, alt) {
       if (!grapesEditor) return;
+      // Shape/card selected (or its wrapper) → fit the image INTO the shape
+      const shapeImg = findShapeImgComp(selectedComponent);
+      if (shapeImg) {
+        setShapeImageSrc(shapeImg, url, alt);
+        syncCanvasToHtml();
+        renderSmartLayers();
+        showToast('🖼️ Shape image fitted ✓');
+        return;
+      }
       if (selectedComponent && (selectedComponent.get('tagName') || '').toLowerCase() === 'img') {
         selectedComponent.setAttributes(Object.assign({}, selectedComponent.getAttributes(), {
           src: url,
@@ -5117,7 +5383,8 @@ p{color:#64748b;max-width:520px;line-height:1.6}
           appendImageAtDrop(url, alt, canvasDoc.elementFromPoint(e.clientX, e.clientY), e.clientY);
           activeDraggedImage = null;
           renderSmartLayers();
-          showToast('🖼️ Image placed');
+          showToast(lastDropShapeFit ? '🖼️ Shape image fitted ✓' : '🖼️ Image placed');
+          lastDropShapeFit = false;
         });
       } catch (e) {}
     }
@@ -5156,6 +5423,19 @@ p{color:#64748b;max-width:520px;line-height:1.6}
             { id: 'sb-shape-diamond', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">◆</div><div>Diamond</div>', category: 'Shapes', content: '<div data-wc-shape="diamond" style="width:240px;height:240px;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-diamond/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
             { id: 'sb-shape-star', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">⭐</div><div>Star</div>', category: 'Shapes', content: '<div data-wc-shape="star" style="width:260px;height:260px;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-star/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
             { id: 'sb-shape-rounded', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">▢</div><div>Rounded</div>', category: 'Shapes', content: '<div data-wc-shape="rounded" style="width:280px;height:200px;border-radius:28px;overflow:hidden;margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-rounded/600/400" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-square', label: '<div style="width:24px;height:24px;background:#818cf8;border-radius:5px;margin-bottom:0.2rem"></div><div>Square</div>', category: 'Shapes', content: '<div data-wc-shape="square" style="width:260px;height:260px;border-radius:14px;overflow:hidden;margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-square/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-ellipse', label: '<div style="width:30px;height:20px;background:#818cf8;border-radius:50%;margin-bottom:0.2rem"></div><div>Ellipse</div>', category: 'Shapes', content: '<div data-wc-shape="ellipse" style="width:320px;height:200px;border-radius:50%;overflow:hidden;margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-ellipse/800/500" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-pill', label: '<div style="width:32px;height:16px;background:#818cf8;border-radius:999px;margin-bottom:0.2rem"></div><div>Pill</div>', category: 'Shapes', content: '<div data-wc-shape="pill" style="width:320px;height:150px;border-radius:999px;overflow:hidden;margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-pill/800/400" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-triangle', label: '<div style="width:26px;height:23px;background:#818cf8;clip-path:polygon(50% 0%,0% 100%,100% 100%);margin-bottom:0.2rem"></div><div>Triangle</div>', category: 'Shapes', content: '<div data-wc-shape="triangle" style="width:260px;height:240px;clip-path:polygon(50% 0%,0% 100%,100% 100%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-triangle/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-pentagon', label: '<div style="width:24px;height:23px;background:#818cf8;clip-path:polygon(50% 0%,100% 38%,81% 100%,19% 100%,0% 38%);margin-bottom:0.2rem"></div><div>Pentagon</div>', category: 'Shapes', content: '<div data-wc-shape="pentagon" style="width:260px;height:250px;clip-path:polygon(50% 0%,100% 38%,81% 100%,19% 100%,0% 38%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-pentagon/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-octagon', label: '<div style="width:23px;height:23px;background:#818cf8;clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%);margin-bottom:0.2rem"></div><div>Octagon</div>', category: 'Shapes', content: '<div data-wc-shape="octagon" style="width:250px;height:250px;clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-octagon/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-parallelogram', label: '<div style="width:30px;height:20px;background:#818cf8;clip-path:polygon(22% 0%,100% 0%,78% 100%,0% 100%);margin-bottom:0.2rem"></div><div>Slant</div>', category: 'Shapes', content: '<div data-wc-shape="parallelogram" style="width:300px;height:200px;clip-path:polygon(22% 0%,100% 0%,78% 100%,0% 100%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-slant/800/500" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-trapezoid', label: '<div style="width:30px;height:20px;background:#818cf8;clip-path:polygon(22% 0%,78% 0%,100% 100%,0% 100%);margin-bottom:0.2rem"></div><div>Trapezoid</div>', category: 'Shapes', content: '<div data-wc-shape="trapezoid" style="width:300px;height:200px;clip-path:polygon(22% 0%,78% 0%,100% 100%,0% 100%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-trapezoid/800/500" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-arrow', label: '<div style="width:30px;height:20px;background:#818cf8;clip-path:polygon(0% 32%,58% 32%,58% 5%,100% 50%,58% 95%,58% 68%,0% 68%);margin-bottom:0.2rem"></div><div>Arrow</div>', category: 'Shapes', content: '<div data-wc-shape="arrow" style="width:300px;height:200px;clip-path:polygon(0% 32%,58% 32%,58% 5%,100% 50%,58% 95%,58% 68%,0% 68%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-arrow/800/500" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-chevron', label: '<div style="width:28px;height:20px;background:#818cf8;clip-path:polygon(0% 5%,52% 5%,100% 50%,52% 95%,0% 95%,48% 50%);margin-bottom:0.2rem"></div><div>Chevron</div>', category: 'Shapes', content: '<div data-wc-shape="chevron" style="width:280px;height:200px;clip-path:polygon(0% 5%,52% 5%,100% 50%,52% 95%,0% 95%,48% 50%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-chevron/700/500" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-plus', label: '<div style="width:22px;height:22px;background:#818cf8;clip-path:polygon(35% 0%,65% 0%,65% 35%,100% 35%,100% 65%,65% 65%,65% 100%,35% 100%,35% 65%,0% 65%,0% 35%,35% 35%);margin-bottom:0.2rem"></div><div>Plus</div>', category: 'Shapes', content: '<div data-wc-shape="plus" style="width:240px;height:240px;clip-path:polygon(35% 0%,65% 0%,65% 35%,100% 35%,100% 65%,65% 65%,65% 100%,35% 100%,35% 65%,0% 65%,0% 35%,35% 35%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-plus/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-speech', label: '<div style="width:28px;height:24px;background:#818cf8;clip-path:polygon(0% 0%,100% 0%,100% 72%,62% 72%,52% 100%,44% 72%,0% 72%);margin-bottom:0.2rem"></div><div>Speech</div>', category: 'Shapes', content: '<div data-wc-shape="speech" style="width:300px;height:240px;clip-path:polygon(0% 0%,100% 0%,100% 72%,62% 72%,52% 100%,44% 72%,0% 72%);margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-speech/700/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
+            { id: 'sb-shape-leaf', label: '<div style="width:22px;height:22px;background:#818cf8;border-radius:6px 50% 6px 50%;margin-bottom:0.2rem"></div><div>Leaf</div>', category: 'Shapes', content: '<div data-wc-shape="leaf" style="width:260px;height:260px;border-radius:6px 50% 6px 50%;overflow:hidden;margin:2rem auto;position:relative;background:#1e293b;"><img data-wc-shape-img="1" src="https://picsum.photos/seed/wcshape-leaf/600/600" alt="Shape image" style="width:100%;height:100%;object-fit:cover;display:block;"/></div>' },
             { id: 'sb-card-photo', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">🃏</div><div>Photo Card</div>', category: 'Cards', content: '<div data-wc-card="photo" style="max-width:340px;margin:2rem auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.12);"><img data-wc-card-img="1" src="https://picsum.photos/seed/wccard-photo/600/400" alt="Card image" style="width:100%;height:220px;object-fit:cover;display:block;"/><div style="padding:1.5rem;"><span style="display:inline-block;font-size:0.68rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#4f46e5;background:#eef2ff;padding:0.3rem 0.8rem;border-radius:999px;margin-bottom:0.8rem;">New</span><h3 style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.6rem;">Card Title</h3><p style="font-size:0.95rem;line-height:1.65;color:#475569;">Short description about this service, product or person.</p><a href="#contact" style="display:inline-block;text-decoration:none;font-weight:700;font-size:0.9rem;padding:0.8rem 1.8rem;border-radius:999px;margin-top:1rem;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;">Learn More →</a></div></div>' },
             { id: 'sb-card-profile', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">👤</div><div>Profile Card</div>', category: 'Cards', content: '<div data-wc-card="profile" style="max-width:320px;margin:2rem auto;background:#ffffff;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.12);padding:2.25rem 1.75rem;text-align:center;"><img data-wc-card-img="1" src="https://picsum.photos/seed/wccard-profile/400/400" alt="Profile photo" style="width:130px;height:130px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 1.1rem;border:4px solid #eef2ff;"/><h3 style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:0.5rem;">Person Name</h3><p style="font-size:0.92rem;line-height:1.65;color:#475569;">Role or short bio goes here.</p><a href="#contact" style="display:inline-block;text-decoration:none;font-weight:700;font-size:0.9rem;padding:0.8rem 1.8rem;border-radius:999px;margin-top:1rem;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;">Contact →</a></div></div>' },
             { id: 'sb-card-side', label: '<div style="font-size:1.3rem;margin-bottom:0.2rem">↔️</div><div>Side Card</div>', category: 'Cards', content: '<div data-wc-card="horizontal" style="max-width:640px;margin:2rem auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.12);display:flex;flex-wrap:wrap;"><div style="flex:1 1 220px;min-width:220px;"><img data-wc-card-img="1" src="https://picsum.photos/seed/wccard-side/600/600" alt="Card image" style="width:100%;height:100%;min-height:220px;object-fit:cover;display:block;"/></div><div style="flex:1 1 260px;padding:1.75rem;"><h3 style="font-size:1.4rem;font-weight:800;color:#0f172a;margin-bottom:0.6rem;">Card Title</h3><p style="font-size:0.95rem;line-height:1.65;color:#475569;">Description text here. Everything is editable.</p><a href="#contact" style="display:inline-block;text-decoration:none;font-weight:700;font-size:0.9rem;padding:0.8rem 1.8rem;border-radius:999px;margin-top:1rem;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;">Learn More →</a></div></div>' },
@@ -5231,7 +5511,7 @@ p{color:#64748b;max-width:520px;line-height:1.6}
           const isCard = component.getAttributes && component.getAttributes()['data-wc-card'];
           const btns = findButtons(component);
           if (isCard) showToast('🃏 Card added — click text to edit, image to change');
-          else if (isShape) showToast('⭐ Shape added — right-click → Change Card / Shape Image');
+          else if (isShape) showToast('⭐ Shape added — drag an image onto it, or right-click → Change Card / Shape Image');
           else if (btns.length > 0) showToast('🔘 Button added');
           else showToast('✨ New element added');
         }, 300);
@@ -5627,6 +5907,18 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       if (!grapesEditor || !url) return null;
       const wrapper = grapesEditor.DomComponents.getWrapper();
       let target = componentFromElement(targetEl);
+      // Dropped ONTO a shape/card → fit the image INTO that shape
+      // (swap its inner img) instead of nesting a loose image inside it.
+      if (target) {
+        const shapeImg = findShapeImgComp(target);
+        if (shapeImg) {
+          setShapeImageSrc(shapeImg, url, alt);
+          lastDropShapeFit = true;
+          try { syncCanvasToHtml(); } catch (e) {}
+          try { renderSmartLayers(); } catch (e) {}
+          return shapeImg;
+        }
+      }
       if (target && (target.get('tagName') || '').toLowerCase() === 'img') {
         target.setAttributes(Object.assign({}, target.getAttributes(), { src: url, alt: alt || '' }));
         target.set({ draggable: true, resizable: true });
@@ -5993,6 +6285,22 @@ ${WC_ANIMATION_RUNTIME}
         const canvasDoc = grapesEditor.Canvas?.getDocument();
         if (!canvasDoc || canvasDoc.__ctxBound) return;
         canvasDoc.__ctxBound = true;
+        /* ★ Empty-link guard: an <a href=""> click inside the canvas would
+           resolve against the Studio URL and load Studio inside itself
+           (the "back into Studio" loop). Stop exactly those; everything
+           else behaves natively so the canvas stays a real preview. */
+        canvasDoc.addEventListener('click', (e) => {
+          try {
+            const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+            if (!a) return;
+            const href = (a.getAttribute('href') || '').trim();
+            if (href === '' || (href.charAt(0) !== '#' && /^\?[^#]*$/.test(href))) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof showToast === 'function') showToast('🔗 Empty link — set a real URL in Settings to test it');
+            }
+          } catch (err) {}
+        }, true);
         canvasDoc.addEventListener('contextmenu', (e) => {
           if (!studioEditMode) return; // normal preview: let links/menus behave natively
           e.preventDefault();
@@ -6324,8 +6632,75 @@ ${WC_ANIMATION_RUNTIME}
       showImageStatus('✓ Stock photo selected — press Apply Image or Save to Project', '#10b981');
     }
 
+    let currentAiEditorStyle = '';
+    let currentAiEditorWidth = 1200;
+    let currentAiEditorHeight = 800;
+
+    function setAiEditorStyle(chip, styleText) {
+      document.querySelectorAll('#ie-panel-ai .ie-ai-chip').forEach(c => {
+        if (!c.id || !c.id.startsWith('ie-ratio-')) c.classList.remove('active');
+      });
+      if (chip) chip.classList.add('active');
+      currentAiEditorStyle = styleText || '';
+    }
+
+    function setAiEditorRatio(chip, w, h) {
+      document.querySelectorAll('#ie-panel-ai [id^="ie-ratio-"]').forEach(c => c.classList.remove('active'));
+      if (chip) chip.classList.add('active');
+      currentAiEditorWidth = w;
+      currentAiEditorHeight = h;
+    }
+
+    async function generateImageInEditor() {
+      const promptInput = document.getElementById('ie-ai-prompt');
+      const prompt = (promptInput?.value || '').trim();
+      if (!prompt) {
+        showToast('Please describe the image you want to generate');
+        if (promptInput) promptInput.focus();
+        return;
+      }
+
+      const btn = document.getElementById('ie-ai-gen-btn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span> Generating...';
+      }
+      showImageStatus('🎨 AI is creating your image... Please wait a few seconds', '#818cf8');
+
+      try {
+        const seed = Math.floor(Math.random() * 9999999);
+        const fullPrompt = (prompt + (currentAiEditorStyle ? ', ' + currentAiEditorStyle : '')).trim();
+        const encoded = encodeURIComponent(fullPrompt);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${currentAiEditorWidth}&height=${currentAiEditorHeight}&nologo=true&seed=${seed}&model=flux`;
+
+        const testImg = new Image();
+        testImg.onload = () => {
+          document.getElementById('ie-src').value = imageUrl;
+          const urlInput = document.getElementById('ie-online-url-input');
+          if (urlInput) urlInput.value = imageUrl;
+          const altInput = document.getElementById('ie-alt');
+          if (altInput && !altInput.value.trim()) altInput.value = prompt;
+          previewImageEditor();
+          showImageStatus('✓ AI image generated! Press Apply Image or Save to Project', '#10b981');
+          showToast('✨ AI Image created successfully!');
+          if (btn) { btn.disabled = false; btn.innerHTML = '✨ Generate'; }
+        };
+        testImg.onerror = () => {
+          document.getElementById('ie-src').value = imageUrl;
+          previewImageEditor();
+          showImageStatus('✓ AI image ready! Press Apply Image', '#10b981');
+          if (btn) { btn.disabled = false; btn.innerHTML = '✨ Generate'; }
+        };
+        testImg.src = imageUrl;
+      } catch (err) {
+        showImageStatus('⚠️ Generation failed: ' + err.message, '#ef4444');
+        showToast('Image generation failed: ' + err.message);
+        if (btn) { btn.disabled = false; btn.innerHTML = '✨ Generate'; }
+      }
+    }
+
     function switchImageSourceTab(mode) {
-      ['local', 'url', 'stock'].forEach(m => {
+      ['local', 'url', 'stock', 'ai'].forEach(m => {
         const tab = document.getElementById('ie-tab-' + m);
         const panel = document.getElementById('ie-panel-' + m);
         if (tab) tab.classList.toggle('active', m === mode);
@@ -7994,8 +8369,12 @@ ${WC_ANIMATION_RUNTIME}
     }
 
     /* ══════════════ GEMINI AI ══════════════ */
-    function toggleMagicAi() {
-      document.getElementById('magic-ai-panel').classList.toggle('active');
+    function toggleMagicAi(forceOpen) {
+      const panel = document.getElementById('magic-ai-panel');
+      if (!panel) return;
+      if (forceOpen === true) panel.classList.add('active');
+      else if (forceOpen === false) panel.classList.remove('active');
+      else panel.classList.toggle('active');
     }
 
     function quickMagic(q) {
@@ -8078,6 +8457,7 @@ ${WC_ANIMATION_RUNTIME}
 
         if (chips) {
           chips.innerHTML = `
+            <span class="m-chip" onclick="quickMagic('Generate image of modern luxury photography')">🎨 AI Image</span>
             <span class="m-chip" onclick="quickMagic('Rewrite this text to be more punchy and modern')">✍️ Rewrite Text</span>
             <span class="m-chip" onclick="quickMagic('Make this look premium with modern colors and sleek typography')">✨ Luxury Look</span>
             <span class="m-chip" onclick="quickMagic('Add a subtle modern box-shadow and rounded corners')">🎨 Soft Shadow</span>
@@ -8095,6 +8475,7 @@ ${WC_ANIMATION_RUNTIME}
 
         if (chips) {
           chips.innerHTML = `
+            <span class="m-chip" onclick="quickMagic('Generate image of modern corporate hero banner')">🎨 AI Image</span>
             <span class="m-chip" onclick="quickMagic('Add 5-star customer testimonials section with slide-up animation')">⭐ Reviews</span>
             <span class="m-chip" onclick="quickMagic('Add pricing table with 3 tiers')">💰 Pricing</span>
             <span class="m-chip" onclick="quickMagic('Add FAQ section')">❓ FAQ</span>
@@ -8112,120 +8493,40 @@ ${WC_ANIMATION_RUNTIME}
       showToast('Switched to Entire Website mode');
     }
 
-    function changePuterModel(model) {
-      if (window.OpenCodeAI?.setModel) window.OpenCodeAI.setModel(model);
-      // Guarded: PuterService ignores unknown ids (OpenCode-only models
-      // would otherwise break Puter calls with "model not found" errors).
-      if (window.PuterService?.setModel) window.PuterService.setModel(model);
-      try { localStorage.setItem('webcraft_puter_model', model); } catch (e) {}
-      // Nudge: only space-bunny-free is verified working via HTTP right now;
-      // other free models 403 without an OpenCode session (auto-fallback covers).
-      if (model && model !== 'space-bunny-free' && /free|pickle|mimo|jev|longcat|nemotron/i.test(model)) {
-        showToast(`AI Model set to ${model} (if slow, ★ Space Bunny is verified fastest now)`);
-      } else {
-        showToast(`AI Model set to ${model}`);
+    function triggerAiImageFlow() {
+      const inp = document.getElementById('magic-input');
+      if (inp) {
+        inp.value = 'Generate image of ';
+        inp.focus();
+        inp.setSelectionRange(inp.value.length, inp.value.length);
       }
     }
 
-    async function togglePuterAccountMenu(e) {
-      if (e) e.stopPropagation();
-      const isSigned = await window.PuterService.isSignedIn();
-      const user = await window.PuterService.getUser();
-
-      const existing = document.getElementById('puter-account-menu');
-      if (existing) {
-        existing.remove();
-        return;
-      }
-
-      const menu = document.createElement('div');
-      menu.id = 'puter-account-menu';
-      menu.style.cssText = `
-        position: fixed; top: 58px; right: 1.25rem; z-index: 100060;
-        background: #111726; border: 1.5px solid #283347; border-radius: 14px;
-        padding: 1rem; width: 280px; box-shadow: 0 15px 40px rgba(0,0,0,0.7);
-        color: #f8fafc; font-family: inherit; font-size: 0.82rem;
-      `;
-
-      if (isSigned && user) {
-        menu.innerHTML = `
-          <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;padding-bottom:0.75rem;border-bottom:1px solid #1e293b;">
-            <div style="width:36px;height:36px;border-radius:50%;background:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;">👤</div>
-            <div>
-              <div style="font-weight:700;color:#fff;">@${escapeHtml(user.username || 'User')}</div>
-              <div style="font-size:0.7rem;color:#10b981;">🟢 Connected to Puter.js</div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:0.45rem;">
-            <button class="hdr-btn" onclick="handlePuterSwitch()" style="justify-content:flex-start;width:100%;">🔄 Switch Account</button>
-            <button class="hdr-btn" onclick="window.PuterService.openSignUp()" style="justify-content:flex-start;width:100%;">➕ Sign Up New Account</button>
-            <button class="hdr-btn" onclick="handlePuterSignOut()" style="justify-content:flex-start;width:100%;color:#f43f5e;border-color:#3f1826;">🚪 Sign Out</button>
-          </div>
-        `;
+    function changeAiModel(model) {
+      try { localStorage.setItem('webcraft_ai_model', model); } catch (e) {}
+      if (String(model || '').includes('gemini')) {
+        showToast(`AI Model set to ${model} (Google Gemini)`);
       } else {
-        menu.innerHTML = `
-          <div style="margin-bottom:0.75rem;padding-bottom:0.75rem;border-bottom:1px solid #1e293b;">
-            <div style="font-weight:700;color:#fff;margin-bottom:0.2rem;">Puter AI Integration</div>
-            <div style="font-size:0.72rem;color:#94a3b8;line-height:1.4;">Sign in to enjoy free DeepSeek & Gemini AI generations.</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:0.45rem;">
-            <button class="hdr-btn save-btn" onclick="handlePuterSignIn()" style="justify-content:center;width:100%;">✦ Sign In with Puter</button>
-            <button class="hdr-btn" onclick="window.PuterService.openSignUp()" style="justify-content:center;width:100%;">➕ Create Free Account</button>
-          </div>
-        `;
+        showToast(`AI Model set to ${model} (OpenCode Fallback)`);
       }
+    }
 
-      document.body.appendChild(menu);
-      const closeMenu = (ev) => {
-        if (!menu.contains(ev.target) && ev.target.id !== 'header-puter-btn') {
-          menu.remove();
-          document.removeEventListener('click', closeMenu);
-        }
+    /* AI-chat model default: gemini-3.5-flash-lite (restore saved choice) */
+    (function initAiChatModel() {
+      const apply = () => {
+        try {
+          const saved = localStorage.getItem('webcraft_ai_model') || 'gemini-3.5-flash-lite';
+          const sel = document.getElementById('magic-model-select');
+          if (sel) {
+            const has = Array.from(sel.options).some(o => o.value === saved);
+            sel.value = has ? saved : 'gemini-3.5-flash-lite';
+            if (!has) localStorage.setItem('webcraft_ai_model', 'gemini-3.5-flash-lite');
+          }
+        } catch (e) {}
       };
-      setTimeout(() => document.addEventListener('click', closeMenu), 10);
-    }
-
-    async function handlePuterSignIn() {
-      document.getElementById('puter-account-menu')?.remove();
-      try {
-        await window.PuterService.signIn();
-        showToast('✓ Signed in with Puter!');
-      } catch (e) {
-        showToast('Sign in cancelled');
-      }
-    }
-
-    async function handlePuterSwitch() {
-      document.getElementById('puter-account-menu')?.remove();
-      try {
-        await window.PuterService.switchAccount();
-        showToast('✓ Switched Puter account!');
-      } catch (e) {
-        showToast('Account switch cancelled');
-      }
-    }
-
-    async function handlePuterSignOut() {
-      document.getElementById('puter-account-menu')?.remove();
-      await window.PuterService.signOut();
-      showToast('Signed out of Puter');
-    }
-
-    window.addEventListener('puter-auth-changed', (e) => {
-      const { user, isSignedIn } = e.detail || {};
-      const dot = document.getElementById('puter-status-dot');
-      const name = document.getElementById('header-puter-name');
-      const link = document.getElementById('panel-puter-account-link');
-      if (isSignedIn && user) {
-        if (dot) dot.style.background = '#10b981';
-        if (name) name.textContent = '@' + (user.username || 'Puter');
-        if (link) link.textContent = '@' + (user.username || 'User');
-      } else {
-        if (dot) dot.style.background = '#94a3b8';
-        if (name) name.textContent = 'Sign In (Puter)';
-        if (link) link.textContent = 'Sign In with Puter';
-      }
-    });
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+      else apply();
+    })();
 
     function formatMarkdown(text) {
       if (!text) return '';
@@ -8243,6 +8544,7 @@ ${WC_ANIMATION_RUNTIME}
        color change, periya/chinna size, dark/light mode. Returns true if handled. */
     function applyLocalSmartStyle(q) {
       try {
+        q = (typeof copilotStripNoise === 'function') ? copilotStripNoise(q) : String(q || '');
         const lower = String(q || '').toLowerCase();
         const comp = (typeof selectedComponent !== 'undefined') ? selectedComponent : null;
         const hasSel = !!(comp && comp.getEl);
@@ -8273,22 +8575,20 @@ ${WC_ANIMATION_RUNTIME}
             saveProjectData();
           }
           renderSmartLayers();
-          appendMagicChat(`✨ Applied locally (offline): ${escapeHtml(q)}`, 'ai');
-          showToast('✨ Updated (offline smart-style) & saved!');
+          const sum0 = friendlyUpdateSummary(q);
+          appendMagicChat(sum0.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+          showToast(sum0.toast);
           return true;
         }
         // Whole-page color / theme swaps (mirror of server smart engine)
         if (!hasSel && (wantColor || wantDark || wantLight)) {
-          let mod = currentHtml, msg = '';
+          let mod = currentHtml;
           if (wantDark) {
             mod = mod.split('#ffffff').join('#090d16').split('#fafbfe').join('#090d16').split('#f8fafc').join('#0f172a');
-            msg = 'Switched to dark mode (offline).';
           } else if (wantLight) {
             mod = mod.split('#090d16').join('#ffffff').split('#0f172a').join('#f8fafc').split('#111622').join('#ffffff');
-            msg = 'Switched to light mode (offline).';
           } else if (wantColor) {
             mod = mod.split('#6366f1').join(wantColor).split('#a855f7').join(wantColor);
-            msg = `Applied color ${wantColor} across the page (offline).`;
           }
           if (mod !== currentHtml) {
             currentHtml = mod;
@@ -8297,19 +8597,2160 @@ ${WC_ANIMATION_RUNTIME}
               saveProjectData();
             }
             loadHtmlIntoStudioCanvas();
-            appendMagicChat(`✨ ${escapeHtml(msg)}`, 'ai');
-            showToast('✨ Updated (offline smart-style) & saved!');
+            const sumW = friendlyUpdateSummary(q);
+            appendMagicChat(sumW.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+            showToast(sumW.toast);
             return true;
+          }
+        }
+        // Selected-element TEXT rewrite (offline): "change text/heading/title to X",
+        // "rewrite this (text) to X", "ithoda text ah X nu maathu", or quoted "X".
+        if (hasSel) {
+          let newText = null;
+          let m = String(q).match(/(?:change|rewrite|update|set|maathu|maathi)\s+(?:this\s+)?(?:text|heading|title|label|button|content)\s+(?:to|as|ah|aag?)\s*[:\-]?\s*(.+)/i);
+          if (!m) m = String(q).match(/["“”]([^"“”]{2,300})["“”]/);
+          if (m) newText = m[1].trim().replace(/\s*\[hint:[^\]]*\]/gi, '').trim();
+          if (newText) {
+            const el = comp.getEl();
+            if (el) {
+              const tag = (el.tagName || 'DIV').toLowerCase();
+              if (/^(h1|h2|h3|h4|h5|h6|p|span|a|button|li|div)$/.test(tag) && el.children.length === 0) {
+                el.textContent = newText;
+              } else {
+                const t = el.querySelector('h1,h2,h3,h4,p,span,a,button,li');
+                if (t) t.textContent = newText;
+                else el.textContent = newText;
+              }
+              syncCanvasToHtml();
+              if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+                projectData.designs[activeConceptIndex].html = currentHtml;
+                saveProjectData();
+              }
+              renderSmartLayers();
+              const sumT = friendlyUpdateSummary(q);
+              appendMagicChat(sumT.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+              showToast(sumT.toast);
+              return true;
+            }
+          }
+          // Selected-element REMOVE / HIDE (offline): "remove/delete this (section)",
+          // "hide this", "antha section remove pannu".
+          if (/remove|delete|hide|neekku|remove pannu|delete pannu|hide pannu/i.test(q)) {
+            try {
+              if (/hide|hide pannu/i.test(q)) {
+                const el = comp.getEl();
+                if (el) el.style.display = 'none';
+                syncCanvasToHtml();
+              } else {
+                comp.remove();
+                if (grapesEditor) grapesEditor.select(null);
+                selectedComponent = null;
+                if (typeof updateAiSelectedTarget === 'function') updateAiSelectedTarget(null);
+                syncCanvasToHtml();
+              }
+              if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+                projectData.designs[activeConceptIndex].html = currentHtml;
+                saveProjectData();
+              }
+              renderSmartLayers();
+              const sumR = friendlyUpdateSummary(q);
+              appendMagicChat(sumR.html + ' <span style="color:#64748b;font-size:0.68rem;">· offline</span>', 'ai');
+              showToast(sumR.toast + ' Undo (↶) iruku.');
+              return true;
+            } catch (e2) { console.warn('[local smart-style remove]', e2); }
           }
         }
       } catch (e) { console.warn('[local smart-style]', e); }
       return false;
     }
 
+    /* ══════════════ PROMPT-TO-IMAGE GENERATION ══════════════ */
+    function isImageGenerationRequest(q) {
+      if (!q || typeof q !== 'string') return false;
+      let s = q.trim().replace(/\[Intent interpretation:.*?\]/gis, '').trim();
+      const lower = s.toLowerCase();
+      if (/^(?:generate|create|make|draw|render|give me an?)\s+(?:an?\s+)?(?:ai\s+)?(?:image|photo|picture|graphic|illustration)\s+(?:of|for|about|with)?/i.test(lower)) return true;
+      if (/^(?:ai\s*image|prompt\s*to\s*image|image\s*gen(?:eration)?|generate\s*photo|generate\s*picture|draw\s*photo)[:\s]/i.test(lower)) return true;
+      if (/^image:\s*.+/i.test(lower)) return true;
+      if (/(?:image|photo|padam)\s*(?:create|generate|ready|thanga|podu|pannu|vainga)/i.test(lower)) return true;
+      return false;
+    }
+
+    function extractImagePrompt(q) {
+      let s = q.trim().replace(/\[Intent interpretation:.*?\]/gis, '').trim();
+      let p = s;
+      p = p.replace(/^(?:generate|create|make|draw|render|give me an?)\s+(?:an?\s+)?(?:ai\s+)?(?:image|photo|picture|graphic|illustration)\s+(?:of|for|about|with)?\s*/i, '');
+      p = p.replace(/^(?:ai\s*image|prompt\s*to\s*image|image\s*gen(?:eration)?|generate\s*photo|generate\s*picture|draw\s*photo)[:\s]*/i, '');
+      p = p.replace(/^image:\s*/i, '');
+      p = p.replace(/(?:image|photo|padam)\s*(?:create|generate|ready|thanga|podu|pannu|vainga).*/i, '');
+      return p.trim() || s.trim();
+    }
+
+    async function executeAiImageGeneration(cleanPrompt, options = {}) {
+      const width = options.width || 1200;
+      const height = options.height || 800;
+      const seed = Math.floor(Math.random() * 9999999);
+      const encoded = encodeURIComponent(cleanPrompt.trim());
+      const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&nologo=true&seed=${seed}&model=flux`;
+      return { url: imageUrl, prompt: cleanPrompt, seed, width, height };
+    }
+
+    function renderAiImageInChat(imgData) {
+      const cardHtml = `
+        <div class="ai-chat-image-card">
+          <div style="position:relative; width:100%; min-height:170px; background:#040711; display:flex; align-items:center; justify-content:center;">
+            <img src="${imgData.url}" alt="${escapeHtml(imgData.prompt)}" style="width:100%; height:auto; display:block; max-height:260px; object-fit:cover;" loading="lazy" onload="const l=this.nextElementSibling;if(l)l.style.display='none';">
+            <div style="position:absolute; font-size:0.75rem; color:#94a3b8; display:flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:rgba(0,0,0,0.6); border-radius:999px;">
+              <span class="typing-dots"><i></i><i></i><i></i></span> Generating Flux image...
+            </div>
+          </div>
+          <div style="padding:0.65rem 0.75rem 0.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.35rem;">
+              <span style="font-size:0.68rem; font-weight:700; color:#818cf8; text-transform:uppercase; letter-spacing:0.04em;">🎨 AI Image (Flux)</span>
+              <span style="font-size:0.65rem; color:#64748b;">${imgData.width}×${imgData.height}</span>
+            </div>
+            <div style="font-size:0.78rem; color:#e2e8f0; font-weight:600; line-height:1.35; margin-bottom:0.6rem;">
+              "${escapeHtml(imgData.prompt)}"
+            </div>
+          </div>
+          <div class="ai-chat-image-actions">
+            <button type="button" class="ai-chat-img-btn primary" onclick="applyAiImageToCanvas('${imgData.url}', 'replace')">
+              🖼️ Replace Image
+            </button>
+            <button type="button" class="ai-chat-img-btn" onclick="applyAiImageToCanvas('${imgData.url}', 'background')">
+              ✨ Set Background
+            </button>
+            <button type="button" class="ai-chat-img-btn success" onclick="applyAiImageToCanvas('${imgData.url}', 'insert')">
+              ➕ Insert Block
+            </button>
+            <button type="button" class="ai-chat-img-btn" onclick="saveAiImageToProjectStorage('${imgData.url}', this)">
+              📥 Save to Project
+            </button>
+          </div>
+        </div>
+      `;
+      appendMagicChat(cardHtml, 'ai');
+      showToast('✨ AI image ready in chat!');
+    }
+
+    function flashCanvasComponent(comp) {
+      try {
+        const el = comp?.getEl ? comp.getEl() : null;
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.outline = '3px solid #6366f1';
+          el.style.outlineOffset = '3px';
+          el.style.transition = 'outline 0.3s ease';
+          setTimeout(() => { if (el) el.style.outline = ''; }, 2200);
+        }
+      } catch (e) {}
+    }
+
+    function applyAiImageToCanvas(url, mode) {
+      if (!grapesEditor) return;
+      const comp = selectedComponent;
+
+      if (mode === 'replace') {
+        if (comp) {
+          const tag = (comp.get('tagName') || '').toLowerCase();
+          if (tag === 'img') {
+            comp.addAttributes({ src: url });
+            syncCanvasToHtml();
+            saveProjectData();
+            showToast('🖼️ Replaced image on canvas!');
+            flashCanvasComponent(comp);
+            return;
+          }
+          const innerImg = comp.find('img')[0];
+          if (innerImg) {
+            innerImg.addAttributes({ src: url });
+            syncCanvasToHtml();
+            saveProjectData();
+            showToast('🖼️ Replaced image on canvas!');
+            flashCanvasComponent(innerImg);
+            return;
+          }
+        }
+        const firstImg = grapesEditor.getWrapper().find('img')[0];
+        if (firstImg) {
+          firstImg.addAttributes({ src: url });
+          syncCanvasToHtml();
+          saveProjectData();
+          showToast('🖼️ Replaced website photo!');
+          flashCanvasComponent(firstImg);
+          return;
+        }
+        showToast('Select an image on canvas first to replace');
+      } else if (mode === 'background') {
+        const target = comp || grapesEditor.getWrapper().find('section, header, hero')[0] || grapesEditor.getWrapper();
+        if (target) {
+          const style = target.getStyle() || {};
+          style['background-image'] = `url('${url}')`;
+          style['background-size'] = 'cover';
+          style['background-position'] = 'center';
+          style['background-repeat'] = 'no-repeat';
+          target.setStyle(style);
+          syncCanvasToHtml();
+          saveProjectData();
+          showToast('✨ Section background set!');
+          flashCanvasComponent(target);
+        }
+      } else if (mode === 'insert') {
+        const wrapper = grapesEditor.getWrapper();
+        const target = comp || wrapper;
+        const blockHtml = `
+          <div class="ai-generated-image-block" style="padding: 2.5rem 1rem; text-align: center;">
+            <div style="max-width: 960px; margin: 0 auto; overflow: hidden; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.18);">
+              <img src="${url}" alt="AI Generated" style="width: 100%; height: auto; display: block; object-fit: cover;" />
+            </div>
+          </div>
+        `;
+        let inserted;
+        if (target !== wrapper && target.parent()) {
+          inserted = target.parent().append(blockHtml, { at: target.index() + 1 })[0];
+        } else {
+          inserted = wrapper.append(blockHtml)[0];
+        }
+        if (inserted) {
+          grapesEditor.select(inserted);
+          flashCanvasComponent(inserted);
+        }
+        syncCanvasToHtml();
+        saveProjectData();
+        showToast('➕ Added image block to page!');
+      }
+    }
+
+    async function saveAiImageToProjectStorage(url, btnEl) {
+      if (!url) return;
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '⏳ Saving...';
+      }
+      showToast('📥 Downloading image into project...');
+      try {
+        const fd = new FormData();
+        fd.append('url', url);
+        const res = await fetch('<?= SITE_URL ?>/api/upload.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data && data.success && data.url) {
+          if (btnEl) {
+            btnEl.innerHTML = '✓ Saved';
+            btnEl.classList.add('success');
+          }
+          showToast('✓ Image saved permanently in project storage!');
+        } else {
+          throw new Error(data?.error || 'Could not save image');
+        }
+      } catch (err) {
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.innerHTML = '📥 Save to Project';
+        }
+        showToast('Save failed: ' + err.message);
+      }
+    }
+
+    /* ★ Customer-friendly update summary (Tanglish).
+       Tells the customer WHAT changed and WHERE — never a generic message. */
+    function cleanSummaryText(s) {
+      return String(s || '').replace(/\[Conversation context:[\s\S]*?\](?=\s|$)/gi, ' ').replace(/\[\[(?:CTX|FILE)[\s\S]*?\]\]/gi, ' ').replace(/\[Intent interpretation:[\s\S]*?\](?=\s|$)/gi, ' ').replace(/\s*\[hint:[^\]]*\]/gi, '').trim().replace(/^[:\-–—\s]+/, '').slice(0, 140);
+    }
+    function describeAiTarget() {
+      try {
+        const comp = (typeof selectedComponent !== 'undefined') ? selectedComponent : null;
+        if (!comp) return { label: 'Website', scoped: false };
+        const attrs = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+        const secName = attrs['data-section-name'] || attrs['data-section'] || attrs['id'] || '';
+        let heading = '';
+        try {
+          const el = comp.getEl ? comp.getEl() : null;
+          if (el) {
+            const h = el.querySelector('h1,h2,h3');
+            heading = h ? (h.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40) : '';
+            if (!heading) heading = (el.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+          }
+        } catch (e) {}
+        const tag = (comp.get('tagName') || 'section').toLowerCase();
+        const label = secName ? `"${secName}" section` : (heading ? `"${heading}" ${tag}` : `selected ${tag}`);
+        return { label, scoped: true, tag };
+      } catch (e) { return { label: 'selected section', scoped: true }; }
+    }
+    function friendlyUpdateSummary(q) {
+      const t = describeAiTarget();
+      const scopeNote = t.scoped ? 'Vera entha idamum thodala.' : '';
+      const s = cleanSummaryText(q);
+      const lower = s.toLowerCase();
+      if (/remove|delete|neekku/i.test(lower)) return { html: `✅ Ready! ${escapeHtml(t.label)} <b>remove</b> panniten. Undo (↶) venumna use pannunga.`, toast: '🗑️ Section removed!' };
+      if (/hide/i.test(lower)) return { html: `✅ Ready! ${escapeHtml(t.label)} <b>hide</b> panniten. ${scopeNote}`, toast: '🙈 Section hidden!' };
+      const tm = s.match(/(?:change|rewrite|update|set|maathu|maathi)\s+(?:this\s+)?(?:text|heading|title|label|button|content)\s+(?:to|as|ah|aag?)\s*[:\-]?\s*(.+)/i)
+              || s.match(/["“”]([^"“”]{2,200})["“”]/);
+      if (tm && cleanSummaryText(tm[1])) return { html: `✅ Ready! ${escapeHtml(t.label)} la text maathiten: “${escapeHtml(cleanSummaryText(tm[1]))}”. ${scopeNote}`, toast: '✨ Text updated!' };
+      const cm = lower.match(/\b(blue|green|red|gold|purple|orange|pink|black|white)\b/) || s.match(/#([0-9a-f]{6}|[0-9a-f]{3})/i);
+      if (/color|colour|background|niram|theme color/i.test(lower) || cm) {
+        const cname = cm ? (cm[1] ? '#' + cm[1] : cm[0]) : 'ungal sonna color';
+        return { html: `✅ Ready! ${escapeHtml(t.label)} color <b>${escapeHtml(cname)}</b> aakiten. ${scopeNote}`, toast: '🎨 Color updated!' };
+      }
+      if (/periya|bigger|large|increase|\bbig\b/i.test(s)) return { html: `✅ Ready! ${escapeHtml(t.label)} size <b>perusa</b> panniten. ${scopeNote}`, toast: '🔍 Size increased!' };
+      if (/chinna|smaller|small|decrease/i.test(s)) return { html: `✅ Ready! ${escapeHtml(t.label)} size <b>chinna</b> panniten. ${scopeNote}`, toast: '🔍 Size reduced!' };
+      if (/dark|night.*mode/i.test(lower)) return { html: `✅ Ready! <b>Dark mode</b> maathiten.`, toast: '🌙 Dark mode!' };
+      if (/light.*mode|white.*mode/i.test(lower)) return { html: `✅ Ready! <b>Light mode</b> maathiten.`, toast: '☀️ Light mode!' };
+      if (/add|create|podu|pannu|insert|new/i.test(lower)) return { html: `✅ Ready! Ungal sonna mathiri puthusa add panniten: “${escapeHtml(s.slice(0, 120))}”. ${scopeNote}`, toast: '✨ Section added!' };
+      return { html: `✅ Ready! Ungal sonna mathiri apply panniten: “${escapeHtml(s.slice(0, 120))}”. ${scopeNote}`, toast: '✨ Updated!' };
+    }
+
+    function applyUpdatedSnippetToCanvas(comp, snippetHtml) {
+      if (!comp || !snippetHtml) return;
+      let clean = snippetHtml.trim();
+      const fenceMatch = clean.match(/```(?:html)?\s*([\s\S]*?)```/i);
+      if (fenceMatch) clean = fenceMatch[1].trim();
+      const firstTag = clean.indexOf('<');
+      if (firstTag > 0) clean = clean.slice(firstTag).trim();
+
+      const parent = comp.parent();
+      let freshComp = null;
+      if (parent) {
+        const idx = comp.index();
+        comp.remove();
+        const added = parent.append(clean, { at: idx });
+        freshComp = Array.isArray(added) ? added[0] : added;
+      } else {
+        comp.components(clean);
+        freshComp = comp;
+      }
+      if (freshComp) {
+        if (typeof configureEditorComponent === 'function') configureEditorComponent(freshComp);
+        if (grapesEditor) grapesEditor.select(freshComp);
+        flashCanvasComponent(freshComp);
+      }
+      syncCanvasToHtml();
+      if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+        projectData.designs[activeConceptIndex].html = currentHtml;
+        saveProjectData();
+      }
+      renderSmartLayers();
+      showToast('✨ Selected element updated live & saved!');
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ★ AI WEBSITE COPILOT (extends Magic AI — lanes/UI preserved)
+       Ask/Edit modes · target scopes · memory · find · audit · review
+       ══════════════════════════════════════════════════════════════ */
+    const copilotState = {
+      mode: 'edit',
+      memory: [],        // [{role:'user'|'ai', text, target}]
+      changes: [],       // [{at, target, summary, kind:'snippet'|'full'|'local', verIdx}]
+      pendingReview: null,
+      pendingConfirm: null,
+      audit: null,       // {at, goods, warns, bads, issues:[...]}
+      file: null,        // {name, text}
+      lastTargetLabel: '',
+      lastAction: '',
+      msgSeq: 0
+    };
+    try { copilotState.mode = localStorage.getItem('webcraft_copilot_mode') || 'edit'; } catch (e) {}
+    if (copilotState.mode !== 'ask' && copilotState.mode !== 'edit') copilotState.mode = 'edit';
+
+    function copilotSetMode(m) {
+      copilotState.mode = (m === 'ask') ? 'ask' : 'edit';
+      try { localStorage.setItem('webcraft_copilot_mode', copilotState.mode); } catch (e) {}
+      const a = document.getElementById('copilot-mode-ask'), b = document.getElementById('copilot-mode-edit');
+      if (a) a.classList.toggle('active', copilotState.mode === 'ask');
+      if (b) b.classList.toggle('active', copilotState.mode === 'edit');
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.placeholder = copilotState.mode === 'ask'
+        ? 'Ask for advice — website will NOT change (e.g. how to improve?)...'
+        : 'Describe the change — AI edits the target (e.g. make hero premium)...';
+      copilotRefreshTargetLine();
+      showToast(copilotState.mode === 'ask' ? '💬 Ask mode — advice only, no changes' : '🛠️ Edit mode — AI can modify the website');
+    }
+    (function copilotInitMode() {
+      const apply = () => {
+        const a = document.getElementById('copilot-mode-ask'), b = document.getElementById('copilot-mode-edit');
+        if (a) a.classList.toggle('active', copilotState.mode === 'ask');
+        if (b) b.classList.toggle('active', copilotState.mode === 'edit');
+        copilotRefreshTargetLine();
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+      else apply();
+    })();
+
+    /* Strip prompt-injected blocks so classification/local logic sees raw intent. */
+    function copilotStripNoise(s) {
+      return String(s || '')
+        .replace(/\[Intent interpretation:[\s\S]*?\](?=\s|$)/gi, ' ')
+        .replace(/\[Conversation context:[\s\S]*?\](?=\s|$)/gi, ' ')
+        .replace(/\[\[CTX[\s\S]*?\]\]/gi, ' ')
+        .replace(/\s*\[hint:[^\]]*\]/gi, '')
+        .replace(/\s+/g, ' ').trim();
+    }
+
+    /* ── Smart command detection (EN + Tamil + Sinhala). Internal only. ── */
+    function copilotClassifyPure(text) {
+      const s = copilotStripNoise(text);
+      const l = s.toLowerCase();
+      const out = { kind: 'STYLE_EDIT', scope: null, allPages: false, destructive: false, sectionType: null, anchor: null, findWhat: null, tone: null };
+      if (/(all|every|each)\s+pages?\b|ella\s+(pages|pakkam)/i.test(s)) out.allPages = true;
+      if (/(this|current)\s+page\b|intha\s+page/i.test(s)) out.scope = out.scope || 'page';
+      if (/(delete|remove|redesign|replace)\s+(the\s+)?(entire|whole|full|complete)\b/i.test(s)
+        || /redesign\s+(my\s+)?(complete|entire|whole)\s+(website|site|homepage)/i.test(s)
+        || /(entire|whole)\s+(page|website|site)\s+(delete|remove)/i.test(s)) out.destructive = true;
+      if (/\b(audit|website\s+health|site\s+score|full\s+(checkup|check|review))\b/i.test(l) || /audit\s+(my\s+)?(website|site|page)/i.test(s)) { out.kind = 'WEBSITE_AUDIT'; return out; }
+      if (/\bfix\s+(everything|all|these|them|found|issues|ella)\b/i.test(s) || /ella(athayum|yum)?\s*fix\s*pannu/i.test(s)) { out.kind = 'FIX_ALL'; return out; }
+      if (/^\s*(hi+|hii+|hello+|hey+|yo|vanakkam|namaste|good\s*(morning|afternoon|evening|day)|allo+)\s*[!.👋🙏]*\s*$/i.test(s)) { out.kind = 'GREETING'; return out; }
+      if (/^\s*(thanks?|thank\s*you|nandri|shukriya)\b/i.test(s) && s.length < 40 && !/(mak|chang|add|fix|edit|pannu|maathu)/i.test(s)) { out.kind = 'THANKS'; return out; }
+      if (/^\s*(undo|revert|undo\s+that|பழையபடி|திரும்ப|ආපසු)\b/i.test(s) || /↩\s*undo/i.test(s)) { out.kind = 'UNDO'; return out; }
+      const findM = s.match(/^(find|where\s+is|locate|show\s+me|select|enga|kandu(pidi)?|find\s+pannu|hoyanna?)\b[\s:,'"“”]*([^'"“”]+)$/i)
+        || s.match(/(find|select)\s+(my|the|antha|intha)\b(.+)$/i);
+      if (findM && /(section|button|hero|footer|header|pricing|contact|faq|gallery|form|menu|nav|logo|image|photo|testimonial|heading)/i.test(findM[3] || '')) {
+        out.kind = 'FIND_ELEMENT'; out.findWhat = (findM[3] || '').trim(); return out;
+      }
+      if (/\bseo\b|meta\s+(title|description)|search\s+(rank|result)|google.*rank/i.test(s)) { out.kind = 'SEO_EDIT'; return out; }
+      if (/\bmobile\b|responsive|small\s+screen|phone\s+(view|screen|la)/i.test(s) && /(fix|improve|better|friend|optimi|maathu|seri)/i.test(s)) { out.kind = 'MOBILE_FIX'; return out; }
+      if (/(image|photo|picture|padam|படம்|புகைப்படம்|ඡායාරූපය|පින්තූරය)/i.test(s)
+        && /(replac|chang| professional|bigger|larg|smaller|background|hero|பெரிய|சிறிய|பெருசு|ලොකු|පොඩි)/i.test(s)) { out.kind = 'IMAGE_EDIT'; return out; }
+      const secM = s.match(/(testimonial|review|faq|pricing|price|gallery|contact|form|map|banner|cta|newsletter|stat|timeline|booking|blog|service|about|hero|footer)s?\b/i);
+      if (/(add|creat|insert|new|append|podu|add\s+pannu|seru|சேர்|சேரு|உருவாக்கு|එකතු|අලුත්)/i.test(s) && secM) {
+        out.kind = 'SECTION_ADD'; out.sectionType = secM[1].toLowerCase();
+        const am = s.match(/(below|after|under|above|before|over|kizha|keezha|கீழே|mela|மேலே|முன்|பின்)\s+(.+?)(?:\s+section)?$/i);
+        if (am) out.anchor = { pos: /below|after|under|kizha|கீழே|பின்/i.test(am[1]) ? 'after' : 'before', what: am[2].trim() };
+        return out;
+      }
+      if (/(remov|delet|neekku|neekunga|நீக்கு|makanna|අයින්)/i.test(s) && /(section|hero|footer|header|pricing|faq|gallery|form|banner|block)/i.test(s)) { out.kind = 'SECTION_DELETE'; return out; }
+      if (/\bmove\b.*\b(above|below|before|after|top|bottom)\b/i.test(s) || /reorder/i.test(s)) { out.kind = 'SECTION_MOVE'; return out; }
+      if (/\b(tone|copy|copywrite|headline|slogan|tagline)\b/i.test(l)
+        || /(rewrite|shorten|expand|professional|persuasive|friendly|premium|copy|content|text).{0,40}(hero|about|service|testimonial|faq|pricing|cta|contact)/i.test(s)
+        || /(hero|about|service|testimonial|faq|pricing)\b.{0,30}(rewrite|shorten|expand|regenerate)/i.test(s)) { out.kind = 'CONTENT_GENERATION'; return out; }
+      const qMark = /\?\s*$/.test(s.trim());
+      const editVerb = /(mak|chang|updat|edit|add|remov|delet|fix|improv|creat|generat|insert|replac|set|maathu|maathi|mathu|mattu|aakku|pannu|பண்ணு|மாற்று|කරන්න|හදන්න)/i.test(s);
+if (/^(what|why|which|is|are|can|should|do\s|does|explain|enga|epdi|yen|ethu|ஏன்|எப்படி|எது|ඇයි|මොකක්ද|කොහොමද)/i.test(s.trim())) { out.kind = 'QUESTION'; return out; }
+      if (/^(how|how\s+to|how\s+do\s+i|epdi)\b/i.test(s.trim())) { out.kind = 'ADVICE'; return out; }
+      if (qMark && !editVerb) { out.kind = 'QUESTION'; return out; }
+      if (/(suggest|advice|opinion|should\s+i|what.{0,25}wrong|improve.{0,20}\?|review\s+my)/i.test(s) && !editVerb) { out.kind = 'ADVICE'; return out; }
+      if (/(text|heading|title|label|font.{0,15}(text|word)|paragraph)/i.test(s) && /(chang|rewrite|updat|set|maathu|maathi|mathu|mattu|edita?)/i.test(s)) { out.kind = 'TEXT_EDIT'; return out; }
+      return out;
+    }
+
+    /* ── Target resolution: element / section / page / website ── */
+    function copilotSelectedComp() {
+      try { return (typeof selectedComponent !== 'undefined') ? selectedComponent : null; } catch (e) { return null; }
+    }
+    function copilotNearestSection(comp) {
+      let c = comp, depth = 0;
+      try {
+        while (c && depth < 8) {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+          if (tag === 'section' || tag === 'header' || tag === 'footer' || tag === 'main' || at['data-section-name']) return c;
+          c = c.parent ? c.parent() : null; depth++;
+        }
+      } catch (e) {}
+      return comp;
+    }
+    function copilotCompOuter(comp, max) {
+      try {
+        const el = comp.getEl ? comp.getEl() : null;
+        const outer = el ? el.outerHTML : (comp.toHTML ? comp.toHTML() : '');
+        return String(outer || '').slice(0, max || 8000);
+      } catch (e) { return ''; }
+    }
+    function copilotResolveTarget() {
+      const scopePref = (typeof window !== 'undefined' && window.WCAIScope) ? window.WCAIScope : 'auto';
+      const comp = copilotSelectedComp();
+      const page = copilotPageInfo();
+      if (scopePref === 'site' || (!comp && scopePref === 'auto')) {
+        return { scope: 'website', comp: null, html: '', label: 'Entire Website', page };
+      }
+      if (scopePref === 'page') return { scope: 'page', comp: null, html: '', label: 'Page: ' + page.name, page };
+      if (!comp) return { scope: 'website', comp: null, html: '', label: 'Entire Website', page };
+      if (scopePref === 'section') {
+        const sec = copilotNearestSection(comp);
+        return { scope: 'section', comp: sec, html: copilotCompOuter(sec), label: copilotDescribeComp(sec), page };
+      }
+      return { scope: 'element', comp, html: copilotCompOuter(comp), label: copilotDescribeComp(comp), page };
+    }
+    function copilotDescribeComp(comp) {
+      try {
+        if (!comp) return 'Entire Website';
+        const at = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+        const nm = at['data-section-name'] || at['data-section'] || at['id'] || '';
+        const tag = (comp.get('tagName') || 'element').toLowerCase();
+        let head = '';
+        try {
+          const el = comp.getEl ? comp.getEl() : null;
+          if (el) {
+            const h = el.querySelector('h1,h2,h3');
+            head = ((h ? h.innerText : el.innerText) || '').trim().replace(/\s+/g, ' ').slice(0, 42);
+          }
+        } catch (e) {}
+        if (nm) return `"${nm}" ${tag}`;
+        if (head) return `"${head}" ${tag}`;
+        return `<${tag}>`;
+      } catch (e) { return 'selected element'; }
+    }
+    function copilotRefreshTargetLine() {
+      try {
+        const el = document.getElementById('copilot-target-line');
+        if (!el) return;
+        const t = copilotResolveTarget();
+        const modeIcon = copilotState.mode === 'ask' ? '💬 Ask' : '🛠️ Edit';
+        const icon = t.scope === 'website' ? '🌐' : (t.scope === 'page' ? '📄' : (t.scope === 'section' ? '📐' : '🎯'));
+        el.textContent = `${modeIcon} · ${icon} Target: ${t.scope === 'website' ? 'Entire Website' : t.label}`;
+        copilotState.lastTargetLabel = t.label;
+      } catch (e) {}
+    }
+
+    /* ── Page + brand context (lightweight, from existing project data) ── */
+    function copilotPageInfo() {
+      try {
+        if (typeof wcEnsurePages === 'function' && typeof wcCurrentPageIdx === 'function') {
+          const pages = wcEnsurePages() || [];
+          const idx = wcCurrentPageIdx() || 0;
+          const cur = pages[idx] || {};
+          return { name: cur.name || 'Home', slug: cur.slug || 'index', idx, count: pages.length };
+        }
+      } catch (e) {}
+      return { name: 'Home', slug: 'index', idx: 0, count: 1 };
+    }
+    function copilotBrandBlock() {
+      try {
+        const d = (typeof wcDesign === 'function') ? wcDesign() : null;
+        const ss = (d && d.siteSettings) || {};
+        const biz = (typeof projectData !== 'undefined' && projectData && projectData.bizName) || ss.name || 'Website';
+        let primary = '';
+        try {
+          const m = String(typeof currentHtml === 'string' ? currentHtml : '').match(/--primary\s*:\s*(#[0-9a-fA-F]{3,8})/);
+          if (m) primary = m[1];
+        } catch (e) {}
+        const parts = [`Business: ${biz}`];
+        if (ss.phone) parts.push(`Phone: ${ss.phone}`);
+        if (ss.email) parts.push(`Email: ${ss.email}`);
+        if (ss.whatsapp) parts.push(`WhatsApp: ${ss.whatsapp}`);
+        if (ss.address) parts.push(`Location: ${ss.address}`);
+        if (ss.hours) parts.push(`Hours: ${ss.hours}`);
+        if (primary) parts.push(`Primary color: ${primary}`);
+        if (ss.lang) parts.push(`Preferred language: ${ss.lang}`);
+        return parts.join(' | ');
+      } catch (e) { return ''; }
+    }
+    function copilotStructureSummary(maxSections) {
+      // Compressed site map: section names + headings only (token-efficient).
+      try {
+        if (!grapesEditor) return '';
+        const wrap = grapesEditor.getWrapper();
+        const out = [];
+        const walk = (c, depth) => {
+          if (!c || depth > 6 || out.length >= (maxSections || 24)) return;
+          let tag = '';
+          try { tag = (c.get('tagName') || '').toLowerCase(); } catch (e) {}
+          if (['section', 'header', 'footer', 'main'].includes(tag)) {
+            const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+            let head = '';
+            try {
+              const el = c.getEl ? c.getEl() : null;
+              const h = el ? el.querySelector('h1,h2,h3') : null;
+              head = h ? (h.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+            } catch (e) {}
+            out.push(`- <${tag}> ${at['data-section-name'] || at.id || ''} ${head ? '| "' + head + '"' : ''}`.trim());
+          }
+          try { (c.components() || []).forEach(k => walk(k, depth + 1)); } catch (e) {}
+        };
+        (wrap.components() || []).forEach(k => walk(k, 0));
+        return out.join('\n');
+      } catch (e) { return ''; }
+    }
+
+    /* ── Conversation memory (lightweight, capped) ── */
+    function copilotMemPush(role, text, target) {
+      try {
+        copilotState.memory.push({ role, text: String(text || '').slice(0, 300), target: target || '' });
+        while (copilotState.memory.length > 8) copilotState.memory.shift();
+      } catch (e) {}
+    }
+    function copilotMemoryBlock() {
+      try {
+        const turns = copilotState.memory.slice(-6);
+        if (!turns.length) return '';
+        const lines = turns.map(t => `${t.role === 'user' ? 'User' : 'AI'}: ${t.text.slice(0, 140)}${t.target ? ` [target: ${t.target}]` : ''}`);
+        return `\n\n[Conversation context (resolve pronouns like "them/it/that" from the last turn):\n${lines.join('\n')}\n]`;
+      } catch (e) { return ''; }
+    }
+    function copilotResolvePronouns(q) {
+      try {
+        if (!/\b(them|it|that|those|this)\b/i.test(q)) return q;
+        if (/(button|section|heading|text|image|color|hero|footer|header)/i.test(q)) return q;
+        const last = [...copilotState.memory].reverse().find(m => m.target);
+        if (last && last.target) return `${q} (= ${last.target})`;
+      } catch (e) {}
+      return q;
+    }
+
+    /* ── Activity stages (never a frozen spinner) ── */
+    function copilotStage(t) {
+      try {
+        const b = document.querySelector('#magic-typing .msg-bubble');
+        if (b) b.innerHTML = '<span class="typing-dots"><i></i><i></i><i></i></span> <span style="font-size:.78rem;color:#94a3b8;font-weight:600;">' + escapeHtml(t) + '</span>';
+      } catch (e) {}
+    }
+    function copilotDone() {
+      try {
+        const t = document.getElementById('magic-typing');
+        if (t) t.remove();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      } catch (e) {}
+    }
+
+    /* ── ASK lane: advice/audit/content text (never touches the website) ── */
+    async function copilotAsk(instruction, opts) {
+      opts = opts || {};
+      const selModel = document.getElementById('magic-model-select')?.value || 'gemini-3.5-flash-lite';
+      const t = copilotResolveTarget();
+      const ctx = {
+        brand: copilotBrandBlock(),
+        page: `${copilotPageInfo().name} (/${copilotPageInfo().slug}) of ${copilotPageInfo().count} page(s)`,
+        target: `${t.label} [${t.scope}]${t.html ? '\n' + t.html.slice(0, 2500) : '\n' + copilotStructureSummary(20)}`,
+        history: copilotState.memory.slice(-6).map(m => `${m.role}: ${m.text.slice(0, 140)}`).join('\n'),
+        file: copilotState.file ? `FILE: ${copilotState.file.name}\n${copilotState.file.text.slice(0, 6000)}` : ''
+      };
+      copilotStage(opts.stage || 'Asking AI...');
+      try {
+        const res = await fetch('<?= SITE_URL ?>/api/generate.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ask', instruction, context: ctx, model: selModel })
+        });
+        const j = await res.json();
+        if (j && j.success && j.reply) {
+          copilotMemPush('ai', j.reply.slice(0, 300), t.label);
+          return { ok: true, reply: j.reply, model: j.model || selModel };
+        }
+        // Transparent retry with the other lane before giving up (§22).
+        copilotStage('AI model unavailable — trying another available model...');
+        const res2 = await fetch('<?= SITE_URL ?>/api/generate.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ask', instruction, context: ctx, model: 'opencode-fallback' })
+        });
+        const j2 = await res2.json();
+        if (j2 && j2.success && j2.reply) {
+          copilotMemPush('ai', j2.reply.slice(0, 300), t.label);
+          return { ok: true, reply: j2.reply, model: j2.model || 'opencode' };
+        }
+        return { ok: false, error: ((j2 && (j2.error || (j2.errors || [])[0])) || (j && (j.error || (j.errors || [])[0])) || 'AI unavailable') };
+      } catch (e) {
+        return { ok: false, error: e?.message || 'network error' };
+      }
+    }
+
+    /* ── FIND element by natural language (no modification) ── */
+    function copilotWalkComps(fn) {
+      const out = [];
+      try {
+        if (!grapesEditor) return out;
+        const walk = (c, depth) => {
+          if (!c || depth > 9) return;
+          try { if (fn(c) === true) out.push(c); } catch (e) {}
+          try { (c.components() || []).forEach(k => walk(k, depth + 1)); } catch (e) {}
+        };
+        (grapesEditor.getWrapper().components() || []).forEach(k => walk(k, 0));
+      } catch (e) {}
+      return out;
+    }
+    function copilotCompText(c) {
+      try {
+        const el = c.getEl ? c.getEl() : null;
+        return ((el ? (el.innerText || '') : '') + '').toLowerCase();
+      } catch (e) { return ''; }
+    }
+    function copilotFindElement(what) {
+      const w = copilotStripNoise(what).toLowerCase();
+      const keys = w.split(/[^a-z0-9₹#.\u0b80-\u0bff\u0d80-\u0dff ]+/i).join(' ');
+      const wants = (rx) => rx.test(w);
+      const bySectionName = (name) => copilotWalkComps(c => {
+        const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+        const nm = `${at['data-section-name'] || ''} ${at.id || ''}`.toLowerCase();
+        return nm.includes(name);
+      });
+      const byHeading = (name) => copilotWalkComps(c => {
+        const tag = (c.get('tagName') || '').toLowerCase();
+        if (!['section', 'div', 'header', 'footer', 'main'].includes(tag)) return false;
+        return copilotCompText(c).slice(0, 400).includes(name);
+      });
+      const byButtonText = (name) => copilotWalkComps(c => {
+        const tag = (c.get('tagName') || '').toLowerCase();
+        if (tag !== 'a' && tag !== 'button') return false;
+        return copilotCompText(c).includes(name);
+      });
+      let hits = [];
+      if (wants(/hero|முகப்பு|banner/)) hits = bySectionName('hero').length ? bySectionName('hero') : copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'header');
+      else if (wants(/footer|அடி|පාදකය/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'footer');
+      else if (wants(/header|menu|nav/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'header');
+      else if (wants(/contact/)) hits = byButtonText('contact').concat(bySectionName('contact'));
+      else if (wants(/whatsapp|call|phone/)) hits = byButtonText(wants(/whatsapp/) ? 'whatsapp' : wants(/call/) ? 'call' : 'phone');
+      else if (wants(/pric|price|விலை|මිල/)) hits = bySectionName('pric').concat(byHeading('pric'));
+      else if (wants(/faq|question/)) hits = bySectionName('faq').concat(byHeading('frequently'));
+      else if (wants(/galler/)) hits = bySectionName('galler');
+      else if (wants(/testimonial|review/)) hits = bySectionName('testimonial').concat(bySectionName('review'));
+      else if (wants(/button|பட்டன்/)) {
+        const rest = w.replace(/button|பட்டன்|find|select|the|my|where|is|show|me|please/g, ' ').trim();
+        hits = rest ? byButtonText(rest.split(' ')[0]) : [];
+        if (!hits.length) hits = copilotWalkComps(c => ['a', 'button'].includes((c.get('tagName') || '').toLowerCase()));
+      } else if (wants(/image|photo|picture|padam|படம்/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'img');
+      else if (wants(/form/)) hits = copilotWalkComps(c => (c.get('tagName') || '').toLowerCase() === 'form');
+      else if (wants(/logo/)) hits = copilotWalkComps(c => { const at = c.getAttributes ? (c.getAttributes() || {}) : {}; return /logo/i.test(at.class || '') || /logo/i.test(at.alt || ''); });
+      else {
+        const word = keys.split(' ').filter(x => x.length > 2 && !/^(the|my|find|select|show|where|please|antha|intha|and|element|section)$/.test(x))[0];
+        if (word) { hits = bySectionName(word).concat(byButtonText(word)).concat(byHeading(word)); }
+      }
+      hits = hits.filter(Boolean);
+      return hits[0] || null;
+    }
+
+    /* ── WEBSITE AUDIT (deterministic scan of the real site — no fake tests) ── */
+    function copilotContrastRatio(fg, bg) {
+      try {
+        const lum = (rgb) => {
+          const m = String(rgb).match(/[\d.]+/g) || [0, 0, 0];
+          const [r, g, b] = [0, 1, 2].map(i => { const v = parseFloat(m[i] || 0) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        const L1 = lum(fg), L2 = lum(bg);
+        return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+      } catch (e) { return 99; }
+    }
+    function copilotLocatorFor(comp) {
+      try {
+        const at = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+        return { tag: (comp.get('tagName') || '').toLowerCase(), id: at.id || '', cls: (at.class || '').split(' ')[0] || '', text: copilotCompText(comp).slice(0, 60) };
+      } catch (e) { return { tag: '', id: '', cls: '', text: '' }; }
+    }
+    function copilotFindByLocator(loc) {
+      const found = copilotWalkComps(c => {
+        try {
+          const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+          if (loc.id && (at.id || '') === loc.id) return true;
+          if (loc.cls && String(at.class || '').split(' ').includes(loc.cls) && (c.get('tagName') || '').toLowerCase() === loc.tag) {
+            if (!loc.text) return true;
+            return copilotCompText(c).slice(0, 60) === loc.text;
+          }
+        } catch (e) {}
+        return false;
+      });
+      return found[0] || null;
+    }
+    function copilotAuditRun() {
+      copilotStage('Analyzing website...');
+      const issues = [];
+      let goods = 0;
+      try {
+        syncCanvasToHtml();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(String(currentHtml || ''), 'text/html');
+        const bodyText = (doc.body ? doc.body.textContent : '') || '';
+        // SEO basics
+        const title = (doc.querySelector('title')?.textContent || '').trim();
+        if (!title || /^(website|home|untitled|document)$/i.test(title)) issues.push({ sev: 'bad', cat: 'SEO', msg: 'Page title is missing or generic.', fix: 'seo-title' });
+        else goods++;
+        if (!doc.querySelector('meta[name="description"]')) issues.push({ sev: 'warn', cat: 'SEO', msg: 'Meta description is missing (search previews suffer).', fix: 'seo-desc' });
+        else goods++;
+        const h1s = doc.querySelectorAll('h1');
+        if (h1s.length === 0) issues.push({ sev: 'bad', cat: 'SEO', msg: 'No H1 heading found.', fix: null });
+        else if (h1s.length > 1) issues.push({ sev: 'warn', cat: 'SEO', msg: `${h1s.length} H1 headings — keep exactly one per page.`, fix: 'h1-demote' });
+        else goods++;
+        // Content
+        if (/lorem ipsum|placeholder|dummy text|sample text/i.test(bodyText)) issues.push({ sev: 'bad', cat: 'Content', msg: 'Placeholder text (lorem ipsum) still on the page.', fix: 'ai' });
+        else if (bodyText.trim().length > 200) goods++;
+        const emptyHeads = [...doc.querySelectorAll('h1,h2,h3')].filter(h => !h.textContent.trim()).length;
+        if (emptyHeads) issues.push({ sev: 'warn', cat: 'Content', msg: `${emptyHeads} empty heading(s) found.`, fix: null });
+        ['contact', 'about', 'service'].forEach(k => { if (new RegExp(`id=["']${k}["']`, 'i').test(String(currentHtml))) goods++; });
+        if (!/id=["']contact["']/i.test(String(currentHtml))) issues.push({ sev: 'warn', cat: 'UX', msg: 'No #contact section — CTAs may lead nowhere.', fix: null });
+        // Links & buttons (canvas-accurate via components)
+        const deadLinks = copilotWalkComps(c => {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          if (tag !== 'a') return false;
+          const href = (c.getAttributes ? (c.getAttributes() || {}).href : '') || '';
+          return href === '#' || href.trim() === '';
+        });
+        if (deadLinks.length) issues.push({ sev: 'warn', cat: 'UX', msg: `${deadLinks.length} link(s) with empty/dead href (#).`, fix: 'dead-links', loc: copilotLocatorFor(deadLinks[0]) });
+        else goods++;
+        const noAlt = copilotWalkComps(c => {
+          if ((c.get('tagName') || '').toLowerCase() !== 'img') return false;
+          const alt = (c.getAttributes ? (c.getAttributes() || {}).alt : '') || '';
+          return !alt.trim();
+        });
+        if (noAlt.length) issues.push({ sev: 'warn', cat: 'Accessibility', msg: `${noAlt.length} image(s) missing alt text.`, fix: 'img-alt', loc: copilotLocatorFor(noAlt[0]) });
+        else goods++;
+        // Mobile: overflow + tiny text + tap targets (measured on live canvas)
+        try {
+          const cBody = grapesEditor?.Canvas?.getBody?.();
+          if (cBody) {
+            const over = [];
+            cBody.querySelectorAll('section,header,footer,div').forEach(el => {
+              if (el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0) over.push(el);
+            });
+            if (over.length) issues.push({ sev: 'bad', cat: 'Mobile', msg: `${over.length} element(s) overflow horizontally (side-scroll on phones).`, fix: 'overflow' });
+            else goods++;
+          }
+        } catch (e) {}
+        let tiny = 0;
+        copilotWalkComps(c => {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          if (!/^(p|span|li|a)$/.test(tag)) return false;
+          try {
+            const el = c.getEl ? c.getEl() : null;
+            if (!el) return false;
+            const fs = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+            if (fs < 12) { tiny++; return true; }
+          } catch (e) {}
+          return false;
+        });
+        if (tiny) issues.push({ sev: 'warn', cat: 'Mobile', msg: `${tiny} text element(s) smaller than 12px (hard to read on phones).`, fix: 'tiny-text' });
+        // Contrast sample (headings + buttons)
+        let lowContrast = 0;
+        copilotWalkComps(c => {
+          const tag = (c.get('tagName') || '').toLowerCase();
+          if (!/^(h1|h2|h3|button)$/.test(tag) && !(tag === 'a' && /btn/i.test((c.getAttributes ? (c.getAttributes() || {}).class : '') || ''))) return false;
+          try {
+            const el = c.getEl ? c.getEl() : null;
+            if (!el) return false;
+            const cs = window.getComputedStyle(el);
+            if (copilotContrastRatio(cs.color, cs.backgroundColor) < 3) { lowContrast++; return true; }
+          } catch (e) {}
+          return false;
+        });
+        if (lowContrast) issues.push({ sev: 'warn', cat: 'Accessibility', msg: `${lowContrast} heading/button(s) with very low text contrast.`, fix: 'ai' });
+        else goods++;
+        if (!/name=["']viewport["']/i.test(String(currentHtml))) issues.push({ sev: 'bad', cat: 'Mobile', msg: 'Viewport meta tag missing — mobile layout will break.', fix: 'viewport' });
+        else goods++;
+      } catch (e) { issues.push({ sev: 'warn', cat: 'Audit', msg: 'Scan hit a snag: ' + e.message, fix: null }); }
+      const bads = issues.filter(i => i.sev === 'bad').length;
+      const warns = issues.filter(i => i.sev === 'warn').length;
+      copilotState.audit = { at: Date.now(), goods, warns, bads, issues };
+      return copilotState.audit;
+    }
+    function copilotAuditHtml(audit) {
+      const sevIcon = (s) => s === 'bad' ? '<span class="cp-sev-bad">❌</span>' : (s === 'warn' ? '<span class="cp-sev-warn">⚠️</span>' : '<span class="cp-sev-ok">✅</span>');
+      let h = `<div style="font-weight:800; margin-bottom:0.35rem;">📋 Website Audit — ${escapeHtml(copilotPageInfo().name)}</div>`;
+      h += `<div style="font-size:0.76rem; margin-bottom:0.4rem;"><span class="cp-sev-ok">✅ ${audit.goods} good</span> · <span class="cp-sev-warn">⚠️ ${audit.warns} recommended</span> · <span class="cp-sev-bad">❌ ${audit.bads} important</span></div>`;
+      if (!audit.issues.length) return h + `<div>${sevIcon('ok')} Everything looks solid. Nice work!</div>`;
+      audit.issues.forEach((it, i) => {
+        h += `<div class="cp-audit-row">${sevIcon(it.sev)}<span><b>[${escapeHtml(it.cat)}]</b> ${escapeHtml(it.msg)}</span>`;
+        if (it.fix) h += `<button type="button" class="cp-msg-btn cp-fix-btn" onclick="copilotFixIssue(${i})">Fix</button>`;
+        h += `</div>`;
+      });
+      return h;
+    }
+
+    /* ── Per-issue fix router: safe local fixes first, AI lane otherwise ── */
+    async function copilotFixIssue(i) {
+      const audit = copilotState.audit;
+      if (!audit || !audit.issues[i]) { showToast('Run Audit first'); return; }
+      const it = audit.issues[i];
+      copilotStage('Fixing: ' + it.msg.slice(0, 60) + '...');
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI fix: ' + it.msg.slice(0, 40)); } catch (e) {}
+      const done = async (msg) => {
+        copilotMemPush('ai', msg, copilotState.lastTargetLabel);
+        appendMagicChat(`✅ ${escapeHtml(msg)}`, 'ai');
+        copilotFollowups('fix');
+      };
+      try {
+        if (it.fix === 'img-alt') {
+          let n = 0;
+          copilotWalkComps(c => {
+            if ((c.get('tagName') || '').toLowerCase() !== 'img') return false;
+            const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+            if ((at.alt || '').trim()) return false;
+            try {
+              let label = copilotBrandBlock().split('|')[0].replace('Business:', '').trim() || 'Website';
+              const p = c.parent ? c.parent() : null;
+              if (p) { const t = copilotCompText(p).slice(0, 60).trim(); if (t) label = t; }
+              c.addAttributes({ alt: label.slice(0, 100) }); n++; return true;
+            } catch (e) { return false; }
+          });
+          syncCanvasToHtml(); saveProjectData();
+          audit.issues.splice(i, 1); audit.warns = audit.issues.filter(x => x.sev === 'warn').length; audit.bads = audit.issues.filter(x => x.sev === 'bad').length;
+          await done(`Image alt text added (${n} image${n === 1 ? '' : 's'}).`);
+          copilotRecordChange('Image alt text', 'local'); return;
+        }
+        if (it.fix === 'dead-links') {
+          const ids = [...String(currentHtml).matchAll(/id="([^"]+)"/gi)].map(m => m[1].toLowerCase());
+          let n = 0;
+          copilotWalkComps(c => {
+            if ((c.get('tagName') || '').toLowerCase() !== 'a') return false;
+            const at = c.getAttributes ? (c.getAttributes() || {}) : {};
+            const href = (at.href || '').trim();
+            if (href && href !== '#') return false;
+            const t = copilotCompText(c);
+            const guess = ['contact', 'about', 'services', 'pricing', 'faq', 'gallery', 'home'].find(k => t.includes(k) && ids.includes(k));
+            if (guess) { try { c.addAttributes({ href: '#' + guess }); n++; return true; } catch (e) {} }
+            return false;
+          });
+          syncCanvasToHtml(); saveProjectData();
+          await done(n ? `Dead links pointed at matching sections (${n} fixed).` : 'No safe link target found — tell me where they should go.');
+          copilotRecordChange('Dead links', 'local'); return;
+        }
+        if (it.fix === 'tiny-text') {
+          let n = 0;
+          copilotWalkComps(c => {
+            const tag = (c.get('tagName') || '').toLowerCase();
+            if (!/^(p|span|li|a)$/.test(tag)) return false;
+            try {
+              const el = c.getEl ? c.getEl() : null;
+              if (!el) return false;
+              if ((parseFloat(window.getComputedStyle(el).fontSize) || 16) < 12) {
+                const st = c.getStyle ? (c.getStyle() || {}) : {};
+                st['font-size'] = '14px'; c.setStyle(st); n++; return true;
+              }
+            } catch (e) {}
+            return false;
+          });
+          syncCanvasToHtml(); saveProjectData();
+          await done(`Small text bumped to readable size (${n} fixed).`);
+          copilotRecordChange('Tiny text', 'local'); return;
+        }
+        if (it.fix === 'overflow') {
+          let n = 0;
+          try {
+            const cBody = grapesEditor?.Canvas?.getBody?.();
+            if (cBody) cBody.querySelectorAll('section,header,footer').forEach(el => {
+              if (el.scrollWidth > el.clientWidth + 2 && el.clientWidth > 0) {
+                el.style.overflowX = 'clip'; el.style.maxWidth = '100%'; n++;
+              }
+            });
+          } catch (e) {}
+          syncCanvasToHtml(); saveProjectData();
+          await done(n ? `Horizontal overflow clipped (${n} section${n === 1 ? '' : 's'}) — desktop untouched.` : 'No overflowing section found now.');
+          copilotRecordChange('Overflow', 'local'); return;
+        }
+        if (it.fix === 'viewport') {
+          if (!/name=["']viewport["']/i.test(String(currentHtml))) {
+            currentHtml = String(currentHtml).replace(/<head([^>]*)>/i, '<head$1>\n<meta name="viewport" content="width=device-width, initial-scale=1.0">');
+            loadHtmlIntoStudioCanvas(); saveProjectData();
+            await done('Viewport meta tag added — mobile layout enabled.');
+            copilotRecordChange('Viewport meta', 'full'); return;
+          }
+        }
+        if (it.fix === 'seo-title' || it.fix === 'seo-desc') {
+          await copilotSeoText(it.fix === 'seo-title' ? 'title' : 'desc');
+          return;
+        }
+        // 'ai' / 'h1-demote' / null → scoped AI edit on the located element.
+        let target = it.loc ? copilotFindByLocator(it.loc) : null;
+        if (target && grapesEditor) grapesEditor.select(target);
+        const instr = it.fix === 'h1-demote'
+          ? 'Change this H1 into an H2 (keep the exact same text and styling) so the page has only one H1.'
+          : `Fix this website issue on the selected element only: ${it.msg}`;
+        const inp = document.getElementById('magic-input');
+        if (inp) inp.value = instr;
+        copilotState.programmatic = true;
+        try { await executeMagicAi(); }
+        finally { copilotState.programmatic = false; }
+      } catch (e) {
+        appendMagicChat(`⚠️ Fix failed: ${escapeHtml(e?.message || e)} — website was not modified.`, 'ai');
+      }
+    }
+
+    /* ── CONTENT GENERATOR (copy via ASK lane, deterministic insert/replace) ── */
+    const COPILOT_COPY_SPECS = {
+      hero: { title: 'Hero copy', fmt: 'Reply with exactly 4 short lines: HEADLINE (under 10 words), SUB (under 20 words), BUTTON1 text, BUTTON2 text. No labels beyond those four, no extra commentary.' },
+      about: { title: 'About us', fmt: 'Reply with exactly 3 lines: TITLE, PARAGRAPH1 (2 sentences), PARAGRAPH2 (2 sentences). No extra commentary.' },
+      services: { title: 'Services', fmt: 'Reply with exactly 4 lines: TITLE, then 3 lines each "Service name: one-line benefit". No extra commentary.' },
+      features: { title: 'Features', fmt: 'Reply with exactly 4 lines: TITLE, then 3 lines each "Feature: one-line benefit". No extra commentary.' },
+      testimonials: { title: 'Testimonials', fmt: 'Reply with exactly 6 lines: 3 pairs of QUOTE (one sentence, no quotes) then CUSTOMER NAME + ROLE. No extra commentary.' },
+      faq: { title: 'FAQ', fmt: 'Reply with exactly 6 lines: 3 pairs of QUESTION (ends with ?) then ANSWER (one sentence). No extra commentary.' },
+      pricing: { title: 'Pricing', fmt: 'Reply with exactly 4 lines: TITLE, then 3 lines each "Plan name: price + one-line highlight". No extra commentary.' },
+      cta: { title: 'Call to action', fmt: 'Reply with exactly 3 lines: HEADLINE (under 8 words), SUB (under 15 words), BUTTON text. No extra commentary.' },
+      contact: { title: 'Contact section', fmt: 'Reply with exactly 3 lines: TITLE, INVITING LINE (under 15 words), BUTTON text. No extra commentary.' }
+    };
+    function copilotParseCopyLines(reply) {
+      return String(reply || '').split('\n').map(l => l.replace(/^(headline|title|sub|subtitle|button|cta|q|a|quote|name|answer|description|desc|paragraph\d*|service\d*|feature\d*|plan\d*)\s*[:\-–.]\s*/i, '').trim()).filter(l => l && !/^#+$/.test(l)).slice(0, 8);
+    }
+    function copilotSectionShell(kind, inner) {
+      const P = 'var(--primary,#6366f1)';
+      const wrap = (t) => `<section data-ai-gen="${kind}" style="padding:4.5rem 1.5rem;"><div style="max-width:1100px;margin:0 auto;">${t}</div></section>`;
+      if (kind === 'hero') return `<section data-ai-gen="hero" style="padding:5rem 1.5rem;text-align:center;background:linear-gradient(180deg,#f8fafc,#eef2ff);"><div style="max-width:820px;margin:0 auto;"><h1 style="font-size:clamp(2rem,5vw,3.4rem);font-weight:900;line-height:1.1;margin-bottom:1rem;">${inner[0] || 'Welcome'}</h1><p style="font-size:1.1rem;color:#475569;margin-bottom:2rem;">${inner[1] || ''}</p><div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;"><a href="#contact" style="background:${P};color:#fff;font-weight:800;padding:0.9rem 2.2rem;border-radius:999px;text-decoration:none;">${inner[2] || 'Get Started'}</a><a href="#about" style="border:2px solid ${P};color:${P};font-weight:800;padding:0.9rem 2.2rem;border-radius:999px;text-decoration:none;">${inner[3] || 'Learn More'}</a></div></div></section>`;
+      if (kind === 'testimonials') {
+        let cards = '';
+        for (let i = 0; i < 6; i += 2) {
+          if (!inner[i]) continue;
+          cards += `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:1.6rem;box-shadow:0 8px 24px rgba(2,6,23,0.06);"><div style="color:#f59e0b;margin-bottom:0.6rem;">★★★★★</div><p style="color:#334155;margin-bottom:1rem;">“${inner[i]}”</p><strong>${inner[i + 1] || 'Happy customer'}</strong></div>`;
+        }
+        return wrap(`<div style="text-align:center;font-size:0.75rem;font-weight:800;letter-spacing:0.12em;color:#94a3b8;margin-bottom:0.6rem;">TESTIMONIALS</div><h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2.2rem;">Loved by our customers</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;">${cards}</div>`);
+      }
+      if (kind === 'faq') {
+        let items = '';
+        for (let i = 0; i < 6; i += 2) {
+          if (!inner[i]) continue;
+          items += `<details style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1rem 1.3rem;"><summary style="font-weight:700;cursor:pointer;">${inner[i]}</summary><p style="color:#475569;margin-top:0.6rem;">${inner[i + 1] || ''}</p></details>`;
+        }
+        return wrap(`<h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2rem;">Frequently asked questions</h2><div style="display:flex;flex-direction:column;gap:0.9rem;max-width:760px;margin:0 auto;">${items}</div>`);
+      }
+      if (kind === 'pricing') {
+        let tiers = '';
+        inner.slice(1, 4).forEach((t, ix) => {
+          const parts = String(t || '').split(':');
+          tiers += `<div style="background:${ix === 1 ? '#0f172a' : '#fff'};color:${ix === 1 ? '#fff' : '#0f172a'};border:1px solid #e2e8f0;border-radius:20px;padding:2rem;text-align:center;"><h3 style="margin-bottom:0.5rem;">${(parts[0] || 'Plan').trim()}</h3><div style="font-size:1.8rem;font-weight:900;color:${ix === 1 ? '#fff' : P};margin-bottom:0.6rem;">${(parts[1] || '').trim()}</div><p style="opacity:.75;">${(parts.slice(2).join(':') || '').trim()}</p><a href="#contact" style="display:inline-block;margin-top:1.2rem;background:${P};color:#fff;font-weight:800;padding:0.8rem 1.8rem;border-radius:999px;text-decoration:none;">Choose</a></div>`;
+        });
+        return wrap(`<h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2rem;">${inner[0] || 'Pricing'}</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;">${tiers}</div>`);
+      }
+      const title = inner[0] || COPILOT_COPY_SPECS[kind]?.title || 'Section';
+      const paras = inner.slice(1, 4).map(p => `<p style="color:#475569;margin-bottom:1rem;">${p}</p>`).join('');
+      return wrap(`<div style="font-size:0.75rem;font-weight:800;letter-spacing:0.12em;color:#94a3b8;margin-bottom:0.6rem;">${title.toUpperCase()}</div><h2 style="font-size:2rem;font-weight:800;margin-bottom:1rem;">${title}</h2>${paras}`);
+    }
+    async function copilotContentAsk(kind) {
+      const spec = COPILOT_COPY_SPECS[kind];
+      if (!spec) return;
+      const input = document.getElementById('magic-input');
+      if (input) input.value = `Write ${spec.title.toLowerCase()} copy for my website`;
+      appendMagicChat(`✍️ ${escapeHtml(spec.title)}`, 'user');
+      showMagicTyping();
+      copilotStage('Writing copy...');
+      const brand = copilotBrandBlock();
+      const file = copilotState.file ? `\nUse these business facts:\n${copilotState.file.text.slice(0, 3000)}` : '';
+      const r = await copilotAsk(`Write ${spec.title.toLowerCase()} website copy for this business. ${brand}.${file}\n${spec.fmt}`, { stage: 'Writing copy...' });
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      if (!r.ok) { appendMagicChat(`⚠️ I couldn't write that right now (${escapeHtml(r.error)}). Your website was not modified.`, 'ai'); return; }
+      const lines = copilotParseCopyLines(r.reply);
+      if (!lines.length) { appendMagicChat(formatMarkdown(r.reply), 'ai'); return; }
+      const t = copilotResolveTarget();
+      const canReplace = t.scope === 'element' && t.comp && (() => {
+        try {
+          const el = t.comp.getEl ? t.comp.getEl() : null;
+          const tag = (t.comp.get('tagName') || '').toLowerCase();
+          return el && /^(h1|h2|h3|h4|p|span|a|button|li)$/.test(tag);
+        } catch (e) { return false; }
+      })();
+      const id = ++copilotState.msgSeq;
+      copilotState['copy_' + id] = { kind, lines };
+      let h = `<div style="font-weight:800; margin-bottom:0.3rem;">✍️ ${escapeHtml(spec.title)} — ready</div>`;
+      h += `<div style="font-size:0.78rem; background:#0b1220; border:1px solid #1e293b; border-radius:8px; padding:0.6rem 0.75rem; margin-bottom:0.5rem;">${lines.map(l => `• ${escapeHtml(l)}`).join('<br>')}</div>`;
+      h += `<div class="cp-msg-actions">`;
+      if (canReplace) h += `<button type="button" class="cp-msg-btn" onclick="copilotCopyApply(${id},'replace')">✏️ Replace selected text</button>`;
+      h += `<button type="button" class="cp-msg-btn" onclick="copilotCopyApply(${id},'insert')">➕ Insert as new section</button></div>`;
+      copilotMemPush('ai', `${spec.title} copy drafted`, t.label);
+      appendMagicChat(h, 'ai');
+      copilotFollowups('content');
+    }
+    function copilotCopyApply(id, how) {
+      const c = copilotState['copy_' + id];
+      if (!c) return;
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI copy: ' + c.kind); } catch (e) {}
+      try {
+        if (how === 'replace') {
+          const t = copilotResolveTarget();
+          if (t.comp) {
+            const el = t.comp.getEl ? t.comp.getEl() : null;
+            if (el) {
+              const first = el.querySelector('h1,h2,h3,h4,p') || el;
+              first.textContent = c.lines.slice(0, 2).join(' ');
+              syncCanvasToHtml(); saveProjectData(); renderSmartLayers(); flashCanvasComponent(t.comp);
+              appendMagicChat(`✅ Ready! ${escapeHtml(t.label)} text replaced with fresh copy. Vera entha idamum thodala.`, 'ai');
+              copilotRecordChange(`${c.kind} text replaced`, 'local');
+              copilotFollowups('edit'); return;
+            }
+          }
+          showToast('Select a text element first');
+          return;
+        }
+        const html = copilotSectionShell(c.kind, c.lines);
+        const target = copilotResolveTarget();
+        let anchor = (target.scope === 'section' || target.scope === 'element') ? (target.scope === 'section' ? target.comp : copilotNearestSection(target.comp)) : null;
+        if (!anchor) {
+          const contact = copilotFindElement('contact section') || copilotFindElement('footer');
+          anchor = contact || null;
+        }
+        copilotInsertAfter(anchor, html, `Added ${c.kind} section`);
+      } catch (e) { appendMagicChat(`⚠️ Could not insert: ${escapeHtml(e?.message || e)}`, 'ai'); }
+    }
+    function copilotInsertAfter(anchorComp, html, label) {
+      if (!grapesEditor) throw new Error('Canvas not ready');
+      let clean = String(html).trim();
+      const fm = clean.match(/```(?:html)?\s*([\s\S]*?)```/i);
+      if (fm) clean = fm[1].trim();
+      const ft = clean.indexOf('<');
+      if (ft > 0) clean = clean.slice(ft).trim();
+      if (!clean || !clean.includes('<') || clean.length < 60) throw new Error('AI returned an empty section — website unchanged.');
+      let parent, at;
+      if (anchorComp && anchorComp.parent) {
+        parent = anchorComp.parent();
+        at = anchorComp.index() + 1;
+      } else {
+        parent = grapesEditor.getWrapper();
+        const kids = parent.components ? parent.components() : [];
+        let footIdx = -1;
+        kids.forEach((k, ix) => { try { if ((k.get('tagName') || '').toLowerCase() === 'footer') footIdx = ix; } catch (e) {} });
+        at = footIdx >= 0 ? footIdx : kids.length;
+      }
+      if (!parent) throw new Error('No place to insert — website unchanged.');
+      const added = parent.append(clean, { at });
+      const fresh = Array.isArray(added) ? added[0] : added;
+      if (!fresh) { try { grapesEditor.UndoManager.undo(); } catch (e) {} throw new Error('Insert failed — website unchanged.'); }
+      try { if (typeof configureEditorComponent === 'function') configureEditorComponent(fresh); } catch (e) {}
+      try { grapesEditor.select(fresh); } catch (e) {}
+      flashCanvasComponent(fresh);
+      syncCanvasToHtml(); saveProjectData(); renderSmartLayers();
+      const lbl = copilotDescribeComp(fresh);
+      appendMagicChat(`✅ Ready! <b>${escapeHtml(label || 'New section')}</b> added${anchorComp ? ` near ${escapeHtml(copilotDescribeComp(anchorComp))}` : ''} — selected panniten (${escapeHtml(lbl)}). Vera entha idamum thodala.`, 'ai');
+      copilotRecordChange(label || 'Section added', 'snippet');
+      copilotMemPush('ai', (label || 'Section added'), lbl);
+      copilotFollowups('add');
+      showToast('✨ Section added & saved!');
+    }
+    async function copilotSeoText(which) {
+      appendMagicChat(which === 'title' ? '🔎 SEO title' : '🔎 Meta description', 'user');
+      showMagicTyping();
+      const brand = copilotBrandBlock();
+      const r = await copilotAsk(
+        which === 'title'
+          ? `Write ONE SEO page title (max 60 characters) for this business. ${brand}. Reply with ONLY the title text, nothing else.`
+          : `Write ONE SEO meta description (max 155 characters) for this business. ${brand}. Reply with ONLY the description text, nothing else.`,
+        { stage: 'Writing SEO...' });
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      if (!r.ok) { appendMagicChat(`⚠️ SEO text failed (${escapeHtml(r.error)}). Website unchanged.`, 'ai'); return; }
+      const text = copilotStripNoise(r.reply).replace(/^["“”']+|["“”']+$/g, '').trim().slice(0, which === 'title' ? 70 : 170);
+      if (!text) { appendMagicChat('⚠️ Empty SEO text — website unchanged.', 'ai'); return; }
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI SEO'); } catch (e) {}
+      let html = String(currentHtml || '');
+      if (which === 'title') {
+        if (/<title[^>]*>[\s\S]*?<\/title>/i.test(html)) html = html.replace(/<title[^>]*>[\s\S]*?<\/title>/i, `<title>${escapeHtml(text)}</title>`);
+        else html = html.replace(/<head([^>]*)>/i, `<head$1>\n<title>${escapeHtml(text)}</title>`);
+      } else {
+        if (/<meta\s+name=["']description["'][^>]*>/i.test(html)) html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, `<meta name="description" content="${escapeHtml(text)}">`);
+        else html = html.replace(/<\/title>/i, `</title>\n<meta name="description" content="${escapeHtml(text)}">`);
+      }
+      if (html === currentHtml) { appendMagicChat('⚠️ Could not place SEO tag — website unchanged.', 'ai'); return; }
+      currentHtml = html;
+      const d = (typeof wcDesign === 'function') ? wcDesign() : null;
+      if (d) { d.html = currentHtml; try { const p = wcEnsurePages(); p[wcCurrentPageIdx()].html = currentHtml; } catch (e) {} }
+      loadHtmlIntoStudioCanvas(); saveProjectData();
+      appendMagicChat(`✅ Ready! SEO ${which === 'title' ? 'title' : 'description'} set: “${escapeHtml(text)}”.`, 'ai');
+      copilotRecordChange('SEO ' + which, 'full');
+      copilotMemPush('ai', 'SEO ' + which + ' set', 'head');
+      copilotFollowups('edit');
+    }
+    /* ── AI IMAGE COMMANDS (generate + existing canvas apply, editor untouched) ── */
+    async function copilotImageCommand(q, target) {
+      const l = q.toLowerCase();
+      const comp = target.comp;
+      const isImgSel = comp && ((comp.get('tagName') || '').toLowerCase() === 'img');
+      if (/(larger|bigger|periya|பெரிய|பெருசு|லொகு|ලොකු)/i.test(q) || /(smaller|chinna|சின்ன|சிறிய|පොඩි)/i.test(q)) {
+        const bigger = !/(smaller|chinna|சின்ன|சிறிய|පොඩි)/i.test(q);
+        const imgComp = isImgSel ? comp : (comp ? (comp.find ? (comp.find('img')[0] || null) : null) : null);
+        if (!imgComp) { appendMagicChat('🖼️ Select an image on canvas first, then tell me larger/smaller.', 'ai'); return true; }
+        try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI image resize'); } catch (e) {}
+        const st = imgComp.getStyle ? (imgComp.getStyle() || {}) : {};
+        if (bigger) { st['width'] = '100%'; st['height'] = 'auto'; }
+        else { st['max-width'] = '320px'; st['width'] = '100%'; st['height'] = 'auto'; }
+        imgComp.setStyle(st);
+        syncCanvasToHtml(); saveProjectData(); flashCanvasComponent(imgComp);
+        appendMagicChat(`✅ Ready! Image ${bigger ? '<b>perusa</b>' : '<b>chinna</b>'} panniten — selected image mattum maariruku.`, 'ai');
+        copilotRecordChange('Image resized', 'local');
+        copilotFollowups('edit'); return true;
+      }
+      const asBg = /(background|hero\s*background|பின்னணி)/i.test(q);
+      const brand = copilotBrandBlock().split('|')[0];
+      let prompt = copilotStripNoise(q).replace(/(replace|change|use|make|set|this|image|photo|picture|with|a|more|professional|hero|background|maathu|pannu)/gi, ' ').replace(/\s+/g, ' ').trim();
+      if (prompt.length < 6) prompt = `professional ${brand} website photo, high quality`;
+      appendMagicChat(`🎨 Generating image: <i>${escapeHtml(prompt.slice(0, 90))}</i>...`, 'ai');
+      showMagicTyping();
+      try {
+        const imgData = await executeAiImageGeneration(prompt);
+        copilotDone();
+        renderAiImageInChat(imgData);
+        const url = imgData && imgData.url;
+        if (url) {
+          try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI image apply'); } catch (e) {}
+          applyAiImageToCanvas(url, asBg ? 'background' : 'replace');
+          copilotRecordChange(asBg ? 'Image set as background' : 'Image replaced', 'local');
+          appendMagicChat(`✅ Ready! ${asBg ? 'Section background set panniten' : 'Image replace panniten'}. Card la irunthu vera option um try pannalam.`, 'ai');
+          copilotFollowups('edit');
+        }
+      } catch (e) {
+        copilotDone();
+        appendMagicChat(`⚠️ Image generation failed: ${escapeHtml(e?.message || e)} — website unchanged.`, 'ai');
+      }
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      return true;
+    }
+    /* ── ADD SECTION at the right place (anchor-aware, never blind-append) ── */
+    async function copilotAddSection(cls, target, selModel, q) {
+      const typeName = { testimonial: 'testimonials', review: 'testimonials', faq: 'FAQ', pricing: 'pricing', gallery: 'gallery', contact: 'contact', hero: 'hero', about: 'about', service: 'services', cta: 'call-to-action', banner: 'banner', form: 'contact form', map: 'map', newsletter: 'newsletter' }[cls.sectionType] || cls.sectionType || 'section';
+      let anchor = null;
+      if (cls.anchor && cls.anchor.what) anchor = copilotFindElement(cls.anchor.what);
+      if (!anchor && target.scope !== 'website' && target.comp) anchor = target.scope === 'section' ? target.comp : copilotNearestSection(target.comp);
+      copilotStage(cls.anchor ? `Finding ${cls.anchor.what}...` : 'Preparing new section...');
+      const brand = copilotBrandBlock();
+      const file = copilotState.file ? `\nUse these business facts in the copy:\n${copilotState.file.text.slice(0, 3000)}` : '';
+      const anchorHtml = anchor ? copilotCompOuter(anchor, 3000) : copilotStructureSummary(14);
+      const instruction = `Create ONE brand-new ${typeName} website section for this business (${brand}).${file}\nDesign context:\n${anchorHtml}\nRules: return ONLY the new <section> element HTML (inline styles, real business copy, working anchor links like #contact, responsive). No markdown fences, no commentary.`;
+      copilotStage('Generating section...');
+      try {
+        const res = await fetch('<?= SITE_URL ?>/api/generate.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'refine', api_key: localStorage.getItem('gemini_api_key') || '', model: selModel === 'opencode-fallback' ? 'gemini-3.5-flash-lite' : selModel, current_html: String(currentHtml || '').slice(0, 20000), selected_html: anchorHtml.slice(0, 10000), instruction, customer_requirement: q, biz_name: (typeof projectData !== 'undefined' && projectData && projectData.bizName) || 'Website' })
+        });
+        const j = await res.json();
+        const html = j && (j.html || '');
+        if (j && j.success && html && /<(section|div|header|footer)/i.test(html)) {
+          try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI add section'); } catch (e) {}
+          const pos = cls.anchor ? (cls.anchor.pos === 'before' ? 'before' : 'below') : 'added';
+          const anchorLbl = anchor ? copilotDescribeComp(anchor) : '';
+          copilotInsertAfter(anchor, html, `Added ${typeName}`);
+          // Rewrite the insert message with anchor position.
+          return true;
+        }
+      } catch (e) { /* fall through to honest message */ }
+      appendMagicChat(`⚠️ Section generate aagala — website unchanged. Konjam specific ah sollunga (e.g. "Add FAQ with 3 questions").`, 'ai');
+      return true;
+    }
+    /* ── MOBILE FIX: measured issues → safe local fixes, sequenced ── */
+    async function copilotMobileFix() {
+      appendMagicChat('📱 Mobile check', 'user');
+      showMagicTyping();
+      const audit = copilotAuditRun();
+      const mob = audit.issues.filter(i => i.cat === 'Mobile');
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      if (!mob.length) {
+        appendMagicChat(`✅ <b>Mobile check done</b> — overflow illa, text readable, viewport OK. Desktop version thodave illa.`, 'ai');
+        copilotFollowups('edit'); return true;
+      }
+      let h = `<div style="font-weight:800; margin-bottom:0.3rem;">📱 Mobile issues: ${mob.length}</div>`;
+      mob.forEach(it => { h += `<div class="cp-audit-row">⚠️<span><b>[${escapeHtml(it.cat)}]</b> ${escapeHtml(it.msg)}</span></div>`; });
+      h += `<div style="margin-top:0.4rem; font-size:0.76rem; color:#94a3b8;">Desktop version damage aagathu — mobile-safe fixes mattum apply aagum.</div>`;
+      h += `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn" onclick="copilotFixMobileNow()">🔧 Fix mobile issues (${mob.length})</button></div>`;
+      copilotState.audit = audit;
+      appendMagicChat(h, 'ai');
+      copilotFollowups('edit'); return true;
+    }
+    async function copilotFixMobileNow() {
+      const audit = copilotState.audit;
+      if (!audit) return;
+      const queue = audit.issues.filter(i => i.cat === 'Mobile' && i.fix).slice();
+      if (!queue.length) { showToast('Nothing auto-fixable'); return; }
+      showMagicTyping();
+      let n = 0;
+      for (let k = 0; k < queue.length; k++) {
+        const idx = audit.issues.indexOf(queue[k]);
+        if (idx < 0) continue;
+        copilotStage(`Fixing mobile ${k + 1}/${queue.length}...`);
+        try { await copilotFixIssue(idx); n++; } catch (e) {}
+      }
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      appendMagicChat(`✅ <b>Mobile fixes completed (${n}/${queue.length})</b> — desktop untouched.`, 'ai');
+      copilotRecordChange('Mobile fixes', 'local');
+      copilotFollowups('edit');
+    }
+
+    /* ── SAFE validation before any full-page apply (§23) ── */
+    function copilotValidateFullDoc(html) {
+      const s = String(html || '');
+      if (s.trim().length < 500) return 'AI returned an empty page';
+      if (!/<body[\s>]/i.test(s) || !/<\/html>/i.test(s)) return 'AI returned broken HTML (no body/html)';
+      const txt = s.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ');
+      const plain = txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (plain.length < 100) return 'AI returned a page with no readable content';
+      if (/^```/.test(s.trim())) return 'AI returned markdown instead of HTML';
+      return null;
+    }
+    function copilotValidateSnippet(html) {
+      const s = String(html || '').trim();
+      if (!s || !s.includes('<')) return 'AI returned an empty element';
+      if (s.length > 60000) return 'AI returned an oversized element';
+      return null;
+    }
+    /* ── BEFORE/AFTER REVIEW for large changes (§5) ── */
+    function copilotReviewStats(newHtml) {
+      try {
+        const countSec = (h) => (String(h).match(/<(section|header|footer)[\s>]/gi) || []).length;
+        const a = countSec(typeof currentHtml === 'string' ? currentHtml : '');
+        const b = countSec(newHtml);
+        const kb = (h) => Math.round(String(h).length / 1024);
+        return { a, b, ka: kb(typeof currentHtml === 'string' ? currentHtml : ''), kb: kb(newHtml) };
+      } catch (e) { return { a: 0, b: 0, ka: 0, kb: 0 }; }
+    }
+    function copilotReviewGate(o) {
+      // Small/snippet edits apply directly; large full-page edits need review.
+      if (!copilotState.reviewLarge && o.kind !== 'full') return Promise.resolve(true);
+      if (o.kind !== 'full') return Promise.resolve(true);
+      return new Promise((resolve) => {
+        copilotState.pendingReview = { resolve, apply: o.apply, summary: o.summary };
+        const st = copilotReviewStats(o.html);
+        document.getElementById('copilot-review-title').textContent = o.title || 'Review AI changes';
+        document.getElementById('copilot-review-sub').textContent = 'Your website was NOT modified yet. Apply chaa?';
+        document.getElementById('copilot-review-yes').textContent = 'Apply Changes';
+        document.getElementById('copilot-review-no').textContent = 'Discard';
+        document.getElementById('copilot-review-body').innerHTML =
+          `<div style="margin-bottom:0.5rem;"><b>Before:</b> ${st.a} sections · ${st.ka} KB &nbsp;→&nbsp; <b>After:</b> ${st.b} sections · ${st.kb} KB</div>` +
+          `<div>${o.summary || ''}</div>`;
+        document.getElementById('copilot-review-modal').style.display = 'flex';
+      });
+    }
+    function copilotReviewDecide(yes) {
+      const p = copilotState.pendingReview || copilotState.pendingConfirm;
+      copilotState.pendingReview = null; copilotState.pendingConfirm = null;
+      try { document.getElementById('copilot-review-modal').style.display = 'none'; } catch (e) {}
+      if (p && p.resolve) p.resolve(!!yes);
+    }
+    function copilotConfirmDanger(o) {
+      // {title, body, yesLabel} → Promise<boolean> (Continue/Cancel).
+      return new Promise((resolve) => {
+        copilotState.pendingConfirm = { resolve };
+        document.getElementById('copilot-review-title').textContent = o.title || 'Confirm change';
+        document.getElementById('copilot-review-sub').textContent = 'This is a major change.';
+        document.getElementById('copilot-review-yes').textContent = o.yesLabel || 'Continue';
+        document.getElementById('copilot-review-no').textContent = 'Cancel';
+        document.getElementById('copilot-review-body').innerHTML = o.body || '';
+        document.getElementById('copilot-review-modal').style.display = 'flex';
+      });
+    }
+    /* ── AI change memory + undo (integrates version snapshots + UndoManager) ── */
+    function copilotVersionsCount() {
+      try {
+        if (typeof wcGetVersions === 'function') return wcGetVersions().length;
+      } catch (e) {}
+      return 0;
+    }
+    function copilotChatKey() {
+      try { return 'webcraft_ai_chat::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+      catch (e) { return 'webcraft_ai_chat::c0'; }
+    }
+    function copilotChangesKey() {
+      try { return 'webcraft_ai_changes::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+      catch (e) { return 'webcraft_ai_changes::c0'; }
+    }
+    let __copilotChatSaveT = null;
+    function copilotCollectLogHtml(maxRows) {
+      try {
+        const log = document.getElementById('magic-chat-log');
+        if (!log) return '';
+        const div = document.createElement('div');
+        [...log.children].forEach(r => {
+          if (!r.classList || !r.classList.contains('msg') || r.id === 'magic-typing') return;
+          const c = r.cloneNode(true);
+          c.querySelectorAll('.ai-chat-image-card').forEach(card => {
+            const ph = document.createElement('div');
+            ph.style.cssText = 'font-size:.75rem;color:#94a3b8;';
+            ph.textContent = '🖼️ [AI image — open canvas/downloads to view]';
+            card.replaceWith(ph);
+          });
+          div.appendChild(c);
+        });
+        while (div.children.length > (maxRows || 60)) div.removeChild(div.firstChild);
+        return div.innerHTML;
+      } catch (e) { return ''; }
+    }
+    function copilotWriteChatLog(key) {
+      try {
+        const html = copilotCollectLogHtml(60);
+        if (!html || html.length < 20 || html.length > 90000) return false;
+        localStorage.setItem(key || copilotChatKey(), JSON.stringify({ savedAt: Date.now(), html }));
+        return true;
+      } catch (e) { return false; }
+    }
+    function copilotSaveChat() {
+      try {
+        clearTimeout(__copilotChatSaveT);
+        __copilotChatSaveT = setTimeout(() => copilotWriteChatLog(), 400);
+      } catch (e) {}
+    }
+    function copilotLoadChatLog(key) {
+      try {
+        const raw = localStorage.getItem(key || copilotChatKey());
+        if (!raw) return false;
+        const o = JSON.parse(raw);
+        const log = document.getElementById('magic-chat-log');
+        if (!log || !o.html || o.html.length < 20) return false;
+        if (log.querySelectorAll(':scope > .msg').length > 1) return false; // live chat wins
+        log.innerHTML = o.html;
+        log.scrollTop = log.scrollHeight;
+        return true;
+      } catch (e) { return false; }
+    }
+    function copilotPersistChanges() {
+      try { localStorage.setItem(copilotChangesKey(), JSON.stringify(copilotState.changes.slice(-20))); } catch (e) {}
+    }
+    function copilotLoadChanges() {
+      try {
+        const raw = localStorage.getItem(copilotChangesKey());
+        if (!raw) return;
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) copilotState.changes = arr.slice(-20).map(c => ({ at: c.at || 0, target: c.target || '', summary: c.summary || '', kind: c.kind || 'snippet', verIdx: c.verIdx || 0, sess: false }));
+      } catch (e) {}
+    }
+    /* ── Past chat sessions: auto-archived on clear/new/view (max 5, quota-safe) ── */
+    function copilotSessionsKey() {
+      try { return 'webcraft_ai_chats::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+      catch (e) { return 'webcraft_ai_chats::c0'; }
+    }
+    function copilotGetSessions() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(copilotSessionsKey()) || '[]');
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }
+    }
+    function copilotPutSessions(arr) {
+      try {
+        localStorage.setItem(copilotSessionsKey(), JSON.stringify((arr || []).slice(0, 5)));
+        return true;
+      } catch (e) { return false; }
+    }
+    function copilotSessionTitle(html) {
+      try {
+        const div = document.createElement('div');
+        div.innerHTML = String(html || '');
+        const u = div.querySelector('.msg.user .msg-bubble');
+        const t = ((u && u.textContent) || '').trim().replace(/\s+/g, ' ').slice(0, 46);
+        return t || 'Chat';
+      } catch (e) { return 'Chat'; }
+    }
+    function copilotArchiveCurrentChat() {
+      try {
+        const html = copilotCollectLogHtml(30);
+        const log = document.getElementById('magic-chat-log');
+        const count = log ? log.querySelectorAll(':scope > .msg').length : 0;
+        if (!html || count <= 2) return false; // welcome-only → nothing worth keeping
+        const sessions = copilotGetSessions();
+        if (sessions.length && sessions[0].html === html) return false; // already archived
+        sessions.unshift({ at: Date.now(), title: copilotSessionTitle(html), html: html.slice(0, 30000) });
+        return copilotPutSessions(sessions.slice(0, 5));
+      } catch (e) { return false; }
+    }
+    function copilotViewSession(i) {
+      try {
+        const sessions = copilotGetSessions();
+        const s = sessions[i];
+        if (!s) return;
+        copilotArchiveCurrentChat();
+        const log = document.getElementById('magic-chat-log');
+        if (log) { log.innerHTML = s.html; log.scrollTop = log.scrollHeight; }
+        copilotWriteChatLog();
+        document.getElementById('copilot-history-modal').style.display = 'none';
+        toggleMagicAi(true);
+        showToast('💬 Old chat opened — continue from here');
+      } catch (e) { showToast('Could not open chat'); }
+    }
+    function copilotNewChat() {
+      try {
+        copilotArchiveCurrentChat();
+        const log = document.getElementById('magic-chat-log');
+        if (log) log.innerHTML = '';
+        try { localStorage.removeItem(copilotChatKey()); } catch (e) {}
+        appendMagicChat('👋 <strong>New chat started!</strong><br>Pazhaya chat 🕘 History la safe ah iruku — eppo venunalum paarkalam.', 'ai');
+        document.getElementById('copilot-history-modal').style.display = 'none';
+        toggleMagicAi(true);
+      } catch (e) {}
+    }
+    function copilotShowHistory() {
+      try {
+        const box = document.getElementById('copilot-history-body');
+        const sessions = copilotGetSessions();
+        let h = `<div style="font-weight:800; margin-bottom:0.35rem;">💬 Past chats (${sessions.length})</div>`;
+        if (!sessions.length) {
+          h += `<div style="color:#94a3b8; margin-bottom:0.6rem;">Innum archive aana chat illa. Clear / New chat kuduthaanga inga save aagum.</div>`;
+        } else {
+          sessions.forEach((s, i) => {
+            const when = s.at ? new Date(s.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            h += `<div class="cp-hist-row"><span class="cp-hist-time">${escapeHtml(when)}</span>` +
+              `<span><b>${escapeHtml(String(s.title || 'Chat').slice(0, 60))}</b></span>` +
+              `<button type="button" class="cp-msg-btn cp-fix-btn" onclick="copilotViewSession(${i})">👁 View</button></div>`;
+          });
+        }
+        h += `<div class="cp-msg-actions" style="margin:0.4rem 0 0.8rem;"><button type="button" class="cp-msg-btn" onclick="copilotNewChat()">➕ New chat</button></div>`;
+        h += `<div style="font-weight:800; margin-bottom:0.35rem;">🛠️ AI changes</div>`;
+        const list = (copilotState.changes || []).slice().reverse();
+        if (!list.length) {
+          h += '<div style="color:#94a3b8;">No AI changes yet for this website.</div>';
+        } else {
+          h += list.map((c) => {
+            const idx = copilotState.changes.indexOf(c);
+            const when = c.at ? new Date(c.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            return `<div class="cp-hist-row"><span class="cp-hist-time">${escapeHtml(when)}</span>` +
+              `<span><b>${escapeHtml(c.summary.slice(0, 80))}</b>${c.target ? `<br><span style="color:#67e8f9;">🎯 ${escapeHtml(String(c.target).slice(0, 60))}</span>` : ''}</span>` +
+              `<button type="button" class="cp-msg-btn cp-fix-btn" onclick="copilotRestoreChange(${idx})">↩ Restore</button></div>`;
+          }).join('');
+        }
+        box.innerHTML = h;
+        document.getElementById('copilot-history-modal').style.display = 'flex';
+      } catch (e) { showToast('History unavailable'); }
+    }
+    function copilotRestoreChange(idx) {
+      const c = copilotState.changes[idx];
+      if (!c) return;
+      try {
+        if (typeof window.wcRestoreVersion === 'function') window.wcRestoreVersion(c.verIdx || 0);
+        else if (grapesEditor) grapesEditor.UndoManager.undo();
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        appendMagicChat(`↩ <b>Restored:</b> “${escapeHtml(c.summary.slice(0, 90))}” point ku thirumbi ponen.`, 'ai');
+        showToast('↩ Restored to earlier point');
+      } catch (e) { appendMagicChat(`⚠️ Restore failed: ${escapeHtml(e?.message || e)}`, 'ai'); }
+    }
+    function copilotRecordChange(summary, kind) {
+      try {
+        copilotState.changes.push({ at: Date.now(), target: copilotState.lastTargetLabel || '', summary, kind, verIdx: Math.max(0, copilotVersionsCount() - 1), sess: true });
+        while (copilotState.changes.length > 20) copilotState.changes.shift();
+        copilotPersistChanges();
+      } catch (e) {}
+    }
+    function copilotUndoLast() {
+      const last = copilotState.changes.pop();
+      if (!last) { showToast('↩ Nothing to undo'); return; }
+      copilotPersistChanges();
+      try {
+        // Same-session snippet/local edits → fast canvas undo; everything else
+        // (full pages, older sessions) → version restore to the saved point.
+        if ((last.kind === 'snippet' || last.kind === 'local') && last.sess && grapesEditor) {
+          try { grapesEditor.UndoManager.undo(); }
+          catch (e) { if (typeof window.wcRestoreVersion === 'function') window.wcRestoreVersion(last.verIdx); }
+        } else {
+          if (typeof window.wcRestoreVersion === 'function') window.wcRestoreVersion(last.verIdx);
+          else if (grapesEditor) grapesEditor.UndoManager.undo();
+        }
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        appendMagicChat(`↩ <b>Undone:</b> ${escapeHtml(last.summary)} — old website thirumbi vanthiruchu.`, 'ai');
+        showToast('↩ AI change undone');
+      } catch (e) { appendMagicChat(`⚠️ Undo failed: ${escapeHtml(e?.message || e)}`, 'ai'); }
+    }
+    /* ── Message action buttons + smart follow-ups (§20, §24) ── */
+    function copilotMsgButtons(q) {
+      const id = ++copilotState.msgSeq;
+      copilotState['msg_' + id] = { q };
+      return `<div class="cp-msg-actions">` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotUndoLast()">↩ Undo</button>` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotRetryMsg(${id})">🔁 Retry</button>` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotPreviewTarget()">👀 Preview</button></div>`;
+    }
+    function copilotRetryMsg(id) {
+      const m = copilotState['msg_' + id];
+      if (!m || !m.q) return;
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.value = copilotStripNoise(m.q);
+      executeMagicAi();
+    }
+    function copilotPreviewTarget() {
+      try {
+        const c = copilotSelectedComp();
+        if (c) { flashCanvasComponent(c); showToast('👀 Target highlighted on canvas'); return; }
+      } catch (e) {}
+      try { if (typeof openStudioPreview === 'function') { openStudioPreview(); return; } } catch (e) {}
+      showToast('👀 Canvas is live — see your site');
+    }
+    function copilotFollowups(kind) {
+      try {
+        const box = document.getElementById('magic-chips-container');
+        if (!box) return;
+        const chip = (label, fn) => `<span class="m-chip" onclick="${fn}">${label}</span>`;
+        let h = '';
+        if (kind === 'audit') h = chip('🔧 Fix all', 'copilotFixAll()') + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('💬 Ask advice', "copilotSetMode('ask')");
+        else if (kind === 'fix') h = chip('📋 Audit again', 'copilotAuditShow()') + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('✨ Make premium', "quickMagic('Make this website more premium')");
+        else if (kind === 'add') h = chip('❓ Add FAQ', "quickMagic('Add FAQ section below testimonials')") + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('📋 Audit', 'copilotAuditShow()');
+        else if (kind === 'content') h = chip('🎯 Improve CTA', "quickMagic('Improve CTA visibility')") + chip('📱 Mobile check', "quickMagic('Make my website mobile-friendly')") + chip('🔎 SEO check', 'copilotSeoFlow()');
+        else h = chip('📱 Improve Mobile', "quickMagic('Make my website mobile-friendly')") + chip('🎯 Update CTA', "quickMagic('Improve CTA visibility')") + chip('📋 Audit', 'copilotAuditShow()') + chip('🔎 SEO', 'copilotSeoFlow()');
+        box.innerHTML = h;
+      } catch (e) {}
+    }
+    /* ── File / document context (§18: txt/md/csv/json) ── */
+    function copilotAttachFile() {
+      try { document.getElementById('copilot-file').click(); } catch (e) {}
+    }
+    function copilotFilePicked(input) {
+      try {
+        const f = input && input.files && input.files[0];
+        if (!f) return;
+        if (f.size > 200000) { showToast('⚠️ File too big (max 200KB text)'); input.value = ''; return; }
+        const rd = new FileReader();
+        rd.onload = () => {
+          copilotState.file = { name: f.name, text: String(rd.result || '').slice(0, 6000) };
+          document.getElementById('copilot-filename').textContent = `${f.name} (${Math.round(copilotState.file.text.length / 1024)}KB)`;
+          document.getElementById('copilot-filebar').style.display = 'flex';
+          showToast('📎 File attached — AI will use it');
+        };
+        rd.readAsText(f);
+        input.value = '';
+      } catch (e) { showToast('⚠️ Could not read file'); }
+    }
+    function copilotClearFile() {
+      copilotState.file = null;
+      try { document.getElementById('copilot-filebar').style.display = 'none'; } catch (e) {}
+    }
+    /* ── Design quick commands (§12) ── */
+    function copilotDesignCmd(style) {
+      const map = {
+        premium: 'Make this look premium: refined spacing, soft shadows, consistent rounded corners, elegant typography — keep all text and images',
+        luxury: 'Make this luxurious dark-theme style: deep background, gold accents, serif display headings, generous spacing — keep all text',
+        modern: 'Make this modern: clean layout, gradient accents, glassmorphism cards, bold headings — keep all text',
+        corporate: 'Make this corporate and trustworthy: navy + white, structured grid, professional headings, clear CTA — keep all text',
+        minimal: 'Make this minimal: lots of whitespace, single accent color, simple typography, remove visual clutter — keep all text',
+        creative: 'Make this creative and playful: vibrant accents, interesting shapes, energetic headings — keep all text readable',
+        mobile: 'Make my website mobile-friendly without changing desktop design',
+        cta: 'Improve CTA visibility: high-contrast buttons, sticky call-to-action, clear action words — keep page structure',
+        spacing: 'Fix spacing: consistent section padding, even gaps, clean vertical rhythm — do not change colors or text',
+        type: 'Improve typography: clear heading hierarchy, readable sizes, elegant font pairing — do not change colors or layout'
+      };
+      const t = copilotResolveTarget();
+      const scopeTxt = t.scope === 'website' ? 'the entire website' : `the selected ${t.label}`;
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.value = `${map[style] || style} — apply to ${scopeTxt}`;
+      executeMagicAi();
+    }
+    function copilotSeoFlow() { copilotSeoText('title'); }
+    /* ── FIX ALL: sequenced safe fixes with progress (§14) ── */
+    async function copilotFixAll() {
+      let audit = copilotState.audit;
+      if (!audit || !audit.issues.length) {
+        appendMagicChat('📋 Checking website first...', 'ai');
+        showMagicTyping();
+        audit = copilotAuditRun();
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (!audit.issues.length) { appendMagicChat('✅ <b>Nothing to fix</b> — website already looks solid.', 'ai'); return; }
+        appendMagicChat(copilotAuditHtml(audit) + `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotFixAll()">🔧 Fix All (${audit.issues.filter(i => i.fix).length} auto-fixable)</button></div>`, 'ai');
+      }
+      const queue = audit.issues.filter(i => i.fix).slice();
+      if (!queue.length) { appendMagicChat('ℹ️ No auto-fixable issues — the rest need your input. Tell me what to change.', 'ai'); return; }
+      const ok = await copilotConfirmDanger({
+        title: `Fix ${queue.length} issues?`,
+        body: `<div style="font-size:0.8rem;">AI will fix <b>${queue.length}</b> detected issue(s) one by one. Each fix is undoable.</div>`,
+        yesLabel: `Fix All (${queue.length})`
+      });
+      if (!ok) { appendMagicChat('Fix-all cancelled — nothing changed.', 'ai'); return; }
+      showMagicTyping();
+      let n = 0;
+      for (let k = 0; k < queue.length; k++) {
+        const idx = audit.issues.indexOf(queue[k]);
+        if (idx < 0) continue;
+        copilotStage(`Fixing ${k + 1}/${queue.length}: ${queue[k].msg.slice(0, 50)}...`);
+        try { await copilotFixIssue(idx); n++; } catch (e) {}
+      }
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      appendMagicChat(`✅ <b>Website improvements completed (${n}/${queue.length} fixed).</b>`, 'ai');
+      copilotRecordChange(`Fix-all: ${n} issues`, 'local');
+      copilotFollowups('fix');
+      showToast('✓ Website improvements completed');
+    }
+    async function copilotAuditShow() {
+      appendMagicChat('📋 Website audit', 'user');
+      showMagicTyping();
+      await new Promise(r => setTimeout(r, 30));
+      const audit = copilotAuditRun();
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      const fixable = audit.issues.filter(i => i.fix).length;
+      copilotMemPush('ai', `Audit: ${audit.goods} good, ${audit.warns} warnings, ${audit.bads} important`, 'website');
+      appendMagicChat(copilotAuditHtml(audit) + (fixable ? `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotFixAll()">🔧 Fix All (${fixable})</button></div>` : ''), 'ai');
+      copilotFollowups('audit');
+    }
+    /* ── ALL-PAGES loop (§9: only when explicitly requested) ── */
+    async function copilotAllPages(instruction) {
+      let pages = [];
+      try { pages = (typeof wcEnsurePages === 'function') ? wcEnsurePages() : []; } catch (e) {}
+      if (pages.length < 2) {
+        appendMagicChat('ℹ️ Only one page exists — applying to the current page.', 'ai');
+        return false; // fall through to normal single-page flow
+      }
+      const cleanInstr = copilotStripNoise(instruction).replace(/\b(to|on|for|across)\s+all\s+pages?\b|\ball\s+pages?\b/gi, 'on this page').trim();
+      const ok = await copilotConfirmDanger({
+        title: `Change ${pages.length} pages?`,
+        body: `<div style="font-size:0.8rem;">“${escapeHtml(cleanInstr.slice(0, 140))}” will be applied to <b>${pages.length} pages</b>: ${pages.map(p => escapeHtml(p.name)).join(', ')}.</div>`,
+        yesLabel: `Change ${pages.length} pages`
+      });
+      if (!ok) { appendMagicChat('Multi-page change cancelled — nothing changed.', 'ai'); return true; }
+      const curIdx = copilotPageInfo().idx;
+      showMagicTyping();
+      let done = 0;
+      const inp = document.getElementById('magic-input');
+      for (let i = 0; i < pages.length; i++) {
+        copilotStage(`Applying to page ${i + 1}/${pages.length}: ${pages[i].name}...`);
+        try {
+          if (typeof wcSwitchPage === 'function') wcSwitchPage(i);
+          await new Promise(r => setTimeout(r, 250));
+          if (inp) inp.value = cleanInstr;
+          copilotState.programmatic = true;
+          try { await executeMagicAi(); }
+          finally { copilotState.programmatic = false; }
+          done++;
+        } catch (e) { console.warn('[copilot] page failed:', pages[i].name, e?.message); }
+      }
+      try { if (typeof wcSwitchPage === 'function' && curIdx !== copilotPageInfo().idx) wcSwitchPage(curIdx); } catch (e) {}
+      copilotDone();
+      const btn = document.getElementById('magic-btn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+      appendMagicChat(`✅ <b>Applied to ${done}/${pages.length} pages:</b> “${escapeHtml(cleanInstr.slice(0, 120))}”.`, 'ai');
+      copilotRecordChange(`All-pages edit (${done}/${pages.length})`, 'full');
+      copilotFollowups('edit');
+      return true;
+    }
+
+    /* ── LOCAL section delete / move (exact + undoable, no AI needed) ── */
+    async function copilotLocalDelete(target, rawQ) {
+      if (!target.comp || !grapesEditor) return false;
+      const label = target.label;
+      const ok = await copilotConfirmDanger({
+        title: `Remove ${label}?`,
+        body: `<div style="font-size:0.8rem;">This will remove <b>${escapeHtml(label)}</b> from the ${escapeHtml(copilotPageInfo().name)} page. You can undo right after.</div>`,
+        yesLabel: 'Remove it'
+      });
+      if (!ok) { appendMagicChat('Delete cancelled — nothing changed.', 'ai'); return true; }
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI delete'); } catch (e) {}
+      try {
+        target.comp.remove();
+        try { grapesEditor.select(null); } catch (e) {}
+        syncCanvasToHtml(); saveProjectData(); renderSmartLayers();
+        appendMagicChat(`✅ Ready! ${escapeHtml(label)} <b>remove</b> panniten. Undo (↶) venumna use pannunga.<div class="cp-msg-actions"><button type="button" class="cp-msg-btn" onclick="copilotUndoLast()">↩ Undo</button></div>`, 'ai');
+        copilotRecordChange(`Removed ${label}`, 'local');
+        copilotMemPush('ai', `Removed ${label}`, '');
+        copilotFollowups('edit');
+        try { if (typeof updateAiSelectedTarget === 'function') updateAiSelectedTarget(null); } catch (e) {}
+      } catch (e) { appendMagicChat(`⚠️ Delete failed: ${escapeHtml(e?.message || e)}`, 'ai'); }
+      return true;
+    }
+    function copilotLocalMove(q) {
+      const m = copilotStripNoise(q).match(/move\s+(.+?)\s+(above|below|before|after|top|bottom)\s+(.+)$/i);
+      if (!m) return false;
+      const mover = copilotFindElement(m[1]) || copilotSelectedComp();
+      const anchor = copilotFindElement(m[3]);
+      if (!mover || !anchor || mover === anchor) return false;
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI move'); } catch (e) {}
+      try {
+        const parent = anchor.parent ? anchor.parent() : null;
+        if (!parent) return false;
+        let idx = anchor.index() + (/below|after|bottom/i.test(m[2]) ? 1 : 0);
+        if (/top/i.test(m[2])) idx = 0;
+        parent.append(mover, { at: idx });
+        syncCanvasToHtml(); saveProjectData(); renderSmartLayers();
+        try { grapesEditor.select(mover); } catch (e) {}
+        flashCanvasComponent(mover);
+        appendMagicChat(`✅ Ready! ${escapeHtml(copilotDescribeComp(mover))} moved ${/below|after|bottom/i.test(m[2]) ? 'below' : 'above'} ${escapeHtml(copilotDescribeComp(anchor))}.`, 'ai');
+        copilotRecordChange('Section moved', 'local');
+        copilotFollowups('edit');
+        return true;
+      } catch (e) { return false; }
+    }
+    function copilotUnderstoodLine(rawQ, cls) {
+      try {
+        const short = copilotStripNoise(rawQ).slice(0, 90);
+        const kindWord = (cls && cls.kind === 'QUESTION') ? 'kelvi' : ((cls && cls.kind === 'ADVICE') ? 'yosanai' : 'request');
+        return `<div style="font-size:.7rem;color:#67e8f9;margin-bottom:.3rem;">🎯 Purinjathu (${kindWord}): “${escapeHtml(short)}”</div>`;
+      } catch (e) { return ''; }
+    }
+    /* ── PROPOSAL FLOW: preview first, apply only on customer OK ──
+       AI result → previewable page → [👀 Preview] [✅ Apply] [✕ Discard].
+       Nothing touches the canvas until Apply. Fix-all/all-pages runs
+       (programmatic) keep the direct-apply path. */
+    function copilotUsedTag(m) {
+      return m ? ` <span style="color:#64748b;font-size:0.68rem;">· ${escapeHtml(m)}</span>` : '';
+    }
+    function friendlyProposalSummary(q) {
+      try {
+        const t = describeAiTarget();
+        const s = cleanSummaryText(q);
+        return `👀 <b>Preview ready!</b> ${escapeHtml(t.label)} ku oru change ready panniten: “${escapeHtml(s.slice(0, 120))}”. <b>Preview</b> paarunga — pudicha <b>✅ Apply</b> kudunga (illa na ✕ Discard). Vera ethavum maarala.`;
+      } catch (e) { return '👀 <b>Preview ready!</b> Paarunga, pudicha Apply kudunga.'; }
+    }
+    function copilotProposalButtons(id) {
+      return `<div class="cp-msg-actions">` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotProposalPreview(${id})">👀 Preview</button>` +
+        `<button type="button" class="cp-msg-btn warn" onclick="copilotProposalDecide(${id},true)">✅ Apply</button>` +
+        `<button type="button" class="cp-msg-btn" onclick="copilotProposalDecide(${id},false)">✕ Discard</button></div>`;
+    }
+    function copilotBuildSnippetPreview(snapHtml, comp, snippetHtml) {
+      // Splice the proposed snippet into a COPY of the pre-edit page so the
+      // customer previews exactly what Apply would do. Canvas untouched.
+      try {
+        let tag = 'div', id = '', secName = '', text = '';
+        try {
+          tag = (comp.get('tagName') || 'div').toLowerCase();
+          const at = comp.getAttributes ? (comp.getAttributes() || {}) : {};
+          id = at.id || ''; secName = at['data-section-name'] || '';
+          const el = comp.getEl ? comp.getEl() : null;
+          text = el ? (el.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+        } catch (e) {}
+        const doc = new DOMParser().parseFromString(String(snapHtml || ''), 'text/html');
+        if (!doc || !doc.body) return null;
+        let el = null;
+        if (id) { try { el = doc.getElementById(id); } catch (e) {} }
+        if (!el && secName) { try { el = doc.querySelector('[data-section-name="' + String(secName).replace(/"/g, '') + '"]'); } catch (e) {} }
+        if (!el && text) {
+          const needle = text.slice(0, 40);
+          const all = [...doc.body.querySelectorAll(tag + ',section,div')];
+          el = all.find(x => ((x.textContent || '').replace(/\s+/g, ' ').indexOf(needle) !== -1)) || null;
+        }
+        if (!el) return null;
+        const tpl = document.createElement('template');
+        tpl.innerHTML = String(snippetHtml).trim();
+        const node = tpl.content.firstElementChild;
+        if (!node) return null;
+        el.replaceWith(node);
+        return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+      } catch (e) { return null; }
+    }
+    async function copilotProposalPreview(id) {
+      const p = copilotState['prop_' + id];
+      if (!p || !(p.previewHtml || p.html)) { showToast('Proposal expired — request ah thirumba anupunga'); return; }
+      const html = String(p.previewHtml || p.html);
+      // Open synchronously (popup-blocker safe), navigate after upload.
+      let win = null;
+      try { win = window.open('', '_blank'); } catch (e) {}
+      const postUrl = async () => {
+        try {
+          const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+          const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 15000) : null;
+          const res = await fetch('<?= SITE_URL ?>/preview.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html: html.slice(0, 7 * 1024 * 1024) }),
+            signal: ctrl ? ctrl.signal : undefined
+          });
+          if (timer) clearTimeout(timer);
+          const j = await res.json();
+          if (j && j.success && j.url) return j.url;
+        } catch (e) {}
+        return null;
+      };
+      const url = await postUrl();
+      if (url) {
+        if (win) { try { win.location.href = url; } catch (e) { window.open(url, '_blank'); } }
+        else window.open(url, '_blank');
+      } else {
+        if (win) { try { win.close(); } catch (e) {} }
+        showToast('⚠️ Preview build failed — Apply panna canvas la paaralam (Undo iruku)');
+      }
+    }
+    function copilotApplySnippetNow(targetComp, snippetHtml, modelLabel, qText) {
+      applyUpdatedSnippetToCanvas(targetComp, snippetHtml);
+      const sum = friendlyUpdateSummary(qText);
+      appendMagicChat(sum.html + copilotUsedTag(modelLabel) + copilotMsgButtons(qText), 'ai');
+      showToast(sum.toast);
+      copilotMemPush('ai', cleanSummaryText(qText).slice(0, 200), copilotState.lastTargetLabel);
+      copilotRecordChange(cleanSummaryText(qText).slice(0, 120) || 'Section edit', 'snippet');
+      copilotFollowups('edit');
+    }
+    function copilotApplyFullNow(fullHtml, modelLabel, qText) {
+      currentHtml = fullHtml;
+      if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+        projectData.designs[activeConceptIndex].html = currentHtml;
+        saveProjectData();
+      }
+      loadHtmlIntoStudioCanvas();
+      const sum = friendlyUpdateSummary(qText);
+      appendMagicChat(sum.html + copilotUsedTag(modelLabel) + copilotMsgButtons(qText), 'ai');
+      showToast(sum.toast);
+      copilotMemPush('ai', cleanSummaryText(qText).slice(0, 200), copilotState.lastTargetLabel);
+      copilotRecordChange(cleanSummaryText(qText).slice(0, 120) || 'Website edit', 'full');
+      copilotFollowups('edit');
+    }
+    function copilotProposeChange(o) {
+      // o: {kind:'snippet'|'full', snippet?, html?, previewHtml, comp?, model, q}
+      // Returns true (caller marks applied — proposal IS the handled outcome).
+      const pid = ++copilotState.msgSeq;
+      let cidx = 0, pgidx = 0;
+      try { cidx = (typeof activeConceptIndex === 'number') ? activeConceptIndex : 0; } catch (e) {}
+      try { pgidx = copilotPageInfo().idx || 0; } catch (e) {}
+      copilotState['prop_' + pid] = {
+        kind: o.kind, snippet: o.snippet || null, html: o.html || null,
+        previewHtml: o.previewHtml || o.html || null,
+        compRef: o.comp || null, loc: o.comp ? copilotLocatorFor(o.comp) : null,
+        model: o.model || '', q: cleanSummaryText(o.q || ''),
+        target: copilotState.lastTargetLabel || '', cidx, pgidx
+      };
+      appendMagicChat(friendlyProposalSummary(o.q) + copilotUsedTag(o.model) + copilotProposalButtons(pid), 'ai');
+      showToast('👀 Preview ready — paarunga, OK na Apply');
+      return true;
+    }
+    async function copilotProposalDecide(id, go) {
+      const p = copilotState['prop_' + id];
+      if (!p) { showToast('Proposal expired — request ah thirumba anupunga'); return; }
+      delete copilotState['prop_' + id];
+      if (p.target) { try { copilotState.lastTargetLabel = p.target; } catch (e) {} }
+      if (!go) {
+        appendMagicChat('✕ Discarded — website unchanged. Vera ethavathu try pannalam.', 'ai');
+        return;
+      }
+      try {
+        let cc = 0, pp = 0;
+        try { cc = (typeof activeConceptIndex === 'number') ? activeConceptIndex : 0; } catch (e) {}
+        try { pp = copilotPageInfo().idx || 0; } catch (e) {}
+        if (cc !== (p.cidx || 0) || pp !== (p.pgidx || 0)) {
+          appendMagicChat('⚠️ Page/concept maariruchu — intha proposal expired. Request ah thirumba anupunga, pudhu preview tharen.', 'ai');
+          return;
+        }
+      } catch (e) {}
+      if (p.kind === 'snippet') {
+        let target = null;
+        try {
+          const el = p.compRef && p.compRef.getEl ? p.compRef.getEl() : null;
+          const cdoc = (typeof grapesEditor !== 'undefined' && grapesEditor && grapesEditor.Canvas && grapesEditor.Canvas.getDocument) ? grapesEditor.Canvas.getDocument() : null;
+          if (el && cdoc && cdoc.contains(el)) target = p.compRef;
+        } catch (e) {}
+        if (!target && p.loc) { try { target = copilotFindByLocator(p.loc); } catch (e) {} }
+        if (!target) { appendMagicChat('⚠️ Antha section ippo canvas la illa (vera edit nadanthirku pola) — request ah thirumba anupunga.', 'ai'); return; }
+        const verr = copilotValidateSnippet(p.snippet);
+        if (verr) { appendMagicChat(`⚠️ ${escapeHtml(verr)} — website unchanged.`, 'ai'); return; }
+        try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI apply: ' + String(p.q).slice(0, 40)); } catch (e) {}
+        copilotApplySnippetNow(target, p.snippet, p.model, p.q);
+      } else {
+        const verr = copilotValidateFullDoc(p.html);
+        if (verr) { appendMagicChat(`⚠️ ${escapeHtml(verr)} — website unchanged.`, 'ai'); return; }
+        try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI apply: ' + String(p.q).slice(0, 40)); } catch (e) {}
+        copilotApplyFullNow(p.html, p.model, p.q);
+      }
+    }
+
+    /* ── MAIN ROUTER: classify → correct operation (runs before AI lanes) ── */
+    async function copilotPreRoute(ctx) {
+      // Returns {handled:boolean, q?:string}. Handled paths restore btn/typing themselves.
+      const rawQ = ctx.rawQ;
+      const cls = copilotClassifyPure(rawQ);
+      const target = copilotResolveTarget();
+      copilotState.lastTargetLabel = target.label;
+      copilotMemPush('user', copilotStripNoise(rawQ).slice(0, 300), target.scope === 'website' ? '' : target.label);
+      // Too short to act on — instant nudge, zero network (fast).
+      if (copilotStripNoise(rawQ).length < 2) {
+        copilotDone();
+        const btnS = document.getElementById('magic-btn');
+        if (btnS) { btnS.disabled = false; btnS.innerHTML = '➤'; }
+        appendMagicChat(`👋 Konjam detail ah sollunga — example: <i>"heading ah blue aakku"</i>, <i>"pricing section add pannu"</i>, illa <i>"audit my website"</i>.`, 'ai');
+        return { handled: true };
+      }
+      const finishAi = (html, follow) => {
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        appendMagicChat(html, 'ai');
+        if (follow) copilotFollowups(follow);
+      };
+      // 1. FIND — read-only, works in both modes.
+      if (cls.kind === 'FIND_ELEMENT') {
+        const hit = copilotFindElement(cls.findWhat || rawQ);
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (hit && grapesEditor) {
+          try { grapesEditor.select(hit); } catch (e) {}
+          flashCanvasComponent(hit);
+          const lbl = copilotDescribeComp(hit);
+          copilotMemPush('ai', `Selected ${lbl}`, lbl);
+          appendMagicChat(`🎯 <b>Selected: ${escapeHtml(lbl)}</b> — canvas la highlight panniten. Edit venumna sollunga (Edit mode).`, 'ai');
+          copilotFollowups('edit');
+        } else {
+          appendMagicChat(`🔍 Atha kandupudika mudiyala (“${escapeHtml((cls.findWhat || '').slice(0, 80))}”). Section name ah sollunga — e.g. “Find pricing section”, “Where is contact button?”.`, 'ai');
+        }
+        return { handled: true };
+      }
+      // 2. AUDIT — analysis only, never modifies.
+      if (cls.kind === 'WEBSITE_AUDIT') {
+        const audit = copilotAuditRun();
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        const fixable = audit.issues.filter(i => i.fix).length;
+        copilotMemPush('ai', `Audit: ${audit.goods} good, ${audit.warns} warnings, ${audit.bads} important`, 'website');
+        appendMagicChat(copilotAuditHtml(audit) + (fixable ? `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotFixAll()">🔧 Fix All (${fixable})</button></div>` : ''), 'ai');
+        copilotFollowups('audit');
+        return { handled: true };
+      }
+      // 3. FIX ALL shortcut.
+      if (cls.kind === 'FIX_ALL') { await copilotFixAll(); return { handled: true }; }
+      // 3b. UNDO — local, instant, both modes.
+      if (cls.kind === 'UNDO') {
+        copilotDone();
+        const btnU = document.getElementById('magic-btn');
+        if (btnU) { btnU.disabled = false; btnU.innerHTML = '➤'; }
+        copilotUndoLast();
+        return { handled: true };
+      }
+      // 3c. GREETING / THANKS — instant local reply, zero network (fast).
+      if (cls.kind === 'GREETING' || cls.kind === 'THANKS') {
+        copilotDone();
+        const btnG = document.getElementById('magic-btn');
+        if (btnG) { btnG.disabled = false; btnG.innerHTML = '➤'; }
+        const biz = (typeof projectData !== 'undefined' && projectData && projectData.bizName) || '';
+        if (cls.kind === 'GREETING') {
+          copilotMemPush('ai', 'Greeted user', '');
+          appendMagicChat(`👋 Vanakkam${biz ? ' — <b>' + escapeHtml(biz) + '</b>' : ''}! Naan unga <b>Website Copilot</b>. Section ah select panni sollunga, illa direct ah sollunga:<br>• <i>"hero ah premium aakku"</i> • <i>"pricing add pannu"</i> • <i>"audit my website"</i><br><span style="color:#94a3b8;font-size:.74rem;">💬 Advice mattum venumna Ask mode ku maathunga.</span>`, 'ai');
+        } else {
+          copilotMemPush('ai', 'Acknowledged thanks', '');
+          appendMagicChat(`😊 Nandri! Vera ethavathu venumna sollunga — text, color, section, image, mobile fix, audit, ellaame pannalam.`, 'ai');
+        }
+        copilotFollowups('edit');
+        return { handled: true };
+      }
+      // 4. QUESTION / ADVICE — never modifies (both modes).
+      if (cls.kind === 'QUESTION' || cls.kind === 'ADVICE') {
+        const r = await copilotAsk(copilotStripNoise(rawQ));
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (r.ok) {
+          appendMagicChat(copilotUnderstoodLine(rawQ, cls) + formatMarkdown(r.reply) + `<div style="font-size:0.68rem;color:#64748b;margin-top:0.3rem;">· ${escapeHtml(r.model)}</div>`, 'ai');
+          copilotFollowups('edit');
+        } else {
+          appendMagicChat(`⚠️ I couldn't answer right now (${escapeHtml(r.error)}). Your website was not modified.`, 'ai');
+        }
+        return { handled: true };
+      }
+      // 5. ASK MODE — edit intents become advice + one-tap apply offer.
+      // (Programmatic runs like Fix-All bypass this: they already confirmed edit intent.)
+      if (copilotState.mode === 'ask' && !copilotState.programmatic) {
+        const r = await copilotAsk(`How should I do this on my website? Give 3-4 short actionable steps, no code: ${copilotStripNoise(rawQ)}`);
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        if (r.ok) {
+          const id = ++copilotState.msgSeq;
+          copilotState['apply_' + id] = { q: copilotStripNoise(rawQ) };
+          appendMagicChat(copilotUnderstoodLine(rawQ, cls) + formatMarkdown(r.reply) + `<div class="cp-msg-actions"><button type="button" class="cp-msg-btn warn" onclick="copilotSwitchAndApply(${id})">🛠️ Switch to Edit &amp; apply</button></div>`, 'ai');
+        } else {
+          appendMagicChat(`⚠️ I couldn't answer right now (${escapeHtml(r.error)}). Website unchanged.`, 'ai');
+        }
+        return { handled: true };
+      }
+      // 5b. ALL-PAGES (explicit only) — checked before single-scope routes
+      // so "add X to all pages" never collapses to one page.
+      if (cls.allPages) {
+        const handled = await copilotAllPages(copilotStripNoise(rawQ));
+        if (handled) return { handled: true };
+        // single page exists → fall through to lanes
+      }
+      // 6. IMAGE commands.
+      if (cls.kind === 'IMAGE_EDIT') { await copilotImageCommand(copilotStripNoise(rawQ), target); return { handled: true }; }
+      // 7. SEO text.
+      if (cls.kind === 'SEO_EDIT') {
+        const lq = rawQ.toLowerCase();
+        await copilotSeoText(/meta\s+description|description/i.test(lq) && !/title/i.test(lq) ? 'desc' : 'title');
+        return { handled: true };
+      }
+      // 8. CONTENT generation (structured copy).
+      if (cls.kind === 'CONTENT_GENERATION') {
+        const key = (copilotStripNoise(rawQ).match(/hero|about|services|features|testimonials|faq|pricing|cta|contact/i) || ['hero'])[0].toLowerCase();
+        const mapKey = { service: 'services', feature: 'features', testimonial: 'testimonials' }[key] || key;
+        if (COPILOT_COPY_SPECS[mapKey]) { await copilotContentAsk(mapKey); return { handled: true }; }
+        // fall through to lanes with brand-enriched instruction
+      }
+      // 9. ADD SECTION at anchor.
+      if (cls.kind === 'SECTION_ADD') {
+        const selModel = document.getElementById('magic-model-select')?.value || 'gemini-3.5-flash-lite';
+        await copilotAddSection(cls, target, selModel, copilotStripNoise(rawQ));
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        return { handled: true };
+      }
+      // 10. MOBILE fix flow.
+      if (cls.kind === 'MOBILE_FIX') { await copilotMobileFix(); return { handled: true }; }
+      // 12. LOCAL delete / move.
+      if (cls.kind === 'SECTION_DELETE' && target.comp) { await copilotLocalDelete(target, rawQ); copilotDone(); const btn = document.getElementById('magic-btn'); if (btn) { btn.disabled = false; btn.innerHTML = '➤'; } return { handled: true }; }
+      if (cls.kind === 'SECTION_MOVE') {
+        if (copilotLocalMove(rawQ)) { copilotDone(); const btn = document.getElementById('magic-btn'); if (btn) { btn.disabled = false; btn.innerHTML = '➤'; } return { handled: true }; }
+        // fall through to AI lanes if local move can't resolve
+      }
+      // 13. DESTRUCTIVE full-site ops → confirm first.
+      if (cls.destructive && !copilotState.confirmedOnce) {
+        copilotDone();
+        const btn = document.getElementById('magic-btn');
+        if (btn) { btn.disabled = false; btn.innerHTML = '➤'; }
+        const ok = await copilotConfirmDanger({
+          title: 'Big change — continue?',
+          body: `<div style="font-size:0.8rem;">“${escapeHtml(copilotStripNoise(rawQ).slice(0, 140))}” will change <b>multiple sections</b>. A restore point was saved.</div>`,
+          yesLabel: 'Continue'
+        });
+        if (!ok) { appendMagicChat('Cancelled — nothing changed.', 'ai'); return { handled: true }; }
+        copilotState.confirmedOnce = true;
+        const inp = document.getElementById('magic-input');
+        if (inp) inp.value = rawQ;
+        try { await executeMagicAi(); }
+        finally { copilotState.confirmedOnce = false; }
+        return { handled: true };
+      }
+      copilotState.confirmedOnce = false;
+      // 13b. VAGUE edit (no actionable detail) → instant clarification.
+      // "edit this features in my web" mathiri vague request ah 60s lanes la
+      // odi fail panna veikkaama, udane specific ah kekurom (zero network).
+      {
+        const stripped = copilotStripNoise(rawQ);
+        const hasDetail = /(color|colour|text|heading|title|button|image|photo|add|remov|delet|fix|dark|light|big|small|periya|chinna|larg|premium|luxury|modern|minimal|corporate|creative|mobile|audit|seo|pric|faq|galler|contact|hide|move|blue|green|red|gold|purple|orange|pink|font|size|round|shadow|background|cent(er|re)|bold|spacing|align)/i.test(stripped);
+        if (!hasDetail) {
+          const frame = stripped
+            .replace(/^(please\s+|kindly\s+)?(edit|update|change|make|fix|improve|ithai?|anthai?|inthai?)\b[\s,]*/i, '')
+            .replace(/\b(this|that|it|these|those|my|web|website|site|section|page|la|le|in|on|oru|konjam|please)\b/gi, ' ')
+            .replace(/\s+/g, ' ').trim();
+          const meaningful = frame.split(' ').filter(w => w.length > 1);
+          if (meaningful.length <= 2) {
+            copilotDone();
+            const btnV = document.getElementById('magic-btn');
+            if (btnV) { btnV.disabled = false; btnV.innerHTML = '➤'; }
+            const guess = meaningful.join(' ');
+            let hit = null;
+            try { hit = guess ? copilotFindElement(guess) : null; } catch (e) {}
+            if (hit && typeof grapesEditor !== 'undefined' && grapesEditor) {
+              try { grapesEditor.select(hit); } catch (e) {}
+              try { flashCanvasComponent(hit); } catch (e) {}
+            }
+            const lbl = hit ? copilotDescribeComp(hit) : (guess ? `"${guess}" part` : 'antha part');
+            copilotMemPush('ai', 'Asked clarification for vague request', lbl);
+            appendMagicChat(`🤔 Konjam specific ah sollunga — <b>${escapeHtml(lbl)}</b> la <b>enna</b> maaranum?<br>• <i>"color blue aakku"</i> • <i>"text ah X nu maathu"</i> • <i>"button periya aakku"</i>${hit ? '<br>👆 Section ah select panniten — ippo instruction kudunga.' : ''}`, 'ai');
+            copilotFollowups('edit');
+            return { handled: true };
+          }
+        }
+      }
+      // 14. EDIT passthrough: snapshot + memory context for the lanes.
+      try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI: ' + copilotStripNoise(rawQ).slice(0, 40)); } catch (e) {}
+      const withCtx = copilotResolvePronouns(copilotStripNoise(rawQ)) + copilotMemoryBlock()
+        + (copilotState.file ? `\n\n[[FILE ${copilotState.file.name}:\n${copilotState.file.text.slice(0, 4000)}\n]]` : '');
+      return { handled: false, q: withCtx };
+    }
+    function copilotSwitchAndApply(id) {
+      const p = copilotState['apply_' + id];
+      if (!p) return;
+      copilotSetMode('edit');
+      const inp = document.getElementById('magic-input');
+      if (inp) inp.value = p.q;
+      executeMagicAi();
+    }
+    /* ── Copilot boot hooks (lightweight; no duplicate heavy listeners) ── */
+    function copilotInitHooks() {
+      try { copilotRefreshTargetLine(); } catch (e) {}
+      try { copilotLoadChanges(); } catch (e) {}
+      try { copilotLoadChatLog(); } catch (e) {}
+      try {
+        if (window.wcSetAIScope && !window.wcSetAIScope.__cpWrapped) {
+          const orig = window.wcSetAIScope;
+          const wrapped = function (s) { try { orig(s); } catch (e) {} try { copilotRefreshTargetLine(); } catch (e2) {} };
+          wrapped.__cpWrapped = true;
+          window.wcSetAIScope = wrapped;
+        }
+      } catch (e) {}
+      try {
+        if (typeof grapesEditor !== 'undefined' && grapesEditor && !window.__copilotSelHook) {
+          window.__copilotSelHook = true;
+          grapesEditor.on('component:selected', () => { try { copilotRefreshTargetLine(); } catch (e) {} });
+          grapesEditor.on('component:deselected', () => { try { copilotRefreshTargetLine(); } catch (e) {} });
+        } else if (!window.__copilotSelHook) {
+          setTimeout(() => { try { copilotInitHooks(); } catch (e) {} }, 2500);
+        }
+      } catch (e) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', copilotInitHooks);
+    else copilotInitHooks();
+
+    /* ══════════════ MAIN AI CHAT EXECUTION (Gemini Primary · OpenCode Fallback) ══════════════ */
     async function executeMagicAi() {
       const input = document.getElementById('magic-input');
-      const q = input.value.trim();
-      if (!q) return;
+      const rawQ = input.value.trim();
+      if (!rawQ) return;
 
       syncCanvasToHtml();
       const snap = currentHtml;
@@ -8319,9 +10760,37 @@ ${WC_ANIMATION_RUNTIME}
       btn.disabled = true;
       btn.innerHTML = '⏳';
 
-      appendMagicChat(q, 'user');
+      appendMagicChat(rawQ, 'user');
       showMagicTyping();
 
+      // 1. Check prompt-to-image request
+      if (isImageGenerationRequest(rawQ)) {
+        try {
+          const imgPrompt = extractImagePrompt(rawQ);
+          const imgData = await executeAiImageGeneration(imgPrompt);
+          renderAiImageInChat(imgData);
+        } catch (imgErr) {
+          appendMagicChat(`⚠️ Image generation failed: ${escapeHtml(imgErr.message)}`, 'ai');
+        } finally {
+          hideMagicTyping();
+          btn.disabled = false;
+          btn.innerHTML = '➤';
+        }
+        return;
+      }
+
+      const selModel = document.getElementById('magic-model-select')?.value || 'gemini-3.5-flash-lite';
+      // Strip the "Update this <tag>:" prefill added by right-click → Ask AI to Edit This.
+      // The tag prefix confuses every AI lane, so only the real instruction is sent.
+      let q = String(rawQ).replace(/^update\s+this\s+<[^>]+>\s*:?\s*/i, '').trim();
+      if (!q) {
+        hideMagicTyping();
+        btn.disabled = false;
+        btn.innerHTML = '➤';
+        appendMagicChat('👋 Section select aachu! Ippo <strong>enna change venum</strong> nu sollunga — example: <em>"heading ah blue aakku"</em>, <em>"button periya aakku"</em>, <em>"text ah X nu maathu"</em>.', 'ai');
+        return;
+      }
+      const laneErrs = [];
       const comp = selectedComponent;
       const hasSelected = !!comp;
       let selectedPayload = null;
@@ -8337,145 +10806,202 @@ ${WC_ANIMATION_RUNTIME}
         }
       }
 
+      // ★ Copilot router: ask/find/audit/add-section/etc. handled here; edits fall through.
+      // Guarded: a router bug must never freeze the send button — fall back to plain lanes.
+      copilotStage('Understanding request...');
       try {
-        // ★ Selected element → SNIPPET lane first (small I/O, fits free caps,
-        // respects dropdown model). Whole page → full-doc lane.
-        // Puter.js is fallback only for selected-element micro-edits.
-        let result = null;
-        if (hasSelected && selectedPayload && window.OpenCodeAI?.editSnippet) {
-          try {
-            result = await window.OpenCodeAI.editSnippet({
-              userPrompt: q,
-              selectedHtml: selectedPayload.html || '',
-              bizName: projectData?.bizName || 'Website'
-            });
-          } catch (snipErr) {
-            console.warn('[Snippet lane failed, trying full-doc]:', snipErr?.message);
-            result = null;
-          }
-        }
-        if (!result && window.OpenCodeAI?.editWithFallback) {
-          try {
-            let enriched = q;
-            if (hasSelected && selectedPayload) {
-              enriched = `Target selected <${selectedPayload.tag}> element:\n${String(selectedPayload.html || '').slice(0, 4000)}\n\nUser request: ${q}\nReturn COMPLETE updated HTML document.`;
-            }
-            result = await window.OpenCodeAI.editWithFallback({
-              userPrompt: enriched,
-              currentHtml: currentHtml,
-              bizName: projectData?.bizName || 'Website',
-              puterCtx: { summary: buildAiStudioContext() }
-            });
-          } catch (freeErr) {
-            console.warn('[Free AI lane failed, trying Puter]:', freeErr?.message);
-            result = null;
-          }
-        }
-        if (!result && hasSelected) {
-          result = await window.PuterService.chatAndEdit({
-            userPrompt: q,
-            selectedElement: selectedPayload,
-            currentHtml: currentHtml,
-            context: {
-              bizName: projectData?.bizName || 'Website',
-              summary: buildAiStudioContext()
-            }
-          });
-        }
-        if (!result) throw new Error('All AI lanes failed — try a template action (e.g. "Add a pricing table with 3 plans") or another free model.');
+        const routed = await copilotPreRoute({ rawQ, q, comp, hasSelected, selectedPayload, selModel, snap, btn, input });
+        if (routed && routed.handled) return;
+        if (routed && routed.q) q = routed.q;
+      } catch (routeErr) {
+        console.warn('[copilot] router failed, using plain lanes:', routeErr?.message);
+      }
 
-        appendMagicChat(formatMarkdown(result.conversation), 'ai');
+      try {
+        let applied = false;
 
-        if (result.isEdit && result.updatedHtml) {
-          const isFullDoc = result.updatedHtml.includes('<html') || result.updatedHtml.includes('<!DOCTYPE');
-          if (hasSelected && comp && !isFullDoc) {
-            const parent = comp.parent();
-            if (parent) {
-              const idx = comp.index();
-              comp.remove();
-              const added = parent.append(result.updatedHtml, { at: idx });
-              const freshComp = Array.isArray(added) ? added[0] : added;
-              if (freshComp) {
-                configureEditorComponent(freshComp);
-                grapesEditor.select(freshComp);
+        // ══════════════════════════════════════════════
+        // 1. PRIMARY ENGINE: GOOGLE GEMINI (Server AI)
+        // ══════════════════════════════════════════════
+        if (selModel !== 'opencode-fallback') {
+          try {
+            copilotStage('Analyzing website...');
+            const geminiRes = await fetch('<?= SITE_URL ?>/api/generate.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'refine',
+                api_key: localStorage.getItem('gemini_api_key') || '',
+                model: selModel,
+                current_html: currentHtml,
+                selected_html: (hasSelected && selectedPayload) ? selectedPayload.html : '',
+                instruction: q,
+                customer_requirement: q,
+                biz_name: projectData?.bizName || 'Website',
+                concept_index: activeConceptIndex
+              })
+            });
+            const gData = await geminiRes.json();
+            if (gData && gData.success) {
+              const usedModel = gData.model || selModel;
+              if (gData.is_snippet && gData.html && hasSelected && comp) {
+                // PROPOSE FIRST: preview paar → OK na Apply (canvas untouched till then).
+                const verr = copilotValidateSnippet(gData.html);
+                if (verr) { laneErrs.push('Gemini (' + selModel + '): ' + verr); }
+                else if (copilotState.programmatic) {
+                  copilotStage('Applying changes...');
+                  copilotApplySnippetNow(comp, gData.html, usedModel, q);
+                  applied = true;
+                }
+                else {
+                  copilotStage('Preparing preview...');
+                  const previewHtml = copilotBuildSnippetPreview(snap, comp, gData.html);
+                  if (!previewHtml) {
+                    // Splice failed (rare) → direct apply, honest + undoable.
+                    copilotApplySnippetNow(comp, gData.html, usedModel, q);
+                    appendMagicChat('ℹ️ Preview build aagala — direct ah apply panniten. Pudikkalana ↩ Undo.', 'ai');
+                  } else {
+                    copilotProposeChange({ kind: 'snippet', snippet: gData.html, previewHtml, comp, model: usedModel, q });
+                  }
+                  applied = true;
+                }
+              } else if (hasSelected) {
+                // SCOPED MODE: full-page answer is rejected — selected
+                // section mattum maarave snippet lane / offline retry.
+                laneErrs.push('Gemini (' + selModel + '): full page returned, selected section snippet kedaikala — fallback retry');
+              } else if (gData.html && gData.html.trim() !== snap.trim()) {
+                const verr = copilotValidateFullDoc(gData.html);
+                if (verr) { laneErrs.push('Gemini (' + selModel + '): ' + verr + ' — kept existing website'); }
+                else if (copilotState.programmatic) {
+                  copilotStage('Applying changes...');
+                  copilotApplyFullNow(gData.html, usedModel, q);
+                  applied = true;
+                }
+                else {
+                  // PROPOSE FIRST: preview paar → OK na Apply.
+                  copilotStage('Preparing preview...');
+                  copilotProposeChange({ kind: 'full', html: gData.html, previewHtml: gData.html, model: usedModel, q });
+                  applied = true;
+                }
+              } else if (gData.success) {
+                laneErrs.push('Gemini (' + selModel + '): returned no change');
               }
-            } else {
-              comp.components(result.updatedHtml);
+            } else if (gData) {
+              laneErrs.push('Gemini (' + selModel + '): ' + ((gData.errors || []).slice(0, 2).join(' | ') || gData.error || 'failed'));
             }
-            syncCanvasToHtml();
-            if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-              projectData.designs[activeConceptIndex].html = currentHtml;
-              saveProjectData();
+          } catch (geminiErr) {
+            laneErrs.push('Gemini (' + selModel + '): ' + (geminiErr?.message || 'network error'));
+            console.warn('[Gemini primary lane error, falling back to OpenCode]:', geminiErr?.message);
+          }
+        }
+
+        // ══════════════════════════════════════════════
+        // 2. FALLBACK ENGINE: OPENCODE
+        // ══════════════════════════════════════════════
+        if (!applied) {
+          try {
+            copilotStage(selModel === 'opencode-fallback' ? 'Contacting OpenCode...' : 'Trying fallback model...');
+            let ocResult = null;
+            if (hasSelected && selectedPayload && window.OpenCodeAI?.editSnippet) {
+              try {
+                ocResult = await window.OpenCodeAI.editSnippet({
+                  userPrompt: q,
+                  selectedHtml: selectedPayload.html || '',
+                  bizName: projectData?.bizName || 'Website'
+                });
+              } catch (snipErr) {
+                laneErrs.push('Snippet: ' + (snipErr?.message || 'failed'));
+              }
             }
-            renderSmartLayers();
-            showToast('✨ Selected element updated & saved!');
+            if (!ocResult && window.OpenCodeAI?.editWithFallback) {
+              let enriched = q;
+              if (hasSelected && selectedPayload) {
+                enriched = `Target selected <${selectedPayload.tag}> element:
+${String(selectedPayload.html || '').slice(0, 4000)}
+
+User request: ${q}
+Return COMPLETE updated HTML document.`;
+              }
+              ocResult = await window.OpenCodeAI.editWithFallback({
+                userPrompt: enriched,
+                currentHtml: currentHtml,
+                bizName: projectData?.bizName || 'Website',
+                model: selModel
+              });
+            }
+
+            if (ocResult && ocResult.updatedHtml) {
+              const ocModel = ocResult.model || ocResult.engine || 'opencode';
+              const isFullDoc = ocResult.updatedHtml.includes('<html') || ocResult.updatedHtml.includes('<!DOCTYPE');
+              if (hasSelected && comp && !isFullDoc) {
+                // PROPOSE FIRST: preview paar → OK na Apply.
+                const verr = copilotValidateSnippet(ocResult.updatedHtml);
+                if (verr) { laneErrs.push('OpenCode: ' + verr); }
+                else if (copilotState.programmatic) {
+                  copilotStage('Applying changes...');
+                  copilotApplySnippetNow(comp, ocResult.updatedHtml, ocModel, q);
+                  applied = true;
+                }
+                else {
+                  copilotStage('Preparing preview...');
+                  const previewHtml = copilotBuildSnippetPreview(snap, comp, ocResult.updatedHtml);
+                  if (!previewHtml) {
+                    copilotApplySnippetNow(comp, ocResult.updatedHtml, ocModel, q);
+                    appendMagicChat('ℹ️ Preview build aagala — direct ah apply panniten. Pudikkalana ↩ Undo.', 'ai');
+                  } else {
+                    copilotProposeChange({ kind: 'snippet', snippet: ocResult.updatedHtml, previewHtml, comp, model: ocModel, q });
+                  }
+                  applied = true;
+                }
+              } else if (hasSelected && isFullDoc) {
+                // SCOPED MODE: full-page answer rejected — section mattum
+                // maarave offline smart-style retry.
+                laneErrs.push('OpenCode: full page returned, selected section snippet kedaikala — offline retry');
+              } else {
+                const verr = copilotValidateFullDoc(ocResult.updatedHtml);
+                if (verr) { laneErrs.push('OpenCode: ' + verr + ' — kept existing website'); }
+                else if (copilotState.programmatic) {
+                  copilotStage('Applying changes...');
+                  copilotApplyFullNow(ocResult.updatedHtml, ocModel, q);
+                  applied = true;
+                }
+                else {
+                  // PROPOSE FIRST: preview paar → OK na Apply.
+                  copilotStage('Preparing preview...');
+                  copilotProposeChange({ kind: 'full', html: ocResult.updatedHtml, previewHtml: ocResult.updatedHtml, model: ocModel, q });
+                  applied = true;
+                }
+              }
+            }
+          } catch (ocErr) {
+            laneErrs.push('OpenCode: ' + (ocErr?.message || 'failed'));
+            console.warn('[OpenCode fallback lane error]:', ocErr?.message);
+          }
+        }
+
+        // ══════════════════════════════════════════════
+        // 3. OFFLINE SMART-STYLE FALLBACK (text/color/size/remove/hide)
+        // ══════════════════════════════════════════════
+        if (!applied) {
+          if (applyLocalSmartStyle(q)) {
+            applied = true;
           } else {
-            if (result.updatedHtml.includes('<html') || result.updatedHtml.includes('<!DOCTYPE')) {
-              currentHtml = result.updatedHtml;
-              loadHtmlIntoStudioCanvas();
-            } else {
-              grapesEditor.addComponents(result.updatedHtml);
-              syncCanvasToHtml();
-            }
-            if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-              projectData.designs[activeConceptIndex].html = currentHtml;
-              saveProjectData();
-            }
-            renderSmartLayers();
-            showToast('✨ Website updated & saved!');
+            // Short + clean reasons only (strip prompt blocks, cap length).
+            const why = laneErrs.length
+              ? laneErrs.slice(0, 3).map(e => copilotStripNoise(String(e)).slice(0, 150)).join(' | ')
+              : 'no detail';
+            const scopeHint = hasSelected ? 'Selected section ku mattum apply aagala. ' : '';
+            throw new Error(`Could not apply changes (model ${selModel}) — ${scopeHint}${why}. Try: "heading ah blue aakku", "text ah X nu maathu", or "button periya aakku".`);
           }
         }
 
       } catch (err) {
-        console.warn('[AI error, checking fallback]:', err);
-        if (window.PuterService.isQuotaOrCreditError(err)) {
-          appendMagicChat('⚠️ Puter AI credit limit reached. Click **Switch Account** or **Create Free Account** in the popup to continue.', 'ai');
-        } else {
-          const selModel = (window.OpenCodeAI?.getModel) ? window.OpenCodeAI.getModel() : '';
-          appendMagicChat(`⚠️ AI notice (${escapeHtml(selModel || 'free model')}): ${escapeHtml(err.message)}. Trying backend Gemini fallback...`, 'ai');
-          try {
-            await executeGeminiBackendFallback(q, snap);
-          } catch (backendErr) {
-            // Last net: offline smart-style (color/size/dark-light) — no network needed
-            if (applyLocalSmartStyle(q)) return;
-            appendMagicChat(`⚠️ Backend failed: ${escapeHtml(backendErr.message)}`, 'ai');
-            showToast('AI request failed: ' + backendErr.message);
-          }
-        }
+        appendMagicChat(`⚠️ AI notice: ${escapeHtml(err.message)}`, 'ai');
+        showToast('AI request: ' + err.message);
       } finally {
         hideMagicTyping();
         btn.disabled = false;
         btn.innerHTML = '➤';
-      }
-    }
-
-    async function executeGeminiBackendFallback(q, snap) {
-      const selModel = (window.OpenCodeAI?.getModel) ? window.OpenCodeAI.getModel() : undefined;
-      const res = await fetch('<?= SITE_URL ?>/api/generate.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'refine',
-          api_key: localStorage.getItem('gemini_api_key') || '',
-          model: selModel,
-          current_html: currentHtml,
-          instruction: q,
-          customer_requirement: q,
-          biz_name: projectData?.bizName || 'Website',
-          concept_index: activeConceptIndex
-        })
-      });
-      const result = await res.json();
-      if (!result.success) throw new Error(result.error || 'Failed');
-      if (result.html && result.html.trim() !== snap.trim()) {
-        currentHtml = result.html;
-        if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
-          projectData.designs[activeConceptIndex].html = currentHtml;
-          saveProjectData();
-        }
-        loadHtmlIntoStudioCanvas();
-        appendMagicChat(`✨ ${escapeHtml(result.response_msg || 'Updated via Gemini')}`, 'ai');
-        showToast('✨ Updated live via Gemini!');
       }
     }
 
@@ -8517,6 +11043,7 @@ ${WC_ANIMATION_RUNTIME}
       row.appendChild(body);
       log.appendChild(row);
       log.scrollTop = log.scrollHeight;
+      try { copilotSaveChat(); } catch (e) {}
     }
 
     function showMagicTyping() {
@@ -8538,8 +11065,10 @@ ${WC_ANIMATION_RUNTIME}
     function clearMagicChat() {
       const log = document.getElementById('magic-chat-log');
       if (!log) return;
+      try { copilotArchiveCurrentChat(); } catch (e) {}
       log.innerHTML = '';
-      appendMagicChat('🧹 Chat cleared. What should I build next?', 'ai');
+      try { localStorage.removeItem(copilotChatKey()); } catch (e) {}
+      appendMagicChat('🧹 Chat cleared — pazhaya chat 🕘 History la iruku, paarkalam.', 'ai');
     }
 
     /* ══════════════ TOP BAR & CANVAS FEATURE RIBBON ══════════════ */
@@ -8809,7 +11338,7 @@ ${WC_ANIMATION_RUNTIME}
       if (outlines) grapesEditor.runCommand('core:component-outline');
     }
 
-    function openStudioPreview() {
+    async function openStudioPreview() {
       syncCanvasToHtml();
       // Preview opens in the SELECTED device view (not always full PC width),
       // so the customer sees exactly what was chosen: PC / Laptop / Tablet / Phone.
@@ -8839,9 +11368,29 @@ ${WC_ANIMATION_RUNTIME}
       win.document.open();
       win.document.write(shell);
       win.document.close();
+      // Real-URL preview (preview.php): the frame gets a true http(s) base URL,
+      // so header clicks behave like the published site — #anchors scroll,
+      // page links 404 honestly, and nothing can loop back into Studio.
+      // Falls back to the classic srcdoc preview when offline/oversized.
+      let frameUrl = null;
+      try {
+        const html = String(currentHtml || '');
+        if (html.length > 100 && html.length <= 7 * 1024 * 1024) {
+          const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+          const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 15000) : null;
+          const res = await fetch('<?= SITE_URL ?>/preview.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html }),
+            signal: ctrl ? ctrl.signal : undefined
+          });
+          if (timer) clearTimeout(timer);
+          const j = await res.json();
+          if (j && j.success && j.url) frameUrl = j.url;
+        }
+      } catch (e) { console.warn('[preview] URL preview failed, using srcdoc fallback'); }
       // srcdoc via property (no HTML-escaping pitfalls with inline scripts).
       const frame = win.document.getElementById('pv-frame');
-      if (frame) frame.srcdoc = currentHtml;
+      if (frame) { if (frameUrl) frame.src = frameUrl; else frame.srcdoc = currentHtml; }
     }
 
     function toggleFullscreen() {
@@ -9180,10 +11729,617 @@ ${WC_ANIMATION_RUNTIME}
       setTimeout(() => window.location.href = '<?= SITE_URL ?>/builder.php?resume=1&concept=' + activeConceptIndex + '&view=' + currentStudioView, 1100);
     }
 
+    /* ════════════════════════════════════════════════════════════════
+       WC PRO LAYER — premium Canva-style upgrade (additive, safe)
+       - Preserves all existing functions/storage/canvas protections
+       - Priority: Global Theme → Section Style → Element Style (natural cascade;
+         theme uses low-specificity vars, inline styles always win)
+       ════════════════════════════════════════════════════════════════ */
+    window.WCPro = window.WCPro || {};
+    (function WCProCore() {
+      if (window.__WCProCoreLoaded) return;
+      window.__WCProCoreLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const debounce = (fn, ms) => { let t = null; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+      /* ── 1. Project extensions with safe defaults (never breaks old saves) ── */
+      function wcProEnsure() {
+        try {
+          if (typeof projectData === 'undefined' || !projectData) return null;
+          const d = (projectData.designs && projectData.designs[typeof activeConceptIndex === 'number' ? activeConceptIndex : 0]) || null;
+          if (!d) return null;
+          if (!d.wcTheme || typeof d.wcTheme !== 'object') d.wcTheme = Object.assign({}, WCProDefaultTheme());
+          if (!d.siteSettings || typeof d.siteSettings !== 'object') d.siteSettings = { name: projectData.bizName || '', logo: '', favicon: '', phone: '', email: '', whatsapp: '', address: '', hours: '', lang: 'en', currency: 'Rs', socials: { facebook: '', instagram: '', twitter: '', youtube: '', linkedin: '' } };
+          if (!d.seo || typeof d.seo !== 'object') d.seo = { title: '', desc: '', keywords: '', favicon: '', ogTitle: '', ogDesc: '', ogImage: '', canonical: '' };
+          if (!Array.isArray(d.mySections)) { try { d.mySections = JSON.parse(localStorage.getItem('webcraft_my_sections') || '[]'); } catch (e) { d.mySections = []; } if (!Array.isArray(d.mySections)) d.mySections = []; }
+          return d;
+        } catch (e) { return null; }
+      }
+      function WCProDefaultTheme() {
+        return { primary: '#6366f1', secondary: '#8b5cf6', accent: '#06b6d4', background: '#ffffff', surface: '#f8fafc', heading: '#0f172a', body: '#475569', link: '#4f46e5', button: '#6366f1', buttonText: '#ffffff', headingFont: 'Plus Jakarta Sans, Inter, system-ui, sans-serif', bodyFont: 'Inter, system-ui, sans-serif', headingWeight: '800', bodyWeight: '400', baseSize: '16', radius: '14', buttonRadius: '999', shadow: 'soft', spacing: '5', container: '1100', scale: '1' };
+      }
+      window.WCProDefaultTheme = WCProDefaultTheme;
+      window.wcProEnsure = wcProEnsure;
+
+      /* ── 2. Save status pill + debounced autosave (wraps, never replaces) ── */
+      let savePillEl = null, saveState = 'saved', origSaveProjectData = null, origSyncCanvas = null;
+      function wcSetSaveState(s, msg) {
+        saveState = s;
+        if (!savePillEl) savePillEl = $('wc-save-pill');
+        if (!savePillEl) return;
+        savePillEl.classList.remove('saving', 'dirty');
+        const dot = savePillEl.querySelector('.dot'), txt = savePillEl.querySelector('.txt');
+        if (s === 'saving') { savePillEl.classList.add('saving'); if (txt) txt.textContent = msg || 'Saving…'; }
+        else if (s === 'dirty') { savePillEl.classList.add('dirty'); if (txt) txt.textContent = msg || 'Unsaved changes'; }
+        else { if (txt) txt.textContent = msg || 'Saved'; }
+      }
+      window.wcSetSaveState = wcSetSaveState;
+      function wcEnsureSavePill() {
+        if ($('wc-save-pill')) { savePillEl = $('wc-save-pill'); return; }
+        const hr = document.querySelector('.header-right');
+        if (!hr) return;
+        const pill = document.createElement('span');
+        pill.id = 'wc-save-pill';
+        pill.title = 'Save status — every meaningful change is persisted';
+        pill.innerHTML = '<span class="dot"></span><span class="txt">Saved</span>';
+        hr.insertBefore(pill, hr.firstChild);
+        savePillEl = pill;
+      }
+      const wcAutosave = debounce(() => {
+        try {
+          wcSetSaveState('saving');
+          if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml();
+          else if (typeof saveProjectData === 'function') saveProjectData();
+          wcSetSaveState('saved');
+        } catch (e) { wcSetSaveState('dirty', 'Unsaved changes'); }
+      }, 900);
+      window.wcAutosave = wcAutosave;
+      window.wcMarkDirty = function () { wcSetSaveState('dirty', 'Unsaved changes'); wcAutosave(); };
+      function wcWrapSaveFns() {
+        try {
+          if (typeof saveProjectData === 'function' && !saveProjectData.__wcWrapped) {
+            origSaveProjectData = saveProjectData;
+            window.saveProjectData = function () { wcSetSaveState('saving'); let r = false; try { r = origSaveProjectData.apply(this, arguments); } catch (e) {} wcSetSaveState(r === false ? 'dirty' : 'saved', r === false ? 'Unsaved changes' : 'Saved'); return r; };
+            window.saveProjectData.__wcWrapped = true;
+          }
+        } catch (e) {}
+        try {
+          if (typeof syncCanvasToHtml === 'function' && !syncCanvasToHtml.__wcWrapped) {
+            origSyncCanvas = syncCanvasToHtml;
+            window.syncCanvasToHtml = function () { let r = false; try { r = origSyncCanvas.apply(this, arguments); } catch (e) {} try { wcSetSaveState('saved'); } catch (e2) {} return r; };
+            window.syncCanvasToHtml.__wcWrapped = true;
+          }
+        } catch (e) {}
+      }
+
+      /* ── 3. Version history (separate key — never touches primary save) ── */
+      function wcVersionsKey() {
+        try { return 'webcraft_versions::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+        catch (e) { return 'webcraft_versions::c0'; }
+      }
+      function wcGetVersions() {
+        try { const a = JSON.parse(localStorage.getItem(wcVersionsKey()) || '[]'); return Array.isArray(a) ? a : []; }
+        catch (e) { return []; }
+      }
+      function wcPutVersions(list) {
+        let arr = list.slice(-10);
+        for (let attempt = 0; attempt < 4; attempt++) {
+          try { localStorage.setItem(wcVersionsKey(), JSON.stringify(arr)); return true; }
+          catch (e) { arr.shift(); if (!arr.length) return false; }
+        }
+        return false;
+      }
+      function wcSnapshotVersion(label) {
+        try {
+          const d = wcProEnsure(); if (!d) return;
+          try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+          const html = (typeof currentHtml === 'string' && currentHtml) ? currentHtml : (d.html || '');
+          if (!html || html.length < 50) return;
+          const vers = wcGetVersions();
+          const last = vers[vers.length - 1];
+          if (last && last.html === html) return;
+          vers.push({ label: label || 'Checkpoint', at: Date.now(), html: html.slice(0, 300000) });
+          wcPutVersions(vers);
+          try { wcRenderHistoryPanel(); } catch (e) {}
+        } catch (e) {}
+      }
+      window.wcSnapshotVersion = wcSnapshotVersion;
+      window.wcRestoreVersion = function (i) {
+        try {
+          const vers = wcGetVersions(); if (!vers[i]) return;
+          const d = wcProEnsure();
+          wcSnapshotVersion('Before restore');
+          const html = vers[i].html;
+          if (typeof currentHtml !== 'undefined') currentHtml = html;
+          if (d) d.html = html;
+          try { if (typeof lockTheme === 'function') lockTheme(html, true); } catch (e) {}
+          try { if (typeof loadHtmlIntoStudioCanvas === 'function') loadHtmlIntoStudioCanvas(); } catch (e) {}
+          try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+          try { if (typeof showToast === 'function') showToast('🕘 Version restored — review, undo/redo still available'); } catch (e) {}
+          try { wcApplyThemeToCanvas(); wcApplyResponsiveCss(); } catch (e) {}
+        } catch (e) {}
+      };
+
+      /* ── 4. GLOBAL THEME — low-specificity vars, inline styles always win ── */
+      const SHADOWS = { none: 'none', soft: '0 10px 30px rgba(2,6,23,0.10)', medium: '0 18px 50px rgba(2,6,23,0.16)', strong: '0 28px 80px rgba(2,6,23,0.28)' };
+      function wcThemeCss(t) {
+        const sh = SHADOWS[t.shadow] || SHADOWS.soft;
+        return (':root{--wc-primary:' + t.primary + ';--wc-secondary:' + t.secondary + ';--wc-accent:' + t.accent + ';--wc-bg:' + t.background + ';--wc-surface:' + t.surface + ';--wc-heading:' + t.heading + ';--wc-body:' + t.body + ';--wc-link:' + t.link + ';--wc-btn:' + t.button + ';--wc-btn-text:' + t.buttonText + ';--wc-radius:' + t.radius + 'px;--wc-btn-radius:' + t.buttonRadius + 'px;--wc-shadow:' + sh + ';--wc-container:' + t.container + 'px;--wc-section-pad:' + t.spacing + 'rem;--wc-scale:' + t.scale + ';--primary:' + t.primary + ';--primary-gradient:linear-gradient(135deg,' + t.primary + ' 0%,' + t.secondary + ' 100%);}\n' +
+          'body{background-color:var(--wc-bg);color:var(--wc-body);font-family:' + t.bodyFont + ';font-size:calc(' + t.baseSize + 'px * var(--wc-scale));}\n' +
+          'h1,h2,h3,h4,h5,h6{color:var(--wc-heading);font-family:' + t.headingFont + ';font-weight:' + t.headingWeight + ';}\n' +
+          'p,li,span,div{font-weight:' + t.bodyWeight + ';}\n' +
+          'a{color:var(--wc-link);}\n' +
+          'a[class*="btn"],button[class*="btn"],.btn-primary{background:' + t.button + ' !important;color:' + t.buttonText + ' !important;border-radius:var(--wc-btn-radius) !important;}\n').trim();
+      }
+      function wcApplyThemeToCanvas() {
+        try {
+          const d = wcProEnsure(); if (!d) return;
+          const t = d.wcTheme || WCProDefaultTheme();
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (!doc || !doc.head) return;
+          let tag = doc.getElementById('wc-global-theme-css');
+          if (!tag) { tag = doc.createElement('style'); tag.id = 'wc-global-theme-css'; doc.head.appendChild(tag); }
+          tag.textContent = wcThemeCss(t);
+        } catch (e) {}
+      }
+      window.wcApplyThemeToCanvas = wcApplyThemeToCanvas;
+      window.wcSetThemeKey = function (key, val) {
+        const d = wcProEnsure(); if (!d) return;
+        wcSnapshotVersion('Before theme change');
+        d.wcTheme[key] = val;
+        wcApplyThemeToCanvas();
+        wcMarkDirty();
+        try { wcRenderThemePanel(); } catch (e) {}
+      };
+      window.wcApplyThemeToEntireWebsite = function () {
+        const d = wcProEnsure(); if (!d) return;
+        wcSnapshotVersion('Before Apply-to-Entire-Website');
+        wcApplyThemeToCanvas();
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        try { if (typeof showToast === 'function') showToast('🎨 Theme applied to entire website — your custom element styles were kept'); } catch (e) {}
+      };
+
+      /* ── 5. TRUE RESPONSIVE — per-device overrides, desktop untouched ── */
+      const WC_DEVICES = ['Desktop', 'Laptop', 'Tablet', 'Mobile'];
+      const WC_MEDIA = { Laptop: '@media (max-width:1200px)', Tablet: '@media (max-width:768px)', Mobile: '@media (max-width:480px)' };
+      window.WC_DEVICES = WC_DEVICES;
+      function wcGetResp(comp) {
+        try { const raw = comp.getAttributes && comp.getAttributes()['data-wc-resp']; return raw ? JSON.parse(raw) : {}; } catch (e) { return {}; }
+      }
+      function wcSetResp(comp, device, key, val) {
+        try {
+          const all = wcGetResp(comp);
+          all[device] = all[device] || {};
+          if (val === '' || val == null) delete all[device][key]; else all[device][key] = val;
+          if (!Object.keys(all[device]).length) delete all[device];
+          comp.addAttributes({ 'data-wc-resp': JSON.stringify(all) });
+        } catch (e) {}
+      }
+      window.wcGetResp = wcGetResp; window.wcSetResp = wcSetResp;
+      function wcApplyResponsiveCss() {
+        try {
+          if (typeof grapesEditor === 'undefined' || !grapesEditor) return;
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (!doc || !doc.head) return;
+          let tag = doc.getElementById('wc-responsive-css');
+          if (!tag) { tag = doc.createElement('style'); tag.id = 'wc-responsive-css'; doc.head.appendChild(tag); }
+          let css = '.wc-hide-desktop{display:inherit;}\n@media (min-width:1210px){.wc-hide-desktop{display:none !important;}}\n@media (max-width:1200px) and (min-width:769px){.wc-hide-laptop{display:none !important;}}\n@media (max-width:768px) and (min-width:481px){.wc-hide-tablet{display:none !important;}}\n@media (max-width:480px){.wc-hide-mobile{display:none !important;}}\n';
+          try {
+            const wrapper = grapesEditor.DomComponents && grapesEditor.DomComponents.getWrapper();
+            const walk = (comp) => {
+              if (!comp || !comp.getAttributes) return;
+              const attrs = comp.getAttributes() || {};
+              const resp = attrs['data-wc-resp'];
+              if (resp) {
+                let parsed = null; try { parsed = JSON.parse(resp); } catch (e) {}
+                if (parsed) {
+                  const cls = (attrs.class || '').split(/\s+/).filter(Boolean);
+                  const id = attrs.id ? ('#' + attrs.id) : (comp.getId ? ('#' + comp.getId()) : null);
+                  const sel = id || (cls.length ? ('.' + cls[0]) : null);
+                  if (sel) {
+                    ['Laptop', 'Tablet', 'Mobile'].forEach(dev => {
+                      const o = parsed[dev];
+                      if (o && Object.keys(o).length) {
+                        const body = Object.keys(o).map(k => k + ':' + o[k] + ' !important;').join('');
+                        css += WC_MEDIA[dev] + '{' + sel + '{' + body + '}}\n';
+                      }
+                    });
+                  }
+                }
+              }
+              try { (comp.components && comp.components() || []).forEach(walk); } catch (e) {}
+            };
+            if (wrapper) walk(wrapper);
+          } catch (e) {}
+          tag.textContent = css;
+        } catch (e) {}
+      }
+      window.wcApplyResponsiveCss = wcApplyResponsiveCss;
+      window.wcSetVisibility = function (comp, mode) {
+        if (!comp) return;
+        const classes = ['wc-hide-desktop', 'wc-hide-laptop', 'wc-hide-tablet', 'wc-hide-mobile', 'wc-show-mobile-only', 'wc-show-desktop-only'];
+        const attrs = comp.getAttributes() || {};
+        let cls = (attrs.class || '').split(/\s+/).filter(c => c && classes.indexOf(c) < 0);
+        if (mode === 'hide-desktop') cls.push('wc-hide-desktop');
+        else if (mode === 'hide-tablet') cls.push('wc-hide-tablet');
+        else if (mode === 'hide-mobile') cls.push('wc-hide-mobile');
+        else if (mode === 'only-mobile') { cls.push('wc-hide-desktop'); cls.push('wc-hide-laptop'); cls.push('wc-hide-tablet'); }
+        else if (mode === 'only-desktop') { cls.push('wc-hide-tablet'); cls.push('wc-hide-mobile'); }
+        comp.addAttributes({ class: cls.join(' ') });
+        wcApplyResponsiveCss(); wcMarkDirty();
+        try { wcRenderResponsivePanel(); } catch (e) {}
+      };
+
+      /* expose boot hook data */
+      window.WCPro._pill = wcEnsureSavePill; window.WCPro._wrapSave = wcWrapSaveFns;
+      window.WCPro._ensure = wcProEnsure; window.WCPro._snapshot = wcSnapshotVersion;
+    })();
+
     function escapeHtml(s) {
       if (typeof s !== 'string') return '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    /* ═══════════ WC PRO PART 2 — editors, panels, AI, guides (additive) ═══════════ */
+    (function WCProPanels() {
+      if (window.__WCProPanelsLoaded) return;
+      window.__WCProPanelsLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+      const curDev = () => { try { return (typeof studioCurrentDevice === 'string' && studioCurrentDevice) || (grapesEditor && grapesEditor.getDevice && grapesEditor.getDevice()) || 'Desktop'; } catch (e) { return 'Desktop'; } };
+      function wcColorHex(v, fb) {
+        try { if (typeof normalizeHex === 'function') { const n = normalizeHex(v); if (n) return n.slice(0, 7); } } catch (e) {}
+        try { const m = String(v || '').match(/#([0-9a-f]{6}|[0-9a-f]{3})/i); if (m) { let h = m[0]; if (h.length === 4) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3]; return h; } } catch (e) {}
+        return fb;
+      }
+
+      /* ── drawer: create new tabs once (keeps original drawer intact) ── */
+      const PRO_TABS = { theme: '🎨 Website Theme', header: '🏷️ Header / Navbar', footer: '🦶 Footer', settings: '⚙️ Website Settings', seo: '🚀 SEO + Social', history: '🕘 Version History', saved: '💎 My Sections', responsive: '📐 Responsive' };
+      function wcEnsureProTabs() {
+        const drawer = $('canva-drawer'); if (!drawer) return;
+        Object.keys(PRO_TABS).forEach(k => {
+          if (!$('dtab-' + k)) {
+            const div = document.createElement('div');
+            div.className = 'drawer-content'; div.id = 'dtab-' + k; div.style.display = 'none';
+            div.innerHTML = '<div id="wc-pro-' + k + '"></div>';
+            drawer.appendChild(div);
+          }
+        });
+        if (!$('rail-responsive')) {
+          const rail = document.querySelector('.canva-rail');
+          if (rail) { const b = document.createElement('div'); b.className = 'rail-item'; b.id = 'rail-responsive'; b.innerHTML = '<span class="icon">📐</span><span>Respon</span>'; b.onclick = () => window.wcOpenTab ? window.wcOpenTab('responsive') : window.switchDrawerTab('responsive'); rail.appendChild(b); }
+        }
+      }
+      /* wrap switchDrawerTab (assignment, not redeclaration — preserves original) */
+      function wcPatchDrawer() {
+        try {
+          if (window.switchDrawerTab && !window.switchDrawerTab.__wcWrapped) {
+            const orig = window.switchDrawerTab;
+            const wrapped = function (tab) {
+              wcEnsureProTabs();
+              if (PRO_TABS[tab] || tab === 'responsive') {
+                const dr = $('canva-drawer'); if (dr) dr.classList.remove('collapsed');
+                document.querySelectorAll('.rail-item').forEach(r => r.classList.remove('active'));
+                ['blocks', 'uploads', 'text', 'anim', 'lang', 'styles', 'traits', 'layers', 'pages', 'theme', 'header', 'footer', 'settings', 'seo', 'history', 'saved', 'responsive'].forEach(t => { const el = $('dtab-' + t); if (el) el.style.display = (t === tab) ? 'block' : 'none'; });
+                const rail = $('rail-' + tab); if (rail) rail.classList.add('active');
+                const titles = Object.assign({ blocks: 'Elements & Blocks' }, PRO_TABS);
+                const dt = $('drawer-title'); if (dt) dt.textContent = titles[tab] || 'Tools';
+                if (tab === 'theme') wcRenderThemePanel();
+                if (tab === 'header') wcRenderHeaderPanel();
+                if (tab === 'footer') wcRenderFooterPanel();
+                if (tab === 'settings') wcRenderSettingsPanel();
+                if (tab === 'seo') wcRenderSeoPanel();
+                if (tab === 'history') wcRenderHistoryPanel();
+                if (tab === 'saved') wcRenderSavedPanel();
+                if (tab === 'responsive') wcRenderResponsivePanel();
+                return;
+              }
+              return orig.apply(this, arguments);
+            };
+            wrapped.__wcWrapped = true;
+            window.switchDrawerTab = wrapped;
+          }
+        } catch (e) {}
+      }
+
+      /* ── THEME PANEL ── */
+      const THEME_FIELDS = [['primary', 'Primary color'], ['secondary', 'Secondary color'], ['accent', 'Accent color'], ['background', 'Background color'], ['surface', 'Surface / card color'], ['heading', 'Heading color'], ['body', 'Body text color'], ['link', 'Link color'], ['button', 'Button color'], ['buttonText', 'Button text color']];
+      window.wcRenderThemePanel = function () {
+        const box = $('wc-pro-theme'); if (!box) return;
+        const d = window.wcProEnsure ? window.wcProEnsure() : null; if (!d) { box.innerHTML = '<div class="wc-pro-card">Load a project first.</div>'; return; }
+        const t = d.wcTheme || window.WCProDefaultTheme();
+        let h = '<div class="wc-pro-card"><h4>🎨 Global colors <span class="wc-friendly-lbl">— whole site</span></h4>';
+        THEME_FIELDS.forEach(([k, lbl]) => { h += '<div class="wc-pro-row"><label>' + lbl + '</label><input type="color" value="' + esc(t[k] || '#6366f1') + '" onchange="wcSetThemeKey(\'' + k + '\',this.value)"></div>'; });
+        h += '</div><div class="wc-pro-card"><h4>✍️ Typography</h4>';
+        h += '<div class="wc-pro-row"><label>Heading font</label><select onchange="wcSetThemeKey(\'headingFont\',this.value)">' + ['Plus Jakarta Sans, Inter, system-ui, sans-serif', 'Inter, system-ui, sans-serif', 'Space Grotesk, Inter, sans-serif', 'Georgia, serif', 'Noto Sans Tamil, sans-serif'].map(f => '<option ' + (t.headingFont === f ? 'selected' : '') + ' value="' + esc(f) + '">' + esc(f.split(',')[0]) + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Body font</label><select onchange="wcSetThemeKey(\'bodyFont\',this.value)">' + ['Inter, system-ui, sans-serif', 'Plus Jakarta Sans, Inter, sans-serif', 'Space Grotesk, Inter, sans-serif', 'Georgia, serif', 'Noto Sans Tamil, sans-serif'].map(f => '<option ' + (t.bodyFont === f ? 'selected' : '') + ' value="' + esc(f) + '">' + esc(f.split(',')[0]) + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Text weight <span class="wc-friendly-lbl">(boldness)</span></label><select onchange="wcSetThemeKey(\'bodyWeight\',this.value)">' + ['300', '400', '500', '600', '700'].map(w => '<option ' + (String(t.bodyWeight) === w ? 'selected' : '') + '>' + w + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Heading weight</label><select onchange="wcSetThemeKey(\'headingWeight\',this.value)">' + ['500', '600', '700', '800', '900'].map(w => '<option ' + (String(t.headingWeight) === w ? 'selected' : '') + '>' + w + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Base font size</label><input type="range" min="13" max="20" value="' + esc(t.baseSize || 16) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcSetThemeKey(\'baseSize\',this.value)"><span class="wc-pro-val">' + esc(t.baseSize || 16) + 'px</span></div>';
+        h += '</div><div class="wc-pro-card"><h4>▢ Corners, shadows & spacing</h4>';
+        h += '<div class="wc-pro-row"><label>Corner roundness</label><input type="range" min="0" max="32" value="' + esc(t.radius || 14) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcSetThemeKey(\'radius\',this.value)"><span class="wc-pro-val">' + esc(t.radius || 14) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Button roundness</label><input type="range" min="0" max="999" value="' + esc(t.buttonRadius || 999) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcSetThemeKey(\'buttonRadius\',this.value)"><span class="wc-pro-val">' + esc(t.buttonRadius || 999) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Shadow style</label><select onchange="wcSetThemeKey(\'shadow\',this.value)">' + ['none', 'soft', 'medium', 'strong'].map(s => '<option ' + (t.shadow === s ? 'selected' : '') + '>' + s + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Section spacing <span class="wc-friendly-lbl">(top/bottom)</span></label><input type="range" min="2" max="9" step="0.5" value="' + esc(t.spacing || 5) + '" oninput="this.nextElementSibling.textContent=this.value+\'rem\'" onchange="wcSetThemeKey(\'spacing\',this.value)"><span class="wc-pro-val">' + esc(t.spacing || 5) + 'rem</span></div>';
+        h += '<div class="wc-pro-row"><label>Content width</label><input type="range" min="720" max="1400" step="10" value="' + esc(t.container || 1100) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcSetThemeKey(\'container\',this.value)"><span class="wc-pro-val">' + esc(t.container || 1100) + 'px</span></div>';
+        h += '</div><button class="wc-pro-btn primary" style="width:100%" onclick="wcApplyThemeToEntireWebsite()">✨ Apply to Entire Website</button>';
+        h += '<div class="wc-friendly-lbl" style="margin-top:0.5rem">Priority: Global Theme → Section Style → Element Style. Your per-element custom styles always win.</div>';
+        box.innerHTML = h;
+      };
+
+      /* ── HEADER / FOOTER detection ── */
+      function wcFindHeader() {
+        try {
+          if (typeof grapesEditor === 'undefined' || !grapesEditor) return null;
+          const w = grapesEditor.DomComponents.getWrapper(); let found = null;
+          const walk = (c) => { if (found) return; try { const tag = (c.get('tagName') || '').toLowerCase(); const at = c.getAttributes() || {}; if (tag === 'header' || tag === 'nav' || (at.id === 'header') || (at.class || '').includes('header') || (at.class || '').includes('navbar')) found = c; } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+          walk(w); return found;
+        } catch (e) { return null; }
+      }
+      function wcFindFooter() {
+        try {
+          if (typeof grapesEditor === 'undefined' || !grapesEditor) return null;
+          const w = grapesEditor.DomComponents.getWrapper(); let found = null;
+          const walk = (c) => { if (found) return; try { const tag = (c.get('tagName') || '').toLowerCase(); const at = c.getAttributes() || {}; if (tag === 'footer' || at.id === 'footer' || (at.class || '').includes('footer')) found = c; } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+          walk(w); return found;
+        } catch (e) { return null; }
+      }
+      function wcMenuLinks(headerComp) {
+        const out = [];
+        try {
+          const walk = (c) => { try { const tag = (c.get('tagName') || '').toLowerCase(); if (tag === 'a') { const el = c.getEl && c.getEl(); out.push({ comp: c, text: el ? (el.innerText || '').trim().slice(0, 40) : '', href: (c.getAttributes() || {}).href || '' }); } } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+          if (headerComp) walk(headerComp);
+        } catch (e) {}
+        return out.slice(0, 20);
+      }
+      window.wcRenderHeaderPanel = function () {
+        const box = $('wc-pro-header'); if (!box) return;
+        const hdr = wcFindHeader();
+        if (!hdr) { box.innerHTML = '<div class="wc-pro-card"><h4>🏷️ Header</h4><div style="font-size:0.76rem;color:#94a3b8">No header found on this page. Insert one from Elements → Sections, or ask AI to “add a header”.</div><button class="wc-pro-btn" style="margin-top:0.6rem" onclick="switchDrawerTab(\'blocks\')">🧱 Browse sections</button></div>'; return; }
+        const st = hdr.getStyle() || {}, at = hdr.getAttributes() || {};
+        const links = wcMenuLinks(hdr);
+        let h = '<div class="wc-pro-card"><h4>🏷️ Header style</h4>';
+        h += '<div class="wc-pro-row"><label>Background</label><input type="color" value="' + esc(wcColorHex(st['background-color'], '#ffffff')) + '" onchange="wcHeaderSet({\'background-color\':this.value})"></div>';
+        h += '<div class="wc-pro-row"><label>Menu color</label><input type="color" value="#334155" onchange="wcHeaderMenuColor(this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Sticky header</label><select id="wc-hdr-sticky" onchange="wcHeaderSticky(this.value)"><option value="off">OFF</option><option value="on">ON — stays on top</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Header look</label><select onchange="wcHeaderLook(this.value)"><option value="solid">Solid</option><option value="transparent">Transparent over hero</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Inside spacing</label><input type="range" min="0" max="40" value="12" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcHeaderSet({padding:this.value+\'px 1.5rem\'})"><span class="wc-pro-val">12px</span></div>';
+        h += '<div style="display:flex;gap:0.4rem"><button class="wc-pro-btn small" onclick="wcHeaderLockToggle()">🔒 Lock / Unlock</button><button class="wc-pro-btn small" onclick="wcSelectHeader()">👆 Select header</button></div></div>';
+        h += '<div class="wc-pro-card"><h4>🔗 Menu items (' + links.length + ')</h4><div id="wc-menu-list">';
+        links.forEach((l, i) => { h += '<div class="wc-sec-item"><div class="wc-sec-item-top"><span class="wc-sec-item-name">' + esc(l.text || ('Link ' + (i + 1))) + '</span><button class="wc-pro-btn small" onclick="wcMenuEdit(' + i + ')">Edit</button><button class="wc-pro-btn small danger" onclick="wcMenuDelete(' + i + ')">✕</button></div><div class="wc-friendly-lbl">' + esc(l.href || '(no link)') + '</div></div>'; });
+        h += '</div><div class="wc-pro-row"><label>New item text</label><input type="text" id="wc-new-menu-text" placeholder="About"></div>';
+        h += '<div class="wc-pro-row"><label>Link to</label><select id="wc-new-menu-href"><option value="#services">Section: Services</option><option value="#about">Section: About</option><option value="#contact">Section: Contact</option><option value="#pricing">Section: Pricing</option><option value="/">Page: Home</option><option value="tel:+10000000000">📞 Phone call</option><option value="mailto:hello@site.com">✉️ Email</option><option value="https://wa.me/10000000000">💬 WhatsApp</option><option value="https://example.com">🌐 External URL</option></select></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcMenuAdd()">+ Add menu item</button></div>';
+        h += '<div class="wc-pro-card"><h4>🖼️ Logo</h4><div class="wc-pro-row"><label>Logo width</label><input type="range" min="24" max="320" value="120" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcLogoSize(this.value)"><span class="wc-pro-val">120px</span></div><div style="display:flex;gap:0.4rem"><button class="wc-pro-btn small" onclick="wcLogoReplace()">🔄 Change / upload logo</button><button class="wc-pro-btn small" onclick="wcLogoLink()">🔗 Logo link</button></div></div>';
+        window._wcHdrLinks = links;
+        box.innerHTML = h;
+      };
+      window.wcSelectHeader = function () { const h = wcFindHeader(); if (h && grapesEditor) { grapesEditor.select(h); const el = h.getEl && h.getEl(); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } };
+      window.wcHeaderSet = function (styleObj) { const h = wcFindHeader(); if (!h) return; try { h.addStyle(styleObj); } catch (e) {} window.wcMarkDirty && window.wcMarkDirty(); };
+      window.wcHeaderMenuColor = function (c) { const h = wcFindHeader(); if (!h) return; const walk = (comp) => { try { const tag = (comp.get('tagName') || '').toLowerCase(); if (tag === 'a') comp.addStyle({ color: c }); } catch (e) {} try { (comp.components() || []).forEach(walk); } catch (e) {} }; walk(h); window.wcMarkDirty && window.wcMarkDirty(); };
+      window.wcHeaderSticky = function (v) { const h = wcFindHeader(); if (!h) return; if (v === 'on') { h.addStyle({ position: 'sticky', top: '0', 'z-index': '100' }); } else { h.addStyle({ position: 'static' }); } window.wcMarkDirty && window.wcMarkDirty(); };
+      window.wcHeaderLook = function (v) { const h = wcFindHeader(); if (!h) return; if (v === 'transparent') h.addStyle({ background: 'transparent', 'background-color': 'transparent', position: 'absolute', width: '100%' }); else h.addStyle({ position: 'relative' }); window.wcMarkDirty && window.wcMarkDirty(); };
+      window.wcHeaderLockToggle = function () { const h = wcFindHeader(); if (h) wcToggleLock(h); };
+      window.wcMenuAdd = function () {
+        const h = wcFindHeader(); if (!h || !grapesEditor) return;
+        const txt = ($('wc-new-menu-text') || {}).value || 'New Link';
+        const href = ($('wc-new-menu-href') || {}).value || '#contact';
+        let nav = null;
+        const walk = (c) => { if (nav) return; try { const tag = (c.get('tagName') || '').toLowerCase(); if (tag === 'nav' || tag === 'ul') nav = c; } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+        walk(h);
+        const html = '<a href="' + esc(href) + '" style="text-decoration:none;font-weight:600;color:inherit;padding:0.4rem 0.7rem;">' + esc(txt) + '</a>';
+        try { if (nav) nav.append(html); else h.append(html); } catch (e) {}
+        window.wcMarkDirty && window.wcMarkDirty(); wcRenderHeaderPanel();
+      };
+      window.wcMenuEdit = function (i) {
+        const l = (window._wcHdrLinks || [])[i]; if (!l) return;
+        const nt = prompt('Menu text:', l.text || ''); if (nt == null) return;
+        const nh = prompt('Link (page / #section / https:// / tel: / mailto: / wa.me):', l.href || '#contact'); if (nh == null) return;
+        try {
+          const el = l.comp.getEl && l.comp.getEl();
+          if (el) el.textContent = nt;
+          l.comp.addAttributes({ href: nh });
+          try { l.comp.set('content', nt); } catch (e) {}
+        } catch (e) {}
+        window.wcMarkDirty && window.wcMarkDirty(); wcRenderHeaderPanel();
+      };
+      window.wcMenuDelete = function (i) { const l = (window._wcHdrLinks || [])[i]; if (!l) return; if (!confirm('Delete menu item?')) return; try { l.comp.remove(); } catch (e) {} window.wcMarkDirty && window.wcMarkDirty(); wcRenderHeaderPanel(); };
+      window.wcLogoSize = function (px) { const h = wcFindHeader(); if (!h) return; const walk = (c) => { try { if ((c.get('tagName') || '').toLowerCase() === 'img') { c.addStyle({ width: px + 'px', height: 'auto' }); return true; } } catch (e) {} let done = false; try { (c.components() || []).forEach(k => { if (walk(k)) done = true; }); } catch (e) {} return done; }; walk(h); window.wcMarkDirty && window.wcMarkDirty(); };
+      window.wcLogoReplace = function () { const h = wcFindHeader(); if (!h) return; let img = null; const walk = (c) => { if (img) return; try { if ((c.get('tagName') || '').toLowerCase() === 'img') img = c; } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} }; walk(h); if (img && typeof openImageEditor === 'function') openImageEditor(img); else if (typeof showToast === 'function') showToast('No logo image found — click the logo first'); };
+      window.wcLogoLink = function () { const h = wcFindHeader(); if (!h) return; const href = prompt('Logo links to:', '/'); if (href == null) return; const walk = (c) => { try { if ((c.get('tagName') || '').toLowerCase() === 'a') { const kids = c.components() || []; kids.forEach(k => { try { if ((k.get('tagName') || '').toLowerCase() === 'img') c.addAttributes({ href: href }); } catch (e) {} }); } } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} }; walk(h); window.wcMarkDirty && window.wcMarkDirty(); };
+
+      /* ── FOOTER PANEL ── */
+      window.wcRenderFooterPanel = function () {
+        const box = $('wc-pro-footer'); if (!box) return;
+        const f = wcFindFooter();
+        if (!f) { box.innerHTML = '<div class="wc-pro-card"><h4>🦶 Footer</h4><div style="font-size:0.76rem;color:#94a3b8">No footer found. Insert one from Elements → Sections → Footer, or ask AI to “add a footer”.</div></div>'; return; }
+        const st = f.getStyle() || {};
+        let h = '<div class="wc-pro-card"><h4>🦶 Footer style</h4>';
+        h += '<div class="wc-pro-row"><label>Background</label><input type="color" value="' + esc(wcColorHex(st['background-color'] || st.background, '#0f172a')) + '" onchange="wcFooterSet({\'background-color\':this.value})"></div>';
+        h += '<div class="wc-pro-row"><label>Text color</label><input type="color" value="' + esc(wcColorHex(st.color, '#cbd5e1')) + '" onchange="wcFooterSet({color:this.value})"></div>';
+        h += '<div class="wc-pro-row"><label>Alignment</label><select onchange="wcFooterSet({\'text-align\':this.value})"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Spacing</label><input type="range" min="0" max="120" value="48" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcFooterSet({padding:this.value+\'px 1.5rem\'})"><span class="wc-pro-val">48px</span></div>';
+        h += '<div style="display:flex;gap:0.4rem;flex-wrap:wrap"><button class="wc-pro-btn small" onclick="wcFooterEditContent()">✍️ Edit contact + links</button><button class="wc-pro-btn small" onclick="wcSelectFooter()">👆 Select footer</button><button class="wc-pro-btn small" onclick="wcFooterLock()">🔒 Lock</button></div></div>';
+        h += '<div class="wc-pro-card"><h4>📞 Contact quick-fill</h4><div class="wc-pro-row"><label>Phone</label><input type="text" id="wc-f-phone" placeholder="+1…"></div><div class="wc-pro-row"><label>Email</label><input type="text" id="wc-f-email" placeholder="hello@…"></div><div class="wc-pro-row"><label>Address</label><input type="text" id="wc-f-addr" placeholder="Street, City"></div><button class="wc-pro-btn primary" style="width:100%" onclick="wcFooterApplyContact()">Apply to footer text</button></div>';
+        h += '<div class="wc-pro-card"><h4>© Copyright</h4><div class="wc-pro-row"><label>Line</label><input type="text" id="wc-f-copy" style="flex:1;max-width:none" placeholder="© 2026 My Business. All rights reserved."></div><button class="wc-pro-btn" style="width:100%" onclick="wcFooterApplyCopy()">Update copyright</button></div>';
+        box.innerHTML = h;
+      };
+      window.wcSelectFooter = function () { const f = wcFindFooter(); if (f && grapesEditor) grapesEditor.select(f); };
+      window.wcFooterSet = function (o) { const f = wcFindFooter(); if (!f) return; try { f.addStyle(o); } catch (e) {} window.wcMarkDirty && window.wcMarkDirty(); };
+      window.wcFooterLock = function () { const f = wcFindFooter(); if (f) wcToggleLock(f); };
+      window.wcFooterEditContent = function () { const f = wcFindFooter(); if (!f) return; if (grapesEditor) grapesEditor.select(f); try { if (typeof openContentEditorForSelectedSection === 'function' && typeof editingSection !== 'undefined') { editingSection = f; openContentEditorForSelectedSection(); } else wcSmartContentEdit(f); } catch (e) { wcSmartContentEdit(f); } };
+      window.wcFooterApplyContact = function () {
+        const f = wcFindFooter(); if (!f) return;
+        const ph = ($('wc-f-phone') || {}).value || '', em = ($('wc-f-email') || {}).value || '', ad = ($('wc-f-addr') || {}).value || '';
+        try {
+          const el = f.getEl && f.getEl(); if (!el) return;
+          let html = el.innerHTML;
+          if (ph) html = html.replace(/(\+?[\d][\d\s\-()]{6,})/g, (m) => ((m.replace(/\D/g, '').length >= 7) ? ph : m));
+          if (em && /[\w.+-]+@[\w-]+\.[\w.]+/.test(html)) html = html.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, em);
+          if (ad && html.length) { /* append address line if none matched */ }
+          el.innerHTML = html;
+          try { f.set('content', html); } catch (e) {}
+        } catch (e) {}
+        window.wcMarkDirty && window.wcMarkDirty();
+        if (typeof showToast === 'function') showToast('📞 Footer contact updated — click text to fine-tune');
+      };
+      window.wcFooterApplyCopy = function () {
+        const f = wcFindFooter(); if (!f) return;
+        const v = ($('wc-f-copy') || {}).value || ''; if (!v) return;
+        try {
+          const el = f.getEl && f.getEl();
+          if (el) { const nodes = Array.from(el.querySelectorAll('*')); let done = false; for (const n of nodes) { if (/©|copyright|rights/i.test(n.textContent || '')) { n.textContent = v; done = true; break; } } if (!done) el.insertAdjacentHTML('beforeend', '<p style="text-align:center;opacity:.7;margin-top:1rem">' + v.replace(/</g, '&lt;') + '</p>'); }
+        } catch (e) {}
+        window.wcMarkDirty && window.wcMarkDirty();
+      };
+
+      /* ── SECTION MGMT + LOCKS + REUSABLE ── */
+      function wcSections() { try { if (typeof findSectionComponents === 'function') return findSectionComponents(); } catch (e) {} return []; }
+      window.wcToggleLock = function (comp) {
+        comp = comp || (typeof selectedComponent !== 'undefined' ? selectedComponent : null);
+        if (!comp) { if (typeof showToast === 'function') showToast('👉 Select something first'); return; }
+        const at = comp.getAttributes() || {};
+        const locked = at['data-wc-locked'] === '1';
+        if (locked) { comp.addAttributes({ 'data-wc-locked': '0' }); try { comp.set({ draggable: true, selectable: true, hoverable: true }); } catch (e) {} if (typeof showToast === 'function') showToast('🔓 Unlocked — editable again'); }
+        else { comp.addAttributes({ 'data-wc-locked': '1' }); try { comp.set({ draggable: false }); } catch (e) {} if (typeof showToast === 'function') showToast('🔒 Locked — visible but protected'); }
+        window.wcMarkDirty && window.wcMarkDirty();
+        try { if (typeof renderSmartLayers === 'function') renderSmartLayers(); } catch (e) {}
+      };
+      window.wcIsLocked = function (comp) { try { return (comp.getAttributes() || {})['data-wc-locked'] === '1'; } catch (e) { return false; } };
+      window.wcSectionOp = function (i, op) {
+        const secs = wcSections(); const c = secs[i]; if (!c) return;
+        if (op === 'up' || op === 'down') {
+          try {
+            const parent = c.parent(); if (!parent) return;
+            const idx = c.index(); const sibs = parent.components();
+            const to = op === 'up' ? idx - 1 : idx + 1;
+            if (to < 0 || to >= sibs.length) return;
+            const html = c.toHTML ? c.toHTML() : '';
+            const style = c.getStyle ? c.getStyle() : {};
+            const attrs = Object.assign({}, c.getAttributes() || {});
+            c.remove();
+            const added = parent.append(html, { at: to });
+            const fresh = Array.isArray(added) ? added[0] : added;
+            if (fresh) { try { fresh.addStyle(style); fresh.addAttributes(attrs); if (typeof configureEditorComponent === 'function') configureEditorComponent(fresh); } catch (e) {} }
+          } catch (e) {}
+        } else if (op === 'dup') { try { const html = c.toHTML(); const parent = c.parent(); if (parent) parent.append(html, { at: c.index() + 1 }); } catch (e) {} }
+        else if (op === 'del') { if (!confirm('Delete this section?')) return; try { c.remove(); } catch (e) {} }
+        else if (op === 'hide') { try { const st = c.getStyle() || {}; c.addAttributes({ 'data-wc-orig-display': st.display || '' }); c.addStyle({ display: 'none' }); } catch (e) {} }
+        else if (op === 'show') { try { const od = (c.getAttributes() || {})['data-wc-orig-display'] || 'block'; c.addStyle({ display: od }); } catch (e) {} }
+        else if (op === 'lock') { window.wcToggleLock(c); return; }
+        else if (op === 'rename') { const n = prompt('Section name:', (c.getAttributes() || {})['data-section-name'] || ''); if (n != null) c.addAttributes({ 'data-section-name': n }); }
+        else if (op === 'edit') { if (grapesEditor) grapesEditor.select(c); try { if (typeof openSelectedSectionEditor === 'function') openSelectedSectionEditor(); else if (typeof openSectionEditor === 'function') openSectionEditor(c); } catch (e) {} return; }
+        else if (op === 'content') { if (grapesEditor) grapesEditor.select(c); try { if (typeof editingSection !== 'undefined') editingSection = c; } catch (e) {} try { if (typeof openContentEditorForSelectedSection === 'function') openContentEditorForSelectedSection(); else wcSmartContentEdit(c); } catch (e) {} return; }
+        else if (op === 'save') { wcSaveReusable(c); return; }
+        window.wcMarkDirty && window.wcMarkDirty();
+        try { if (typeof renderSmartLayers === 'function') renderSmartLayers(); } catch (e) {}
+      };
+      window.wcSaveReusable = function (comp) {
+        comp = comp || (typeof selectedComponent !== 'undefined' ? selectedComponent : null);
+        if (!comp) { if (typeof showToast === 'function') showToast('👉 Select a section first'); return; }
+        const name = prompt('Save as reusable section — name it:', 'My Premium Section'); if (!name) return;
+        try {
+          const d = window.wcProEnsure ? window.wcProEnsure() : null;
+          const html = comp.toHTML ? comp.toHTML() : '';
+          const css = comp.getStyle ? comp.getStyle() : {};
+          const entry = { name: name, html: html, css: css, at: Date.now() };
+          if (d) { d.mySections = d.mySections || []; d.mySections.push(entry); }
+          const all = JSON.parse(localStorage.getItem('webcraft_my_sections') || '[]'); all.push(entry);
+          localStorage.setItem('webcraft_my_sections', JSON.stringify(all.slice(-30)));
+          if (typeof saveProjectData === 'function') saveProjectData();
+          if (typeof showToast === 'function') showToast('💎 Saved to My Sections');
+          wcRenderSavedPanel();
+        } catch (e) {}
+      };
+      window.wcInsertReusable = function (i) {
+        try {
+          const d = window.wcProEnsure ? window.wcProEnsure() : null;
+          const list = (d && d.mySections && d.mySections.length ? d.mySections : JSON.parse(localStorage.getItem('webcraft_my_sections') || '[]'));
+          const e = list[i]; if (!e) return;
+          if (!grapesEditor) return;
+          const w = grapesEditor.DomComponents.getWrapper();
+          const added = w.append(e.html);
+          const comp = Array.isArray(added) ? added[0] : added;
+          if (comp && typeof configureEditorComponent === 'function') configureEditorComponent(comp);
+          window.wcMarkDirty && window.wcMarkDirty();
+          if (typeof showToast === 'function') showToast('✨ Section inserted — click to edit');
+        } catch (e) {}
+      };
+      window.wcRenderSavedPanel = function () {
+        const box = $('wc-pro-saved'); if (!box) return;
+        let list = [];
+        try { const d = window.wcProEnsure ? window.wcProEnsure() : null; list = (d && d.mySections && d.mySections.length ? d.mySections : JSON.parse(localStorage.getItem('webcraft_my_sections') || '[]')); } catch (e) {}
+        let h = '<div class="wc-pro-card"><h4>💎 My Sections (' + list.length + ')</h4>';
+        if (!list.length) h += '<div style="font-size:0.75rem;color:#94a3b8">Save any customized section here, then reuse it on any page. Select a section → “Save as reusable”.</div><button class="wc-pro-btn" style="margin-top:0.6rem;width:100%" onclick="wcSaveReusable()">💾 Save selected section</button>';
+        else list.forEach((s, i) => { h += '<div class="wc-sec-item"><div class="wc-sec-item-top"><span class="wc-sec-item-name">' + esc(s.name) + '</span><button class="wc-pro-btn small primary" onclick="wcInsertReusable(' + i + ')">Insert</button><button class="wc-pro-btn small danger" onclick="wcDeleteReusable(' + i + ')">✕</button></div></div>'; });
+        h += '</div>';
+        box.innerHTML = h;
+      };
+      window.wcDeleteReusable = function (i) {
+        try {
+          const d = window.wcProEnsure ? window.wcProEnsure() : null;
+          if (d && d.mySections) d.mySections.splice(i, 1);
+          const all = JSON.parse(localStorage.getItem('webcraft_my_sections') || '[]'); all.splice(i, 1);
+          localStorage.setItem('webcraft_my_sections', JSON.stringify(all));
+          if (typeof saveProjectData === 'function') saveProjectData();
+          wcRenderSavedPanel();
+        } catch (e) {}
+      };
+
+      /* section list inside responsive/settings panels */
+      window.wcRenderSectionManagerInto = function (boxId) {
+        const box = $(boxId); if (!box) return;
+        const secs = wcSections();
+        let h = '';
+        secs.slice(0, 30).forEach((c, i) => {
+          let nm = 'Section ' + (i + 1);
+          try { nm = (typeof getSectionDisplayName === 'function' ? getSectionDisplayName(c, i) : nm); } catch (e) {}
+          const at = c.getAttributes() || {};
+          const locked = at['data-wc-locked'] === '1';
+          const hidden = ((c.getStyle() || {}).display === 'none');
+          h += '<div class="wc-sec-item' + (locked ? ' locked' : '') + (hidden ? ' hidden-sec' : '') + '"><div class="wc-sec-item-top"><span class="wc-sec-item-name">' + esc(nm) + (locked ? ' 🔒' : '') + (hidden ? ' 👁‍🗨 hidden' : '') + '</span></div><div class="wc-sec-item-btns">'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'content\')">Edit</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'edit\')">Style</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'dup\')">Duplicate</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'up\')">↑</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'down\')">↓</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',' + (hidden ? '\'show\'' : '\'hide\'') + ')">' + (hidden ? 'Show' : 'Hide') + '</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'lock\')">' + (locked ? 'Unlock' : 'Lock') + '</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'rename\')">Rename</button>'
+            + '<button class="wc-pro-btn small" onclick="wcSectionOp(' + i + ',\'save\')">💎 Save</button>'
+            + '<button class="wc-pro-btn small danger" onclick="wcSectionOp(' + i + ',\'del\')">Delete</button>'
+            + '</div></div>';
+        });
+        if (!secs.length) h = '<div style="font-size:0.74rem;color:#94a3b8">No sections yet — add blocks from Elements.</div>';
+        box.innerHTML = h;
+      };
+      /* expose drawer tools + patch IMMEDIATELY at eval (drawer DOM already parsed above).
+         This guarantees our panels open on first click — no boot-timing dependency. */
+      window.wcEnsureProTabs = wcEnsureProTabs;
+      window.wcPatchDrawer = wcPatchDrawer;
+      window.wcOpenTab = function (tab) {
+        try { wcEnsureProTabs(); if (window.switchDrawerTab && !window.switchDrawerTab.__wcWrapped) wcPatchDrawer(); } catch (e) {}
+        try { window.switchDrawerTab(tab); } catch (e) {}
+      };
+      window.wcProStatus = function () {
+        return {
+          core: !!window.__WCProCoreLoaded, panels: !!window.__WCProPanelsLoaded,
+          extras: !!window.__WCProExtrasLoaded, hist: !!window.__WCProHistLibLoaded,
+          hdr: !!window.__WCProHeaderLoaded, ftr: !!window.__WCProFooterLoaded,
+          seo: !!window.__WCProSeoLoaded,
+          drawerWrapped: !!(window.switchDrawerTab && window.switchDrawerTab.__wcWrapped)
+        };
+      };
+      try { wcEnsureProTabs(); wcPatchDrawer(); } catch (e) { try { console.warn('[WCPro] drawer patch deferred', e); } catch (e2) {} }
+    })();
+    /* WCPro drawer fallback: only used if the main patch above failed to define wcOpenTab. */
+    (function WCProDrawerNow() {
+      if (typeof window.wcOpenTab !== 'function') {
+        window.wcOpenTab = function (t) { try { window.switchDrawerTab(t); } catch (e) {} };
+      }
+    })();
 
     function showToast(msg) {
       const t = document.getElementById('toast');
@@ -9191,6 +12347,2528 @@ ${WC_ANIMATION_RUNTIME}
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
     }
+
+    /* ═══════════ WC PRO PART 3 — settings/SEO/AI/toolbar/guides/boot ═══════════ */
+    (function WCProExtras() {
+      if (window.__WCProExtrasLoaded) return;
+      window.__WCProExtrasLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+      const curDev = () => { try { return (typeof studioCurrentDevice === 'string' && studioCurrentDevice) || (grapesEditor && grapesEditor.getDevice && grapesEditor.getDevice()) || 'Desktop'; } catch (e) { return 'Desktop'; } };
+      const sel = () => { try { return (typeof selectedComponent !== 'undefined' ? selectedComponent : null); } catch (e) { return null; } };
+
+      /* ── SETTINGS + SEO ── */
+      window.wcRenderSettingsPanel = function () {
+        const box = $('wc-pro-settings'); if (!box) return;
+        const d = window.wcProEnsure ? window.wcProEnsure() : null; if (!d) return;
+        const s = d.siteSettings || {};
+        const so = s.socials || {};
+        let h = '<div class="wc-pro-card"><h4>🏢 Business info <span class="wc-friendly-lbl">— used across site</span></h4>';
+        h += '<div class="wc-pro-row"><label>Website name</label><input type="text" id="wc-set-name" value="' + esc(s.name || '') + '"></div>';
+        h += '<div class="wc-pro-row"><label>Logo URL</label><input type="text" id="wc-set-logo" value="' + esc(s.logo || '') + '"></div>';
+        h += '<div class="wc-pro-row"><label>Phone</label><input type="text" id="wc-set-phone" value="' + esc(s.phone || '') + '"></div>';
+        h += '<div class="wc-pro-row"><label>Email</label><input type="text" id="wc-set-email" value="' + esc(s.email || '') + '"></div>';
+        h += '<div class="wc-pro-row"><label>WhatsApp</label><input type="text" id="wc-set-wa" value="' + esc(s.whatsapp || '') + '"></div>';
+        h += '<div class="wc-pro-row"><label>Address</label><input type="text" id="wc-set-addr" value="' + esc(s.address || '') + '"></div>';
+        h += '<div class="wc-pro-row"><label>Hours</label><input type="text" id="wc-set-hours" value="' + esc(s.hours || '') + '"></div>';
+        h += '<div class="wc-pro-row"><label>Language</label><select id="wc-set-lang"><option value="en"' + (s.lang === 'en' ? ' selected' : '') + '>English</option><option value="ta"' + (s.lang === 'ta' ? ' selected' : '') + '>Tamil</option><option value="si"' + (s.lang === 'si' ? ' selected' : '') + '>Sinhala</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Currency</label><input type="text" id="wc-set-cur" value="' + esc(s.currency || 'Rs') + '"></div></div>';
+        h += '<div class="wc-pro-card"><h4>🔗 Social links</h4>';
+        ['facebook', 'instagram', 'twitter', 'youtube', 'linkedin'].forEach(k => { h += '<div class="wc-pro-row"><label style="text-transform:capitalize">' + k + '</label><input type="text" id="wc-set-so-' + k + '" value="' + esc(so[k] || '') + '" placeholder="https://…"></div>'; });
+        h += '</div><button class="wc-pro-btn primary" style="width:100%" onclick="wcSaveSettings()">💾 Save & apply to website</button>';
+        h += '<div class="wc-pro-card" style="margin-top:0.7rem"><h4>📐 Page sections</h4><div id="wc-sec-manage"></div></div>';
+        box.innerHTML = h;
+        try { window.wcRenderSectionManagerInto('wc-sec-manage'); } catch (e) {}
+      };
+      window.wcSaveSettings = function () {
+        const d = window.wcProEnsure ? window.wcProEnsure() : null; if (!d) return;
+        const g = (id) => { const el = $(id); return el ? el.value.trim() : ''; };
+        d.siteSettings = { name: g('wc-set-name'), logo: g('wc-set-logo'), phone: g('wc-set-phone'), email: g('wc-set-email'), whatsapp: g('wc-set-wa'), address: g('wc-set-addr'), hours: g('wc-set-hours'), lang: g('wc-set-lang') || 'en', currency: g('wc-set-cur') || 'Rs', socials: { facebook: g('wc-set-so-facebook'), instagram: g('wc-set-so-instagram'), twitter: g('wc-set-so-twitter'), youtube: g('wc-set-so-youtube'), linkedin: g('wc-set-so-linkedin') } };
+        try { if (d.siteSettings.name && typeof projectData !== 'undefined' && projectData) { projectData.bizName = d.siteSettings.name; const pi = $('project-name-input'); if (pi) pi.value = d.siteSettings.name; } } catch (e) {}
+        try {
+          if (typeof grapesEditor !== 'undefined' && grapesEditor) {
+            const w = grapesEditor.DomComponents.getWrapper(); let n = 0;
+            const walk = (c) => {
+              try {
+                const tag = (c.get('tagName') || '').toLowerCase(); const at = c.getAttributes() || {};
+                if (tag === 'a') {
+                  const href = at.href || '';
+                  if (d.siteSettings.whatsapp && (href.includes('wa.me') || /whatsapp/i.test(c.getEl ? (c.getEl().textContent || '') : ''))) { let num = d.siteSettings.whatsapp.replace(/\D/g, ''); c.addAttributes({ href: 'https://wa.me/' + num }); n++; }
+                  else if (d.siteSettings.phone && href.startsWith('tel:')) { c.addAttributes({ href: 'tel:' + d.siteSettings.phone.replace(/\s/g, '') }); n++; }
+                  else if (d.siteSettings.email && href.startsWith('mailto:')) { c.addAttributes({ href: 'mailto:' + d.siteSettings.email }); n++; }
+                }
+              } catch (e) {}
+              try { (c.components() || []).forEach(walk); } catch (e) {}
+            };
+            walk(w);
+          }
+        } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        window.wcMarkDirty && window.wcMarkDirty();
+        if (typeof showToast === 'function') showToast('⚙️ Website settings saved & applied');
+      };
+      window.wcRenderSeoPanel = function () {
+        const box = $('wc-pro-seo'); if (!box) return;
+        const d = window.wcProEnsure ? window.wcProEnsure() : null; if (!d) return;
+        const s = d.seo || {};
+        let h = '<div class="wc-pro-card"><h4>🔍 Search (SEO)</h4>';
+        h += '<div class="wc-pro-row"><label>SEO title</label><input type="text" id="wc-seo-title" value="' + esc(s.title || '') + '" style="max-width:none;flex:2"></div>';
+        h += '<div class="wc-pro-row"><label>Description</label><input type="text" id="wc-seo-desc" value="' + esc(s.desc || '') + '" style="max-width:none;flex:2"></div>';
+        h += '<div class="wc-pro-row"><label>Keywords</label><input type="text" id="wc-seo-kw" value="' + esc(s.keywords || '') + '" style="max-width:none;flex:2"></div>';
+        h += '<div class="wc-pro-row"><label>Canonical URL</label><input type="text" id="wc-seo-can" value="' + esc(s.canonical || '') + '" style="max-width:none;flex:2"></div></div>';
+        h += '<div class="wc-pro-card"><h4>📣 Social share</h4>';
+        h += '<div class="wc-pro-row"><label>Share title</label><input type="text" id="wc-seo-ogt" value="' + esc(s.ogTitle || '') + '" style="max-width:none;flex:2"></div>';
+        h += '<div class="wc-pro-row"><label>Share text</label><input type="text" id="wc-seo-ogd" value="' + esc(s.ogDesc || '') + '" style="max-width:none;flex:2"></div>';
+        h += '<div class="wc-pro-row"><label>Share image</label><input type="text" id="wc-seo-ogi" value="' + esc(s.ogImage || '') + '" style="max-width:none;flex:2"></div>';
+        h += '<div class="wc-pro-row"><label>Favicon URL</label><input type="text" id="wc-seo-fav" value="' + esc(s.favicon || '') + '" style="max-width:none;flex:2"></div></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcSaveSeo()">💾 Save SEO</button>';
+        h += '<button class="wc-pro-btn" style="width:100%;margin-top:0.4rem" onclick="openSeoAuditModal()">🔎 Run SEO audit</button>';
+        box.innerHTML = h;
+      };
+      window.wcSaveSeo = function () {
+        const d = window.wcProEnsure ? window.wcProEnsure() : null; if (!d) return;
+        const g = (id) => { const el = $(id); return el ? el.value.trim() : ''; };
+        d.seo = { title: g('wc-seo-title'), desc: g('wc-seo-desc'), keywords: g('wc-seo-kw'), canonical: g('wc-seo-can'), ogTitle: g('wc-seo-ogt'), ogDesc: g('wc-seo-ogd'), ogImage: g('wc-seo-ogi'), favicon: g('wc-seo-fav') };
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(typeof currentHtml === 'string' ? currentHtml : '', 'text/html');
+          if (d.seo.title) { let t = doc.querySelector('title'); if (!t) { t = doc.createElement('title'); doc.head.appendChild(t); } t.textContent = d.seo.title; }
+          const setMeta = (sel, attr, val) => { if (!val) return; let m = doc.head.querySelector(sel); if (!m) { m = doc.createElement('meta'); doc.head.appendChild(m); } m.setAttribute(attr === 'p' ? 'property' : 'name', sel.replace(/meta\[(name|property)="([^"]+)"\]/, '$2')); if (attr === 'p') m.setAttribute('property', sel.match(/"([^"]+)"/)[1]); else m.setAttribute('name', sel.match(/"([^"]+)"/)[1]); m.setAttribute('content', val); };
+          setMeta('meta[name="description"]', 'n', d.seo.desc);
+          setMeta('meta[name="keywords"]', 'n', d.seo.keywords);
+          setMeta('meta[property="og:title"]', 'p', d.seo.ogTitle || d.seo.title);
+          setMeta('meta[property="og:description"]', 'p', d.seo.ogDesc || d.seo.desc);
+          setMeta('meta[property="og:image"]', 'p', d.seo.ogImage);
+          if (d.seo.canonical) { let l = doc.head.querySelector('link[rel="canonical"]'); if (!l) { l = doc.createElement('link'); l.setAttribute('rel', 'canonical'); doc.head.appendChild(l); } l.setAttribute('href', d.seo.canonical); }
+          if (d.seo.favicon) { let l = doc.head.querySelector('link[rel="icon"]'); if (!l) { l = doc.createElement('link'); l.setAttribute('rel', 'icon'); doc.head.appendChild(l); } l.setAttribute('href', d.seo.favicon); }
+          if (typeof currentHtml !== 'undefined') currentHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+          if (d && projectData.designs && projectData.designs[typeof activeConceptIndex !== 'undefined' ? activeConceptIndex : 0]) projectData.designs[typeof activeConceptIndex !== 'undefined' ? activeConceptIndex : 0].html = currentHtml;
+        } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        window.wcMarkDirty && window.wcMarkDirty();
+        if (typeof showToast === 'function') showToast('🚀 SEO saved');
+      };
+
+      /* ── HISTORY + BEFORE/AFTER ── */
+      window.wcRenderHistoryPanel = function () {
+        const box = $('wc-pro-history'); if (!box) return;
+        const vers = (typeof wcGetVersions === 'function') ? wcGetVersions() : [];
+        let h = '<div class="wc-pro-card"><h4>🕘 Versions (' + vers.length + '/10)</h4>';
+        h += '<div class="wc-pro-row"><label>Snapshot before big edits</label><button class="wc-pro-btn small" onclick="wcSnapshotVersion(\'Manual checkpoint\');wcRenderHistoryPanel()">+ Save</button></div>';
+        h += '<div class="wc-pro-row"><label>Compare major change</label><button class="wc-pro-btn small" onclick="wcOpenBeforeAfter()">Before | After</button></div></div>';
+        if (!vers.length) h += '<div style="font-size:0.75rem;color:#94a3b8">No versions yet. One is created automatically before AI / theme changes.</div>';
+        else vers.slice().reverse().forEach((v) => {
+          const idx = vers.indexOf(v);
+          const dt = new Date(v.at); const when = dt.toLocaleString();
+          h += '<div class="wc-ver-item"><span class="t">📦 ' + esc(v.label || 'Checkpoint') + '<br><span style="opacity:.65;font-size:.68rem">' + esc(when) + '</span></span><button class="wc-pro-btn small" onclick="wcPreviewVersion(' + idx + ')">👁</button><button class="wc-pro-btn small primary" onclick="wcRestoreVersion(' + idx + ')">Restore</button></div>';
+        });
+        box.innerHTML = h;
+      };
+      window.wcPreviewVersion = function (i) {
+        const vers = (typeof wcGetVersions === 'function') ? wcGetVersions() : [];
+        if (!vers[i]) return;
+        window._wcBeforeHtml = vers[i].html;
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+        window._wcAfterHtml = (typeof currentHtml === 'string' ? currentHtml : '');
+        wcOpenBeforeAfter();
+      };
+      window.wcOpenBeforeAfter = function () {
+        let m = $('wc-before-after-modal');
+        if (!m) {
+          m = document.createElement('div'); m.id = 'wc-before-after-modal';
+          m.innerHTML = '<div class="ba-box"><div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.7rem"><strong style="flex:1">Before | After — review major changes</strong><button class="wc-pro-btn small" onclick="document.getElementById(\'wc-before-after-modal\').classList.remove(\'show\')">✕ Close</button><button class="wc-pro-btn small primary" onclick="document.getElementById(\'wc-before-after-modal\').classList.remove(\'show\')">✓ Keep after</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem"><div><div class="wc-friendly-lbl">BEFORE</div><iframe id="wc-ba-before"></iframe></div><div><div class="wc-friendly-lbl">AFTER</div><iframe id="wc-ba-after"></iframe></div></div></div>';
+          document.body.appendChild(m);
+          m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('show'); });
+        }
+        const b = window._wcBeforeHtml || (typeof currentHtml === 'string' ? currentHtml : '');
+        let a = window._wcAfterHtml || b;
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); a = (typeof currentHtml === 'string' ? currentHtml : a); } catch (e) {}
+        const bi = $('wc-ba-before'), ai = $('wc-ba-after');
+        if (bi) bi.srcdoc = b; if (ai) ai.srcdoc = a;
+        m.classList.add('show');
+      };
+
+      /* ── RESPONSIVE PANEL (per-device, with indicator) ── */
+      const RESP_PROPS = [['font-size', 'Text size'], ['padding', 'Inside spacing'], ['margin', 'Outside spacing'], ['width', 'Width'], ['height', 'Height'], ['max-width', 'Max width'], ['min-height', 'Min height'], ['text-align', 'Text alignment'], ['display', 'Display'], ['gap', 'Gap']];
+      window.wcRenderResponsivePanel = function () {
+        const box = $('wc-pro-responsive'); if (!box) return;
+        const c = sel();
+        let h = '<div class="wc-pro-card"><h4>📐 Device <span class="wc-friendly-lbl">— edit per screen</span></h4>';
+        h += '<div style="display:flex;gap:0.35rem;margin-bottom:0.6rem">';
+        ['Desktop', 'Laptop', 'Tablet', 'Mobile'].forEach(dv => { h += '<button class="wc-pro-btn small' + (curDev() === dv ? ' primary' : '') + '" onclick="setStudioDevice(\'' + dv + '\');setTimeout(wcRenderResponsivePanel,250)">' + dv + '</button>'; });
+        h += '</div>';
+        if (!c) { h += '<div style="font-size:0.75rem;color:#94a3b8">👆 Click anything on the canvas, then tune it per device. Desktop stays untouched when you edit Mobile.</div>'; }
+        else {
+          const tag = (c.get('tagName') || 'div').toLowerCase();
+          const resp = (window.wcGetResp ? window.wcGetResp(c) : {}) || {};
+          const hasDev = resp[curDev()] && Object.keys(resp[curDev()]).length;
+          h += '<div style="font-size:0.74rem;color:#cbd5e1;margin-bottom:0.5rem">Editing <strong>&lt;' + esc(tag) + '&gt;</strong> for <strong>' + esc(curDev()) + '</strong>' + (hasDev ? ' <span class="wc-dev-badge on">● device-specific</span>' : ' <span class="wc-dev-badge">inherits desktop</span>') + '</div>';
+          RESP_PROPS.forEach(([k, lbl]) => {
+            const v = (resp[curDev()] || {})[k] || '';
+            h += '<div class="wc-pro-row"><label>' + lbl + '</label><input type="text" data-wc-rk="' + k + '" value="' + esc(v) + '" placeholder="—" onchange="wcRespSet(this)"></div>';
+          });
+          h += '<div class="wc-friendly-lbl">Examples: 18px · 1.2rem · center · none · 100% · 320px</div>';
+          h += '<div class="wc-vis-row"><button class="wc-vis-chip" onclick="wcVis(\'hide-desktop\')">Hide on desktop</button><button class="wc-vis-chip" onclick="wcVis(\'hide-tablet\')">Hide on tablet</button><button class="wc-vis-chip" onclick="wcVis(\'hide-mobile\')">Hide on mobile</button><button class="wc-vis-chip" onclick="wcVis(\'only-mobile\')">Only mobile</button><button class="wc-vis-chip" onclick="wcVis(\'only-desktop\')">Only desktop</button><button class="wc-vis-chip" onclick="wcVis(\'clear\')">Clear rules</button></div>';
+          h += '<div style="display:flex;gap:0.4rem;margin-top:0.6rem"><button class="wc-pro-btn small" onclick="wcAlign(\'left\')">⬅ Left</button><button class="wc-pro-btn small" onclick="wcAlign(\'center\')">↔ Center</button><button class="wc-pro-btn small" onclick="wcAlign(\'right\')">➡ Right</button></div>';
+        }
+        h += '</div><div class="wc-pro-card"><h4>📏 Resize & align</h4><div style="font-size:0.74rem;color:#94a3b8">Drag any element edge to resize · drag body to move · center pink lines = snap guides. Toggle grid:</div><button class="wc-pro-btn small" style="margin-top:0.5rem" onclick="toggleCanvasGridGuide()">▦ Grid guides</button></div>';
+        box.innerHTML = h;
+      };
+      window.wcRespSet = function (input) {
+        const c = sel(); if (!c) return;
+        const k = input.getAttribute('data-wc-rk'); const dev = curDev();
+        if (dev === 'Desktop') { try { const o = {}; o[k] = input.value; c.addStyle(o); } catch (e) {} }
+        else { window.wcSetResp(c, dev, k, input.value); window.wcApplyResponsiveCss && window.wcApplyResponsiveCss(); }
+        window.wcMarkDirty && window.wcMarkDirty();
+        wcRenderResponsivePanel();
+      };
+      window.wcVis = function (mode) {
+        const c = sel(); if (!c) { if (typeof showToast === 'function') showToast('👉 Select an element first'); return; }
+        if (mode === 'clear') { try { const at = c.getAttributes() || {}; const cls = (at.class || '').split(/\s+/).filter(x => x && ['wc-hide-desktop', 'wc-hide-laptop', 'wc-hide-tablet', 'wc-hide-mobile', 'wc-show-mobile-only', 'wc-show-desktop-only'].indexOf(x) < 0); c.addAttributes({ class: cls.join(' ') }); } catch (e) {} }
+        else window.wcSetVisibility(c, mode);
+        window.wcMarkDirty && window.wcMarkDirty();
+      };
+      window.wcAlign = function (how) {
+        const c = sel(); if (!c) return;
+        try {
+          if (how === 'center') c.addStyle({ 'margin-left': 'auto', 'margin-right': 'auto', display: 'block', 'text-align': 'center' });
+          else if (how === 'left') c.addStyle({ 'margin-right': 'auto', 'margin-left': '0', 'text-align': 'left' });
+          else c.addStyle({ 'margin-left': 'auto', 'margin-right': '0', 'text-align': 'right' });
+        } catch (e) {}
+        window.wcMarkDirty && window.wcMarkDirty();
+      };
+
+      /* ── RICH TEXT FLOATING TOOLBAR ── */
+      function wcEnsureTextToolbar() {
+        if ($('wc-text-toolbar')) return;
+        const tb = document.createElement('div'); tb.id = 'wc-text-toolbar';
+        tb.innerHTML = '<button data-cmd="bold" title="Bold"><b>B</b></button><button data-cmd="italic" title="Italic"><i>I</i></button><button data-cmd="underline" title="Underline"><u>U</u></button>'
+          + '<select id="wc-tt-font" title="Font"><option value="">Font…</option><option>Inter</option><option>Plus Jakarta Sans</option><option>Space Grotesk</option><option>Georgia</option></select>'
+          + '<select id="wc-tt-size" title="Size"><option value="">Size…</option><option value="14px">S</option><option value="16px">M</option><option value="20px">L</option><option value="28px">XL</option><option value="40px">XXL</option></select>'
+          + '<input type="color" id="wc-tt-color" title="Text color" value="#0f172a"><input type="color" id="wc-tt-hl" title="Highlight" value="#fef08a">'
+          + '<button data-cmd="justifyLeft" title="Align left">⬅</button><button data-cmd="justifyCenter" title="Center">↔</button><button data-cmd="justifyRight" title="Right">➡</button>'
+          + '<button data-cmd="insertUnorderedList" title="Bullets">•≡</button><button data-cmd="insertOrderedList" title="Numbers">1≡</button>'
+          + '<button id="wc-tt-link" title="Add link">🔗</button><button id="wc-tt-clear" title="Remove formatting">🧹</button>';
+        document.body.appendChild(tb);
+        tb.addEventListener('mousedown', (e) => e.preventDefault());
+        tb.querySelectorAll('button[data-cmd]').forEach(b => b.addEventListener('click', () => {
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (!doc) return;
+          doc.execCommand(b.getAttribute('data-cmd'), false, null);
+          try { const c = sel(); if (c) { const el = c.getEl && c.getEl(); if (el) c.set('content', el.innerHTML); } } catch (e) {}
+          window.wcMarkDirty && window.wcMarkDirty();
+        }));
+        const fz = tb.querySelector('#wc-tt-size');
+        if (fz) fz.addEventListener('change', () => { const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null; if (!doc || !fz.value) return; doc.execCommand('fontSize', false, '7'); try { const f = doc.querySelector('font[size="7"]'); if (f) { f.removeAttribute('size'); f.style.fontSize = fz.value; } } catch (e) {} window.wcMarkDirty && window.wcMarkDirty(); });
+        const ff = tb.querySelector('#wc-tt-font');
+        if (ff) ff.addEventListener('change', () => { const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null; if (!doc || !ff.value) return; doc.execCommand('fontName', false, ff.value); const c = sel(); if (c) try { c.addStyle({ 'font-family': ff.value }); } catch (e) {} window.wcMarkDirty && window.wcMarkDirty(); });
+        const tc = tb.querySelector('#wc-tt-color');
+        if (tc) tc.addEventListener('input', () => { const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null; if (doc) doc.execCommand('foreColor', false, tc.value); const c = sel(); if (c) try { c.addStyle({ color: tc.value }); } catch (e) {} window.wcMarkDirty && window.wcMarkDirty(); });
+        const hl = tb.querySelector('#wc-tt-hl');
+        if (hl) hl.addEventListener('input', () => { const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null; if (doc) doc.execCommand('hiliteColor', false, hl.value); window.wcMarkDirty && window.wcMarkDirty(); });
+        const lk = tb.querySelector('#wc-tt-link');
+        if (lk) lk.addEventListener('click', () => { const url = prompt('Link URL (https:// / #section / tel: / mailto:):', 'https://'); if (!url) return; const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null; if (doc) doc.execCommand('createLink', false, url); window.wcMarkDirty && window.wcMarkDirty(); });
+        const cl = tb.querySelector('#wc-tt-clear');
+        if (cl) cl.addEventListener('click', () => { const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null; if (doc) doc.execCommand('removeFormat', false, null); window.wcMarkDirty && window.wcMarkDirty(); });
+      }
+      function wcPositionToolbar() {
+        const tb = $('wc-text-toolbar'); if (!tb) return;
+        const c = sel(); if (!c) { tb.classList.remove('show'); return; }
+        const tag = (c.get('tagName') || '').toLowerCase();
+        if (!['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'a', 'li', 'div', 'button'].includes(tag)) { tb.classList.remove('show'); return; }
+        const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+        const canvasSel = doc ? doc.getSelection() : null;
+        if (!canvasSel || canvasSel.toString().trim().length < 1) { tb.classList.remove('show'); return; }
+        try {
+          const r = canvasSel.getRangeAt(0).getBoundingClientRect();
+          tb.classList.add('show');
+          tb.style.left = Math.max(8, Math.min(window.innerWidth - tb.offsetWidth - 8, r.left + (r.width / 2) - (tb.offsetWidth / 2))) + 'px';
+          tb.style.top = Math.max(60, r.top - tb.offsetHeight - 12) + 'px';
+        } catch (e) {}
+      }
+
+      /* ── SMART SECTION CONTENT (human-readable fields, edits in place) ── */
+      window.wcSmartContentEdit = function (comp) {
+        comp = comp || sel(); if (!comp) return;
+        const el = comp.getEl && comp.getEl(); if (!el) return;
+        const heads = Array.from(el.querySelectorAll('h1,h2,h3')).slice(0, 3);
+        const paras = Array.from(el.querySelectorAll('p')).slice(0, 4);
+        const btns = Array.from(el.querySelectorAll('a,button')).slice(0, 4);
+        const imgs = Array.from(el.querySelectorAll('img')).slice(0, 3);
+        const tag = (comp.get('tagName') || 'section').toLowerCase();
+        let kind = 'Section';
+        try { const nm = ((comp.getAttributes() || {})['data-section-name'] || el.id || '').toLowerCase(); if (/hero/.test(nm) || tag === 'header') kind = 'Hero'; else if (/service/.test(nm)) kind = 'Services'; else if (/testimonial|review/.test(nm)) kind = 'Testimonials'; else if (/pric/.test(nm)) kind = 'Pricing'; else if (/faq/.test(nm)) kind = 'FAQ'; else if (/contact/.test(nm)) kind = 'Contact'; else if (/footer/.test(nm)) kind = 'Footer'; else if (/team/.test(nm)) kind = 'Team'; } catch (e) {}
+        let h = '<div style="display:flex;flex-direction:column;gap:0.55rem;max-height:60vh;overflow:auto">';
+        h += '<div class="wc-friendly-lbl">' + esc(kind) + ' — type below, updates live on canvas (no new section created)</div>';
+        heads.forEach((n, i) => { h += '<label class="wc-friendly-lbl">' + (i === 0 ? 'Main heading' : 'Heading ' + (i + 1)) + '</label><input class="be-input" data-wc-f="h' + i + '" value="' + esc(n.textContent.trim().slice(0, 140)) + '">'; });
+        paras.forEach((n, i) => { h += '<label class="wc-friendly-lbl">' + (i === 0 ? 'Subtitle / description' : 'Text ' + (i + 1)) + '</label><textarea class="be-input" data-wc-f="p' + i + '" rows="2">' + esc(n.textContent.trim().slice(0, 300)) + '</textarea>'; });
+        btns.forEach((n, i) => { h += '<label class="wc-friendly-lbl">' + (i === 0 ? 'Primary button' : 'Secondary button') + '</label><div style="display:flex;gap:0.35rem"><input class="be-input" data-wc-f="b' + i + '" value="' + esc(n.textContent.trim().slice(0, 60)) + '"><input class="be-input" data-wc-f="bl' + i + '" value="' + esc(n.getAttribute('href') || '') + '" placeholder="link"></div>'; });
+        imgs.forEach((n, i) => { h += '<label class="wc-friendly-lbl">Image ' + (i + 1) + ' URL</label><div style="display:flex;gap:0.35rem"><input class="be-input" data-wc-f="img' + i + '" value="' + esc(n.getAttribute('src') || '') + '"><button class="wc-pro-btn small" data-wc-f="imgbtn' + i + '">🔄</button></div>'; });
+        h += '</div>';
+        const apply = (root) => {
+          try {
+            root.querySelectorAll('[data-wc-f]').forEach(inp => {
+              const f = inp.getAttribute('data-wc-f');
+              if (f.startsWith('imgbtn')) { inp.onclick = () => { if (grapesEditor) grapesEditor.select(comp); const im = el.querySelectorAll('img')[parseInt(f.replace('imgbtn', ''), 10)]; if (im && typeof openImageEditor === 'function') { let cc = null; try { const walk = (x) => { if (cc) return; try { if (x.getEl && x.getEl() === im) cc = x; } catch (e) {} try { (x.components() || []).forEach(walk); } catch (e) {} }; walk(comp); } catch (e) {} if (cc) openImageEditor(cc); } }; return; }
+              inp.oninput = () => {
+                const v = inp.value;
+                try {
+                  if (f[0] === 'h') { const n = el.querySelectorAll('h1,h2,h3')[parseInt(f.slice(1), 10)]; if (n) n.textContent = v; }
+                  else if (f[0] === 'p' && f.length === 2) { const n = el.querySelectorAll('p')[parseInt(f.slice(1), 10)]; if (n) n.textContent = v; }
+                  else if (f[0] === 'b' && f.length === 2) { const n = el.querySelectorAll('a,button')[parseInt(f.slice(1), 10)]; if (n) n.textContent = v; }
+                  else if (f.slice(0, 2) === 'bl') { const n = el.querySelectorAll('a,button')[parseInt(f.slice(2), 10)]; if (n) n.setAttribute('href', v); }
+                  else if (f.slice(0, 3) === 'img') { const n = el.querySelectorAll('img')[parseInt(f.slice(3), 10)]; if (n) n.setAttribute('src', v); }
+                  try { comp.set('content', el.innerHTML); } catch (e) {}
+                  window.wcMarkDirty && window.wcMarkDirty();
+                } catch (e) {}
+              };
+            });
+          } catch (e) {}
+        };
+        if (typeof openSectionConfigurator === 'function') {
+          try {
+            const host = document.createElement('div'); host.innerHTML = h;
+            host.querySelectorAll('.be-input').forEach(x => { x.style.cssText = 'width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:8px;padding:0.45rem 0.6rem;font-size:0.78rem;font-family:inherit;'; });
+            apply(host);
+            const cfg = $('section-configurator-content');
+            if (cfg) { cfg.innerHTML = ''; cfg.appendChild(host); $('section-configurator-modal').classList.add('active'); return; }
+          } catch (e) {}
+        }
+        showProModal(kind + ' content', h, apply);
+      };
+      function showProModal(title, html, onMount) {
+        let m = $('wc-pro-modal');
+        if (!m) { m = document.createElement('div'); m.id = 'wc-pro-modal'; m.style.cssText = 'position:fixed;inset:0;z-index:9600;display:none;align-items:center;justify-content:center;background:rgba(2,6,16,.7)'; m.innerHTML = '<div style="width:min(560px,94vw);max-height:86vh;overflow:auto;background:#0b0f1a;border:1px solid #334155;border-radius:16px;padding:1rem"><div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.7rem"><strong id="wc-pro-modal-title" style="flex:1"></strong><button class="wc-pro-btn small" onclick="document.getElementById(\'wc-pro-modal\').style.display=\'none\'">✕</button></div><div id="wc-pro-modal-body"></div></div>'; document.body.appendChild(m); m.addEventListener('click', (e) => { if (e.target === m) m.style.display = 'none'; }); }
+        $('wc-pro-modal-title').textContent = title;
+        const body = $('wc-pro-modal-body'); body.innerHTML = html;
+        body.querySelectorAll('.be-input').forEach(x => { if (!x.style.cssText) x.style.cssText = 'width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:8px;padding:0.45rem 0.6rem;font-size:0.78rem;font-family:inherit;'; });
+        if (onMount) onMount(body);
+        m.style.display = 'flex';
+      }
+      window.wcShowProModal = showProModal;
+
+      /* ── ADVANCED BUTTON + IMAGE (in-place, layout-preserving) ── */
+      window.wcEditButtonPro = function (comp) {
+        comp = comp || sel(); if (!comp) return;
+        const at = comp.getAttributes() || {}, st = comp.getStyle() || {};
+        const el = comp.getEl && comp.getEl();
+        const txt = el ? (el.innerText || '').trim() : '';
+        let h = '<div class="wc-pro-card"><h4>🔘 Content</h4><div class="wc-pro-row"><label>Button text</label><input type="text" id="wc-b-txt" value="' + esc(txt) + '"></div>';
+        h += '<div class="wc-pro-row"><label>Icon</label><input type="text" id="wc-b-ico" placeholder="→ ✦ ★" style="max-width:70px"></div>';
+        h += '<div class="wc-pro-row"><label>Icon side</label><select id="wc-b-icop"><option value="right">Right</option><option value="left">Left</option></select></div></div>';
+        h += '<div class="wc-pro-card"><h4>🎯 Action — where it goes</h4><div class="wc-pro-row"><label>Type</label><select id="wc-b-kind"><option value="section">Section on this page</option><option value="page">Another page</option><option value="external">External website</option><option value="whatsapp">WhatsApp chat</option><option value="phone">Phone call</option><option value="email">Email</option><option value="file">Download file</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Target</label><input type="text" id="wc-b-href" value="' + esc(at.href || '#contact') + '" style="flex:2;max-width:none"></div>';
+        h += '<div class="wc-pro-row"><label>Opens in</label><select id="wc-b-tgt"><option value="">Same tab</option><option value="_blank"' + (at.target === '_blank' ? ' selected' : '') + '>New tab</option></select></div></div>';
+        h += '<div class="wc-pro-card"><h4>🎨 Style <span class="wc-friendly-lbl">— live preview</span></h4>';
+        h += '<div class="wc-pro-row"><label>Background</label><input type="color" id="wc-b-bg" value="' + esc((st['background-color'] || '#6366f1').slice(0, 7)) + '"></div>';
+        h += '<div class="wc-pro-row"><label>Text color</label><input type="color" id="wc-b-c" value="' + esc((st.color || '#ffffff').slice(0, 7)) + '"></div>';
+        h += '<div class="wc-pro-row"><label>Text size</label><input type="range" id="wc-b-fs" min="12" max="24" value="' + (parseInt(st['font-size']) || 15) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'"><span class="wc-pro-val">' + (parseInt(st['font-size']) || 15) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Corner roundness</label><input type="range" id="wc-b-r" min="0" max="60" value="' + (parseInt(st['border-radius']) || 24) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'"><span class="wc-pro-val">' + (parseInt(st['border-radius']) || 24) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Inside spacing</label><input type="range" id="wc-b-p" min="8" max="60" value="24" oninput="this.nextElementSibling.textContent=this.value+\'px\'"><span class="wc-pro-val">24px</span></div>';
+        h += '<div class="wc-pro-row"><label>Shadow</label><select id="wc-b-sh"><option value="none">None</option><option value="soft" selected>Soft</option><option value="strong">Strong</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Hover grow</label><select id="wc-b-hov"><option value="yes">Yes — subtle</option><option value="no">No</option></select></div></div>';
+        h += '<button class="wc-pro-btn primary" id="wc-b-apply" style="width:100%">✓ Apply button</button>';
+        showProModal('Button editor', h, (root) => {
+          root.querySelector('#wc-b-apply').onclick = () => {
+            const t = root.querySelector('#wc-b-txt').value, ico = root.querySelector('#wc-b-ico').value, side = root.querySelector('#wc-b-icop').value;
+            const kind = root.querySelector('#wc-b-kind').value; let href = root.querySelector('#wc-b-href').value;
+            if (kind === 'whatsapp' && !/wa\.me|whatsapp/i.test(href)) href = 'https://wa.me/' + href.replace(/\D/g, '');
+            if (kind === 'phone' && !href.startsWith('tel:')) href = 'tel:' + href.replace(/\s/g, '');
+            if (kind === 'email' && !href.startsWith('mailto:')) href = 'mailto:' + href;
+            const tgt = root.querySelector('#wc-b-tgt').value;
+            const bg = root.querySelector('#wc-b-bg').value, c = root.querySelector('#wc-b-c').value;
+            const fs = root.querySelector('#wc-b-fs').value, r = root.querySelector('#wc-b-r').value, p = root.querySelector('#wc-b-p').value;
+            const sh = root.querySelector('#wc-b-sh').value;
+            try {
+              const label = (side === 'left' ? (ico ? ico + ' ' : '') + t : t + (ico ? ' ' + ico : ''));
+              const el2 = comp.getEl && comp.getEl(); if (el2) el2.textContent = label;
+              try { comp.set('content', label); } catch (e) {}
+              comp.addAttributes({ href: href }); if (tgt) comp.addAttributes({ target: tgt }); else { const a2 = Object.assign({}, comp.getAttributes()); delete a2.target; comp.setAttributes(a2); }
+              comp.addStyle({ 'background-color': bg, background: bg, color: c, 'font-size': fs + 'px', 'border-radius': r + 'px', padding: '0.7rem ' + p + 'px', 'box-shadow': sh === 'none' ? 'none' : (sh === 'strong' ? '0 18px 45px rgba(2,6,23,.3)' : '0 10px 25px rgba(2,6,23,.15)'), transition: 'all .2s ease' });
+            } catch (e) {}
+            window.wcMarkDirty && window.wcMarkDirty();
+            $('wc-pro-modal').style.display = 'none';
+            if (typeof showToast === 'function') showToast('🔘 Button updated');
+          };
+        });
+      };
+      window.wcEditImagePro = function (comp) {
+        comp = comp || sel(); if (!comp) return;
+        if (typeof openImageEditor === 'function') openImageEditor(comp);
+        setTimeout(() => {
+          const modal = $('image-editor-modal'); if (!modal) return;
+          if ($('wc-img-pro')) return;
+          const box = document.createElement('div'); box.id = 'wc-img-pro'; box.className = 'wc-pro-card';
+          box.innerHTML = '<h4>✨ Pro adjustments <span class="wc-friendly-lbl">— keeps layout</span></h4>'
+            + '<div class="wc-pro-row"><label>See-through <span class="wc-friendly-lbl">(opacity)</span></label><input type="range" id="wc-img-op" min="20" max="100" value="100" oninput="this.nextElementSibling.textContent=this.value+\'%\'"><span class="wc-pro-val">100%</span></div>'
+            + '<div class="wc-pro-row"><label>Soft blur</label><input type="range" id="wc-img-blur" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value+\'px\'"><span class="wc-pro-val">0px</span></div>'
+            + '<div class="wc-pro-row"><label>Shadow</label><select id="wc-img-sh"><option value="none">None</option><option value="soft">Soft</option><option value="strong">Strong</option></select></div>'
+            + '<div class="wc-pro-row"><label>Image link</label><input type="text" id="wc-img-link" placeholder="https://… or #section" style="flex:2;max-width:none"></div>'
+            + '<div class="wc-pro-row"><label>New tab</label><select id="wc-img-tgt"><option value="">Same tab</option><option value="_blank">New tab</option></select></div>'
+            + '<button class="wc-pro-btn primary" style="width:100%" onclick="wcApplyImagePro()">✓ Apply image style</button>';
+          modal.querySelector('.be-modal-box, .modal-box, div').appendChild(box);
+        }, 60);
+      };
+      window.wcApplyImagePro = function () {
+        try {
+          const comp = (typeof editingImage !== 'undefined' ? editingImage : sel()); if (!comp) return;
+          const op = $('wc-img-op').value, bl = $('wc-img-blur').value, sh = $('wc-img-sh').value;
+          const st = {};
+          st.opacity = (op / 100).toString();
+          if (+bl > 0) st.filter = 'blur(' + bl + 'px)';
+          st['box-shadow'] = sh === 'none' ? 'none' : (sh === 'strong' ? '0 20px 55px rgba(2,6,23,.35)' : '0 12px 30px rgba(2,6,23,.18)');
+          comp.addStyle(st);
+          const link = $('wc-img-link').value.trim();
+          if (link) { const p = comp.parent(); if (p && (p.get('tagName') || '').toLowerCase() === 'a') p.addAttributes({ href: link, target: $('wc-img-tgt').value || '' }); else if (typeof showToast === 'function') showToast('Tip: wrap image in a link block for clickable images'); }
+          try { if (typeof applyImageEditor === 'function') applyImageEditor(); } catch (e) {}
+          window.wcMarkDirty && window.wcMarkDirty();
+        } catch (e) {}
+      };
+
+      /* ── AI SCOPES + INTENT (wraps executeMagicAi, never replaces lanes) ── */
+      window.WCAIScope = window.WCAIScope || 'auto';
+      window.wcSetAIScope = function (s) { window.WCAIScope = s; document.querySelectorAll('.wc-scope-chip').forEach(c => c.classList.toggle('active', c.getAttribute('data-scope') === s)); };
+      function wcInterpretIntent(q) {
+        const s = (q || '').toLowerCase(); const hints = [];
+        if (/small|சின்ன|cheriya|romba small/.test(s) && /button|btn|பட்டன்/.test(s)) hints.push('Increase button padding to ~1rem 2.4rem and font-size to ~17px so the button feels larger and more tappable.');
+        if (/empty|காலி|வெறுமை|blank/.test(s) && /home|page|hero/.test(s)) hints.push('The homepage feels empty: improve visual balance — enlarge hero, add trust badges, tighten spacing, add one supporting section (testimonials or logos) without deleting existing content.');
+        if (/contact|தொடர்பு|phone|whatsapp|call/.test(s) && /easy|ஈஸி|simple/.test(s)) hints.push('Make contacting easy: strengthen contact CTA — add sticky WhatsApp button, make phone number a tel: link, ensure contact section sits just above footer.');
+        if (/premium|luxury|modern|professional/.test(s)) hints.push('Elevate to premium modern style: refined spacing, soft shadows, consistent radius, elegant typography — keep all text and images.');
+        if (/mobile|phone/.test(s) && /friend|fix|responsive/.test(s)) hints.push('Improve mobile layout: reduce heading sizes ~20%, stack columns, increase tap targets, hide oversized decorations on small screens.');
+        if (/round/.test(s) && /button/.test(s)) hints.push('Make buttons fully rounded (border-radius 999px).');
+        if (/add.*(pricing|faq|gallery|testimonial|contact|whatsapp)/.test(s)) hints.push('Insert the requested section using existing section templates style — editable, near related content.');
+        if (/remove|delete/.test(s)) hints.push('Remove only the requested section; keep header/footer intact.');
+        if (/move.*(contact|section).*above|reorder/.test(s)) hints.push('Reorder sections as asked by moving the component, not duplicating.');
+        return hints.length ? '\n\n[Intent interpretation: ' + hints.join(' ') + ']\n' : '';
+      }
+      window.wcInterpretIntent = wcInterpretIntent;
+      function wcPatchAI() {
+        try {
+          const input = $('magic-input'); const panel = $('magic-ai-panel');
+          if (input && panel && !$('wc-ai-scope')) {
+            const row = document.createElement('div'); row.id = 'wc-ai-scope'; row.className = 'wc-scope-row';
+            row.innerHTML = '<span class="wc-scope-chip active" data-scope="auto" onclick="wcSetAIScope(\'auto\')">🤖 Auto</span><span class="wc-scope-chip" data-scope="element" onclick="wcSetAIScope(\'element\')">🎯 Element</span><span class="wc-scope-chip" data-scope="section" onclick="wcSetAIScope(\'section\')">📐 Section</span><span class="wc-scope-chip" data-scope="site" onclick="wcSetAIScope(\'site\')">🌐 Site</span>';
+            const inputRow = panel.querySelector('.magic-input-row') || input.parentNode;
+            inputRow.parentNode.insertBefore(row, inputRow);
+          }
+          if (typeof executeMagicAi === 'function' && !executeMagicAi.__wcWrapped) {
+            const orig = executeMagicAi;
+            const wrapped = async function () {
+              const inp = $('magic-input'); const q = inp ? inp.value.trim() : '';
+              if (!q) return orig.apply(this, arguments);
+              const scope = window.WCAIScope || 'auto';
+              try { window.wcSnapshotVersion && window.wcSnapshotVersion('Before AI: ' + q.slice(0, 40)); } catch (e) {}
+              if (scope === 'element' && !sel()) { if (typeof showToast === 'function') showToast('🎯 Select an element first for Element mode'); return; }
+              if (scope === 'section') {
+                const c = sel(); let sec = c;
+                try { while (sec && !['section', 'header', 'footer'].includes((sec.get('tagName') || '').toLowerCase())) sec = sec.parent(); } catch (e) {}
+                if (sec && grapesEditor) grapesEditor.select(sec);
+                else if (typeof showToast === 'function') showToast('📐 Selecting nearest section for Section mode');
+              }
+              if (scope === 'site' && grapesEditor) { try { grapesEditor.select(null); } catch (e) {} }
+              if (inp) inp.value = q + wcInterpretIntent(q);
+              try { return await orig.apply(this, arguments); }
+              finally { try { window.wcApplyThemeToCanvas && window.wcApplyThemeToCanvas(); window.wcApplyResponsiveCss && window.wcApplyResponsiveCss(); } catch (e) {} }
+            };
+            wrapped.__wcWrapped = true;
+            window.executeMagicAi = wrapped;
+          }
+        } catch (e) {}
+      }
+
+      /* ── MORE COMPONENTS (all editable after insert) ── */
+      const PRO_COMPONENTS = [
+        ['newsletter', '📧 Newsletter', '<section style="padding:4rem 1.5rem;text-align:center;background:#f8fafc;"><div style="max-width:560px;margin:0 auto;"><h2 style="font-size:2rem;font-weight:800;margin-bottom:0.5rem;">Stay in the loop</h2><p style="color:#64748b;margin-bottom:1.5rem;">Get updates and offers in your inbox.</p><form style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;"><input type="email" placeholder="you@email.com" style="flex:1;min-width:220px;padding:0.85rem 1.1rem;border-radius:999px;border:1.5px solid #e2e8f0;"><button type="submit" style="padding:0.85rem 1.8rem;border-radius:999px;background:var(--primary,#6366f1);color:#fff;font-weight:700;border:none;">Subscribe</button></form></div></section>'],
+        ['stats2', '📊 Statistics', '<section style="padding:3.5rem 1.5rem;text-align:center;"><div style="max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;"><div><div style="font-size:2.4rem;font-weight:900;color:var(--primary,#6366f1);">10k+</div><div style="color:#64748b;">Happy clients</div></div><div><div style="font-size:2.4rem;font-weight:900;color:var(--primary,#6366f1);">4.9★</div><div style="color:#64748b;">Average rating</div></div><div><div style="font-size:2.4rem;font-weight:900;color:var(--primary,#6366f1);">8 yrs</div><div style="color:#64748b;">Experience</div></div></div></section>'],
+        ['timeline', '🕒 Timeline', '<section style="padding:4rem 1.5rem;"><div style="max-width:700px;margin:0 auto;"><h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2rem;">How it works</h2><div style="border-left:3px solid var(--primary,#6366f1);padding-left:1.5rem;display:flex;flex-direction:column;gap:1.5rem;"><div><strong>Step 1 — Contact</strong><p style="color:#64748b;">Tell us what you need.</p></div><div><strong>Step 2 — Design</strong><p style="color:#64748b;">We craft your site.</p></div><div><strong>Step 3 — Launch</strong><p style="color:#64748b;">Go live & grow.</p></div></div></div></section>'],
+        ['booking', '📅 Booking CTA', '<section style="padding:4rem 1.5rem;text-align:center;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;"><h2 style="font-size:2.2rem;font-weight:800;margin-bottom:0.6rem;color:#fff;">Book your free consultation</h2><p style="opacity:.85;margin-bottom:1.5rem;">Pick a time that suits you.</p><a href="#contact" style="display:inline-block;background:#fff;color:#4f46e5;font-weight:800;padding:0.9rem 2.2rem;border-radius:999px;text-decoration:none;">Book Now →</a></section>'],
+        ['whatsapp', '💬 WhatsApp CTA', '<section style="padding:3rem 1.5rem;text-align:center;"><a href="https://wa.me/10000000000" style="display:inline-flex;align-items:center;gap:0.6rem;background:#22c55e;color:#fff;font-weight:800;padding:1rem 2.2rem;border-radius:999px;text-decoration:none;font-size:1.05rem;">💬 Chat on WhatsApp</a></section>'],
+        ['countdown', '⏳ Countdown', '<section data-wc-countdown="1" style="padding:3.5rem 1.5rem;text-align:center;background:#0f172a;color:#fff;"><h2 style="font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:1rem;">Offer ends soon</h2><div style="display:flex;gap:1rem;justify-content:center;font-size:1.6rem;font-weight:800;"><span>02d</span><span>:</span><span>14h</span><span>:</span><span>30m</span></div></section>'],
+        ['video', '🎥 Video', '<section style="padding:4rem 1.5rem;text-align:center;"><div style="max-width:800px;margin:0 auto;"><h2 style="font-size:2rem;font-weight:800;margin-bottom:1rem;">Watch our story</h2><div style="position:relative;padding-top:56.25%;border-radius:18px;overflow:hidden;background:#0f172a;"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" style="position:absolute;inset:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div></div></section>'],
+        ['map', '🗺️ Map', '<section style="padding:3rem 1.5rem;"><div style="max-width:1000px;margin:0 auto;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0;"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126743.5863873168!2d79.83!3d6.92!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sColombo!5e0!3m2!1sen!2slk!4v1" style="width:100%;height:340px;border:0;" loading="lazy"></iframe></div></section>'],
+        ['logos', '🏢 Logo carousel', '<section style="padding:2.5rem 1.5rem;text-align:center;background:#f8fafc;"><div style="font-size:0.75rem;font-weight:800;letter-spacing:0.1em;color:#94a3b8;margin-bottom:1rem;">TRUSTED BY TEAMS AT</div><div style="display:flex;gap:2.5rem;justify-content:center;flex-wrap:wrap;font-weight:800;color:#64748b;font-size:1.2rem;"><span>Acme</span><span>Globex</span><span>Initech</span><span>Umbrella</span><span>Hooli</span></div></section>'],
+        ['blog', '📰 Blog cards', '<section style="padding:4rem 1.5rem;"><div style="max-width:1100px;margin:0 auto;"><h2 style="font-size:2rem;font-weight:800;text-align:center;margin-bottom:2rem;">Latest articles</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;"><article style="border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://picsum.photos/seed/wcblog1/600/360" style="width:100%;height:180px;object-fit:cover;"><div style="padding:1.25rem;"><h3>Article title one</h3><p style="color:#64748b;">Short excerpt…</p></div></article><article style="border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;"><img src="https://picsum.photos/seed/wcblog2/600/360" style="width:100%;height:180px;object-fit:cover;"><div style="padding:1.25rem;"><h3>Article title two</h3><p style="color:#64748b;">Short excerpt…</p></div></article></div></div></section>']
+      ];
+      window.wcInsertProComponent = function (i) {
+        const e = PRO_COMPONENTS[i]; if (!e || !grapesEditor) return;
+        try {
+          const w = grapesEditor.DomComponents.getWrapper();
+          const added = w.append(e[2]);
+          const comp = Array.isArray(added) ? added[0] : added;
+          if (comp && typeof configureEditorComponent === 'function') configureEditorComponent(comp);
+          window.wcMarkDirty && window.wcMarkDirty();
+          if (typeof showToast === 'function') showToast('✨ ' + e[1] + ' added — click to edit');
+        } catch (e2) {}
+      };
+      function wcInjectProComponents() {
+        try {
+          const host = $('dtab-blocks'); if (!host || $('wc-pro-comp-grid')) return;
+          const grid = document.createElement('div'); grid.id = 'wc-pro-comp-grid';
+          grid.innerHTML = '<div style="font-size:0.74rem;font-weight:800;color:#a5b4fc;margin:0.9rem 0 0.5rem;">✨ PREMIUM COMPONENTS — click to insert, then edit</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">' + PRO_COMPONENTS.map((c, i) => '<button class="wc-pro-btn small" onclick="wcInsertProComponent(' + i + ')">' + esc(c[1]) + '</button>').join('') + '</div>';
+          host.appendChild(grid);
+        } catch (e) {}
+      }
+
+      /* ── CONTEXT MENU upgrades (extends, keeps architecture) ── */
+      function wcPatchContextMenu() {
+        try {
+          const menu = $('custom-context-menu'); if (!menu || menu.__wcPatched) return;
+          menu.__wcPatched = true;
+          const add = (label, fn) => { const b = document.createElement('button'); b.className = 'ctx-item'; b.innerHTML = '<span class="ctx-icon">✦</span> ' + label; b.onclick = fn; menu.appendChild(b); return b; };
+          add('🎨 Style with friendly names', () => { try { hideContextMenu(); } catch (e) {} const c = sel(); if (c) { if (grapesEditor) grapesEditor.select(c); window.switchDrawerTab('responsive'); } });
+          add('✍️ Smart content edit', () => { try { hideContextMenu(); } catch (e) {} const c = sel(); if (c) window.wcSmartContentEdit(c); });
+          add('🔘 Edit button (advanced)', () => { try { hideContextMenu(); } catch (e) {} const c = sel(); if (c) window.wcEditButtonPro(c); });
+          add('🔒 Lock / Unlock', () => { try { hideContextMenu(); } catch (e) {} const c = sel(); if (c) window.wcToggleLock(c); });
+          add('💎 Save as My Section', () => { try { hideContextMenu(); } catch (e) {} const c = sel(); if (c) window.wcSaveReusable(c); });
+        } catch (e) {}
+      }
+
+      /* ── PAGES extension (non-destructive, via observer) ── */
+      function wcPatchPages() {
+        const list = $('wc-pages-list'); if (!list || list.__wcObs) return;
+        list.__wcObs = true;
+        const enhance = () => {
+          try {
+            const items = list.querySelectorAll('.wc-page-item');
+            items.forEach((item, i) => {
+              if (item.__wcEnhanced) return; item.__wcEnhanced = true;
+              const mk = (t, title, fn) => { const b = document.createElement('button'); b.className = 'wc-page-mini-btn'; b.textContent = t; b.title = title; b.onclick = (ev) => { ev.stopPropagation(); fn(i); }; item.appendChild(b); return b; };
+              mk('⧉', 'Duplicate page', (idx) => {
+                try {
+                  const d = (typeof wcDesign === 'function' ? wcDesign() : null); if (!d) return;
+                  const pages = (typeof wcEnsurePages === 'function' ? wcEnsurePages() : []);
+                  if (typeof wcSyncCurrentPageFromCanvas === 'function') wcSyncCurrentPageFromCanvas();
+                  const src = pages[idx];
+                  pages.splice(idx + 1, 0, { id: 'p' + Date.now(), name: (src.name || 'Page') + ' copy', slug: (src.slug || 'page') + '-copy', html: src.html || '' });
+                  if (typeof saveProjectData === 'function') saveProjectData();
+                  if (typeof renderWcPagesPanel === 'function') renderWcPagesPanel();
+                } catch (e) {}
+              });
+              if (i !== 0) {
+                mk('🏠', 'Set as homepage', (idx) => {
+                  try {
+                    const d = (typeof wcDesign === 'function' ? wcDesign() : null); if (!d) return;
+                    const pages = (typeof wcEnsurePages === 'function' ? wcEnsurePages() : []);
+                    const cur = (typeof wcCurrentPageIdx === 'function' ? wcCurrentPageIdx() : 0);
+                    const entry = pages.splice(idx, 1)[0]; pages.unshift(entry);
+                    d._wcPage = 0;
+                    if (typeof saveProjectData === 'function') saveProjectData();
+                    if (typeof renderWcPagesPanel === 'function') renderWcPagesPanel();
+                    if (typeof showToast === 'function') showToast('🏠 Homepage set: ' + entry.name);
+                  } catch (e) {}
+                });
+                mk('✎ slug', 'Edit slug', (idx) => {
+                  try {
+                    const pages = (typeof wcEnsurePages === 'function' ? wcEnsurePages() : []);
+                    const v = prompt('URL slug (no spaces):', pages[idx].slug || ''); if (v == null) return;
+                    pages[idx].slug = v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || pages[idx].slug;
+                    if (typeof saveProjectData === 'function') saveProjectData();
+                    if (typeof renderWcPagesPanel === 'function') renderWcPagesPanel();
+                  } catch (e) {}
+                });
+                mk('↑', 'Move up', (idx) => {
+                  try {
+                    const pages = (typeof wcEnsurePages === 'function' ? wcEnsurePages() : []);
+                    if (idx <= 1) return;
+                    const t = pages[idx - 1]; pages[idx - 1] = pages[idx]; pages[idx] = t;
+                    if (typeof saveProjectData === 'function') saveProjectData();
+                    if (typeof renderWcPagesPanel === 'function') renderWcPagesPanel();
+                  } catch (e) {}
+                });
+              }
+            });
+          } catch (e) {}
+        };
+        new MutationObserver(enhance).observe(list, { childList: true });
+        setTimeout(enhance, 800);
+      }
+
+      /* ── DRAG guides (lightweight center snap, no custom engine) ── */
+      function wcEnsureGuides() {
+        try {
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (!doc || !doc.body || doc.getElementById('wc-guides')) return;
+          const g = doc.createElement('div'); g.id = 'wc-guides';
+          g.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;display:none;';
+          g.innerHTML = '<div data-g="v" style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:#ec4899;box-shadow:0 0 8px #ec4899;"></div><div data-g="h" style="position:absolute;left:0;right:0;top:50%;height:1px;background:#22d3ee;box-shadow:0 0 8px #22d3ee;"></div>';
+          doc.body.appendChild(g);
+          if (grapesEditor && !grapesEditor.__wcGuideHook) {
+            grapesEditor.__wcGuideHook = true;
+            grapesEditor.on('component:drag', () => { try { g.style.display = 'block'; } catch (e) {} });
+            grapesEditor.on('component:drag:end', () => { try { g.style.display = 'none'; } catch (e) {} });
+          }
+        } catch (e) {}
+      }
+
+      /* ── lock guard: locked elements stay visible, not editable ── */
+      function wcPatchLockGuard() {
+        try {
+          if (grapesEditor && !grapesEditor.__wcLockHook) {
+            grapesEditor.__wcLockHook = true;
+            grapesEditor.on('component:selected', (m) => {
+              try {
+                if (m && (m.getAttributes() || {})['data-wc-locked'] === '1' && !window._wcUnlockArmed) {
+                  if (typeof showToast === 'function') showToast('🔒 Locked — use Sections / Header / Footer panel → Unlock to edit');
+                }
+              } catch (e) {}
+            });
+          }
+        } catch (e) {}
+      }
+
+      /* ── BOOT: wire everything after editor exists (poll, no reload loops) ── */
+      let bootTries = 0;
+      function wcProBoot() {
+        try { if (window.WCPro && window.WCPro._pill) window.WCPro._pill(); } catch (e) {}
+        try { if (window.WCPro && window.WCPro._wrapSave) window.WCPro._wrapSave(); } catch (e) {}
+        try { wcEnsureProTabs(); wcPatchDrawer(); } catch (e) {}
+        try { wcEnsureTextToolbar(); } catch (e) {}
+        try { wcPatchAI(); wcPatchContextMenu(); wcPatchPages(); wcInjectProComponents(); } catch (e) {}
+        if (typeof grapesEditor === 'undefined' || !grapesEditor) { if (++bootTries < 40) setTimeout(wcProBoot, 500); return; }
+        try { if (window.wcProEnsure) window.wcProEnsure(); } catch (e) {}
+        try { window.wcApplyThemeToCanvas && window.wcApplyThemeToCanvas(); } catch (e) {}
+        try { window.wcApplyResponsiveCss && window.wcApplyResponsiveCss(); } catch (e) {}
+        try { wcEnsureGuides(); wcPatchLockGuard(); } catch (e) {}
+        try {
+          grapesEditor.on('component:selected', () => { setTimeout(() => { try { wcPositionToolbar(); } catch (e) {} }, 60); });
+          grapesEditor.on('component:deselected', () => { const tb = $('wc-text-toolbar'); if (tb) tb.classList.remove('show'); });
+          grapesEditor.on('component:update', () => { window.wcMarkDirty && window.wcMarkDirty(); });
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (doc && !doc.__wcTbBound) {
+            doc.__wcTbBound = true;
+            doc.addEventListener('mouseup', () => setTimeout(wcPositionToolbar, 40));
+            doc.addEventListener('keyup', () => setTimeout(wcPositionToolbar, 40));
+          }
+        } catch (e) {}
+        try {
+          const doc2 = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (doc2 && !doc2.__wcDbl) {
+            doc2.__wcDbl = true;
+            doc2.addEventListener('dblclick', (e) => {
+              const t = e.target;
+              if (!t) return;
+              const tag = (t.tagName || '').toLowerCase();
+              if (['h1', 'h2', 'h3', 'h4', 'p', 'span', 'li'].includes(tag)) { try { t.setAttribute('contenteditable', 'true'); t.focus(); } catch (err) {} }
+              else if (tag === 'img') { try { if (typeof componentFromElement === 'function' && typeof openImageEditor === 'function') { const c = componentFromElement(t); if (c) openImageEditor(c); } } catch (err) {} }
+              else if (tag === 'a' || tag === 'button') { try { if (typeof componentFromElement === 'function') { const c = componentFromElement(t); if (c) window.wcEditButtonPro(c); } } catch (err) {} }
+            });
+          }
+        } catch (e) {}
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(wcProBoot, 1200));
+      else setTimeout(wcProBoot, 1200);
+      window.wcProBoot = wcProBoot;
+    })();
+
+    /* ═══════════ WC PRO PART 4A — History activity + My Sections library (additive) ═══════════
+       Overrides ONLY Part-3 render functions for History / Saved. No existing feature touched. */
+    (function WCProHistLib() {
+      if (window.__WCProHistLibLoaded) return;
+      window.__WCProHistLibLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+      const sel = () => { try { return (typeof selectedComponent !== 'undefined' ? selectedComponent : null); } catch (e) { return null; } };
+
+      /* ── ACTIVITY LOG (lightweight: no HTML, separate key, capped) ── */
+      function wcActivityKey() {
+        try { return 'webcraft_activity::c' + (typeof activeConceptIndex === 'number' ? activeConceptIndex : 0); }
+        catch (e) { return 'webcraft_activity::c0'; }
+      }
+      function wcGetActivity() {
+        try { const a = JSON.parse(localStorage.getItem(wcActivityKey()) || '[]'); return Array.isArray(a) ? a : []; }
+        catch (e) { return []; }
+      }
+      function wcPutActivity(list) {
+        try { localStorage.setItem(wcActivityKey(), JSON.stringify(list.slice(-60))); } catch (e) {}
+      }
+      window.wcGetActivity = wcGetActivity;
+      window.wcLogActivity = function (action, desc, icon) {
+        try {
+          const list = wcGetActivity();
+          list.push({ t: Date.now(), action: String(action || 'Change'), desc: String(desc || ''), icon: String(icon || '✏️') });
+          wcPutActivity(list);
+          try { if ($('wc-pro-history') && $('wc-pro-history').offsetParent) window.wcRenderHistoryPanel(); } catch (e) {}
+        } catch (e) {}
+      };
+      window.wcDeleteActivity = function (i) {
+        try { const l = wcGetActivity(); l.splice(i, 1); wcPutActivity(l); window.wcRenderHistoryPanel(); } catch (e) {}
+      };
+      window.wcClearActivity = function () {
+        if (!confirm('Clear activity history? Snapshots are kept.')) return;
+        try { localStorage.removeItem(wcActivityKey()); window.wcSeedActivity(true); window.wcRenderHistoryPanel(); } catch (e) {}
+      };
+      window.wcSeedActivity = function (force) {
+        try {
+          const k = wcActivityKey() + '::seeded';
+          if (!force && localStorage.getItem(k)) return;
+          localStorage.setItem(k, '1');
+          wcPutActivity([{ t: Date.now(), action: 'Website created', desc: 'Project opened in Studio', icon: '🎉' }]);
+        } catch (e) {}
+      };
+      window.wcSnap = function (label, actionDesc) {
+        try { if (typeof wcSnapshotVersion === 'function') wcSnapshotVersion(label); } catch (e) {}
+        if (actionDesc) window.wcLogActivity(label, actionDesc, '📸');
+      };
+      function wcFmtTime(t) {
+        try {
+          const d = new Date(t), now = new Date();
+          const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          const day = d.toDateString() === now.toDateString() ? 'Today' : d.toLocaleDateString();
+          return { time, day };
+        } catch (e) { return { time: '', day: '' }; }
+      }
+
+      /* ── HISTORY PANEL (deep) ── */
+      window.wcRenderHistoryPanel = function () {
+        const box = $('wc-pro-history'); if (!box) return;
+        const acts = wcGetActivity().slice().reverse();
+        const vers = (typeof wcGetVersions === 'function') ? wcGetVersions() : [];
+        let h = '<div class="wc-pro-card"><h4>🕘 Activity</h4>';
+        if (!acts.length) h += '<div style="font-size:0.75rem;color:#94a3b8">No activity yet.</div>';
+        else h += '<div style="max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:0.4rem;">' + acts.slice(0, 40).map((a) => {
+          const origIdx = wcGetActivity().length - 1 - acts.slice(0, 40).indexOf(a);
+          const f = wcFmtTime(a.t);
+          return '<div class="wc-ver-item"><span style="font-size:1rem">' + esc(a.icon || '✏️') + '</span><span class="t">' + esc(a.action) + '<br><span style="opacity:.65;font-size:.68rem">🕒 ' + esc(f.time) + ' · ' + esc(f.day) + (a.desc ? ' — ' + esc(a.desc) : '') + '</span></span><button class="wc-pro-btn small danger" title="Delete entry" onclick="wcDeleteActivity(' + origIdx + ')">✕</button></div>';
+        }).join('') + '</div>';
+        h += '<button class="wc-pro-btn small" style="margin-top:0.55rem;width:100%" onclick="wcClearActivity()">🧹 Clear history</button></div>';
+        h += '<div class="wc-pro-card"><h4>📸 Version snapshots (' + vers.length + '/10)</h4>';
+        h += '<div style="display:flex;gap:0.4rem;margin-bottom:0.55rem;"><button class="wc-pro-btn small primary" style="flex:1" onclick="wcSnap(\'Manual snapshot\',\'Saved by customer\');wcRenderHistoryPanel()">+ Snapshot current</button><button class="wc-pro-btn small" style="flex:1" onclick="wcOpenBeforeAfter()">Before | After</button></div>';
+        if (!vers.length) h += '<div style="font-size:0.75rem;color:#94a3b8">Snapshots are saved automatically before AI edits and restores.</div>';
+        else vers.slice().reverse().forEach((v) => {
+          const idx = vers.indexOf(v);
+          const f = wcFmtTime(v.at);
+          h += '<div class="wc-ver-item"><span class="t">📦 ' + esc(v.label || 'Checkpoint') + '<br><span style="opacity:.65;font-size:.68rem">🕒 ' + esc(f.time) + ' · ' + esc(f.day) + '</span></span><button class="wc-pro-btn small" onclick="wcPreviewVersion(' + idx + ')">👁</button><button class="wc-pro-btn small primary" onclick="wcRestoreVersion(' + idx + ')">Restore</button><button class="wc-pro-btn small danger" onclick="wcDeleteVersion(' + idx + ')">✕</button></div>';
+        });
+        h += '<div class="wc-friendly-lbl">Undo/Redo (Ctrl+Z / Ctrl+Y) keeps working separately inside the canvas.</div></div>';
+        box.innerHTML = h;
+      };
+      window.wcDeleteVersion = function (i) {
+        try {
+          if (typeof wcGetVersions !== 'function') return;
+          const v = wcGetVersions(); v.splice(i, 1);
+          localStorage.setItem((function () { try { return 'webcraft_versions::c' + activeConceptIndex; } catch (e) { return 'webcraft_versions::c0'; } })(), JSON.stringify(v));
+          window.wcRenderHistoryPanel();
+        } catch (e) {}
+      };
+      // log restores too (wrap once, additive)
+      try {
+        if (typeof window.wcRestoreVersion === 'function' && !window.wcRestoreVersion.__wcActW) {
+          const o = window.wcRestoreVersion;
+          const w = function (i) { const r = o.apply(this, arguments); try { window.wcLogActivity('Version restored', 'Rolled back canvas', '🕘'); } catch (e) {} return r; };
+          w.__wcActW = true; window.wcRestoreVersion = w;
+        }
+      } catch (e) {}
+
+      /* transparent activity wrappers for OTHER editors (call original, then log only) */
+      function wcWrapLog(name, action, icon, descFn) {
+        try {
+          const fn = window[name];
+          if (typeof fn !== 'function' || fn.__wcActW) return;
+          const w = function () {
+            const r = fn.apply(this, arguments);
+            try {
+              let d = '';
+              try { d = descFn ? (descFn.apply(this, arguments) || '') : ''; } catch (e) {}
+              window.wcLogActivity(action, d, icon);
+            } catch (e) {}
+            return r;
+          };
+          w.__wcActW = true; window[name] = w;
+        } catch (e) {}
+      }
+      window.wcArmActivityWrappers = function () {
+        wcWrapLog('applyImageEditor', 'Image replaced', '🖼️', () => 'Image updated on canvas');
+        wcWrapLog('applySectionEditor', 'Section customized', '🎨', () => 'Section style updated');
+        wcWrapLog('insertConfiguredSection', 'Section added', '➕', () => 'New section inserted');
+        wcWrapLog('insertSectionFromConfigurator', 'Section added', '➕', () => 'New section inserted');
+        wcWrapLog('addSectionWithoutEdits', 'Section added', '➕', () => 'New section inserted');
+        wcWrapLog('finishButtonEditor', 'Button updated', '🔘', () => 'Button saved');
+        try {
+          if (typeof window.executeMagicAi === 'function' && !window.executeMagicAi.__wcActW2) {
+            const o = window.executeMagicAi;
+            const w = async function () {
+              /* AI-feed: SEO prompts get our scoring rules so output scores 75%+ */
+              try {
+                const inp = document.getElementById('magic-input');
+                const q = inp ? (inp.value || '') : '';
+                if (/seo|meta title|meta description|open graph|ranking|rank higher|search engine/i.test(q) && q.indexOf('[SEO rules') < 0) {
+                  inp.value = q + '\n\n[SEO rules for this site: title 10-60 chars relevant to the H1; meta description 50-160 chars as ONE natural sentence (never a keyword list); keep exactly one H1; every image needs meaningful alt text (not "image"); fix empty "#" links and dead anchors; add canonical + og:title/og:description/og:image + twitter card; keep the page indexable; never remove the viewport. Apply changes directly to the page.]';
+                }
+              } catch (e) {}
+              const r = await o.apply(this, arguments);
+              try { window.wcLogActivity('AI change applied', 'Magic AI edit finished', '✦'); } catch (e) {}
+              return r;
+            };
+            w.__wcWrapped = true; w.__wcActW2 = true; window.executeMagicAi = w;
+          }
+        } catch (e) {}
+      };
+
+      /* ── MY SECTIONS LIBRARY (deep) ── */
+      const WC_SEC_CATS = ['Hero', 'Services', 'About', 'Testimonials', 'Pricing', 'Gallery', 'Contact', 'CTA', 'Custom'];
+      window.WC_SEC_CATS = WC_SEC_CATS;
+      function wcMySections() {
+        try {
+          const d = (window.wcProEnsure) ? window.wcProEnsure() : null;
+          if (d && Array.isArray(d.mySections) && d.mySections.length) return d.mySections;
+        } catch (e) {}
+        try { const a = JSON.parse(localStorage.getItem('webcraft_my_sections') || '[]'); return Array.isArray(a) ? a : []; }
+        catch (e) { return []; }
+      }
+      function wcPersistMySections(list) {
+        try {
+          const d = (window.wcProEnsure) ? window.wcProEnsure() : null;
+          if (d) d.mySections = list;
+        } catch (e) {}
+        try { localStorage.setItem('webcraft_my_sections', JSON.stringify(list.slice(-40))); } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+      }
+      window.wcMySections = wcMySections;
+      window.wcSaveReusable = function (comp) {
+        comp = comp || sel();
+        if (!comp) { if (typeof showToast === 'function') showToast('👉 Select a section first'); return; }
+        const preset = (typeof getSectionDisplayName === 'function') ? getSectionDisplayName(comp) : 'My Section';
+        const body = '<div style="display:flex;flex-direction:column;gap:0.55rem;">'
+          + '<label class="wc-friendly-lbl">Section name</label><input class="be-input" id="wc-ms-name" value="' + esc(preset) + '" maxlength="60">'
+          + '<label class="wc-friendly-lbl">Category</label><select class="be-input" id="wc-ms-cat">' + WC_SEC_CATS.map(c => '<option>' + c + '</option>').join('') + '</select>'
+          + '<button class="wc-pro-btn primary" id="wc-ms-go" style="width:100%">💾 Save to My Sections</button></div>';
+        const mount = (root) => {
+          root.querySelectorAll('.be-input').forEach(x => { x.style.cssText = 'width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:8px;padding:0.45rem 0.6rem;font-size:0.78rem;font-family:inherit;'; });
+          root.querySelector('#wc-ms-go').onclick = () => {
+            const name = (root.querySelector('#wc-ms-name').value || 'My Section').trim().slice(0, 60) || 'My Section';
+            const cat = root.querySelector('#wc-ms-cat').value || 'Custom';
+            try {
+              const html = comp.toHTML ? comp.toHTML() : '';
+              if (!html || html.length < 20) { if (typeof showToast === 'function') showToast('⚠️ Empty section'); return; }
+              const css = comp.getStyle ? comp.getStyle() : {};
+              const list = wcMySections();
+              list.push({ id: 'ms' + Date.now(), name, category: cat, html: html.slice(0, 300000), css, createdAt: Date.now(), updatedAt: Date.now() });
+              wcPersistMySections(list);
+              window.wcLogActivity('Section saved', '"' + name + '" → My Sections', '💎');
+              if (typeof showToast === 'function') showToast('💎 Saved "' + name + '"');
+              const m = $('wc-pro-modal'); if (m) m.style.display = 'none';
+              window.wcRenderSavedPanel();
+            } catch (e) {}
+          };
+        };
+        if (window.wcShowProModal) window.wcShowProModal('Save to My Sections', body, mount);
+        else { const n = prompt('Section name:', preset); if (n) { const list = wcMySections(); list.push({ id: 'ms' + Date.now(), name: n.slice(0, 60), category: 'Custom', html: comp.toHTML(), css: {}, createdAt: Date.now(), updatedAt: Date.now() }); wcPersistMySections(list); window.wcRenderSavedPanel(); } }
+      };
+      window.wcInsertReusable = function (id, btn) {
+        try {
+          if (btn && btn.dataset && btn.dataset.busy === '1') return;
+          if (btn && btn.dataset) { btn.dataset.busy = '1'; setTimeout(() => { try { btn.dataset.busy = '0'; } catch (e) {} }, 1500); }
+          const list = wcMySections();
+          const e = list.find(x => String(x.id) === String(id));
+          if (!e || !grapesEditor) return;
+          const w = grapesEditor.DomComponents.getWrapper();
+          const added = w.append(e.html);
+          const c = Array.isArray(added) ? added[0] : added;
+          if (c && typeof configureEditorComponent === 'function') configureEditorComponent(c);
+          if (c && grapesEditor.select) grapesEditor.select(c);
+          try { const el = c && c.getEl && c.getEl(); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
+          window.wcMarkDirty && window.wcMarkDirty();
+          window.wcLogActivity('Section added', '"' + (e.name || 'saved section') + '" from library', '➕');
+          if (typeof showToast === 'function') showToast('✨ Added — click to edit');
+        } catch (e) {}
+      };
+      window.wcPreviewReusable = function (id) {
+        const e = wcMySections().find(x => String(x.id) === String(id)); if (!e) return;
+        const body = '<div class="wc-friendly-lbl" style="margin-bottom:0.4rem">' + esc(e.name) + ' · ' + esc(e.category || 'Custom') + '</div>'
+          + '<iframe id="wc-ms-prev" style="width:100%;height:52vh;border:1px solid #1e293b;border-radius:10px;background:#fff;"></iframe>'
+          + '<button class="wc-pro-btn primary" style="width:100%;margin-top:0.6rem" onclick="document.getElementById(\'wc-pro-modal\').style.display=\'none\';wcInsertReusable(\'' + esc(String(e.id)) + '\')">➕ Add to page</button>';
+        window.wcShowProModal && window.wcShowProModal('Preview — ' + e.name, body, (root) => {
+          try { const f = root.querySelector('#wc-ms-prev'); if (f) f.srcdoc = '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0">' + e.html + '</body></html>'; } catch (err) {}
+        });
+      };
+      window.wcRenameReusable = function (id) {
+        const list = wcMySections(); const e = list.find(x => String(x.id) === String(id)); if (!e) return;
+        const n = prompt('Rename section:', e.name || ''); if (n == null) return;
+        e.name = n.trim().slice(0, 60) || e.name; e.updatedAt = Date.now();
+        wcPersistMySections(list); window.wcRenderSavedPanel();
+      };
+      window.wcDuplicateReusable = function (id) {
+        const list = wcMySections(); const e = list.find(x => String(x.id) === String(id)); if (!e) return;
+        list.push(Object.assign({}, e, { id: 'ms' + Date.now(), name: (e.name || 'Section') + ' copy', createdAt: Date.now(), updatedAt: Date.now() }));
+        wcPersistMySections(list); window.wcRenderSavedPanel();
+        if (typeof showToast === 'function') showToast('📋 Duplicated');
+      };
+      window.wcDeleteReusable = function (id) {
+        if (!confirm('Delete this saved section?')) return;
+        wcPersistMySections(wcMySections().filter(x => String(x.id) !== String(id)));
+        window.wcRenderSavedPanel();
+      };
+      window.wcMsFilter = { q: '', cat: 'All' };
+      window.wcMsSearch = function (v) { window.wcMsFilter.q = (v || '').toLowerCase(); window.wcRenderSavedPanel(true); };
+      window.wcMsCat = function (c) { window.wcMsFilter.cat = c; window.wcRenderSavedPanel(); };
+      window.wcRenderSavedPanel = function (keepFocus) {
+        const box = $('wc-pro-saved'); if (!box) return;
+        const f = window.wcMsFilter;
+        let list = wcMySections().slice().reverse();
+        if (f.cat && f.cat !== 'All') list = list.filter(x => (x.category || 'Custom') === f.cat);
+        if (f.q) list = list.filter(x => ((x.name || '') + ' ' + (x.category || '')).toLowerCase().includes(f.q));
+        let h = '<div class="wc-pro-card"><h4>🔍 Search My Sections</h4><input type="text" class="be-input" id="wc-ms-q" placeholder="Search by name or category…" value="' + esc(f.q || '') + '" oninput="wcMsSearch(this.value)" style="width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:8px;padding:0.45rem 0.6rem;font-size:0.78rem;"></div>';
+        h += '<div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.6rem;">' + ['All'].concat(WC_SEC_CATS).map(c => '<button class="wc-vis-chip' + (f.cat === c ? ' active' : '') + '" onclick="wcMsCat(\'' + c + '\')">' + c + '</button>').join('') + '</div>';
+        h += '<div class="wc-pro-card"><h4>💎 Library (' + list.length + ')</h4><button class="wc-pro-btn" style="width:100%;margin-bottom:0.55rem;" onclick="wcSaveReusable()">💾 Save selected section</button>';
+        if (!list.length) h += '<div style="font-size:0.75rem;color:#94a3b8">Nothing here yet. Select any section on the canvas → “Save selected section”.</div>';
+        else h += list.map((s) => {
+          let when = '';
+          try { when = new Date(s.createdAt || Date.now()).toLocaleDateString(); } catch (e) {}
+          return '<div class="wc-sec-item"><iframe sandbox="" srcdoc="' + esc('<!DOCTYPE html><html><body style=&quot;margin:0;zoom:0.5&quot;>' + String(s.html || '').slice(0, 6000) + '</body></html>').replace(/"/g, '&quot;') + '" style="width:100%;height:120px;border:1px solid #1e293b;border-radius:8px;background:#fff;pointer-events:none;" loading="lazy" title="preview"></iframe>'
+            + '<div class="wc-sec-item-top" style="margin-top:0.4rem;"><span class="wc-sec-item-name">💎 ' + esc(s.name || 'Section') + '</span><span class="wc-dev-badge">' + esc(s.category || 'Custom') + '</span></div>'
+            + '<div class="wc-friendly-lbl">Created ' + esc(when) + '</div><div class="wc-sec-item-btns">'
+            + '<button class="wc-pro-btn small primary" onclick="wcInsertReusable(\'' + esc(String(s.id)) + '\',this)">➕ Add to page</button>'
+            + '<button class="wc-pro-btn small" onclick="wcPreviewReusable(\'' + esc(String(s.id)) + '\')">👁 Preview</button>'
+            + '<button class="wc-pro-btn small" onclick="wcRenameReusable(\'' + esc(String(s.id)) + '\')">Rename</button>'
+            + '<button class="wc-pro-btn small" onclick="wcDuplicateReusable(\'' + esc(String(s.id)) + '\')">Duplicate</button>'
+            + '<button class="wc-pro-btn small danger" onclick="wcDeleteReusable(\'' + esc(String(s.id)) + '\')">Delete</button>'
+            + '</div></div>';
+        }).join('');
+        h += '</div>';
+        const ae = document.activeElement;
+        const wasSearch = ae && ae.id === 'wc-ms-q';
+        const pos = wasSearch ? ae.selectionStart : null;
+        box.innerHTML = h;
+        if (keepFocus && wasSearch) { const q = $('wc-ms-q'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (e) {} } }
+      };
+      // seed + arm wrappers shortly after boot
+      setTimeout(() => { try { window.wcSeedActivity(); } catch (e) {} try { window.wcArmActivityWrappers && window.wcArmActivityWrappers(); } catch (e) {} }, 2500);
+    })();
+
+    /* ═══════════ WC PRO PART 4B — deep Header editor (additive, header only) ═══════════
+       Edits the existing header in place. Overrides only wcRenderHeaderPanel. */
+    (function WCProHeader() {
+      if (window.__WCProHeaderLoaded) return;
+      window.__WCProHeaderLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+      const G = () => (typeof grapesEditor !== 'undefined' ? grapesEditor : null);
+      const dirty = () => { try { window.wcMarkDirty && window.wcMarkDirty(); } catch (e) {} };
+      const snap = (l, d) => { try { window.wcSnap ? window.wcSnap(l, d) : (window.wcSnapshotVersion && window.wcSnapshotVersion(l)); } catch (e) {} };
+
+      function wcBFindHeader() {
+        try {
+          const g = G(); if (!g) return null;
+          const w = g.DomComponents.getWrapper(); let found = null;
+          const walk = (c) => { if (found) return; try { const tag = (c.get('tagName') || '').toLowerCase(); const at = c.getAttributes() || {}; if (tag === 'header' || tag === 'nav' || at.id === 'header' || (at.class || '').includes('header') || (at.class || '').includes('navbar')) found = c; } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+          walk(w); return found;
+        } catch (e) { return null; }
+      }
+      function wcBHead() { try { const d = getStudioCanvasDocument(); return (d && d.head) ? d : null; } catch (e) { return null; } }
+      function wcBTag(id) {
+        const head = wcBHead(); if (!head) return null;
+        let t = head.querySelector('#' + id);
+        if (!t) { try { t = head.ownerDocument.createElement('style'); t.id = id; head.appendChild(t); } catch (e) { return null; } }
+        return t;
+      }
+      function wcBSel(comp, attr) {
+        try {
+          const at = comp.getAttributes() || {};
+          if (at.id) return '#' + at.id;
+          const o = {}; o[attr] = '1'; comp.addAttributes(o);
+          return (comp.get('tagName') || 'header').toLowerCase() + '[' + attr + '="1"]';
+        } catch (e) { return 'header'; }
+      }
+      function wcBCfg() {
+        try {
+          const d = (window.wcProEnsure) ? window.wcProEnsure() : null;
+          if (!d) return {};
+          d.headerCfg = d.headerCfg || {};
+          return d.headerCfg;
+        } catch (e) { return {}; }
+      }
+      function wcBCompFromEl(el) {
+        try { if (typeof componentFromElement === 'function') return componentFromElement(el); } catch (e) {}
+        return null;
+      }
+      function wcBFirstImg(hdr) {
+        let out = null;
+        const walk = (c) => { if (out) return; try { if ((c.get('tagName') || '').toLowerCase() === 'img') { out = c; return; } } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+        try { walk(hdr); } catch (e) {}
+        return out;
+      }
+      function wcBNavBox(hdr) {
+        let nav = null;
+        const walk = (c) => { if (nav) return; try { const t = (c.get('tagName') || '').toLowerCase(); if (t === 'nav' || t === 'ul') nav = c; } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+        try { walk(hdr); } catch (e) {}
+        return nav || hdr;
+      }
+      function wcBMenuComps(hdr) {
+        const out = [];
+        try {
+          const el = hdr.getEl && hdr.getEl(); if (!el) return out;
+          el.querySelectorAll('a').forEach(a => { const c = wcBCompFromEl(a); if (c) out.push(c); });
+        } catch (e) {}
+        return out;
+      }
+      function wcBGuessKind(href) {
+        href = href || '';
+        if (/^tel:/i.test(href)) return 'phone';
+        if (/^mailto:/i.test(href)) return 'email';
+        if (/wa\.me|whatsapp/i.test(href)) return 'whatsapp';
+        if (/^#/.test(href)) return 'section';
+        if (/^https?:\/\//i.test(href)) return 'external';
+        if (href === '/' || href === '' || href === '#') return 'home';
+        return 'page';
+      }
+      function wcBPageOpts() {
+        let h = '<option value="home">Home page (/)</option>';
+        try {
+          if (typeof wcEnsurePages === 'function') {
+            const ps = wcEnsurePages() || [];
+            ps.forEach((p, i) => {
+              const v = (i === 0) ? '/' : ('/' + (p.slug || ('page-' + i)) + '.html');
+              h += '<option value="page::' + esc(v) + '">' + esc(p.name || ('Page ' + (i + 1))) + '</option>';
+            });
+          }
+        } catch (e) {}
+        return h;
+      }
+      function wcBSectionOpts() {
+        let h = '';
+        try {
+          if (typeof findSectionComponents === 'function') {
+            findSectionComponents().forEach((c, i) => {
+              const at = c.getAttributes() || {};
+              let nm = at['data-section-name'] || '';
+              try { if (!nm && typeof getSectionDisplayName === 'function') nm = getSectionDisplayName(c, i); } catch (e) {}
+              if (at.id) h += '<option value="#' + esc(at.id) + '">' + esc(nm || at.id) + ' (#' + esc(at.id) + ')</option>';
+            });
+          }
+        } catch (e) {}
+        return h || '<option value="">(no anchored sections)</option>';
+      }
+      function wcBHrefFor(kind, val) {
+        val = (val || '').trim();
+        if (kind === 'home') return '/';
+        if (kind === 'page') return (val.indexOf('page::') === 0) ? val.slice(6) : (val || '/');
+        if (kind === 'section') return val || '#contact';
+        if (kind === 'external') return (/^https?:\/\//i.test(val) ? val : 'https://' + val);
+        if (kind === 'whatsapp') return 'https://wa.me/' + val.replace(/\D/g, '');
+        if (kind === 'phone') return 'tel:' + val.replace(/\s/g, '');
+        if (kind === 'email') return 'mailto:' + val;
+        return val || '#';
+      }
+      function wcBValFromHref(kind, href) {
+        href = href || '';
+        if (kind === 'whatsapp') { const m = href.match(/wa\.me\/(\d+)/); return m ? m[1] : ''; }
+        if (kind === 'phone') return href.replace(/^tel:/i, '');
+        if (kind === 'email') return href.replace(/^mailto:/i, '');
+        if (kind === 'external') return href;
+        if (kind === 'page') return 'page::' + href;
+        return href;
+      }
+      function wcBMove(comp, dir) {
+        try {
+          const p = comp.parent(); if (!p) return false;
+          const idx = comp.index(), to = dir < 0 ? idx - 1 : idx + 1;
+          const n = p.components().length;
+          if (to < 0 || to >= n) return false;
+          const html = comp.toHTML ? comp.toHTML() : '';
+          const st = comp.getStyle ? comp.getStyle() : {};
+          const at = Object.assign({}, comp.getAttributes() || {});
+          comp.remove();
+          const added = p.append(html, { at: to });
+          const f = Array.isArray(added) ? added[0] : added;
+          if (f) { try { f.addStyle(st); f.addAttributes(at); if (typeof configureEditorComponent === 'function') configureEditorComponent(f); } catch (e) {} }
+          return true;
+        } catch (e) { return false; }
+      }
+
+      /* scoped header rules (re-applied from saved cfg after canvas reloads) */
+      window.wcBReapplyChrome = function () {
+        try {
+          const hdr = wcBFindHeader(); if (!hdr) return;
+          const cfg = wcBCfg();
+          const selH = wcBSel(hdr, 'data-wc-hdr');
+          const t1 = wcBTag('wc-hdr-style-css');
+          if (t1) {
+            let css = '';
+            if (cfg.hover) css += selH + ' a:hover{color:' + cfg.hover + ' !important;}\n';
+            if (cfg.linkColor) css += selH + ' a{color:' + cfg.linkColor + ';}\n';
+            if (cfg.active) css += selH + ' a[aria-current="page"]{color:' + cfg.active + ' !important;font-weight:700;}\n';
+            t1.textContent = css;
+          }
+          const nav = wcBNavBox(hdr);
+          const selN = wcBSel(nav, 'data-wc-nav');
+          const t2 = wcBTag('wc-hdr-mobile-css');
+          if (t2) {
+            let css = '';
+            if (cfg.mobileMenu === 'off') css += '@media (max-width:768px){' + selN + '{display:none !important;}}\n';
+            if (cfg.mobileBg) css += '@media (max-width:768px){' + selN + '{background:' + cfg.mobileBg + ' !important;}}\n';
+            if (cfg.mobileColor) css += '@media (max-width:768px){' + selN + ' a{color:' + cfg.mobileColor + ' !important;}}\n';
+            if (cfg.mobilePad) css += '@media (max-width:768px){' + selN + '{padding:' + cfg.mobilePad + 'px !important;}}\n';
+            const logo = wcBFirstImg(hdr);
+            if (logo && cfg.mobileLogo) {
+              const at = logo.getAttributes() || {};
+              const lsel = at.id ? ('#' + at.id) : (selH + ' img');
+              css += '@media (max-width:768px){' + lsel + '{width:' + cfg.mobileLogo + 'px !important;height:auto !important;}}\n';
+            }
+            t2.textContent = css;
+          }
+        } catch (e) {}
+      };
+
+      /* ── deep header panel ── */
+      window.wcRenderHeaderPanel = function () {
+        const box = $('wc-pro-header'); if (!box) return;
+        const hdr = wcBFindHeader();
+        if (!hdr) { box.innerHTML = '<div class="wc-pro-card"><h4>🏷️ Header</h4><div style="font-size:0.76rem;color:#94a3b8">No header found on this page. Insert one from Elements → Sections, or ask AI to “add a header”.</div><div style="display:flex;gap:0.4rem;margin-top:0.6rem"><button class="wc-pro-btn small" onclick="switchDrawerTab(\'blocks\')">🧱 Browse sections</button></div></div>'; return; }
+        const g = G();
+        const st = hdr.getStyle() || {};
+        const cfg = wcBCfg();
+        const logo = wcBFirstImg(hdr);
+        const logoSt = logo ? (logo.getStyle() || {}) : {};
+        const logoAt = logo ? (logo.getAttributes() || {}) : {};
+        let logoLink = '', logoBlank = false;
+        try {
+          let p = logo ? logo.parent() : null, guard = 0;
+          while (p && guard++ < 6) { if ((p.get('tagName') || '').toLowerCase() === 'a') { logoLink = (p.getAttributes() || {}).href || ''; logoBlank = (p.getAttributes() || {}).target === '_blank'; break; } p = p.parent(); }
+        } catch (e) {}
+        const menu = wcBMenuComps(hdr);
+        window._wcBMenu = menu.map(c => {
+          let txt = '', href = '';
+          try { const el = c.getEl && c.getEl(); txt = el ? (el.textContent || '').trim().slice(0, 60) : ''; href = (c.getAttributes() || {}).href || ''; } catch (e) {}
+          const kind = wcBGuessKind(href);
+          return { comp: c, text: txt, kind, val: wcBValFromHref(kind, href) };
+        });
+
+        const px = (v, fb) => { const n = parseInt(v); return isNaN(n) ? fb : n; };
+        let h = '';
+        /* LOGO */
+        h += '<div class="wc-pro-card"><h4>🖼️ Logo</h4>';
+        if (!logo) h += '<div style="font-size:0.75rem;color:#94a3b8">No logo image in this header.</div>';
+        else {
+          h += '<div class="wc-pro-row"><label>Width</label><input type="range" min="24" max="320" value="' + px(logoSt.width, 120) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcBLogoSize(this.value,\'w\')"><span class="wc-pro-val">' + px(logoSt.width, 120) + 'px</span></div>';
+          h += '<div class="wc-pro-row"><label>Height <span class="wc-friendly-lbl">(blank = auto)</span></label><input type="text" id="wcB-logo-h" value="' + esc(logoSt.height && logoSt.height !== 'auto' ? String(logoSt.height).replace('px', '') : '') + '" placeholder="auto" onchange="wcBLogoSize(this.value,\'h\')"></div>';
+          h += '<div class="wc-pro-row"><label>Alignment</label><select onchange="wcBLogoAlign(this.value)"><option value="">—</option><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>';
+          h += '<div class="wc-pro-row"><label>Logo link</label><input type="text" id="wcB-logo-link" value="' + esc(logoLink) + '" placeholder="/  or  https://…" onchange="wcBLogoLink()"></div>';
+          h += '<div class="wc-pro-row"><label>Open in new tab</label><select id="wcB-logo-blank" onchange="wcBLogoLink()"><option value="">Same tab</option><option value="_blank"' + (logoBlank ? ' selected' : '') + '>New tab</option></select></div>';
+          h += '<div style="display:flex;gap:0.35rem;flex-wrap:wrap"><button class="wc-pro-btn small primary" onclick="wcBLogoEdit()">🔄 Replace / Upload</button><button class="wc-pro-btn small danger" onclick="wcBLogoRemove()">Remove logo</button></div>';
+        }
+        h += '</div>';
+        /* MENU */
+        h += '<div class="wc-pro-card"><h4>🔗 Menu (' + menu.length + ')</h4><div id="wcB-menu-list"></div>';
+        h += '<div class="wc-pro-row"><label>New item</label><input type="text" id="wcB-new-txt" placeholder="About"></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcBMenuAdd()">+ Add menu item</button></div>';
+        /* APPEARANCE */
+        const hex = (v, fb) => { try { if (typeof normalizeHex === 'function') { const n = normalizeHex(v); if (n) return n.slice(0, 7); } } catch (e) {} const m = String(v || '').match(/#([0-9a-f]{6}|[0-9a-f]{3})/i); return m ? m[0] : fb; };
+        h += '<div class="wc-pro-card"><h4>🎨 Appearance</h4>';
+        h += '<div class="wc-pro-row"><label>Background</label><input type="color" value="' + esc(hex(st['background-color'] || st.background, '#ffffff')) + '" onchange="wcBHeaderBg(this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Transparent</label><select onchange="wcBTransparent(this.value)"><option value="off">OFF — solid</option><option value="on">ON — see-through</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Sticky <span class="wc-friendly-lbl">(stays on top)</span></label><select onchange="wcBSticky(this.value)"><option value="off">OFF</option><option value="on">ON</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Header height</label><input type="range" min="40" max="160" value="' + px(st['min-height'] || st.height, 72) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcBHeaderStyle({\'min-height\':this.value+\'px\'})"><span class="wc-pro-val">' + px(st['min-height'] || st.height, 72) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Inside spacing</label><input type="range" min="0" max="48" value="12" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcBHeaderStyle({padding:this.value+\'px 1.5rem\'})"><span class="wc-pro-val">12px</span></div>';
+        h += '<div class="wc-pro-row"><label>Menu text size</label><input type="range" min="12" max="22" value="' + (cfg.menuSize || 15) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcBMenuFont(\'size\',this.value)"><span class="wc-pro-val">' + (cfg.menuSize || 15) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Text weight <span class="wc-friendly-lbl">(boldness)</span></label><select onchange="wcBMenuFont(\'weight\',this.value)"><option value="">—</option><option>400</option><option>500</option><option>600</option><option>700</option><option>800</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Menu text color</label><input type="color" value="' + esc(cfg.linkColor || '#334155') + '" onchange="wcBMenuColor(this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Hover color</label><input type="color" value="' + esc(cfg.hover || '#6366f1') + '" onchange="wcBHover(this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Active page color</label><input type="color" value="' + esc(cfg.active || '#4f46e5') + '" onchange="wcBActive(this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Menu gap</label><input type="range" min="0" max="48" value="' + (cfg.gap || 8) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcBGap(this.value)"><span class="wc-pro-val">' + (cfg.gap || 8) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Menu alignment</label><select onchange="wcBNavAlign(this.value)"><option value="">—</option><option value="flex-start">Left</option><option value="center">Center</option><option value="flex-end">Right</option></select></div>';
+        h += '<div style="display:flex;gap:0.35rem;flex-wrap:wrap"><button class="wc-pro-btn small" onclick="wcBSelectHdr()">👆 Select header</button><button class="wc-pro-btn small" onclick="wcToggleLock(wcBFindHeader())">🔒 Lock / Unlock</button></div></div>';
+        /* MOBILE */
+        h += '<div class="wc-pro-card"><h4>📱 Mobile header</h4>';
+        h += '<div class="wc-pro-row"><label>Mobile logo size</label><input type="range" min="20" max="200" value="' + (cfg.mobileLogo || 96) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcBCfgSet(\'mobileLogo\',this.value)"><span class="wc-pro-val">' + (cfg.mobileLogo || 96) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Mobile menu</label><select onchange="wcBCfgSet(\'mobileMenu\',this.value)"><option value="on"' + (cfg.mobileMenu !== 'off' ? ' selected' : '') + '>ON — show</option><option value="off"' + (cfg.mobileMenu === 'off' ? ' selected' : '') + '>OFF — hide</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Mobile menu bg</label><input type="color" value="' + esc(cfg.mobileBg || '#ffffff') + '" onchange="wcBCfgSet(\'mobileBg\',this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Mobile text color</label><input type="color" value="' + esc(cfg.mobileColor || '#0f172a') + '" onchange="wcBCfgSet(\'mobileColor\',this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Mobile spacing</label><input type="range" min="0" max="40" value="' + (cfg.mobilePad || 12) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcBCfgSet(\'mobilePad\',this.value)"><span class="wc-pro-val">' + (cfg.mobilePad || 12) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Hamburger style</label><select onchange="wcBBurger(this.value)"><option value="">—</option><option value="round">Rounded</option><option value="filled">Filled button</option><option value="big">Large tap target</option></select></div>';
+        h += '<div class="wc-friendly-lbl">Hamburger styling applies to the existing menu button in your header (if it has one).</div></div>';
+        box.innerHTML = h;
+        window.wcBRenderMenuRows();
+        window.wcBFindHeader = wcBFindHeader;
+      };
+
+      window.wcBSelectHdr = function () { const h = wcBFindHeader(); if (h && G()) { G().select(h); try { const el = h.getEl && h.getEl(); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} } };
+      window.wcBCfgSet = function (k, v) { const c = wcBCfg(); c[k] = v; snap('Header updated', 'Mobile header setting changed'); window.wcBReapplyChrome(); dirty(); };
+      window.wcBHeaderBg = function (v) { const h = wcBFindHeader(); if (!h) return; try { h.addStyle({ 'background-color': v, background: v }); h.addAttributes({ 'data-wc-transparent': '0' }); } catch (e) {} snap('Header updated', 'Background changed'); dirty(); };
+      window.wcBTransparent = function (v) {
+        const h = wcBFindHeader(); if (!h) return;
+        try {
+          if (v === 'on') {
+            const st = h.getStyle() || {};
+            if (!h.getAttributes()['data-wc-orig-bg']) h.addAttributes({ 'data-wc-orig-bg': st['background-color'] || st.background || '#ffffff' });
+            h.addStyle({ background: 'transparent', 'background-color': 'transparent' });
+            h.addAttributes({ 'data-wc-transparent': '1' });
+          } else {
+            const orig = h.getAttributes()['data-wc-orig-bg'] || '#ffffff';
+            h.addStyle({ 'background-color': orig, background: orig });
+            h.addAttributes({ 'data-wc-transparent': '0' });
+          }
+        } catch (e) {}
+        snap('Header updated', v === 'on' ? 'Transparent ON' : 'Transparent OFF'); dirty();
+      };
+      window.wcBSticky = function (v) {
+        const h = wcBFindHeader(); if (!h) return;
+        try { if (v === 'on') h.addStyle({ position: 'sticky', top: '0', 'z-index': '100' }); else h.addStyle({ position: 'static' }); } catch (e) {}
+        snap('Header updated', v === 'on' ? 'Sticky ON' : 'Sticky OFF'); dirty();
+      };
+      window.wcBHeaderStyle = function (o) { const h = wcBFindHeader(); if (!h) return; try { h.addStyle(o); } catch (e) {} dirty(); };
+      window.wcBLogoSize = function (v, which) {
+        const l = wcBFirstImg(wcBFindHeader()); if (!l) return;
+        try {
+          if (which === 'w') l.addStyle({ width: v + 'px', height: (l.getStyle() || {}).height && (l.getStyle() || {}).height !== 'auto' ? (l.getStyle() || {}).height : 'auto' });
+          else l.addStyle({ height: (!v ? 'auto' : v + 'px') });
+        } catch (e) {}
+        dirty();
+      };
+      window.wcBLogoAlign = function (v) {
+        const l = wcBFirstImg(wcBFindHeader()); if (!l || !v) return;
+        try {
+          if (v === 'center') l.addStyle({ display: 'block', 'margin-left': 'auto', 'margin-right': 'auto' });
+          else if (v === 'left') l.addStyle({ display: 'block', 'margin-left': '0', 'margin-right': 'auto' });
+          else l.addStyle({ display: 'block', 'margin-left': 'auto', 'margin-right': '0' });
+        } catch (e) {}
+        dirty();
+      };
+      window.wcBLogoEdit = function () { const l = wcBFirstImg(wcBFindHeader()); if (l && typeof openImageEditor === 'function') { snap('Before header change', 'Logo edit started'); openImageEditor(l); } else if (typeof showToast === 'function') showToast('No logo image found'); };
+      window.wcBLogoRemove = function () {
+        const l = wcBFirstImg(wcBFindHeader()); if (!l) return;
+        if (!confirm('Remove the logo image?')) return;
+        try { l.remove(); } catch (e) {}
+        snap('Header updated', 'Logo removed'); dirty(); window.wcRenderHeaderPanel();
+      };
+      window.wcBLogoLink = function () {
+        const hdr = wcBFindHeader(), l = wcBFirstImg(hdr); if (!l) return;
+        const url = ($('wcB-logo-link') || {}).value || '';
+        const blank = ($('wcB-logo-blank') || {}).value || '';
+        try {
+          let a = null, p = l.parent(), guard = 0;
+          while (p && guard++ < 6) { if ((p.get('tagName') || '').toLowerCase() === 'a') { a = p; break; } p = p.parent(); }
+          if (a) { a.addAttributes({ href: url || '#' }); if (blank) a.addAttributes({ target: '_blank' }); else { const at = Object.assign({}, a.getAttributes()); delete at.target; a.setAttributes(at); } }
+          else if (url) {
+            const par = l.parent(), idx = l.index(), html = l.toHTML ? l.toHTML() : '';
+            const st = l.getStyle ? l.getStyle() : {}, at = Object.assign({}, l.getAttributes() || {});
+            l.remove();
+            const added = par.append('<a href="' + esc(url) + '"' + (blank ? ' target="_blank"' : '') + '>' + html + '</a>', { at: idx });
+            const f = Array.isArray(added) ? added[0] : added;
+            if (f) { const img = f.components && f.components()[0]; if (img) { try { img.addStyle(st); img.addAttributes(at); } catch (e) {} } }
+          }
+        } catch (e) {}
+        dirty();
+      };
+      window.wcBMenuFont = function (k, v) {
+        const hdr = wcBFindHeader(); if (!hdr || !v) return;
+        const cfg = wcBCfg();
+        wcBMenuComps(hdr).forEach(c => { try { c.addStyle(k === 'size' ? { 'font-size': v + 'px' } : { 'font-weight': v }); } catch (e) {} });
+        if (k === 'size') cfg.menuSize = v;
+        dirty();
+      };
+      window.wcBMenuColor = function (v) {
+        const hdr = wcBFindHeader(); if (!hdr) return;
+        wcBMenuComps(hdr).forEach(c => { try { c.addStyle({ color: v }); } catch (e) {} });
+        wcBCfg().linkColor = v; window.wcBReapplyChrome(); dirty();
+      };
+      window.wcBHover = function (v) { wcBCfg().hover = v; window.wcBReapplyChrome(); snap('Header updated', 'Hover color changed'); dirty(); };
+      window.wcBActive = function (v) { wcBCfg().active = v; window.wcBReapplyChrome(); dirty(); };
+      window.wcBSetActive = function (i) {
+        const m = window._wcBMenu || []; if (!m[i]) return;
+        m.forEach((r, j) => { try { if (j === i) r.comp.addAttributes({ 'aria-current': 'page' }); else { const at = Object.assign({}, r.comp.getAttributes()); delete at['aria-current']; r.comp.setAttributes(at); } } catch (e) {} });
+        window.wcBReapplyChrome(); dirty();
+        if (typeof showToast === 'function') showToast('★ Active menu item set');
+      };
+      window.wcBGap = function (v) {
+        const nav = wcBNavBox(wcBFindHeader()); if (!nav) return;
+        try { nav.addStyle({ gap: v + 'px' }); } catch (e) {}
+        wcBCfg().gap = v; dirty();
+      };
+      window.wcBNavAlign = function (v) {
+        const nav = wcBNavBox(wcBFindHeader()); if (!nav || !v) return;
+        try { nav.addStyle({ 'justify-content': v, 'text-align': v === 'center' ? 'center' : (v === 'flex-end' ? 'right' : 'left') }); } catch (e) {}
+        dirty();
+      };
+      window.wcBBurger = function (v) {
+        const hdr = wcBFindHeader(); if (!hdr || !v) return;
+        let t = null;
+        try {
+          const el = hdr.getEl && hdr.getEl();
+          if (el) {
+            const cand = el.querySelector('button,[class*="toggle"],[class*="burger"],[class*="hamburger"],[id*="toggle"],[id*="burger"]');
+            if (cand) t = wcBCompFromEl(cand);
+          }
+        } catch (e) {}
+        if (!t) { if (typeof showToast === 'function') showToast('No menu button found in this header'); return; }
+        try {
+          if (v === 'round') t.addStyle({ 'border-radius': '999px', padding: '0.55rem 0.7rem' });
+          else if (v === 'filled') t.addStyle({ background: '#0f172a', color: '#fff', 'border-radius': '12px', padding: '0.6rem 0.75rem', border: 'none' });
+          else t.addStyle({ padding: '0.9rem 1rem', 'font-size': '1.3rem', 'border-radius': '12px' });
+        } catch (e) {}
+        dirty();
+        if (typeof showToast === 'function') showToast('🍔 Hamburger style applied');
+      };
+
+      /* menu rows */
+      window.wcBRenderMenuRows = function () {
+        const box = $('wcB-menu-list'); if (!box) return;
+        const m = window._wcBMenu || [];
+        if (!m.length) { box.innerHTML = '<div style="font-size:0.74rem;color:#94a3b8">No menu links found.</div>'; return; }
+        box.innerHTML = m.map((r, i) => {
+          const isSec = r.kind === 'section', isPage = r.kind === 'page';
+          const valCell = isSec
+            ? '<select data-wcB-mv="' + i + '" onchange="wcBMenuLink(' + i + ',this.value)">' + wcBSectionOpts().replace('value="#' + esc((r.val || '').replace('#', '')) + '"', 'value="#' + esc((r.val || '').replace('#', '')) + '" selected') + '</select>'
+            : (isPage
+              ? '<select data-wcB-mv="' + i + '" onchange="wcBMenuLink(' + i + ',this.value)">' + wcBPageOpts().replace('value="page::' + esc(String(r.val || '').replace('page::', '')) + '"', 'value="page::' + esc(String(r.val || '').replace('page::', '')) + '" selected') + '</select>'
+              : '<input type="text" data-wcB-mv="' + i + '" value="' + esc(r.kind === 'home' ? '' : r.val) + '" placeholder="' + (r.kind === 'whatsapp' ? 'number e.g. 9477…' : (r.kind === 'phone' ? '+1…' : (r.kind === 'email' ? 'name@site.com' : 'https://…'))) + '"' + (r.kind === 'home' ? ' disabled' : '') + ' onchange="wcBMenuLink(' + i + ',this.value)">');
+          return '<div class="wc-sec-item"><div class="wc-sec-item-top"><input type="text" value="' + esc(r.text) + '" onchange="wcBMenuText(' + i + ',this.value)" style="flex:1;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:7px;padding:0.32rem 0.5rem;font-size:0.75rem;min-width:0;"></div>'
+            + '<div style="display:flex;gap:0.3rem;margin-top:0.4rem;"><select onchange="wcBMenuKind(' + i + ',this.value)" style="flex:1;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:7px;padding:0.32rem;font-size:0.72rem;">'
+            + ['home', 'page', 'section', 'external', 'whatsapp', 'phone', 'email'].map(k => '<option value="' + k + '"' + (r.kind === k ? ' selected' : '') + '>' + k + '</option>').join('')
+            + '</select></div><div style="margin-top:0.35rem;">' + valCell + '</div>'
+            + '<div class="wc-sec-item-btns"><button class="wc-pro-btn small" onclick="wcBMenuMove(' + i + ',-1)">↑</button><button class="wc-pro-btn small" onclick="wcBMenuMove(' + i + ',1)">↓</button><button class="wc-pro-btn small" onclick="wcBSetActive(' + i + ')">★ Active</button><button class="wc-pro-btn small danger" onclick="wcBMenuDel(' + i + ')">Delete</button></div></div>';
+        }).join('');
+        box.querySelectorAll('select[data-wcB-mv],input[data-wcB-mv]').forEach(x => { x.style.cssText += ';width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:7px;padding:0.32rem 0.5rem;font-size:0.74rem;'; });
+      };
+      window.wcBMenuText = function (i, v) {
+        const r = (window._wcBMenu || [])[i]; if (!r) return;
+        r.text = v;
+        try { const el = r.comp.getEl && r.comp.getEl(); if (el) el.textContent = v; try { r.comp.set('content', v); } catch (e) {} } catch (e) {}
+        dirty();
+      };
+      window.wcBMenuKind = function (i, k) {
+        const r = (window._wcBMenu || [])[i]; if (!r) return;
+        r.kind = k;
+        if (k === 'home') r.val = '';
+        else if (k === 'section') r.val = '#contact';
+        else if (k === 'page') r.val = 'page::/';
+        else r.val = '';
+        try { r.comp.addAttributes({ href: wcBHrefFor(k, r.val) }); } catch (e) {}
+        dirty(); window.wcBRenderMenuRows();
+      };
+      window.wcBMenuLink = function (i, v) {
+        const r = (window._wcBMenu || [])[i]; if (!r) return;
+        r.val = v;
+        try { r.comp.addAttributes({ href: wcBHrefFor(r.kind, v) }); } catch (e) {}
+        dirty();
+      };
+      window.wcBMenuMove = function (i, dir) {
+        const r = (window._wcBMenu || [])[i]; if (!r) return;
+        if (wcBMove(r.comp, dir)) { snap('Header updated', 'Menu reordered'); dirty(); window.wcRenderHeaderPanel(); }
+      };
+      window.wcBMenuDel = function (i) {
+        const r = (window._wcBMenu || [])[i]; if (!r) return;
+        if (!confirm('Delete menu item "' + (r.text || 'link') + '"?')) return;
+        try { r.comp.remove(); } catch (e) {}
+        snap('Header updated', 'Menu item deleted'); dirty(); window.wcRenderHeaderPanel();
+      };
+      window.wcBMenuAdd = function () {
+        const hdr = wcBFindHeader(); if (!hdr || !G()) return;
+        const txt = ($('wcB-new-txt') || {}).value || 'New Link';
+        try {
+          const nav = wcBNavBox(hdr);
+          const added = nav.append('<a href="#contact" style="text-decoration:none;font-weight:600;color:inherit;padding:0.4rem 0.7rem;">' + esc(txt) + '</a>');
+          const c = Array.isArray(added) ? added[0] : added;
+          if (c && typeof configureEditorComponent === 'function') configureEditorComponent(c);
+        } catch (e) {}
+        const inp = $('wcB-new-txt'); if (inp) inp.value = '';
+        snap('Header updated', 'Menu item added'); dirty(); window.wcRenderHeaderPanel();
+      };
+
+      /* delayed boot: re-apply saved chrome rules once editor/canvas ready */
+      setTimeout(() => { try { window.wcBReapplyChrome(); } catch (e) {} }, 3500);
+    })();
+
+    /* ═══════════ WC PRO PART 4C — deep Footer editor (additive, footer only) ═══════════
+       Edits the existing footer in place. Overrides only wcRenderFooterPanel. */
+    (function WCProFooter() {
+      if (window.__WCProFooterLoaded) return;
+      window.__WCProFooterLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+      const G = () => (typeof grapesEditor !== 'undefined' ? grapesEditor : null);
+      const dirty = () => { try { window.wcMarkDirty && window.wcMarkDirty(); } catch (e) {} };
+      const snap = (l, d) => { try { window.wcSnap ? window.wcSnap(l, d) : (window.wcSnapshotVersion && window.wcSnapshotVersion(l)); } catch (e) {} };
+
+      function wcCFindFooter() {
+        try {
+          const g = G(); if (!g) return null;
+          const w = g.DomComponents.getWrapper(); let found = null;
+          const walk = (c) => { if (found) return; try { const tag = (c.get('tagName') || '').toLowerCase(); const at = c.getAttributes() || {}; if (tag === 'footer' || at.id === 'footer' || (at.class || '').includes('footer')) found = c; } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+          walk(w); return found;
+        } catch (e) { return null; }
+      }
+      function wcCHead() { try { const d = getStudioCanvasDocument(); return (d && d.head) ? d : null; } catch (e) { return null; } }
+      function wcCTag(id) {
+        const head = wcCHead(); if (!head) return null;
+        let t = head.querySelector('#' + id);
+        if (!t) { try { t = head.ownerDocument.createElement('style'); t.id = id; head.appendChild(t); } catch (e) { return null; } }
+        return t;
+      }
+      function wcCSel(comp, attr) {
+        try {
+          const at = comp.getAttributes() || {};
+          if (at.id) return '#' + at.id;
+          const o = {}; o[attr] = '1'; comp.addAttributes(o);
+          return (comp.get('tagName') || 'footer').toLowerCase() + '[' + attr + '="1"]';
+        } catch (e) { return 'footer'; }
+      }
+      function wcCCfg() {
+        try {
+          const d = (window.wcProEnsure) ? window.wcProEnsure() : null;
+          if (!d) return {};
+          d.footerCfg = d.footerCfg || {};
+          return d.footerCfg;
+        } catch (e) { return {}; }
+      }
+      function wcCCompFromEl(el) { try { if (typeof componentFromElement === 'function') return componentFromElement(el); } catch (e) {} return null; }
+      function wcCMove(comp, dir) {
+        try {
+          const p = comp.parent(); if (!p) return false;
+          const idx = comp.index(), to = dir < 0 ? idx - 1 : idx + 1, n = p.components().length;
+          if (to < 0 || to >= n) return false;
+          const html = comp.toHTML ? comp.toHTML() : '';
+          const st = comp.getStyle ? comp.getStyle() : {};
+          const at = Object.assign({}, comp.getAttributes() || {});
+          comp.remove();
+          const added = p.append(html, { at: to });
+          const f = Array.isArray(added) ? added[0] : added;
+          if (f) { try { f.addStyle(st); f.addAttributes(at); if (typeof configureEditorComponent === 'function') configureEditorComponent(f); } catch (e) {} }
+          return true;
+        } catch (e) { return false; }
+      }
+      function wcCFirstImg(ftr) {
+        let out = null;
+        const walk = (c) => { if (out) return; try { if ((c.get('tagName') || '').toLowerCase() === 'img') { out = c; return; } } catch (e) {} try { (c.components() || []).forEach(walk); } catch (e) {} };
+        try { walk(ftr); } catch (e) {}
+        return out;
+      }
+      function wcCDescEl(ftr) {
+        try {
+          const el = ftr.getEl && ftr.getEl(); if (!el) return null;
+          const ps = Array.from(el.querySelectorAll('p')).filter(p => (p.textContent || '').trim().length > 20);
+          if (!ps.length) return null;
+          ps.sort((a, b) => (b.textContent || '').length - (a.textContent || '').length);
+          return wcCCompFromEl(ps[0]);
+        } catch (e) { return null; }
+      }
+      var WC_EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.]+/;
+      var WC_PHONE_RE = /(\+?\(?\d[\d\s\-.()]{5,}\d)/;
+      function wcCContact(ftr) {
+        const out = { tel: null, mail: null, wa: null, addr: null, telText: null, mailText: null, waText: null };
+        try {
+          const walk = (c) => {
+            try {
+              if ((c.get('tagName') || '').toLowerCase() === 'a') {
+                const href = (c.getAttributes() || {}).href || '';
+                if (/^tel:/i.test(href) && !out.tel) out.tel = c;
+                else if (/^mailto:/i.test(href) && !out.mail) out.mail = c;
+                else if (/wa\.me|whatsapp/i.test(href) && !out.wa) out.wa = c;
+              }
+            } catch (e) {}
+            try { (c.components() || []).forEach(walk); } catch (e) {}
+          };
+          walk(ftr);
+          const el = ftr.getEl && ftr.getEl();
+          if (el) {
+            const hasLink = (n) => { try { return !!n.querySelector('a[href^="tel:"],a[href^="mailto:"]'); } catch (e) { return false; } };
+            const nodes = Array.from(el.querySelectorAll('p,span,li,div'));
+            let bestPh = null, bestEm = null, bestAd = null;
+            nodes.forEach(n => {
+              let t = '';
+              try { t = (n.textContent || '').trim(); } catch (e) {}
+              if (!t || t.length > 220) return;
+              if (/©|copyright|all rights reserved/i.test(t)) return;
+              if (!hasLink(n)) {
+                const em = t.match(WC_EMAIL_RE);
+                if (em && (!bestEm || t.length < bestEm.t.length)) bestEm = { node: n, comp: wcCCompFromEl(n), match: em[0], t };
+                const ph = t.match(WC_PHONE_RE);
+                if (ph && ph[0].replace(/\D/g, '').length >= 7 && (!bestPh || t.length < bestPh.t.length)) {
+                  if (!(bestEm && bestEm.node === n)) bestPh = { node: n, comp: wcCCompFromEl(n), match: ph[0], t };
+                }
+              }
+              if (!bestAd && t.length >= 10 && t.length <= 200 && /\d/.test(t) && /[a-z]/i.test(t) && /(street|st\.|road|rd\.|avenue|ave|lane|city|town|colombo|kandy|galle|address|no\.|postal|zip)/i.test(t)) {
+                let hasA = false;
+                try { hasA = !!n.querySelector('a'); } catch (e) {}
+                if (!hasA) bestAd = { node: n, comp: wcCCompFromEl(n), text: t };
+              }
+            });
+            out.mailText = bestEm; out.telText = bestPh; out.addr = bestAd;
+          }
+        } catch (e) {}
+        return out;
+      }
+      function wcCFieldVals(c) {
+        let phone = '', email = '', wa = '', addr = '';
+        try { if (c.tel) phone = (c.tel.getAttributes().href || '').replace(/^tel:/i, ''); else if (c.telText) phone = c.telText.match || ''; } catch (e) {}
+        try { if (c.mail) email = (c.mail.getAttributes().href || '').replace(/^mailto:/i, ''); else if (c.mailText) email = c.mailText.match || ''; } catch (e) {}
+        try {
+          if (c.wa) { const m = (c.wa.getAttributes().href || '').match(/wa\.me\/(\d+)/); wa = m ? m[1] : (c.wa.getAttributes().href || ''); }
+          else if (c.waText) wa = c.waText.match || '';
+        } catch (e) {}
+        try { if (c.addr) addr = c.addr.text || ''; } catch (e) {}
+        return { phone, email, wa, addr };
+      }
+      function wcCTextOf(c) { try { const el = c.getEl && c.getEl(); return el ? (el.textContent || '').trim() : ''; } catch (e) { return ''; } }
+      /* link groups: elements (depth<=3) with >=2 links, or heading + >=1 link */
+      function wcCGroups(ftr) {
+        const groups = [];
+        try {
+          const walk = (c, depth, heading) => {
+            if (depth > 3) return;
+            const tag = (c.get('tagName') || '').toLowerCase();
+            let hd = heading;
+            try { if (/^h[1-6]$/.test(tag)) { const t = wcCTextOf(c); if (t) hd = t; } } catch (e) {}
+            const kids = c.components() || [];
+            const links = kids.filter(k => { try { return (k.get('tagName') || '').toLowerCase() === 'a'; } catch (e) { return false; } });
+            if ((links.length >= 2 || (hd && links.length >= 1)) && groups.indexOf(c) < 0 && c !== ftr) groups.push({ comp: c, heading: hd || '', links });
+            kids.forEach(k => walk(k, depth + 1, hd));
+          };
+          (ftr.components() || []).forEach(k => walk(k, 1, ''));
+        } catch (e) {}
+        return groups;
+      }
+      const WC_SOCIALS = [
+        ['facebook', /facebook|fb\.me/i, 'Facebook'],
+        ['instagram', /instagram/i, 'Instagram'],
+        ['youtube', /youtube|youtu\.be/i, 'YouTube'],
+        ['tiktok', /tiktok/i, 'TikTok'],
+        ['linkedin', /linkedin/i, 'LinkedIn'],
+        ['twitter', /twitter|x\.com/i, 'X / Twitter'],
+        ['whatsapp', /wa\.me|whatsapp/i, 'WhatsApp']
+      ];
+      function wcCSocials(ftr) {
+        const out = [];
+        try {
+          const walk = (c) => {
+            try {
+              if ((c.get('tagName') || '').toLowerCase() === 'a') {
+                const href = (c.getAttributes() || {}).href || '';
+                for (const [key, re, label] of WC_SOCIALS) {
+                  if (re.test(href)) { out.push({ comp: c, key, label, href }); break; }
+                }
+              }
+            } catch (e) {}
+            try { (c.components() || []).forEach(walk); } catch (e) {}
+          };
+          walk(ftr);
+        } catch (e) {}
+        return out;
+      }
+      function wcCCopyEl(ftr) {
+        try {
+          const el = ftr.getEl && ftr.getEl(); if (!el) return null;
+          const all = Array.from(el.querySelectorAll('p,span,div,small'));
+          for (const n of all) { if (/©|copyright|all rights reserved/i.test(n.textContent || '')) return wcCCompFromEl(n); }
+        } catch (e) {}
+        return null;
+      }
+
+      window.wcCReapply = function () {
+        try {
+          const ftr = wcCFindFooter(); if (!ftr) return;
+          const cfg = wcCCfg();
+          const selF = wcCSel(ftr, 'data-wc-ftr');
+          const t = wcCTag('wc-ftr-style-css');
+          if (t) {
+            let css = '';
+            if (cfg.link) css += selF + ' a{color:' + cfg.link + ';}\n';
+            if (cfg.hover) css += selF + ' a:hover{color:' + cfg.hover + ' !important;}\n';
+            if (cfg.heading) css += selF + ' h1,' + selF + ' h2,' + selF + ' h3,' + selF + ' h4,' + selF + ' h5,' + selF + ' h6{color:' + cfg.heading + ' !important;}\n';
+            t.textContent = css;
+          }
+        } catch (e) {}
+      };
+
+      /* ── deep footer panel ── */
+      window.wcRenderFooterPanel = function () {
+        const box = $('wc-pro-footer'); if (!box) return;
+        const ftr = wcCFindFooter();
+        if (!ftr) { box.innerHTML = '<div class="wc-pro-card"><h4>🦶 Footer</h4><div style="font-size:0.76rem;color:#94a3b8">No footer found. Insert one from Elements → Sections → Footer, or ask AI to “add a footer”.</div></div>'; return; }
+        const st = ftr.getStyle() || {};
+        const cfg = wcCCfg();
+        const logo = wcCFirstImg(ftr);
+        const logoSt = logo ? (logo.getStyle() || {}) : {};
+        const descComp = wcCDescEl(ftr);
+        const contact = wcCContact(ftr);
+        const groups = wcCGroups(ftr);
+        const socials = wcCSocials(ftr);
+        const copyComp = wcCCopyEl(ftr);
+        window._wcCG = groups.map((g, gi) => ({
+          comp: g.comp, heading: g.heading || ('Link group ' + (gi + 1)),
+          links: g.links.map(c => ({ comp: c, text: wcCTextOf(c).slice(0, 60), href: (c.getAttributes() || {}).href || '' }))
+        }));
+        window._wcCS = socials.map(s => ({ comp: s.comp, key: s.key, label: s.label, href: s.href, hidden: ((s.comp.getStyle() || {}).display === 'none') }));
+
+        const px = (v, fb) => { const n = parseInt(v); return isNaN(n) ? fb : n; };
+        const hex = (v, fb) => { try { if (typeof normalizeHex === 'function') { const n = normalizeHex(v); if (n) return n.slice(0, 7); } } catch (e) {} const m = String(v || '').match(/#([0-9a-f]{6}|[0-9a-f]{3})/i); return m ? m[0] : fb; };
+        let h = '';
+        /* BRAND */
+        h += '<div class="wc-pro-card"><h4>🏷️ Brand</h4>';
+        if (logo) {
+          h += '<div class="wc-pro-row"><label>Logo size</label><input type="range" min="24" max="280" value="' + px(logoSt.width, 120) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcCLogoSize(this.value)"><span class="wc-pro-val">' + px(logoSt.width, 120) + 'px</span></div>';
+          h += '<div style="display:flex;gap:0.35rem;margin-bottom:0.5rem;"><button class="wc-pro-btn small primary" onclick="wcCLogoEdit()">🔄 Replace logo</button></div>';
+        } else h += '<div class="wc-friendly-lbl">No logo image in this footer.</div>';
+        h += '<label class="wc-friendly-lbl">About / description</label><textarea class="be-input" id="wcC-desc" rows="3" style="width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:8px;padding:0.45rem 0.6rem;font-size:0.78rem;" oninput="wcCDesc(this.value)" placeholder="Short about text…">' + esc(descComp ? wcCTextOf(descComp).slice(0, 400) : '') + '</textarea></div>';
+        /* CONTACT */
+        const cVals = wcCFieldVals(contact);
+        h += '<div class="wc-pro-card"><h4>📞 Contact</h4>';
+        h += '<div class="wc-pro-row"><label>Phone</label><input type="text" id="wcC-phone" value="' + esc(cVals.phone) + '" placeholder="+1…"></div>';
+        h += '<div class="wc-pro-row"><label>Email</label><input type="text" id="wcC-email" value="' + esc(cVals.email) + '" placeholder="hello@…"></div>';
+        h += '<div class="wc-pro-row"><label>WhatsApp</label><input type="text" id="wcC-wa" value="' + esc(cVals.wa) + '" placeholder="number…"></div>';
+        h += '<div class="wc-pro-row"><label>Address</label><input type="text" id="wcC-addr" value="' + esc(cVals.addr) + '" placeholder="Street, City"></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcCApplyContact()">✓ Apply contact info</button>';
+        h += '<button class="wc-pro-btn small" style="width:100%;margin-top:0.35rem" onclick="wcRenderFooterPanel()">↻ Re-read from footer</button></div>';
+        /* LINKS */
+        h += '<div class="wc-pro-card"><h4>🔗 Footer links</h4><div id="wcC-groups"></div>';
+        h += '<div class="wc-pro-row"><label>Add to</label><select id="wcC-add-g">' + window._wcCG.map((g, i) => '<option value="' + i + '">' + esc(g.heading) + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Text</label><input type="text" id="wcC-add-t" placeholder="New link"></div>';
+        h += '<div class="wc-pro-row"><label>Goes to</label><input type="text" id="wcC-add-h" placeholder="/about  ·  #services  ·  https://…"></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcCAddLink()">+ Add link</button></div>';
+        /* SOCIAL */
+        h += '<div class="wc-pro-card"><h4>📣 Social media</h4><div id="wcC-socials"></div>';
+        h += '<div class="wc-pro-row"><label>Network</label><select id="wcC-so-net">' + WC_SOCIALS.map(s => '<option value="' + s[0] + '">' + s[2] + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Profile URL</label><input type="text" id="wcC-so-url" placeholder="https://…"></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcCAddSocial()">+ Add social link</button></div>';
+        /* LAYOUT */
+        h += '<div class="wc-pro-card"><h4>📐 Layout</h4>';
+        h += '<div class="wc-pro-row"><label>Columns</label><select onchange="wcCColumns(this.value)"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Column spacing</label><input type="range" min="0" max="64" value="24" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcCGap(this.value)"><span class="wc-pro-val">24px</span></div>';
+        h += '<div class="wc-pro-row"><label>Content alignment</label><select onchange="wcCFtrStyle({\'text-align\':this.value})"><option value="">—</option><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>';
+        h += '<div class="wc-pro-row"><label>Footer padding</label><input type="range" min="0" max="120" value="' + px(st['padding-top'] || st.padding, 48) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcCFtrStyle({padding:this.value+\'px 1.5rem\'})"><span class="wc-pro-val">' + px(st['padding-top'] || st.padding, 48) + 'px</span></div>';
+        h += '<div class="wc-pro-row"><label>Background</label><input type="color" value="' + esc(hex(st['background-color'] || st.background, '#0f172a')) + '" onchange="wcCFtrStyle({\'background-color\':this.value,background:this.value})"></div>';
+        h += '<div class="wc-pro-row"><label>Text color</label><input type="color" value="' + esc(hex(st.color, '#cbd5e1')) + '" onchange="wcCFtrStyle({color:this.value})"></div>';
+        h += '<div class="wc-pro-row"><label>Heading color</label><input type="color" value="' + esc(cfg.heading || '#ffffff') + '" onchange="wcCCfgColor(\'heading\',this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Link color</label><input type="color" value="' + esc(cfg.link || '#cbd5e1') + '" onchange="wcCCfgColor(\'link\',this.value)"></div>';
+        h += '<div class="wc-pro-row"><label>Link hover color</label><input type="color" value="' + esc(cfg.hover || '#6366f1') + '" onchange="wcCCfgColor(\'hover\',this.value)"></div>';
+        h += '<div style="display:flex;gap:0.35rem;flex-wrap:wrap"><button class="wc-pro-btn small" onclick="wcCSelect()">👆 Select footer</button><button class="wc-pro-btn small" onclick="wcToggleLock(wcCFindFooter())">🔒 Lock / Unlock</button></div></div>';
+        /* COPYRIGHT */
+        h += '<div class="wc-pro-card"><h4>© Copyright</h4>';
+        h += '<textarea class="be-input" id="wcC-copy" rows="2" style="width:100%;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:8px;padding:0.45rem 0.6rem;font-size:0.78rem;">' + esc(copyComp ? wcCTextOf(copyComp).slice(0, 300) : '') + '</textarea>';
+        h += '<div style="display:flex;gap:0.35rem;margin-top:0.45rem;"><button class="wc-pro-btn small primary" style="flex:1" onclick="wcCCopy()">✓ Apply</button><button class="wc-pro-btn small" style="flex:1" onclick="wcCCopyYear()">Set year to ' + new Date().getFullYear() + '</button></div></div>';
+        box.innerHTML = h;
+        window.wcCFindFooter = wcCFindFooter;
+        window.wcCRenderGroups();
+        window.wcCRenderSocials();
+      };
+
+      window.wcCSelect = function () { const f = wcCFindFooter(); if (f && G()) { G().select(f); try { const el = f.getEl && f.getEl(); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} } };
+      window.wcCFtrStyle = function (o) { const f = wcCFindFooter(); if (!f) return; try { f.addStyle(o); } catch (e) {} dirty(); };
+      window.wcCCfgColor = function (k, v) { wcCCfg()[k] = v; window.wcCReapply(); dirty(); };
+      window.wcCLogoSize = function (v) { const l = wcCFirstImg(wcCFindFooter()); if (!l) return; try { l.addStyle({ width: v + 'px', height: 'auto' }); } catch (e) {} dirty(); };
+      window.wcCLogoEdit = function () { const l = wcCFirstImg(wcCFindFooter()); if (l && typeof openImageEditor === 'function') { snap('Before footer change', 'Logo edit started'); openImageEditor(l); } };
+      window.wcCDesc = function (v) {
+        const f = wcCFindFooter(); if (!f) return;
+        const c = wcCDescEl(f); if (!c) { if (typeof showToast === 'function') showToast('No description paragraph found'); return; }
+        try { const el = c.getEl && c.getEl(); if (el) el.textContent = v; try { c.set('content', v); } catch (e) {} } catch (e) {}
+        dirty();
+      };
+      window.wcCApplyContact = function () {
+        const f = wcCFindFooter(); if (!f) return;
+        const ph = (($('wcC-phone') || {}).value || '').trim(), em = (($('wcC-email') || {}).value || '').trim(), wa = (($('wcC-wa') || {}).value || '').trim(), ad = (($('wcC-addr') || {}).value || '').trim();
+        const c = wcCContact(f);
+        const setText = (comp, node, nv, oldMatch) => {
+          try {
+            if (node) {
+              const cur = node.textContent || '';
+              node.textContent = (oldMatch && cur.indexOf(oldMatch) >= 0) ? cur.replace(oldMatch, nv) : nv;
+            }
+            if (comp) { try { const el = comp.getEl && comp.getEl(); if (el) comp.set('content', el.innerHTML); } catch (e) {} }
+          } catch (e) {}
+        };
+        const hostOf = () => {
+          try {
+            if (c.tel && c.tel.parent()) return c.tel.parent();
+            if (c.mail && c.mail.parent()) return c.mail.parent();
+            if (c.addr && c.addr.comp && c.addr.comp.parent()) return c.addr.comp.parent();
+          } catch (e) {}
+          return f;
+        };
+        try {
+          if (ph) {
+            if (c.tel) {
+              c.tel.addAttributes({ href: 'tel:' + ph.replace(/\s/g, '') });
+              const t = wcCTextOf(c.tel);
+              if (/\d/.test(t)) setText(c.tel, c.tel.getEl && c.tel.getEl(), ph);
+            } else if (c.telText) setText(c.telText.comp, c.telText.node, ph, c.telText.match);
+            else hostOf().append('<p style="margin:0.3rem 0;">📞 <a href="tel:' + esc(ph.replace(/\s/g, '')) + '" style="color:inherit;text-decoration:none;">' + esc(ph) + '</a></p>');
+          }
+          if (em) {
+            if (c.mail) {
+              c.mail.addAttributes({ href: 'mailto:' + em });
+              const t = wcCTextOf(c.mail);
+              if (/@/.test(t)) setText(c.mail, c.mail.getEl && c.mail.getEl(), em);
+            } else if (c.mailText) setText(c.mailText.comp, c.mailText.node, em, c.mailText.match);
+            else hostOf().append('<p style="margin:0.3rem 0;">✉️ <a href="mailto:' + esc(em) + '" style="color:inherit;text-decoration:none;">' + esc(em) + '</a></p>');
+          }
+          if (wa) {
+            const num = wa.replace(/\D/g, '');
+            if (c.wa) c.wa.addAttributes({ href: 'https://wa.me/' + num });
+            else if (c.waText) setText(c.waText.comp, c.waText.node, wa, c.waText.match);
+            else hostOf().append('<p style="margin:0.3rem 0;">💬 <a href="https://wa.me/' + esc(num) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">' + esc(wa) + '</a></p>');
+          }
+          if (ad) {
+            if (c.addr && c.addr.comp) {
+              const el = c.addr.comp.getEl && c.addr.comp.getEl();
+              if (el) el.textContent = ad;
+              try { c.addr.comp.set('content', ad); } catch (e) {}
+            } else hostOf().append('<p style="margin:0.3rem 0;">📍 ' + esc(ad) + '</p>');
+          }
+        } catch (e) {}
+        snap('Footer updated', 'Contact info applied'); dirty();
+        if (typeof showToast === 'function') showToast('📞 Footer contact updated');
+        try { window.wcRenderFooterPanel(); } catch (e) {}
+      };
+      /* groups */
+      window.wcCRenderGroups = function () {
+        const box = $('wcC-groups'); if (!box) return;
+        const gs = window._wcCG || [];
+        if (!gs.length) { box.innerHTML = '<div class="wc-friendly-lbl">No link groups detected.</div>'; return; }
+        box.innerHTML = gs.map((g, gi) => '<div class="wc-friendly-lbl" style="margin:0.4rem 0 0.25rem;">' + esc(g.heading) + '</div>' + g.links.map((l, li) =>
+          '<div class="wc-sec-item"><div class="wc-sec-item-top"><input type="text" value="' + esc(l.text) + '" onchange="wcCLinkText(' + gi + ',' + li + ',this.value)" style="flex:1;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:7px;padding:0.32rem 0.5rem;font-size:0.75rem;min-width:0;"></div>'
+          + '<input type="text" value="' + esc(l.href) + '" onchange="wcCLinkHref(' + gi + ',' + li + ',this.value)" placeholder="/page · #section · https://…" style="width:100%;margin-top:0.35rem;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:7px;padding:0.32rem 0.5rem;font-size:0.72rem;">'
+          + '<div class="wc-sec-item-btns"><button class="wc-pro-btn small" onclick="wcCLinkMove(' + gi + ',' + li + ',-1)">↑</button><button class="wc-pro-btn small" onclick="wcCLinkMove(' + gi + ',' + li + ',1)">↓</button><button class="wc-pro-btn small danger" onclick="wcCLinkDel(' + gi + ',' + li + ')">Delete</button></div></div>'
+        ).join('')).join('');
+      };
+      window.wcCLinkText = function (gi, li, v) {
+        const l = ((window._wcCG || [])[gi] || {}).links || []; const r = l[li]; if (!r) return;
+        r.text = v;
+        try { const el = r.comp.getEl && r.comp.getEl(); if (el) el.textContent = v; try { r.comp.set('content', v); } catch (e) {} } catch (e) {}
+        dirty();
+      };
+      window.wcCLinkHref = function (gi, li, v) {
+        const l = ((window._wcCG || [])[gi] || {}).links || []; const r = l[li]; if (!r) return;
+        r.href = v;
+        try { r.comp.addAttributes({ href: v }); } catch (e) {}
+        dirty();
+      };
+      window.wcCLinkMove = function (gi, li, dir) {
+        const g = (window._wcCG || [])[gi]; if (!g || !g.links[li]) return;
+        if (wcCMove(g.links[li].comp, dir)) { dirty(); window.wcRenderFooterPanel(); }
+      };
+      window.wcCLinkDel = function (gi, li) {
+        const g = (window._wcCG || [])[gi]; if (!g || !g.links[li]) return;
+        if (!confirm('Delete link "' + (g.links[li].text || '') + '"?')) return;
+        try { g.links[li].comp.remove(); } catch (e) {}
+        snap('Footer updated', 'Link deleted'); dirty(); window.wcRenderFooterPanel();
+      };
+      window.wcCAddLink = function () {
+        const gs = window._wcCG || [];
+        const gi = parseInt((($('wcC-add-g') || {}).value || '0'), 10);
+        const t = (($('wcC-add-t') || {}).value || '').trim() || 'New Link';
+        const href = (($('wcC-add-h') || {}).value || '').trim() || '#';
+        const host = gs[gi] ? gs[gi].comp : wcCFindFooter();
+        if (!host) return;
+        try {
+          const added = host.append('<a href="' + esc(href) + '" style="text-decoration:none;color:inherit;">' + esc(t) + '</a>');
+          const c = Array.isArray(added) ? added[0] : added;
+          if (c && typeof configureEditorComponent === 'function') configureEditorComponent(c);
+        } catch (e) {}
+        snap('Footer updated', 'Link added'); dirty(); window.wcRenderFooterPanel();
+      };
+      /* socials */
+      window.wcCRenderSocials = function () {
+        const box = $('wcC-socials'); if (!box) return;
+        const ss = window._wcCS || [];
+        if (!ss.length) { box.innerHTML = '<div class="wc-friendly-lbl">No social links detected yet.</div>'; return; }
+        box.innerHTML = ss.map((s, i) => '<div class="wc-sec-item"><div class="wc-sec-item-top"><span class="wc-sec-item-name">🌐 ' + esc(s.label) + (s.hidden ? ' (hidden)' : '') + '</span></div>'
+          + '<input type="text" value="' + esc(s.href) + '" onchange="wcCSoUrl(' + i + ',this.value)" style="width:100%;margin-top:0.35rem;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:7px;padding:0.32rem 0.5rem;font-size:0.72rem;">'
+          + '<div class="wc-sec-item-btns"><button class="wc-pro-btn small" onclick="wcCSoToggle(' + i + ')">' + (s.hidden ? 'Show icon' : 'Hide icon') + '</button><button class="wc-pro-btn small danger" onclick="wcCSoDel(' + i + ')">Delete</button></div></div>').join('');
+      };
+      window.wcCSoUrl = function (i, v) {
+        const s = (window._wcCS || [])[i]; if (!s) return;
+        s.href = v;
+        try { s.comp.addAttributes({ href: v }); } catch (e) {}
+        dirty();
+      };
+      window.wcCSoToggle = function (i) {
+        const s = (window._wcCS || [])[i]; if (!s) return;
+        try {
+          if (s.hidden) { const od = (s.comp.getAttributes() || {})['data-wc-orig-d'] || ''; s.comp.addStyle({ display: od }); s.hidden = false; }
+          else { s.comp.addAttributes({ 'data-wc-orig-d': (s.comp.getStyle() || {}).display || '' }); s.comp.addStyle({ display: 'none' }); s.hidden = true; }
+        } catch (e) {}
+        dirty(); window.wcCRenderSocials();
+      };
+      window.wcCSoDel = function (i) {
+        const s = (window._wcCS || [])[i]; if (!s) return;
+        if (!confirm('Delete ' + s.label + ' link?')) return;
+        try { s.comp.remove(); } catch (e) {}
+        snap('Footer updated', s.label + ' removed'); dirty(); window.wcRenderFooterPanel();
+      };
+      window.wcCAddSocial = function () {
+        const f = wcCFindFooter(); if (!f) return;
+        const net = ($('wcC-so-net') || {}).value || 'facebook';
+        const url = (($('wcC-so-url') || {}).value || '').trim();
+        if (!url) { if (typeof showToast === 'function') showToast('Paste the profile URL first'); return; }
+        const label = { facebook: 'Facebook', instagram: 'Instagram', youtube: 'YouTube', tiktok: 'TikTok', linkedin: 'LinkedIn', twitter: 'X / Twitter', whatsapp: 'WhatsApp' }[net] || net;
+        let host = f;
+        try {
+          const ss = wcCSocials(f);
+          if (ss.length && ss[0].comp.parent()) host = ss[0].comp.parent();
+        } catch (e) {}
+        try {
+          const added = host.append('<a href="' + esc(url) + '" target="_blank" rel="noopener" style="display:inline-block;padding:0.45rem 0.8rem;border:1px solid #334155;border-radius:999px;text-decoration:none;color:inherit;font-size:0.78rem;font-weight:700;margin:0.15rem;">' + esc(label) + '</a>');
+          const c = Array.isArray(added) ? added[0] : added;
+          if (c && typeof configureEditorComponent === 'function') configureEditorComponent(c);
+        } catch (e) {}
+        snap('Footer updated', label + ' added'); dirty(); window.wcRenderFooterPanel();
+      };
+      /* layout */
+      window.wcCColumns = function (n) {
+        const f = wcCFindFooter(); if (!f || !n) return;
+        const gs = window._wcCG || [];
+        let host = null;
+        try {
+          if (gs.length > 1) {
+            const p0 = gs[0].comp.parent();
+            if (p0 && gs.every(g => g.comp.parent() === p0) && p0 !== f) host = p0;
+          }
+          if (!host && gs.length) host = gs[0].comp.parent() || f;
+        } catch (e) {}
+        if (!host || host === f) { if (typeof showToast === 'function') showToast('This footer has no separate links row — columns skipped'); return; }
+        try { host.addStyle({ display: 'grid', 'grid-template-columns': 'repeat(' + n + ',1fr)', gap: '1.5rem' }); } catch (e) {}
+        snap('Footer updated', n + ' columns'); dirty();
+      };
+      window.wcCGap = function (v) {
+        const gs = window._wcCG || [];
+        try {
+          const seen = {};
+          gs.forEach(g => { const p = g.comp.parent(); if (p && !seen[p.getId ? p.getId() : Math.random()]) { try { p.addStyle({ gap: v + 'px' }); } catch (e) {} } });
+        } catch (e) {}
+        dirty();
+      };
+      /* copyright */
+      window.wcCCopy = function () {
+        const f = wcCFindFooter(); if (!f) return;
+        const v = ($('wcC-copy') || {}).value || '';
+        if (!v) return;
+        const c = wcCCopyEl(f);
+        try {
+          if (c) { const el = c.getEl && c.getEl(); if (el) el.textContent = v; try { c.set('content', v); } catch (e) {} }
+          else f.append('<p style="text-align:center;opacity:.7;margin-top:1rem;font-size:0.82rem;">' + esc(v) + '</p>');
+        } catch (e) {}
+        snap('Footer updated', 'Copyright edited'); dirty();
+      };
+      window.wcCCopyYear = function () {
+        const f = wcCFindFooter(); if (!f) return;
+        const yr = String(new Date().getFullYear());
+        const c = wcCCopyEl(f);
+        try {
+          if (c) {
+            const el = c.getEl && c.getEl();
+            if (el) { el.innerHTML = (el.innerHTML || '').replace(/\b(19|20)\d{2}\b/g, yr); try { c.set('content', el.innerHTML); } catch (e) {} }
+            const ta = $('wcC-copy'); if (ta && el) ta.value = el.textContent;
+          }
+        } catch (e) {}
+        snap('Footer updated', 'Year → ' + yr); dirty();
+        if (typeof showToast === 'function') showToast('© Year set to ' + yr);
+      };
+
+      setTimeout(() => { try { window.wcCReapply(); } catch (e) {} }, 3500);
+    })();
+
+    /* ═══════════ WC PRO PART 4D — deep SEO settings (additive, SEO only) ═══════════
+       Existing SEO audit modal/score logic untouched. Overrides only wcRenderSeoPanel/wcSaveSeo. */
+    (function WCProSeo() {
+      if (window.__WCProSeoLoaded) return;
+      window.__WCProSeoLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+      const dirty = () => { try { window.wcMarkDirty && window.wcMarkDirty(); } catch (e) {} };
+      const DSE = { title: '', desc: '', keywords: '', author: '', ri: 'index', rf: 'follow', ogTitle: '', ogDesc: '', ogImage: '', twTitle: '', twDesc: '', twImage: '', favicon: '', siteName: '', canonical: '', lang: '' };
+      function wcDGet() {
+        try {
+          const d = (window.wcProEnsure) ? window.wcProEnsure() : null;
+          if (!d) return Object.assign({}, DSE);
+          d.seo = Object.assign({}, DSE, (d.seo || {}));
+          if (!d.seo.siteName && d.siteSettings && d.siteSettings.name) d.seo.siteName = d.siteSettings.name;
+          return d.seo;
+        } catch (e) { return Object.assign({}, DSE); }
+      }
+      const G = (id) => { const el = $(id); return el ? el.value : ''; };
+      window.wcRenderSeoPanel = function () {
+        const box = $('wc-pro-seo'); if (!box) return;
+        const s = wcDGet();
+        const ropt = (v, cur) => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + v + '</option>';
+        let h = '<div class="wc-pro-card"><h4>🔍 Basic SEO <span class="wc-friendly-lbl">— Google result</span></h4>';
+        h += '<div class="wc-pro-row"><label>SEO title</label><input type="text" id="wcD-title" value="' + esc(s.title) + '" maxlength="70" style="flex:2;max-width:none" oninput="wcDPreview()"></div>';
+        h += '<div class="wc-pro-row"><label>Description</label><input type="text" id="wcD-desc" value="' + esc(s.desc) + '" maxlength="170" style="flex:2;max-width:none" oninput="wcDPreview()"></div>';
+        h += '<div class="wc-pro-row"><label>Keywords</label><input type="text" id="wcD-kw" value="' + esc(s.keywords) + '" style="flex:2;max-width:none"></div>';
+        h += '<div class="wc-pro-row"><label>Author</label><input type="text" id="wcD-author" value="' + esc(s.author) + '" style="flex:2;max-width:none"></div>';
+        h += '<div class="wc-pro-row"><label>Search listing</label><select id="wcD-ri">' + ropt('index', s.ri) + ropt('noindex', s.ri) + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Follow links</label><select id="wcD-rf">' + ropt('follow', s.rf) + ropt('nofollow', s.rf) + '</select></div>';
+        h += '<div id="wcD-gprev"></div></div>';
+        h += '<div class="wc-pro-card"><h4>📣 Social preview</h4>';
+        h += '<div class="wc-pro-row"><label>Share title</label><input type="text" id="wcD-ogt" value="' + esc(s.ogTitle) + '" style="flex:2;max-width:none" oninput="wcDPreview()"></div>';
+        h += '<div class="wc-pro-row"><label>Share text</label><input type="text" id="wcD-ogd" value="' + esc(s.ogDesc) + '" style="flex:2;max-width:none" oninput="wcDPreview()"></div>';
+        h += '<div class="wc-pro-row"><label>Share image</label><input type="text" id="wcD-ogi" value="' + esc(s.ogImage) + '" style="flex:2;max-width:none" oninput="wcDPreview()"></div>';
+        h += '<div class="wc-pro-row"><label>X title</label><input type="text" id="wcD-twt" value="' + esc(s.twTitle) + '" style="flex:2;max-width:none"></div>';
+        h += '<div class="wc-pro-row"><label>X description</label><input type="text" id="wcD-twd" value="' + esc(s.twDesc) + '" style="flex:2;max-width:none"></div>';
+        h += '<div class="wc-pro-row"><label>X image</label><input type="text" id="wcD-twi" value="' + esc(s.twImage) + '" style="flex:2;max-width:none"></div>';
+        h += '<div id="wcD-sprev"></div></div>';
+        h += '<div class="wc-pro-card"><h4>🪪 Identity</h4>';
+        h += '<div class="wc-pro-row"><label>Site name</label><input type="text" id="wcD-site" value="' + esc(s.siteName) + '" style="flex:2;max-width:none"></div>';
+        h += '<div class="wc-pro-row"><label>Favicon URL</label><input type="text" id="wcD-fav" value="' + esc(s.favicon) + '" style="flex:2;max-width:none"></div></div>';
+        h += '<div class="wc-pro-card"><h4>⚙️ Technical</h4>';
+        h += '<div class="wc-pro-row"><label>Canonical URL</label><input type="text" id="wcD-can" value="' + esc(s.canonical) + '" placeholder="https://mysite.com/" style="flex:2;max-width:none"></div>';
+        h += '<div class="wc-pro-row"><label>Language</label><select id="wcD-lang">' + ['en', 'ta', 'si', 'fr', 'de', 'es'].map(l => '<option value="' + l + '"' + (s.lang === l ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Sitemap</label><span class="wc-friendly-lbl" id="wcD-sm-status">Ready — download below</span></div>';
+        h += '<div style="display:flex;gap:0.35rem;"><button class="wc-pro-btn small" style="flex:1" onclick="wcDSitemap()">⤓ sitemap.xml</button><button class="wc-pro-btn small" style="flex:1" onclick="wcDRobots()">⤓ robots.txt</button></div>';
+        h += '<div class="wc-friendly-lbl" style="margin-top:0.35rem">Upload these two files to your published site root when you publish.</div></div>';
+        h += '<div class="wc-pro-card"><h4>🖼️ Image alt text (<span id="wcD-imgn">0</span>)</h4><div id="wcD-imgs" style="max-height:220px;overflow:auto;"></div></div>';
+        h += '<div class="wc-pro-card"><h4>📊 Score</h4><div style="font-size:1.6rem;font-weight:900;" id="wcD-score">—</div><div id="wcD-recs" style="font-size:0.74rem;color:#94a3b8;"></div>';
+        h += '<button class="wc-pro-btn" style="width:100%;margin-top:0.5rem" onclick="openSeoAuditModal()">🔎 Open full SEO audit</button></div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%;margin-top:0.5rem;" onclick="wcAiGenerateSeo(this)">✦ AI Generate SEO — targets 75%+</button>';
+        h += '<div class="wc-friendly-lbl" style="margin:0.3rem 0 0.5rem;">AI reads your page content and writes title, description + share tags. Review below, then Save.</div>';
+        h += '<button class="wc-pro-btn primary" style="width:100%" onclick="wcSaveSeo()">💾 Save SEO</button>';
+        box.innerHTML = h;
+        window.wcDRenderImgs();
+        window.wcDPreview();
+        if (window._wcSeoShowScore) { try { window.wcRefreshSeoScore(); } catch (e) {} }
+        else { try { window.wcSeoBlankScore(); } catch (e) {} }
+      };
+      window.wcDPreview = function () {
+        const t = G('wcD-title') || G('wcD-site') || 'Website title';
+        const u = (G('wcD-can') || 'https://yoursite.com/').replace(/\/$/, '');
+        const d = G('wcD-desc') || 'A short description of this website appears here in search results.';
+        const gp = $('wcD-gprev');
+        if (gp) gp.innerHTML = '<div style="background:#fff;border:1px solid #1e293b;border-radius:10px;padding:0.7rem;margin-top:0.5rem;"><div style="font-size:0.72rem;color:#202124;">' + esc(u) + '</div><div style="font-size:1rem;color:#1a0dab;line-height:1.3;">' + esc(t).slice(0, 70) + '</div><div style="font-size:0.78rem;color:#4d5156;line-height:1.45;">' + esc(d).slice(0, 170) + '</div><div class="wc-friendly-lbl">Google preview</div></div>';
+        const ot = G('wcD-ogt') || t, od = G('wcD-ogd') || d, oi = G('wcD-ogi');
+        const sp = $('wcD-sprev');
+        if (sp) sp.innerHTML = '<div style="background:#fff;border:1px solid #1e293b;border-radius:10px;overflow:hidden;margin-top:0.5rem;">' + (oi ? '<img src="' + esc(oi) + '" style="width:100%;height:130px;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">' : '<div style="height:90px;background:#1e293b;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75rem;">No share image</div>') + '<div style="padding:0.6rem;"><div style="font-size:0.68rem;color:#65676b;text-transform:uppercase;">' + esc(u.replace(/^https?:\/\//, '')) + '</div><div style="font-size:0.88rem;font-weight:700;color:#050505;">' + esc(ot).slice(0, 90) + '</div><div style="font-size:0.76rem;color:#65676b;">' + esc(od).slice(0, 130) + '</div></div><div class="wc-friendly-lbl" style="padding:0 0.6rem 0.5rem;">Facebook / X preview</div></div>';
+      };
+      window.wcDRenderImgs = function () {
+        const box = $('wcD-imgs'); if (!box) return;
+        const list = [];
+        try {
+          if (typeof grapesEditor !== 'undefined' && grapesEditor) {
+            const w = grapesEditor.DomComponents.getWrapper();
+            const walk = (c) => {
+              if (list.length >= 30) return;
+              try { if ((c.get('tagName') || '').toLowerCase() === 'img') list.push(c); } catch (e) {}
+              try { (c.components() || []).forEach(walk); } catch (e) {}
+            };
+            walk(w);
+          }
+        } catch (e) {}
+        window._wcDImgs = list;
+        const n = $('wcD-imgn'); if (n) n.textContent = list.length;
+        if (!list.length) { box.innerHTML = '<div class="wc-friendly-lbl">No images on this page.</div>'; return; }
+        box.innerHTML = list.map((c, i) => {
+          let src = '', alt = '';
+          try { const at = c.getAttributes() || {}; src = at.src || ''; alt = at.alt || ''; } catch (e) {}
+          return '<div style="display:flex;gap:0.45rem;align-items:center;margin-bottom:0.4rem;"><img src="' + esc(src) + '" style="width:44px;height:34px;object-fit:cover;border-radius:6px;border:1px solid #1e293b;flex-shrink:0;" onerror="this.style.opacity=0.2"><input type="text" value="' + esc(alt) + '" placeholder="Describe this image…" onchange="wcDAlt(' + i + ',this.value)" style="flex:1;background:#0a0f1c;border:1px solid #283347;color:#e2e8f0;border-radius:7px;padding:0.35rem 0.5rem;font-size:0.74rem;min-width:0;"></div>';
+        }).join('');
+      };
+      window.wcDAlt = function (i, v) {
+        const c = (window._wcDImgs || [])[i]; if (!c) return;
+        try { c.addAttributes({ alt: v }); const el = c.getEl && c.getEl(); if (el) el.setAttribute('alt', v); } catch (e) {}
+        dirty();
+      };
+      function wcDEnsureMeta(doc, key, isProp, content) {
+        if (content == null || content === '') return;
+        const sel = 'meta[' + (isProp ? 'property' : 'name') + '="' + key + '"]';
+        let m = doc.head.querySelector(sel);
+        if (!m) { m = doc.createElement('meta'); if (isProp) m.setAttribute('property', key); else m.setAttribute('name', key); doc.head.appendChild(m); }
+        m.setAttribute('content', content);
+      }
+      window.wcSaveSeo = function () {
+        const d = (window.wcProEnsure) ? window.wcProEnsure() : null; if (!d) return;
+        const s = {
+          title: G('wcD-title').trim(), desc: G('wcD-desc').trim(), keywords: G('wcD-kw').trim(), author: G('wcD-author').trim(),
+          ri: G('wcD-ri') || 'index', rf: G('wcD-rf') || 'follow',
+          ogTitle: G('wcD-ogt').trim(), ogDesc: G('wcD-ogd').trim(), ogImage: G('wcD-ogi').trim(),
+          twTitle: G('wcD-twt').trim(), twDesc: G('wcD-twd').trim(), twImage: G('wcD-twi').trim(),
+          favicon: G('wcD-fav').trim(), siteName: G('wcD-site').trim(), canonical: G('wcD-can').trim(), lang: G('wcD-lang') || 'en'
+        };
+        d.seo = s;
+        try {
+          if (s.siteName) { try { d.siteSettings = d.siteSettings || {}; d.siteSettings.name = s.siteName; } catch (e) {} if (projectData) projectData.bizName = s.siteName; const pi = $('project-name-input'); if (pi) pi.value = s.siteName; }
+        } catch (e) {}
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(typeof currentHtml === 'string' ? currentHtml : '', 'text/html');
+          if (s.title) { let t = doc.head.querySelector('title'); if (!t) { t = doc.createElement('title'); doc.head.appendChild(t); } t.textContent = s.title; }
+          wcDEnsureMeta(doc, 'description', false, s.desc);
+          wcDEnsureMeta(doc, 'keywords', false, s.keywords);
+          wcDEnsureMeta(doc, 'author', false, s.author);
+          wcDEnsureMeta(doc, 'robots', false, s.ri + ', ' + s.rf);
+          wcDEnsureMeta(doc, 'og:title', true, s.ogTitle || s.title);
+          wcDEnsureMeta(doc, 'og:description', true, s.ogDesc || s.desc);
+          wcDEnsureMeta(doc, 'og:image', true, s.ogImage);
+          wcDEnsureMeta(doc, 'og:type', true, 'website');
+          wcDEnsureMeta(doc, 'twitter:card', false, 'summary_large_image');
+          wcDEnsureMeta(doc, 'twitter:title', false, s.twTitle || s.ogTitle || s.title);
+          wcDEnsureMeta(doc, 'twitter:description', false, s.twDesc || s.ogDesc || s.desc);
+          wcDEnsureMeta(doc, 'twitter:image', false, s.twImage || s.ogImage);
+          if (s.canonical) { let l = doc.head.querySelector('link[rel="canonical"]'); if (!l) { l = doc.createElement('link'); l.setAttribute('rel', 'canonical'); doc.head.appendChild(l); } l.setAttribute('href', s.canonical); }
+          if (s.favicon) { let l = doc.head.querySelector('link[rel="icon"]'); if (!l) { l = doc.createElement('link'); l.setAttribute('rel', 'icon'); doc.head.appendChild(l); } l.setAttribute('href', s.favicon); }
+          try { doc.documentElement.setAttribute('lang', s.lang || 'en'); } catch (e) {}
+          if (typeof currentHtml !== 'undefined') currentHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+          try { const ci = (typeof activeConceptIndex !== 'undefined' ? activeConceptIndex : 0); if (projectData.designs && projectData.designs[ci]) projectData.designs[ci].html = currentHtml; } catch (e) {}
+          try { const cd = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null; if (cd && s.title) cd.title = s.title; } catch (e) {}
+        } catch (e) {}
+        try { if (typeof saveProjectData === 'function') saveProjectData(); } catch (e) {}
+        dirty();
+        try { window.wcLogActivity && window.wcLogActivity('SEO updated', 'Meta + social tags saved', '🚀'); } catch (e) {}
+        window.wcRefreshSeoScore();
+        if (typeof showToast === 'function') showToast('🚀 SEO saved — score recalculated');
+      };
+      /* recalc: same spirit as audit + meta checks. Never opens the modal. */
+      window.wcRefreshSeoScore = function () {
+        let score = 0; const recs = [];
+        const plus = (n, ok, tip) => { if (ok) score += n; else if (tip) recs.push(tip); };
+        try {
+          const s = wcDGet();
+          plus(15, s.title && s.title.length >= 10 && s.title.length <= 70, 'Keep the SEO title 10–60 characters.');
+          plus(15, s.desc && s.desc.length >= 50 && s.desc.length <= 170, 'Write a meta description of 50–160 characters.');
+          plus(5, !!s.keywords, 'Add 3–6 keywords.');
+          plus(3, !!s.author, null);
+          plus(4, s.ri === 'index', 'Robots is set to noindex — Google will skip this site.');
+          plus(5, !!s.canonical, 'Add a canonical URL.');
+          plus(12, !!(s.ogTitle || s.title) && !!s.ogImage, 'Add a share image for social previews.');
+          plus(8, !!((s.twTitle || s.ogTitle || s.title) && (s.twImage || s.ogImage)), 'Complete the X/Twitter preview fields.');
+          plus(5, !!s.favicon, 'Add a favicon URL.');
+          plus(3, !!s.lang, null);
+          let h1 = 0, imgs = [], missingAlt = 0, secs = 0, ctas = 0;
+          try {
+            const cd = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+            if (cd) {
+              h1 = cd.querySelectorAll('h1').length;
+              imgs = Array.from(cd.querySelectorAll('img'));
+              missingAlt = imgs.filter(i => !(i.getAttribute('alt') || '').trim()).length;
+              secs = cd.querySelectorAll('section,header,footer').length;
+              ctas = cd.querySelectorAll('a.btn-primary,button,a[href^="#"]').length;
+            }
+          } catch (e) {}
+          plus(8, h1 === 1, h1 === 0 ? 'Add one H1 headline.' : 'Keep only one H1 per page.');
+          plus(10, imgs.length === 0 || missingAlt === 0, missingAlt + ' image(s) need alt text — see Image alt text above.');
+          plus(4, secs >= 3, 'Add more sections (services, reviews…).');
+          plus(3, ctas >= 2, 'Add call-to-action buttons.');
+        } catch (e) {}
+        score = Math.max(0, Math.min(100, Math.round(score)));
+        try { const p = $('cfr-seo-score'); if (p) p.textContent = score + '%'; } catch (e) {}
+        try { const el = $('wcD-score'); if (el) { el.textContent = score + '%'; el.style.color = score >= 80 ? '#34d399' : (score >= 55 ? '#fbbf24' : '#f87171'); } } catch (e) {}
+        try { const r = $('wcD-recs'); if (r) r.innerHTML = recs.length ? recs.slice(0, 5).map(x => '💡 ' + esc(x)).join('<br>') : '✅ All checks passed — excellent!'; } catch (e) {}
+        return score;
+      };
+      window.wcDBlob = function (name, text) {
+        try {
+          const b = new Blob([text], { type: 'text/plain' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(b); a.download = name;
+          document.body.appendChild(a); a.click();
+          setTimeout(() => { try { URL.revokeObjectURL(a.href); a.remove(); } catch (e) {} }, 600);
+        } catch (e) {}
+      };
+      window.wcDSitemap = function () {
+        try {
+          let pages = [{ slug: 'index', name: 'Home' }];
+          try { if (typeof wcEnsurePages === 'function') pages = wcEnsurePages(); } catch (e) {}
+          const s = wcDGet();
+          let base = (s.canonical || '').trim().replace(/\/$/, '') || (location.origin || 'https://example.com');
+          const urls = pages.map(p => '  <url><loc>' + esc(base + '/' + ((p.slug || 'index') === 'index' ? '' : (p.slug + '.html'))) + '</loc></url>').join('\n');
+          window.wcDBlob('sitemap.xml', '<' + '?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + '\n</urlset>');
+          if (typeof showToast === 'function') showToast('⤓ sitemap.xml downloaded');
+        } catch (e) {}
+      };
+      window.wcDRobots = function () {
+        try {
+          const s = wcDGet();
+          let base = (s.canonical || '').trim().replace(/\/$/, '') || (location.origin || 'https://example.com');
+          window.wcDBlob('robots.txt', 'User-agent: *\nAllow: /\n\nSitemap: ' + base + '/sitemap.xml\n');
+          if (typeof showToast === 'function') showToast('⤓ robots.txt downloaded');
+        } catch (e) {}
+      };
+    })();
+
+    /* ═══════════ WC PRO PART 4F — AI SEO generator (SEO + AI-feed only) ═══════════
+       ✦ AI Generate SEO: page content-a padichu title/description/share-tags
+       generate panni apply pannum (targets 75%+). AI fail-na offline
+       heuristic fallback — button eppovum velai seiyum. Body content
+       eppovum thodadhu (head mattum harvest). */
+    (function WCProAiSeo() {
+      if (window.__WCProAiSeoLoaded) return;
+      window.__WCProAiSeoLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+      const dirty = () => { try { window.wcMarkDirty && window.wcMarkDirty(); } catch (e) {} };
+      const STOP = { the: 1, and: 1, for: 1, with: 1, our: 1, your: 1, you: 1, are: 1, was: 1, from: 1, that: 1, this: 1, have: 1, has: 1, will: 1, can: 1, all: 1, more: 1, new: 1, best: 1 };
+
+      function wcSeoCtx() {
+        const c = { biz: 'Website', page: 'Home', h1: '', heads: [], text: '', imgs: [], base: '' };
+        try { c.biz = (projectData && projectData.bizName) || 'Website'; } catch (e) {}
+        try { if (typeof window.wcSeoPageName === 'function') c.page = window.wcSeoPageName(); } catch (e) {}
+        try {
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (doc) {
+            const h1 = doc.querySelector('h1');
+            c.h1 = h1 ? (h1.textContent || '').trim().slice(0, 90) : '';
+            c.heads = Array.from(doc.querySelectorAll('h2,h3')).slice(0, 6).map(h => (h.textContent || '').trim().slice(0, 60)).filter(Boolean);
+            const bt = doc.body ? (doc.body.innerText || doc.body.textContent || '') : '';
+            c.text = String(bt).replace(/\s+/g, ' ').trim().slice(0, 1500);
+            c.imgs = Array.from(doc.querySelectorAll('img')).map(im => im.getAttribute('src') || '').filter(s => s && s.indexOf('data:') !== 0).slice(0, 5);
+          }
+        } catch (e) {}
+        try { c.base = (($('wcD-can') || {}).value || '').trim().replace(/\/$/, '') || (location.origin || ''); } catch (e) {}
+        return c;
+      }
+      function wcCut(s, n) {
+        s = String(s || '').replace(/\s+/g, ' ').trim();
+        if (s.length <= n) return s;
+        const cut = s.slice(0, n - 3);
+        const sp = cut.lastIndexOf(' ');
+        return (sp > n * 0.5 ? cut.slice(0, sp) : cut) + '...';
+      }
+      /* offline fallback — eppovum velai seiyum, 75+ target */
+      window.wcSeoHeuristic = function () {
+        const c = wcSeoCtx();
+        const topic = c.h1 || c.heads[0] || (c.biz + ' — ' + c.page);
+        let title = (c.h1 ? c.h1 + ' | ' + c.biz : topic);
+        title = wcCut(title, 60);
+        if (title.length < 10) title = wcCut(c.biz + ' — Quality Service You Can Trust', 60);
+        let desc = '';
+        try {
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (doc) {
+            const ps = Array.from(doc.querySelectorAll('p')).map(p => (p.textContent || '').trim()).filter(p => p.length >= 60 && !/lorem ipsum/i.test(p));
+            if (ps.length) desc = wcCut(ps.sort((a, b) => b.length - a.length)[0], 157);
+          }
+        } catch (e) {}
+        if (desc.length < 50) desc = wcCut(topic + '. ' + c.biz + ' offers reliable service you can trust. Contact us today for a free quote.', 157);
+        const words = (c.h1 + ' ' + c.heads.join(' ')).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3 && !STOP[w]);
+        const kw = [];
+        words.forEach(w => { if (kw.indexOf(w) < 0) kw.push(w); });
+        return {
+          title, desc, keywords: kw.slice(0, 6).join(', '), author: c.biz,
+          ri: 'index', rf: 'follow',
+          ogTitle: title, ogDesc: desc, ogImage: c.imgs[0] || '',
+          twTitle: title, twDesc: desc, twImage: c.imgs[0] || '',
+          canonical: c.base, ctx: c
+        };
+      };
+      function wcSeoFill(f) {
+        const set = (id, v) => { const el = $(id); if (el) el.value = (v == null ? '' : String(v)); };
+        set('wcD-title', f.title); set('wcD-desc', f.desc); set('wcD-kw', f.keywords); set('wcD-author', f.author);
+        const ri = $('wcD-ri'); if (ri) ri.value = f.ri || 'index';
+        const rf = $('wcD-rf'); if (rf) rf.value = f.rf || 'follow';
+        set('wcD-ogt', f.ogTitle); set('wcD-ogd', f.ogDesc); set('wcD-ogi', f.ogImage);
+        set('wcD-twt', f.twTitle); set('wcD-twd', f.twDesc); set('wcD-twi', f.twImage);
+        if (f.canonical !== undefined) set('wcD-can', f.canonical);
+        try { if (typeof wcDPreview === 'function') wcDPreview(); } catch (e) {}
+      }
+      function wcSeoHarvest(html) {
+        try {
+          const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+          const meta = (n) => { const m = doc.head.querySelector('meta[name="' + n + '"]'); return m ? (m.getAttribute('content') || '').trim() : ''; };
+          const metap = (p) => { const m = doc.head.querySelector('meta[property="' + p + '"]'); return m ? (m.getAttribute('content') || '').trim() : ''; };
+          const t = doc.head.querySelector('title');
+          const cl = doc.head.querySelector('link[rel="canonical"]');
+          return {
+            title: t ? (t.textContent || '').trim() : '', desc: meta('description'),
+            keywords: meta('keywords'), author: meta('author'),
+            ogTitle: metap('og:title'), ogDesc: metap('og:description'), ogImage: metap('og:image'),
+            twTitle: meta('twitter:title'), twDesc: meta('twitter:description'), twImage: meta('twitter:image'),
+            canonical: cl ? (cl.getAttribute('href') || '').trim() : ''
+          };
+        } catch (e) { return null; }
+      }
+      window.wcAiGenerateSeo = async function (btn) {
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Generating SEO…'; }
+        try { if (typeof syncCanvasToHtml === 'function') syncCanvasToHtml(); } catch (e) {}
+        try { if (window.wcSnap) window.wcSnap('Before AI SEO', 'AI SEO generation started'); else if (window.wcSnapshotVersion) window.wcSnapshotVersion('Before AI SEO'); } catch (e) {}
+        const c = wcSeoCtx();
+        let f = null, via = 'heuristic';
+        /* AI lane: full-doc edit prompt, head mattum harvest (body risk illai) */
+        try {
+          if (window.OpenCodeAI && window.OpenCodeAI.editWithFallback && typeof currentHtml === 'string' && currentHtml.length > 100) {
+            const prompt = 'You are an SEO expert. Optimize ONLY the <head> SEO tags of this HTML page for Google + social sharing.\n'
+              + 'Page: ' + c.page + ' | Business: ' + c.biz + ' | Main heading: ' + (c.h1 || '(none)') + ' | About page: ' + c.text.slice(0, 600) + '\n'
+              + 'Rules you MUST follow:\n'
+              + '- <title>: 10-60 characters, includes the main-heading topic + business, never generic like "Home".\n'
+              + '- meta description: 50-160 characters, ONE natural sentence describing the page (never a keyword list).\n'
+              + '- Keep exactly ONE H1. Do NOT change ANY body content, text, images, links or structure.\n'
+              + '- Set og:title, og:description, og:image (reuse an existing page image URL), og:url, twitter:card=summary_large_image + twitter title/description/image.\n'
+              + '- Set canonical to ' + (c.base || 'the site root') + ' and robots to index,follow. Keep viewport, favicon and language as-is.\n'
+              + 'Return the COMPLETE updated HTML document.';
+            const r = await window.OpenCodeAI.editWithFallback({ userPrompt: prompt, currentHtml: currentHtml, bizName: c.biz });
+            if (r && r.updatedHtml) {
+              const got = wcSeoHarvest(r.updatedHtml);
+              if (got && (got.title || got.desc)) { f = got; via = 'ai'; }
+            }
+          }
+        } catch (e) { f = null; }
+        if (!f) f = window.wcSeoHeuristic();
+        /* merge + clamp (AI output-a nambama verify) */
+        const base = window.wcSeoHeuristic();
+        f.title = wcCut(f.title || base.title, 60) || base.title;
+        if (f.title.length < 10) f.title = base.title;
+        f.desc = wcCut(f.desc || base.desc, 160) || base.desc;
+        if (f.desc.length < 30) f.desc = base.desc;
+        ['keywords', 'author', 'ogTitle', 'ogDesc', 'ogImage', 'twTitle', 'twDesc', 'twImage', 'canonical'].forEach(k => { if (f[k] == null || f[k] === '') f[k] = base[k]; });
+        if (!f.ogTitle) f.ogTitle = f.title;
+        if (!f.ogDesc) f.ogDesc = f.desc;
+        if (!f.twTitle) f.twTitle = f.ogTitle;
+        if (!f.twDesc) f.twDesc = f.ogDesc;
+        if (!f.twImage) f.twImage = f.ogImage;
+        f.ri = 'index'; f.rf = 'follow';
+        wcSeoFill(f);
+        window._wcSeoShowScore = true;
+        let score = 0;
+        try { if (typeof wcSaveSeo === 'function') wcSaveSeo(); } catch (e) {}
+        try { if (typeof window.wcRefreshSeoScore === 'function') score = window.wcRefreshSeoScore(); } catch (e) {}
+        try { if (window.wcLogActivity) window.wcLogActivity('SEO generated', (via === 'ai' ? 'AI wrote' : 'Auto-built') + ' meta + share tags · score ' + score + '%', '✦'); } catch (e) {}
+        if (typeof showToast === 'function') showToast(score >= 75 ? '✦ SEO ready — score ' + score + '% 🎉' : '✦ SEO applied — score ' + score + '%. Add alt texts + sections to cross 75.');
+      };
+    })();
+
+    /* ═══════════ WC PRO PART 4E — 100-point SEO engine (SEO logic only) ═══════════
+       Shared analyzer used by the audit modal AND silent score refresh.
+       Reads live canvas (no reload) + currentHtml head. No network calls.
+       Score card stays BLANK until ✦ Generate (window._wcSeoShowScore). */
+    (function WCProSeoEngine() {
+      if (window.__WCProSeoEngineLoaded) return;
+      window.__WCProSeoEngineLoaded = true;
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s == null ? '' : s));
+
+      window.wcSeoPageName = function () {
+        try {
+          if (typeof wcEnsurePages === 'function') {
+            const ps = wcEnsurePages() || [];
+            const i = (typeof wcCurrentPageIdx === 'function') ? wcCurrentPageIdx() : 0;
+            if (ps[i] && ps[i].name) return ps[i].name;
+          }
+        } catch (e) {}
+        return 'Home';
+      };
+      function wcSeoHead() {
+        const o = { title: '', desc: '', keywords: '', author: '', robots: '', ogTitle: '', ogDesc: '', ogImage: '', ogUrl: '', twTitle: '', twDesc: '', twImage: '', canonical: '', favicon: '', lang: '', viewport: false, jsonLd: null, titleCount: 0, descCount: 0, langAttr: '', mediaCss: false, robotsExplicit: false };
+        try {
+          if ($('wcD-title')) {
+            const g = (id) => { const el = $(id); return el ? (el.value || '') : ''; };
+            o.title = g('wcD-title'); o.desc = g('wcD-desc'); o.keywords = g('wcD-kw'); o.author = g('wcD-author');
+            o.robots = ((g('wcD-ri') || 'index') + ', ' + (g('wcD-rf') || 'follow'));
+            o.robotsExplicit = true;
+            o.ogTitle = g('wcD-ogt'); o.ogDesc = g('wcD-ogd'); o.ogImage = g('wcD-ogi');
+            o.twTitle = g('wcD-twt'); o.twDesc = g('wcD-twd'); o.twImage = g('wcD-twi');
+            o.canonical = g('wcD-can'); o.favicon = g('wcD-fav'); o.lang = g('wcD-lang');
+          } else if (window.wcProEnsure) {
+            const d = window.wcProEnsure(); const s = (d && d.seo) || {};
+            o.title = s.title || ''; o.desc = s.desc || ''; o.keywords = s.keywords || ''; o.author = s.author || '';
+            if (s.ri || s.rf) { o.robots = ((s.ri || 'index') + ', ' + (s.rf || 'follow')); o.robotsExplicit = true; }
+            o.ogTitle = s.ogTitle || ''; o.ogDesc = s.ogDesc || ''; o.ogImage = s.ogImage || '';
+            o.twTitle = s.twTitle || ''; o.twDesc = s.twDesc || ''; o.twImage = s.twImage || '';
+            o.canonical = s.canonical || ''; o.favicon = s.favicon || ''; o.lang = s.lang || '';
+          }
+        } catch (e) {}
+        try {
+          if (typeof currentHtml === 'string' && currentHtml) {
+            const doc = new DOMParser().parseFromString(currentHtml, 'text/html');
+            const meta = (n) => { const m = doc.head.querySelector('meta[name="' + n + '"]'); return m ? (m.getAttribute('content') || '') : ''; };
+            const metap = (p) => { const m = doc.head.querySelector('meta[property="' + p + '"]'); return m ? (m.getAttribute('content') || '') : ''; };
+            if (!o.title) { const t = doc.head.querySelector('title'); o.title = t ? (t.textContent || '') : ''; }
+            if (!o.desc) o.desc = meta('description');
+            if (!o.keywords) o.keywords = meta('keywords');
+            if (!o.author) o.author = meta('author');
+            if (!o.robotsExplicit) o.robots = meta('robots');
+            if (!o.ogTitle) o.ogTitle = metap('og:title');
+            if (!o.ogDesc) o.ogDesc = metap('og:description');
+            if (!o.ogImage) o.ogImage = metap('og:image');
+            if (!o.ogUrl) o.ogUrl = metap('og:url');
+            if (!o.canonical) { const l = doc.head.querySelector('link[rel="canonical"]'); o.canonical = l ? (l.getAttribute('href') || '') : ''; }
+            if (!o.favicon) { const l = doc.head.querySelector('link[rel="icon"]'); o.favicon = l ? (l.getAttribute('href') || '') : ''; }
+            if (!o.lang) o.lang = doc.documentElement.getAttribute('lang') || '';
+            o.titleCount = doc.head.querySelectorAll('title').length;
+            o.descCount = doc.head.querySelectorAll('meta[name="description"]').length;
+            o.langAttr = doc.documentElement.getAttribute('lang') || '';
+            o.viewport = !!doc.head.querySelector('meta[name="viewport"]');
+            o.mediaCss = /@media/i.test(currentHtml);
+            doc.querySelectorAll('script[type="application/ld+json"]').forEach(sc => {
+              try {
+                const j = JSON.parse(sc.textContent || '{}');
+                const types = ['Organization', 'LocalBusiness', 'Product', 'Service', 'Article', 'BreadcrumbList', 'WebSite', 'WebPage', 'FAQPage'];
+                const t = j['@type'] || '';
+                o.jsonLd = { ok: types.indexOf(t) >= 0, type: t || 'unknown' };
+              } catch (e) { if (!o.jsonLd) o.jsonLd = { ok: false, type: 'invalid' }; }
+            });
+          }
+        } catch (e) {}
+        return o;
+      }
+      function wcSeoBody() {
+        const c = { h1: 0, h1Text: '', h2: 0, h3: 0, emptyHead: 0, text: '', imgs: [], links: [], ids: {}, sections: 0, ctas: 0, forms: 0, hasNav: false };
+        try {
+          const doc = (typeof getStudioCanvasDocument === 'function') ? getStudioCanvasDocument() : null;
+          if (!doc) return c;
+          const q = (s) => Array.from(doc.querySelectorAll(s));
+          const h1s = q('h1');
+          c.h1 = h1s.length;
+          c.h1Text = h1s.map(h => (h.textContent || '').trim()).filter(Boolean).join(' ');
+          c.h2 = q('h2').length; c.h3 = q('h3').length;
+          ['h1', 'h2', 'h3', 'h4'].forEach(s => q(s).forEach(h => { if (!(h.textContent || '').trim()) c.emptyHead++; }));
+          const body = doc.body ? (doc.body.innerText || doc.body.textContent || '') : '';
+          c.text = String(body).replace(/\s+/g, ' ').trim();
+          c.imgs = q('img').map(im => ({ alt: im.getAttribute('alt') || '', src: im.getAttribute('src') || '' }));
+          c.links = q('a').map(a => ({ href: a.getAttribute('href') || '', text: (a.textContent || '').trim().slice(0, 40) }));
+          q('[id]').forEach(el => { const id = el.getAttribute('id'); if (id) c.ids[id] = 1; });
+          c.sections = doc.querySelectorAll('section,header,footer').length;
+          c.ctas = doc.querySelectorAll('a.btn-primary,button,a[href^="#"]').length;
+          c.forms = q('form').length;
+          c.hasNav = !!(doc.querySelector('header nav, nav'));
+        } catch (e) {}
+        return c;
+      }
+      const GEN_TITLE = /^(home|homepage|welcome|untitled|new website|my website|website|index|page|landing page)$/i;
+      const GEN_ALT = /^(image|photo|picture|pic|img|graphic|banner|icon|logo)$/i;
+      const PLACEHOLDER = /lorem ipsum|your business name|sample title|example text|test content|placeholder|your headline here|your big headline|enter your full name|you@example\.com/i;
+      const sigWords = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3);
+
+      window.wcSeoAnalyze = function () {
+        const h = wcSeoHead(), b = wcSeoBody();
+        const checks = [];
+        const C = (pts, max, st, title, desc) => checks.push({ pts: Math.max(0, Math.min(max, Math.round(pts))), max, st, title, desc });
+        let biz = '';
+        try { biz = (projectData && projectData.bizName) || ''; } catch (e) {}
+
+        (() => {
+          const t = (h.title || '').trim();
+          if (!t) return C(0, 15, 'bad', 'SEO Title', 'Add a descriptive page title (10–60 characters).');
+          let p = 6; const rec = [];
+          const len = t.length;
+          if (len >= 10 && len <= 60) p += 4;
+          else if (len < 10) { p += 1; rec.push('a little short — aim for 10–60 characters'); }
+          else { p += 2; rec.push('a little long — shorten it to be more concise'); }
+          if (GEN_TITLE.test(t)) { rec.push('looks generic — mention what this page offers'); p = Math.min(p, 9); }
+          else p += 3;
+          if (biz && t.toLowerCase() === String(biz).toLowerCase() && b.text.length > 200) { p -= 2; rec.push('expand beyond just the business name'); }
+          const tw = sigWords(t);
+          const pool = sigWords(b.h1Text + ' ' + b.text.slice(0, 600)).join(' ');
+          if (tw.length && tw.some(w => pool.indexOf(w) >= 0)) p += 2;
+          else { rec.push('echo the page topic in the title'); }
+          p = Math.max(0, Math.min(15, p));
+          C(p, 15, p >= 13 ? 'ok' : (p >= 8 ? 'warn' : 'bad'), 'SEO Title',
+            p >= 13 ? '“' + t.slice(0, 52) + (t.length > 52 ? '…' : '') + '” — clear and relevant.' : '“' + t.slice(0, 52) + '” — ' + (rec.join('; ') || 'could be stronger') + '.');
+        })();
+        (() => {
+          const d = (h.desc || '').trim();
+          if (!d) return C(0, 15, 'bad', 'Meta Description', 'Add a 50–160 character description of this page.');
+          let p = 5; const rec = [];
+          const len = d.length;
+          if (len >= 50 && len <= 160) p += 5;
+          else if ((len >= 30 && len < 50) || (len > 160 && len <= 220)) { p += 3; rec.push(len < 50 ? 'a bit short — describe the page benefit' : 'a bit long — trim to ~160 characters'); }
+          else { p += 1; rec.push(len < 30 ? 'too short to be useful' : 'much too long — search cuts it off'); }
+          const commas = (d.match(/,/g) || []).length;
+          const freq = {};
+          d.toLowerCase().split(/\s+/).forEach(w => { if (w.length > 3) freq[w] = (freq[w] || 0) + 1; });
+          const stuffed = commas > 7 || Object.keys(freq).some(w => freq[w] > 5);
+          if (stuffed) { rec.push('reads like a keyword list — write a natural sentence'); }
+          else p += 5;
+          p = Math.min(12, p); if (!stuffed && len >= 50 && len <= 160) p = 15;
+          C(p, 15, p >= 13 ? 'ok' : (p >= 8 ? 'warn' : 'bad'), 'Meta Description',
+            p >= 13 ? 'Good length, reads naturally.' : 'Present — ' + (rec.join('; ') || 'could be stronger') + '.');
+        })();
+        (() => {
+          if (b.h1 === 0) return C(b.h2 > 0 ? 2 : 0, 10, 'bad', 'H1 Structure', 'Add one clear primary heading describing this page.');
+          let p = (b.h1 === 1) ? 5 : 3; const rec = [];
+          if (b.h1 > 1) rec.push('found ' + b.h1 + ' H1s — keep one primary H1, use H2s for sections');
+          if (b.h1Text.length >= 8) p += 1; else rec.push('make the H1 descriptive');
+          if (b.h2 >= 1 && b.h3 >= 1) p += 2;
+          else if (b.h2 >= 1) { p += 1; rec.push('add H3 sub-headings for depth'); }
+          else { rec.push('add H2 headings for major sections'); }
+          if (b.emptyHead > 0) { p -= Math.min(2, b.emptyHead); rec.push(b.emptyHead + ' empty heading(s) found'); }
+          p = Math.max(0, Math.min(10, p));
+          C(p, 10, p >= 8 ? 'ok' : (p >= 5 ? 'warn' : 'bad'), 'H1 Structure',
+            p >= 8 ? (b.h1 === 1 ? 'One primary H1 with good hierarchy.' : 'Hierarchy works.') : rec.join('; ') + '.');
+        })();
+        (() => {
+          const n = b.text.length;
+          let p = n > 1200 ? 7 : (n > 600 ? 6 : (n > 300 ? 4 : (n > 120 ? 2 : 0)));
+          if (b.sections >= 3) p += 1;
+          if (b.ctas >= 1) p += 1;
+          if (b.forms >= 1 || b.ctas >= 3) p += 1;
+          p = Math.min(10, p);
+          const ph = PLACEHOLDER.test(b.text);
+          if (ph) p = Math.min(p, 4);
+          if (n <= 120) return C(p, 10, 'bad', 'Page Content', 'This page looks almost empty — add real text about your business.');
+          if (ph) return C(p, 10, 'warn', 'Page Content', 'Replace demo text with your real business content.');
+          C(p, 10, p >= 8 ? 'ok' : 'warn', 'Page Content',
+            p >= 8 ? 'Good depth of real content.' : 'Thin content (' + n + ' chars) — describe services, benefits and details.');
+        })();
+        (() => {
+          const imgs = b.imgs.filter(i => !/^data:image\/gif;base64,R0lGODlhAQAB/i.test(i.src || ''));
+          if (!imgs.length) return C(10, 10, 'ok', 'Image Alt Text', 'No images — nothing to fix here.');
+          let good = 0; const badN = [];
+          imgs.forEach((im, i) => {
+            const a = (im.alt || '').trim();
+            const srcOk = !!(im.src || '').trim() && !/^(undefined|null)$/i.test(im.src.trim());
+            if (a.length >= 3 && !GEN_ALT.test(a) && srcOk) good++;
+            else badN.push(i + 1);
+          });
+          const p = Math.round(10 * good / imgs.length);
+          if (good === imgs.length) return C(10, 10, 'ok', 'Image Alt Text', 'All ' + imgs.length + ' image(s) have descriptive alt text.');
+          C(p, 10, p >= 7 ? 'warn' : 'bad', 'Image Alt Text',
+            (imgs.length - good) + ' of ' + imgs.length + ' image(s) need descriptive alt text.' + (badN.length <= 4 ? ' (image ' + badN.join(', ') + ')' : ''));
+        })();
+        (() => {
+          const L = b.links;
+          let pages = [];
+          try { if (typeof wcEnsurePages === 'function') pages = (wcEnsurePages() || []).map(p => (p.slug || '') + '.html'); } catch (e) {}
+          let empty = 0, missingT = 0, brokenP = 0;
+          L.forEach(l => {
+            const href = (l.href || '').trim();
+            if (!href || href === '#') { empty++; return; }
+            if (href.charAt(0) === '#') { if (!b.ids[href.slice(1)]) missingT++; return; }
+            if (/\.html?$/i.test(href) && !/^https?:\/\//i.test(href)) {
+              const f = href.split('/').pop().split('?')[0];
+              if (pages.length && pages.indexOf(f) < 0 && f !== 'index.html') brokenP++;
+            }
+          });
+          const healthy = Math.max(0, L.length - empty - missingT - brokenP);
+          let p = (b.hasNav ? 3 : 0) + (b.ctas >= 2 ? 2 : 0) + (L.length ? Math.round(5 * healthy / L.length) : 2);
+          p = Math.min(10, p);
+          const rec = [];
+          if (!b.hasNav) rec.push('no navigation menu detected');
+          if (b.ctas < 2) rec.push('add call-to-action buttons');
+          if (empty) rec.push(empty + ' link(s) go nowhere (empty or “#”)');
+          if (missingT) rec.push(missingT + ' anchor(s) point to missing sections');
+          if (brokenP) rec.push(brokenP + ' page link(s) may be broken');
+          if (!L.length) return C(3, 10, 'warn', 'Links & Navigation', 'No links found — add navigation and CTAs.');
+          C(p, 10, p >= 8 ? 'ok' : (p >= 5 ? 'warn' : 'bad'), 'Links & Navigation',
+            p >= 8 ? L.length + ' links healthy' + (b.hasNav ? ', navigation present.' : '.') : rec.join('; ') + '.');
+        })();
+        (() => {
+          const c = (h.canonical || '').trim();
+          if (/^https?:\/\/.+\..+/.test(c)) return C(5, 5, 'ok', 'Canonical URL', 'Valid canonical set.');
+          if (c) return C(3, 5, 'warn', 'Canonical URL', 'Use a full URL (https://…) for the canonical.');
+          C(0, 5, 'warn', 'Canonical URL', 'Add a canonical URL to identify the preferred page address.');
+        })();
+        (() => {
+          const r = (h.robots || '').trim();
+          if (/noindex/i.test(r)) return C(0, 5, 'warn', 'Indexing', 'Page is marked noindex — hidden from Google. Keep it only if intentional.');
+          if (/nofollow/i.test(r)) return C(4, 5, 'warn', 'Indexing', 'Links are nofollow — fine if intentional.');
+          if (/index/i.test(r)) return C(5, 5, 'ok', 'Indexing', 'Page is indexable.');
+          C(4, 5, 'ok', 'Indexing', 'Indexable by default. An explicit robots tag is optional.');
+        })();
+        (() => {
+          let p = 0;
+          if ((h.ogTitle || '').trim()) p += 1.5;
+          if ((h.ogDesc || '').trim()) p += 1.5;
+          if ((h.ogImage || '').trim()) p += 1.5;
+          if ((h.ogUrl || '').trim()) p += 0.5;
+          p = Math.round(p);
+          if (p >= 5) return C(5, 5, 'ok', 'Social Preview', 'Share title, text and image all set.');
+          if (p === 0) return C(0, 5, 'warn', 'Social Preview', 'Add a social share image so the page looks good when shared.');
+          C(p, 5, 'warn', 'Social Preview', 'Partly set (' + p + '/5) — complete the share ' + (!(h.ogImage || '').trim() ? 'image' : 'title/text') + '.');
+        })();
+        (() => {
+          let p = 0; const rec = [];
+          if (h.viewport) p += 3; else rec.push('add a viewport meta tag');
+          if (h.mediaCss) p += 2; else rec.push('viewport covers basics — responsive rules recommended');
+          C(p, 5, p >= 4 ? 'ok' : (p >= 2 ? 'warn' : 'bad'), 'Mobile Readiness',
+            p >= 4 ? 'Viewport set with responsive styling.' : rec.join('; ') + '.');
+        })();
+        (() => {
+          if (h.jsonLd && h.jsonLd.ok) return C(5, 5, 'ok', 'Structured Data', (h.jsonLd.type || 'Schema') + ' data detected.');
+          if (h.jsonLd) return C(2, 5, 'warn', 'Structured Data', 'Structured data found but unclear — use Organization or LocalBusiness type.');
+          C(0, 5, 'warn', 'Structured Data', 'Optional — add Organization/LocalBusiness info for richer results.');
+        })();
+        (() => {
+          let p = 0; const rec = [];
+          if (h.titleCount === 1) p += 1; else rec.push('page should have exactly one <title>');
+          if ((h.title || '').trim()) p += 1; else rec.push('title tag is empty');
+          if (h.descCount <= 1) p += 1; else rec.push('duplicate meta descriptions');
+          const c = (h.canonical || '').trim();
+          if (!c || /^https?:\/\//.test(c)) p += 1; else rec.push('canonical should be a full URL');
+          if (h.langAttr || h.lang) p += 1; else rec.push('set the page language');
+          C(p, 5, p >= 4 ? 'ok' : 'warn', 'Technical Basics', p >= 4 ? 'Clean title, meta and language setup.' : rec.join('; ') + '.');
+        })();
+        if (!(h.keywords || '').trim()) checks.push({ pts: 0, max: 0, st: 'info', title: 'Meta Keywords', desc: 'Keywords are optional helper data in this Studio. Focus more on useful page content, titles, descriptions, headings and links.' });
+
+        const sum = (names) => checks.filter(c => names.indexOf(c.title) >= 0).reduce((a, c) => ({ p: a.p + c.pts, m: a.m + c.max }), { p: 0, m: 0 });
+        const g = (names) => { const s = sum(names); return s.m ? Math.round(100 * s.p / s.m) : 100; };
+        const groups = {
+          onpage: g(['SEO Title', 'Meta Description', 'H1 Structure', 'Canonical URL']),
+          content: g(['Page Content', 'Image Alt Text', 'Links & Navigation']),
+          technical: g(['Indexing', 'Mobile Readiness', 'Structured Data', 'Technical Basics']),
+          social: g(['Social Preview'])
+        };
+        const total = checks.reduce((a, c) => a + c.pts, 0);
+        return { score: Math.max(0, Math.min(100, total)), groups, checks, page: window.wcSeoPageName() };
+      };
+
+      const BAR = (label, pct) => {
+        const col = pct >= 80 ? '#34d399' : (pct >= 55 ? '#fbbf24' : '#f87171');
+        return '<div style="margin-bottom:0.45rem;"><div style="display:flex;justify-content:space-between;font-size:0.7rem;font-weight:800;color:#cbd5e1;margin-bottom:0.2rem;"><span>' + esc(label) + '</span><span>' + pct + '%</span></div><div style="height:7px;background:#0b1120;border:1px solid #1e293b;border-radius:99px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + col + ';border-radius:99px;"></div></div></div>';
+      };
+      const CARD = (c) => {
+        const icon = c.st === 'ok' ? '✅' : (c.st === 'info' ? '💡' : '⚠️');
+        const bd = c.st === 'ok' ? '#1e293b' : (c.st === 'info' ? '#1e3a5f' : '#7f1d1d');
+        const tc = c.st === 'ok' ? '#f1f5f9' : (c.st === 'info' ? '#bae6fd' : '#fca5a5');
+        const tail = c.max ? ' <span style="opacity:.6;font-weight:400;">(' + c.pts + '/' + c.max + ')</span>' : '';
+        return '<div style="display:flex;align-items:flex-start;gap:0.65rem;background:#0b1120;border:1px solid ' + bd + ';border-radius:8px;padding:0.6rem 0.8rem;"><span style="font-size:1rem;flex-shrink:0;">' + icon + '</span><div><div style="font-size:0.75rem;font-weight:800;color:' + tc + ';margin-bottom:0.1rem;">' + esc(c.title) + tail + '</div><div style="font-size:0.68rem;color:#94a3b8;line-height:1.45;">' + esc(c.desc) + '</div></div></div>';
+      };
+      function wcSeoPaintModal(r) {
+        try {
+          const n = $('seo-audit-score-num'); if (n) n.textContent = r.score + '%';
+          const pill = $('cfr-seo-score'); if (pill) pill.textContent = r.score + '%';
+          const st = $('seo-audit-status');
+          if (st) st.textContent = r.score >= 85 ? '🌟 Excellent — ready to shine' : (r.score >= 70 ? '👍 Good — a few improvements recommended' : (r.score >= 50 ? '🔧 Needs work before launch' : '⚠️ Poor — start with the top fixes'));
+          const fixes = r.checks.filter(c => c.st === 'bad' || c.st === 'warn').length;
+          const good = r.checks.filter(c => c.st === 'ok').length;
+          const su = $('seo-audit-summary');
+          if (su) su.textContent = good + ' strengths · ' + fixes + ' fix' + (fixes === 1 ? '' : 'es') + ' for this page.';
+          let pg = $('seo-audit-page');
+          if (!pg) {
+            const sub = document.querySelector('#seo-audit-modal .modal-box p');
+            if (sub) { pg = document.createElement('div'); pg.id = 'seo-audit-page'; sub.parentNode.insertBefore(pg, sub.nextSibling); }
+          }
+          if (pg) pg.innerHTML = '<span style="display:inline-block;font-size:0.68rem;font-weight:800;color:#a5b4fc;background:#1e1b4b;border:1px solid #6366f1;border-radius:999px;padding:0.18rem 0.65rem;margin:0.35rem 0 0;">📄 SEO Audit — ' + esc(r.page) + '</span>';
+          const list = $('seo-audit-checks-list');
+          if (list) list.innerHTML = BAR('On-page SEO', r.groups.onpage) + BAR('Content', r.groups.content) + BAR('Technical SEO', r.groups.technical) + BAR('Social SEO', r.groups.social) + '<div style="height:0.3rem;"></div>' + r.checks.map(CARD).join('');
+        } catch (e) {}
+      }
+      window.openSeoAuditModal = function () {
+        let r = null;
+        try { r = window.wcSeoAnalyze(); } catch (e) { return; }
+        wcSeoPaintModal(r);
+        try { const m = $('seo-audit-modal'); if (m) m.classList.add('show'); } catch (e) {}
+      };
+      /* blank state — shown until ✦ Generate runs */
+      window.wcSeoBlankScore = function () {
+        try { const el = $('wcD-score'); if (el) { el.textContent = '—'; el.style.color = '#94a3b8'; } } catch (e) {}
+        try { const box = $('wcD-recs'); if (box) box.innerHTML = 'Press <strong>✦ AI Generate SEO</strong> above to analyze this page. No score is shown until you generate.'; } catch (e) {}
+      };
+      /* silent refresh — paints ONLY after Generate (never by default) */
+      window.wcRefreshSeoScore = function () {
+        if (!window._wcSeoShowScore) { try { window.wcSeoBlankScore(); } catch (e) {} return 0; }
+        let r = null;
+        try { r = window.wcSeoAnalyze(); } catch (e) { return 0; }
+        try { const p = $('cfr-seo-score'); if (p) p.textContent = r.score + '%'; } catch (e) {}
+        try {
+          const el = $('wcD-score');
+          if (el) { el.textContent = r.score + '%'; el.style.color = r.score >= 70 ? '#34d399' : (r.score >= 50 ? '#fbbf24' : '#f87171'); }
+        } catch (e) {}
+        try {
+          const box = $('wcD-recs');
+          if (box) {
+            const top = r.checks.filter(c => c.st === 'bad' || c.st === 'warn').slice(0, 4);
+            box.innerHTML = top.length ? top.map(c => '💡 <strong>' + esc(c.title) + ':</strong> ' + esc(c.desc)).join('<br>') : '✅ All checks passed — excellent!';
+          }
+        } catch (e) {}
+        return r.score;
+      };
+      let __seoT = null;
+      window.wcSeoAuto = function () {
+        try { if (typeof wcDPreview === 'function') wcDPreview(); } catch (e) {}
+        clearTimeout(__seoT);
+        __seoT = setTimeout(() => { try { window.wcRefreshSeoScore(); } catch (e) {} }, 700);
+      };
+      window.wcDArmAuto = function () {
+        try {
+          ['wcD-title', 'wcD-desc', 'wcD-kw', 'wcD-can', 'wcD-ogt', 'wcD-ogd', 'wcD-ogi', 'wcD-ri', 'wcD-rf'].forEach(id => {
+            const el = $(id);
+            if (el && !el.__seoArmed) { el.__seoArmed = true; el.addEventListener('input', () => window.wcSeoAuto()); el.addEventListener('change', () => window.wcSeoAuto()); }
+          });
+        } catch (e) {}
+      };
+      try {
+        if (typeof window.wcRenderSeoPanel === 'function' && !window.wcRenderSeoPanel.__seoWrap) {
+          const o = window.wcRenderSeoPanel;
+          const w = function () { const r = o.apply(this, arguments); try { window.wcDArmAuto(); } catch (e) {} return r; };
+          w.__seoWrap = true; window.wcRenderSeoPanel = w;
+        }
+      } catch (e) {}
+    })();
 
     function persistAdminAssets() {
       try {
