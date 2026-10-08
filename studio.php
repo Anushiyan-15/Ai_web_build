@@ -16,7 +16,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
   <title>Canva Visual Studio — WebCraft AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Cinzel:wght@500;700;800&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Cinzel:wght@500;700;800&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/css/grapes.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/grapes.min.js"></script>
   <script src="<?= SITE_URL ?>/assets/js/opencode-service.js"></script>
@@ -4445,6 +4445,7 @@ p{color:#64748b;max-width:520px;line-height:1.6}
     const LANGUAGES = [
       { code: 'en', name: 'English', flag: '🇬🇧' },
       { code: 'ta', name: 'Tamil', flag: '🇮🇳' },
+      { code: 'si', name: 'Sinhala', flag: '🇱🇰' },
       { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
       { code: 'te', name: 'Telugu', flag: '🇮🇳' },
       { code: 'ml', name: 'Malayalam', flag: '🇮🇳' },
@@ -4497,18 +4498,28 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       const sel = document.getElementById('header-lang-select');
       if (!sel) return;
       sel.innerHTML = '';
-      langState.active.forEach(code => {
+      // Active languages first, then the rest (greyed) — so Sinhala etc.
+      // are always one click away even before their chip is enabled.
+      const ordered = [...langState.active, ...LANGUAGES.map(L => L.code).filter(c => !langState.active.includes(c))];
+      ordered.forEach(code => {
         const L = LANGUAGES.find(x => x.code === code);
         if (!L) return;
         const opt = document.createElement('option');
         opt.value = code;
-        opt.textContent = `${L.flag} ${L.name}`;
+        opt.textContent = langState.active.includes(code) ? `${L.flag} ${L.name}` : `＋ ${L.flag} ${L.name}`;
         sel.appendChild(opt);
       });
       sel.value = langState.previewing;
     }
 
     function switchCanvasLanguage(code) {
+      // Picking a not-yet-active language enables it on the spot.
+      if (!langState.active.includes(code)) {
+        langState.active.push(code);
+        try { renderLangChips(); renderHeaderLangSelect(); } catch (e) {}
+        try { saveLanguageState(); } catch (e) {}
+        showToast(`🌐 ${LANGUAGES.find(x => x.code === code)?.name || code} enabled — add translations below, or Auto-translate (AI)`);
+      }
       langState.previewing = code;
       applyLanguageToCanvas(code);
       showToast(`🌐 Previewing ${LANGUAGES.find(x=>x.code===code)?.name||code}`);
@@ -4616,9 +4627,56 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       } catch (e) {}
     }
 
-    function autoTranslateAll() {
-      showToast('✨ Use Magic AI to auto-translate');
-      appendMagicChat('✨ <strong>Tip:</strong> Use Magic AI: <em>"Translate the entire website into Tamil and Hindi, keeping English as primary"</em>', 'ai');
+    /* Fill every empty translation cell with AI (batched, reviewed before Save).
+       Reuses the existing ask lane — no new engine. Modal stays open so the
+       user reviews everything, then presses ✓ Save Translations. */
+    const WC_LANG_NAMES = { en: 'English', ta: 'Tamil', si: 'Sinhala', hi: 'Hindi', te: 'Telugu', ml: 'Malayalam', kn: 'Kannada', es: 'Spanish', fr: 'French', de: 'German', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese' };
+    async function autoTranslateAll() {
+      try {
+        const targets = (langState.active || []).filter(c => c !== langState.primary);
+        if (!targets.length) { showToast('Enable another language chip first (e.g. 🇱🇰 Sinhala)'); return; }
+        const post = (typeof window.wcAiPost === 'function') ? window.wcAiPost : null;
+        if (!post) { showToast('AI helper not loaded — fill the table manually, then Save'); return; }
+        // Collect empty cells: [{key, lang, inp}]
+        const jobs = [];
+        document.querySelectorAll('#language-manager-body [data-i18n-key]').forEach(inp => {
+          const lang = inp.dataset.i18nLang;
+          if (!targets.includes(lang)) return;
+          if ((inp.value || '').trim() !== '') return;
+          const k = inp.dataset.i18nKey;
+          if (!k || !k.trim()) return;
+          jobs.push({ key: k, lang, inp });
+          inp.placeholder = '…translating';
+        });
+        if (!jobs.length) { showToast('Nothing empty — every cell already filled'); return; }
+        const capped = jobs.slice(0, 150);
+        if (jobs.length > capped.length) showToast(`Translating first ${capped.length} of ${jobs.length} cells…`);
+        else showToast(`✨ Translating ${capped.length} cells…`);
+        // Group by language, 12 lines per AI call.
+        const byLang = {};
+        capped.forEach(j => { (byLang[j.lang] = byLang[j.lang] || []).push(j); });
+        for (const lang of Object.keys(byLang)) {
+          const list = byLang[lang];
+          const langName = WC_LANG_NAMES[lang] || lang;
+          for (let i = 0; i < list.length; i += 12) {
+            const chunk = list.slice(i, i + 12);
+            try {
+              const j = await post('/api/generate.php', {
+                action: 'ask',
+                instruction: 'Translate each line to ' + langName + '. Reply with EXACTLY ' + chunk.length + ' lines, one per line, in the same order, no numbering, no quotes. Keep URLs, emails, phone numbers and prices unchanged. Lines:\n' + chunk.map(c => c.key).join('\n'),
+                context: {}
+              }, 60000);
+              const lines = String((j && (j.reply || j.text)) || '').split('\n').map(s => s.trim()).filter(s => s !== '');
+              lines.slice(0, chunk.length).forEach((line, k) => {
+                // Strip matching surrounding quotes the model sometimes adds.
+                const clean = line.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim();
+                if (clean) chunk[k].inp.value = clean;
+              });
+            } catch (e) { /* keep placeholders; user can retry or type manually */ }
+          }
+        }
+        showToast('✨ Draft translations filled — review, then press ✓ Save Translations');
+      } catch (e) { showToast('Auto-translate hit a snag — try again or fill manually'); }
     }
 
     function updateLangSwitcherSettings() {
@@ -12053,8 +12111,8 @@ Return COMPLETE updated HTML document.`;
         let h = '<div class="wc-pro-card"><h4>🎨 Global colors <span class="wc-friendly-lbl">— whole site</span></h4>';
         THEME_FIELDS.forEach(([k, lbl]) => { h += '<div class="wc-pro-row"><label>' + lbl + '</label><input type="color" value="' + esc(t[k] || '#6366f1') + '" onchange="wcSetThemeKey(\'' + k + '\',this.value)"></div>'; });
         h += '</div><div class="wc-pro-card"><h4>✍️ Typography</h4>';
-        h += '<div class="wc-pro-row"><label>Heading font</label><select onchange="wcSetThemeKey(\'headingFont\',this.value)">' + ['Plus Jakarta Sans, Inter, system-ui, sans-serif', 'Inter, system-ui, sans-serif', 'Space Grotesk, Inter, sans-serif', 'Georgia, serif', 'Noto Sans Tamil, sans-serif'].map(f => '<option ' + (t.headingFont === f ? 'selected' : '') + ' value="' + esc(f) + '">' + esc(f.split(',')[0]) + '</option>').join('') + '</select></div>';
-        h += '<div class="wc-pro-row"><label>Body font</label><select onchange="wcSetThemeKey(\'bodyFont\',this.value)">' + ['Inter, system-ui, sans-serif', 'Plus Jakarta Sans, Inter, sans-serif', 'Space Grotesk, Inter, sans-serif', 'Georgia, serif', 'Noto Sans Tamil, sans-serif'].map(f => '<option ' + (t.bodyFont === f ? 'selected' : '') + ' value="' + esc(f) + '">' + esc(f.split(',')[0]) + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Heading font</label><select onchange="wcSetThemeKey(\'headingFont\',this.value)">' + ['Plus Jakarta Sans, Inter, system-ui, sans-serif', 'Inter, system-ui, sans-serif', 'Space Grotesk, Inter, sans-serif', 'Georgia, serif', 'Noto Sans Tamil, sans-serif', 'Noto Sans Sinhala, sans-serif'].map(f => '<option ' + (t.headingFont === f ? 'selected' : '') + ' value="' + esc(f) + '">' + esc(f.split(',')[0]) + '</option>').join('') + '</select></div>';
+        h += '<div class="wc-pro-row"><label>Body font</label><select onchange="wcSetThemeKey(\'bodyFont\',this.value)">' + ['Inter, system-ui, sans-serif', 'Plus Jakarta Sans, Inter, sans-serif', 'Space Grotesk, Inter, sans-serif', 'Georgia, serif', 'Noto Sans Tamil, sans-serif', 'Noto Sans Sinhala, sans-serif'].map(f => '<option ' + (t.bodyFont === f ? 'selected' : '') + ' value="' + esc(f) + '">' + esc(f.split(',')[0]) + '</option>').join('') + '</select></div>';
         h += '<div class="wc-pro-row"><label>Text weight <span class="wc-friendly-lbl">(boldness)</span></label><select onchange="wcSetThemeKey(\'bodyWeight\',this.value)">' + ['300', '400', '500', '600', '700'].map(w => '<option ' + (String(t.bodyWeight) === w ? 'selected' : '') + '>' + w + '</option>').join('') + '</select></div>';
         h += '<div class="wc-pro-row"><label>Heading weight</label><select onchange="wcSetThemeKey(\'headingWeight\',this.value)">' + ['500', '600', '700', '800', '900'].map(w => '<option ' + (String(t.headingWeight) === w ? 'selected' : '') + '>' + w + '</option>').join('') + '</select></div>';
         h += '<div class="wc-pro-row"><label>Base font size</label><input type="range" min="13" max="20" value="' + esc(t.baseSize || 16) + '" oninput="this.nextElementSibling.textContent=this.value+\'px\'" onchange="wcSetThemeKey(\'baseSize\',this.value)"><span class="wc-pro-val">' + esc(t.baseSize || 16) + 'px</span></div>';
@@ -14882,5 +14940,9 @@ Return COMPLETE updated HTML document.`;
       } catch (e) {}
     }
   </script>
+  <!-- ★ WebCraft AI Suite — additive Studio upgrades (health, brand, responsive, versions, templates, language, conversion, director). Reuses Copilot/audit/snapshot/save systems. -->
+  <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/wc-ai-suite.css">
+  <script src="<?= SITE_URL ?>/assets/js/wc-ai-suite.js"></script>
+  <script src="<?= SITE_URL ?>/assets/js/wc-studio-suite.js"></script>
 </body>
 </html>

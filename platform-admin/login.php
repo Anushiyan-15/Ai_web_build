@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background: var(--bg);
+    background: radial-gradient(circle at 50% 25%, #151c38 0%, #0a0d14 75%);
     color: var(--text);
     min-height: 100vh;
     display: flex;
@@ -88,25 +88,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     justify-content: center;
     position: relative;
     padding: 24px;
+    overflow-x: hidden;
   }
 
-  body::before, body::after {
-    content: '';
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(140px);
-    pointer-events: none;
-    z-index: 0;
-  }
-  body::before {
-    width: 600px; height: 600px;
-    background: rgba(99,102,241,.14);
-    top: -200px; left: -200px;
-  }
-  body::after {
-    width: 500px; height: 500px;
-    background: rgba(16,185,129,.1);
-    bottom: -150px; right: -150px;
+  /* ── 3D animated auth scene (same language as customer portal) ── */
+  .auth-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .auth-bg .orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; animation: orbDrift 14s ease-in-out infinite alternate; }
+  .auth-bg .orb.o1 { width: 420px; height: 420px; left: -120px; top: -100px; background: radial-gradient(circle, #6366f1, transparent 70%); }
+  .auth-bg .orb.o2 { width: 380px; height: 380px; right: -100px; top: 20%; background: radial-gradient(circle, #a855f7, transparent 70%); animation-delay: -5s; animation-duration: 17s; }
+  .auth-bg .orb.o3 { width: 340px; height: 340px; left: 30%; bottom: -140px; background: radial-gradient(circle, #06b6d4, transparent 70%); animation-delay: -9s; animation-duration: 20s; }
+  @keyframes orbDrift { from { transform: translate(0,0) scale(1); } to { transform: translate(60px,40px) scale(1.15); } }
+  .auth-bg .gridfloor { position: absolute; left: -25%; right: -25%; bottom: -12%; height: 46%; background-image: linear-gradient(rgba(99,102,241,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,.22) 1px, transparent 1px); background-size: 44px 44px; transform: perspective(700px) rotateX(62deg); transform-origin: bottom; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,.9), transparent 85%); mask-image: linear-gradient(to top, rgba(0,0,0,.9), transparent 85%); animation: gridMove 7s linear infinite; }
+  @keyframes gridMove { from { background-position: 0 0, 0 0; } to { background-position: 0 44px, 0 0; } }
+  .cube3d { position: absolute; width: 110px; height: 110px; transform-style: preserve-3d; animation: cubeSpin 16s linear infinite; }
+  .cube3d.c1 { left: 9%; top: 16%; }
+  .cube3d.c2 { right: 8%; bottom: 14%; width: 76px; height: 76px; animation-duration: 11s; animation-direction: reverse; }
+  .cube3d .face { position: absolute; inset: 0; border: 1.5px solid rgba(129,140,248,.55); background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(168,85,247,.08)); box-shadow: 0 0 28px rgba(99,102,241,.25) inset; border-radius: 10px; }
+  .cube3d .f1 { transform: translateZ(55px); }
+  .cube3d .f2 { transform: rotateY(180deg) translateZ(55px); }
+  .cube3d .f3 { transform: rotateY(90deg) translateZ(55px); }
+  .cube3d .f4 { transform: rotateY(-90deg) translateZ(55px); }
+  .cube3d .f5 { transform: rotateX(90deg) translateZ(55px); }
+  .cube3d .f6 { transform: rotateX(-90deg) translateZ(55px); }
+  .cube3d.c2 .f1 { transform: translateZ(38px); }
+  .cube3d.c2 .f2 { transform: rotateY(180deg) translateZ(38px); }
+  .cube3d.c2 .f3 { transform: rotateY(90deg) translateZ(38px); }
+  .cube3d.c2 .f4 { transform: rotateY(-90deg) translateZ(38px); }
+  .cube3d.c2 .f5 { transform: rotateX(90deg) translateZ(38px); }
+  .cube3d.c2 .f6 { transform: rotateX(-90deg) translateZ(38px); }
+  @keyframes cubeSpin { from { transform: rotateX(-18deg) rotateY(0deg); } to { transform: rotateX(-18deg) rotateY(360deg); } }
+  .auth-bg .floatchip { position: absolute; padding: .5rem .9rem; border-radius: 12px; background: rgba(17,22,34,.72); border: 1px solid rgba(129,140,248,.35); backdrop-filter: blur(8px); font-size: .72rem; font-weight: 800; color: #c7d2fe; box-shadow: 0 12px 30px rgba(0,0,0,.45); animation: chipFloat 6s ease-in-out infinite alternate; }
+  .auth-bg .floatchip.fc1 { left: 12%; bottom: 22%; }
+  .auth-bg .floatchip.fc2 { right: 11%; top: 18%; animation-delay: -3s; }
+  @keyframes chipFloat { from { transform: translateY(-8px) rotate(-2deg); } to { transform: translateY(10px) rotate(2deg); } }
+  @media(max-width:1100px) { .cube3d.c1, .auth-bg .floatchip.fc1 { display: none; } }
+  @media(max-width:820px) { .cube3d.c2, .auth-bg .floatchip.fc2 { display: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .auth-bg .orb, .auth-bg .gridfloor, .cube3d, .auth-bg .floatchip { animation: none !important; }
+    .login-wrap, .card, .brand-icon { animation: none !important; transition: none !important; }
   }
 
   .login-wrap {
@@ -114,7 +133,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     z-index: 1;
     width: 100%;
     max-width: 480px;
+    perspective: 1200px;
+    animation: cardIn .5s cubic-bezier(.22,1,.36,1);
   }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
 
   .brand {
     text-align: center;
@@ -129,7 +151,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     justify-content: center;
     margin-bottom: 14px;
     box-shadow: 0 0 40px rgba(99,102,241,.35);
+    animation: brandFloat 5s ease-in-out infinite alternate;
   }
+  @keyframes brandFloat { from { transform: translateY(-4px); } to { transform: translateY(4px); } }
   .brand-icon svg { width: 28px; height: 28px; fill: #fff; }
   .brand h1 { font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -.02em; }
   .brand p  { color: var(--muted); font-size: .875rem; margin-top: 4px; }
@@ -140,6 +164,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     border-radius: 20px;
     padding: 32px;
     box-shadow: 0 25px 60px rgba(0,0,0,.5);
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform .15s ease-out;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #6366f1, #a855f7, #06b6d4);
   }
 
   .card h2 {
@@ -228,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .btn-primary {
     width: 100%;
     padding: 13px;
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
     color: #fff;
     border: none;
     border-radius: 10px;
@@ -236,15 +269,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background .2s, transform .1s, box-shadow .2s;
+    transition: transform .2s, box-shadow .2s;
     margin-top: 6px;
-    box-shadow: 0 4px 20px rgba(99,102,241,.35);
+    box-shadow: 0 8px 24px rgba(99,102,241,.4);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
   }
-  .btn-primary:hover  { background: var(--primary-hover); box-shadow: 0 6px 28px rgba(99,102,241,.45); }
+  .btn-primary:hover  { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(99,102,241,.6); }
   .btn-primary:active { transform: scale(.98); }
 
   /* Quick Role Switcher Chips */
@@ -283,6 +316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     border-color: var(--primary);
     transform: translateY(-1px);
     background: #141b2a;
+    box-shadow: 0 10px 26px rgba(99,102,241,.35);
   }
   .role-chip-title {
     font-size: 0.78rem;
@@ -308,6 +342,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style>
 </head>
 <body>
+<div class="auth-bg" aria-hidden="true">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="gridfloor"></div>
+  <div class="cube3d c1"><div class="face f1"></div><div class="face f2"></div><div class="face f3"></div><div class="face f4"></div><div class="face f5"></div><div class="face f6"></div></div>
+  <div class="cube3d c2"><div class="face f1"></div><div class="face f2"></div><div class="face f3"></div><div class="face f4"></div><div class="face f5"></div><div class="face f6"></div></div>
+  <div class="floatchip fc1">🛡️ RBAC-protected console</div>
+  <div class="floatchip fc2">⚡ 4 roles · audit logged</div>
+</div>
 <div class="login-wrap">
 
   <div class="brand">
@@ -320,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <p>Enterprise Platform Admin &amp; RBAC Portal</p>
   </div>
 
-  <div class="card">
+  <div class="card" id="auth-card">
     <h2>Sign In to Console</h2>
     <p class="subtitle">Access controls &amp; tenant administration</p>
 
@@ -416,6 +458,24 @@ function fillRole(u, p) {
   document.getElementById('pwInput').value = p;
   document.getElementById('usernameInput').focus();
 }
+
+// ★ 3D tilt on the auth card — mouse-driven, disabled for touch / reduced-motion.
+(function () {
+  try {
+    var card = document.getElementById('auth-card');
+    var wrap = document.querySelector('.login-wrap');
+    if (!card || !wrap) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
+    wrap.addEventListener('mousemove', function (e) {
+      var r = wrap.getBoundingClientRect();
+      var x = (e.clientX - r.left) / Math.max(r.width, 1) - 0.5;
+      var y = (e.clientY - r.top) / Math.max(r.height, 1) - 0.5;
+      card.style.transform = 'rotateY(' + (x * 8).toFixed(2) + 'deg) rotateX(' + (-y * 8).toFixed(2) + 'deg)';
+    });
+    wrap.addEventListener('mouseleave', function () { card.style.transform = ''; });
+  } catch (e) {}
+})();
 
 // ★ Secure sign-in loader (lock scene — page reloads after POST)
 document.getElementById('loginForm').addEventListener('submit', function () {

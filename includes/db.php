@@ -689,6 +689,57 @@ function updateCustomerProfile(string $email, string $name, string $phone): arra
 }
 
 /**
+ * Customer UI language preference (en/ta/si). Best-effort DB column +
+ * local-file mirror + always works via session in callers.
+ */
+function getCustomerLanguage(string $email): string {
+    $email = strtolower(trim($email));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return 'en';
+    try {
+        $row = findCustomerByEmail($email);
+        if ($row && in_array($row['language'] ?? '', ['en', 'ta', 'si'], true)) return $row['language'];
+    } catch (Throwable $e) {}
+    try {
+        $local = loadCustomerAccountsLocal();
+        if (isset($local[$email]) && in_array($local[$email]['language'] ?? '', ['en', 'ta', 'si'], true)) {
+            return $local[$email]['language'];
+        }
+    } catch (Throwable $e) {}
+    return 'en';
+}
+
+function setCustomerLanguage(string $email, string $lang): bool {
+    $email = strtolower(trim($email));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+    if (!in_array($lang, ['en', 'ta', 'si'], true)) return false;
+    $db = getDb();
+    if ($db) {
+        try {
+            $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+            try {
+                if ($driver === 'pgsql') {
+                    $db->exec("ALTER TABLE customers ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'en'");
+                } else {
+                    $db->exec("ALTER TABLE customers ADD COLUMN language VARCHAR(10) DEFAULT 'en'");
+                }
+            } catch (Throwable $e) {}
+            $stmt = $db->prepare("UPDATE customers SET language = :lang WHERE email = :email");
+            $stmt->execute([':lang' => $lang, ':email' => $email]);
+        } catch (Throwable $e) {
+            error_log('setCustomerLanguage DB error: ' . $e->getMessage());
+        }
+    }
+    try {
+        $local = loadCustomerAccountsLocal();
+        if (isset($local[$email])) {
+            $local[$email]['language'] = $lang;
+            saveCustomerAccountsLocal($local);
+        }
+    } catch (Throwable $e) {}
+    return true;
+}
+
+/**
  * Set avatar path for an account (DB + local fallback).
  */
 function setCustomerAvatar(string $email, string $avatarPath): bool {

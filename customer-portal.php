@@ -17,6 +17,24 @@ if (!headers_sent()) {
 }
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/reviews.php';
+require_once __DIR__ . '/includes/ui-lang.php';
+$UI_LANG = ui_resolve_lang();
+
+// ─── UI LANGUAGE SWITCH (persists to account when logged in) ──
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'set_language') {
+    $nl = strtolower(trim($_POST['ui_lang'] ?? 'en'));
+    if (!ui_lang_valid($nl)) $nl = 'en';
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $_SESSION['ui_lang'] = $nl;
+    if (!empty($_SESSION['customer_user']['email'])) {
+        $_SESSION['customer_user']['language'] = $nl;
+        try { setCustomerLanguage($_SESSION['customer_user']['email'], $nl); } catch (Throwable $e) {}
+    }
+    $back = SITE_URL . '/customer-portal.php' . (!empty($_GET['tab']) ? '?tab=' . urlencode($_GET['tab']) : '');
+    header('Location: ' . $back);
+    exit;
+}
 require_once __DIR__ . '/includes/Mailer.php';
 require_once __DIR__ . '/includes/MailQueue.php';
 require_once __DIR__ . '/includes/SocialAuth.php';
@@ -291,6 +309,55 @@ if (isset($_GET['action']) && $_GET['action'] === 'remove_avatar' && !empty($_SE
     exit;
 }
 
+// ─── MY REVIEWS (add / edit / delete — own reviews only) ─────
+// Same POST→redirect→flash convention as the rest of the portal.
+// Ownership is enforced inside the helpers (email in WHERE clause).
+$reviewErr = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['review_add', 'review_edit', 'review_delete'], true)) {
+    if (empty($_SESSION['customer_user']['email'])) {
+        $reviewErr = 'Please sign in first.';
+    } else {
+        $em = strtolower(trim($_SESSION['customer_user']['email']));
+        $nm = $_SESSION['customer_user']['name'] ?? 'Customer';
+        $cid = null;
+        try {
+            $crow = findCustomerByEmail($em);
+            if (!empty($crow['id'])) $cid = (string)$crow['id'];
+        } catch (Throwable $e) {}
+        if ($_POST['action'] === 'review_add') {
+            $res = review_create($em, $nm, $_POST['rv_rating'] ?? 0, $_POST['rv_title'] ?? '', $_POST['rv_message'] ?? '', $_POST['rv_role'] ?? '', $cid);
+            if ($res['success']) {
+                $_SESSION['flash_success'] = 'Thank you! Your review has been submitted and is waiting for approval.';
+                header('Location: ' . SITE_URL . '/customer-portal.php?tab=reviews');
+                exit;
+            }
+            $reviewErr = $res['error'] ?? 'Could not submit review.';
+        } elseif ($_POST['action'] === 'review_edit') {
+            $res = review_update_customer($_POST['rv_id'] ?? 0, $em, $_POST['rv_rating'] ?? 0, $_POST['rv_title'] ?? '', $_POST['rv_message'] ?? '', $_POST['rv_role'] ?? '');
+            if ($res['success']) {
+                $_SESSION['flash_success'] = 'Review updated. It is waiting for approval again.';
+                header('Location: ' . SITE_URL . '/customer-portal.php?tab=reviews');
+                exit;
+            }
+            $reviewErr = $res['error'] ?? 'Could not update review.';
+        } else {
+            // Password re-verification: only deletes when the account
+            // password matches (or no password is set on the account).
+            if (!review_verify_delete_password($em, (string)($_POST['rv_password'] ?? ''))) {
+                $reviewErr = 'Incorrect password. Review was not deleted.';
+            } else {
+                $res = review_delete_customer($_POST['rv_id'] ?? 0, $em);
+                if ($res['success']) {
+                    $_SESSION['flash_success'] = 'Review deleted.';
+                    header('Location: ' . SITE_URL . '/customer-portal.php?tab=reviews');
+                    exit;
+                }
+                $reviewErr = $res['error'] ?? 'Could not delete review.';
+            }
+        }
+    }
+}
+
 // ─── FORGOT PASSWORD WITH EMAIL OTP (3-step, like signup) ───────────
 // Step 1: email → OTP mail. Step 2: code ONLY → verify.
 // Step 3 (only after verify): new password → update + auto sign-in.
@@ -461,9 +528,14 @@ $flashSuccess = $_SESSION['flash_success'] ?? '';
 unset($_SESSION['flash_success']);
 $customerOrders = [];
 $customerNotifs = [];
+$myReviews = [];
+$portalTab = ($_GET['tab'] ?? '') === 'reviews' ? 'reviews' : (($_GET['tab'] ?? '') === 'notifs' ? 'notifs' : 'sites');
+$reviewNeedsPw = false;
 
 if ($currentUser) {
     $customerOrders = getCustomerOrdersFromDatabase($currentUser['email']);
+    $myReviews = reviews_for_customer($currentUser['email'] ?? '');
+    $reviewNeedsPw = review_delete_needs_password($currentUser['email'] ?? '');
     foreach ($customerOrders as $o) {
         $oid = $o['order_id'] ?? '';
         if ($oid) {
@@ -617,6 +689,20 @@ a{color:inherit;text-decoration:none;}
 .notif-title{font-size:0.92rem;font-weight:800;color:#fff;}
 .notif-time{font-size:0.72rem;color:#64748b;}
 .notif-msg{font-size:0.84rem;color:#94a3b8;line-height:1.55;white-space:pre-wrap;}
+
+/* ── My Reviews ── */
+.rv-stars{display:flex;gap:0.25rem;}
+.rv-stars button{background:none;border:none;font-size:2rem;line-height:1;color:#334155;cursor:pointer;padding:0.1rem;transition:transform 0.12s,color 0.12s;font-family:inherit;}
+.rv-stars button:hover{transform:scale(1.15);}
+.rv-stars button.on{color:#f59e0b;text-shadow:0 0 12px rgba(245,158,11,0.5);}
+.rv-stars-static{color:#f59e0b;font-size:1rem;letter-spacing:0.1em;}
+.rv-pill{font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;padding:0.2rem 0.6rem;border-radius:999px;border:1px solid;}
+.rv-row{background:#0c1220;border:1px solid #1e293b;border-radius:12px;padding:1rem 1.25rem;margin-bottom:0.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;}
+.rv-row-actions{display:flex;gap:0.4rem;flex-shrink:0;}
+.rv-mini-btn{background:#1e293b;border:1px solid #334155;color:#cbd5e1;font-family:inherit;font-size:0.75rem;font-weight:700;padding:0.4rem 0.75rem;border-radius:8px;cursor:pointer;transition:all 0.15s;}
+.rv-mini-btn:hover{border-color:#6366f1;color:#fff;}
+.rv-mini-btn.rv-del{color:#fca5a5;border-color:#7f1d1d;}
+.rv-mini-btn.rv-del:hover{background:#7f1d1d;color:#fff;}
 </style>
 </head>
 <body>
@@ -629,6 +715,14 @@ a{color:inherit;text-decoration:none;}
   </a>
 
   <div style="display:flex; align-items:center; gap:0.75rem;">
+    <form method="POST" action="customer-portal.php<?= !empty($_GET['tab']) ? '?tab=' . urlencode($_GET['tab']) : '' ?>" style="margin:0;">
+      <input type="hidden" name="action" value="set_language">
+      <select name="ui_lang" onchange="this.form.submit()" title="Language / மொழி / භාෂාව" style="background:#1e1b4b;border:1.5px solid rgba(99,102,241,0.4);color:#c7d2fe;padding:0.4rem 0.6rem;border-radius:999px;font-size:0.78rem;font-weight:700;font-family:inherit;cursor:pointer;">
+        <?php foreach (ui_lang_list() as $lc => $ln): ?>
+          <option value="<?= $lc ?>"<?= $UI_LANG === $lc ? ' selected' : '' ?>><?= htmlspecialchars($ln) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </form>
     <div style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.75rem; border-radius:999px; font-size:0.75rem; font-weight:800; background:rgba(16,185,129,0.15); border:1.5px solid #10b981; color:#34d399;" title="Supabase Cloud Database Active">
       <span style="width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
       <span>⚡ Supabase Connected</span>
@@ -641,7 +735,7 @@ a{color:inherit;text-decoration:none;}
           <img src="<?= htmlspecialchars($topAvatar) ?>" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #6366f1;">
         <?php endif; ?>
         <span class="user-pill">👤 <?= htmlspecialchars($currentUser['email']) ?></span>
-        <a href="customer-portal.php?action=logout" class="btn-logout">🚪 Sign Out</a>
+        <a href="customer-portal.php?action=logout" class="btn-logout">🚪 <?= ui_t('p_logout') ?></a>
       </div>
     <?php else: ?>
       <div style="font-size:0.82rem;color:#94a3b8;">
@@ -674,8 +768,8 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
   <div class="login-card" id="auth-card">
     <div style="text-align:center;margin-bottom:1.5rem;">
       <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 8px 24px rgba(99,102,241,0.4);margin-bottom:0.75rem;">📱</div>
-      <h1 style="font-size:1.4rem;font-weight:900;color:#fff;">Customer Portal</h1>
-      <p style="font-size:0.84rem;color:#94a3b8;margin-top:0.35rem;">Sign in or create a free account to manage your websites.</p>
+      <h1 style="font-size:1.4rem;font-weight:900;color:#fff;"><?= ui_t('p_login_title') ?></h1>
+      <p style="font-size:0.84rem;color:#94a3b8;margin-top:0.35rem;"><?= ui_t('p_login_sub') ?></p>
     </div>
 
     <?php if ($flashSuccess): ?>
@@ -891,16 +985,16 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
     <div style="flex:1;min-width:200px;">
       <div style="font-size:1.25rem;font-weight:900;color:#fff;"><?= htmlspecialchars($currentUser['name'] ?? 'Customer') ?></div>
       <div style="font-size:.82rem;color:#94a3b8;"><?= htmlspecialchars($currentUser['email']) ?><?= !empty($currentUser['phone']) ? ' · ' . htmlspecialchars($currentUser['phone']) : '' ?></div>
-      <div style="font-size:.72rem;color:#64748b;margin-top:.25rem;"><?= count($customerOrders) ?> website(s) under your account</div>
+      <div style="font-size:.72rem;color:#64748b;margin-top:.25rem;"><?= count($customerOrders) ?> <?= ui_t('p_sites_under') ?></div>
     </div>
-    <button onclick="openProfileModal()" style="padding:.6rem 1.2rem;border-radius:10px;border:1.5px solid #6366f1;background:rgba(99,102,241,.12);color:#c7d2fe;font-weight:800;font-size:.82rem;cursor:pointer;font-family:inherit;">✎ Edit Profile</button>
+    <button onclick="openProfileModal()" style="padding:.6rem 1.2rem;border-radius:10px;border:1.5px solid #6366f1;background:rgba(99,102,241,.12);color:#c7d2fe;font-weight:800;font-size:.82rem;cursor:pointer;font-family:inherit;"><?= ui_t('p_edit_profile') ?></button>
   </div>
 
   <!-- ── PROFILE EDIT MODAL ── -->
   <div id="profile-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeProfileModal()">
     <div style="background:#111622;border:1.5px solid #28334d;border-radius:20px;width:100%;max-width:440px;margin:1rem;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;background:#0d121c;border-bottom:1px solid #1e293b;">
-        <strong style="color:#fff;font-size:1rem;">✎ Edit Profile</strong>
+        <strong style="color:#fff;font-size:1rem;"><?= ui_t('p_edit_profile') ?></strong>
         <button onclick="closeProfileModal()" style="background:none;border:none;color:#64748b;font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
       </div>
       <div style="padding:1.4rem;">
@@ -910,18 +1004,18 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <form method="POST" action="customer-portal.php">
           <input type="hidden" name="action" value="update_profile">
           <div class="field">
-            <label>Your Name</label>
+            <label><?= ui_t('p_your_name') ?></label>
             <input type="text" name="pf_name" class="inp" required maxlength="120" value="<?= htmlspecialchars($currentUser['name'] ?? '') ?>">
           </div>
           <div class="field">
-            <label>Phone Number <span style="font-weight:400;color:#64748b;">(optional)</span></label>
+            <label><?= ui_t('p_phone') ?> <span style="font-weight:400;color:#64748b;">(optional)</span></label>
             <input type="tel" name="pf_phone" class="inp" maxlength="30" placeholder="e.g. +94 77 123 4567" value="<?= htmlspecialchars($currentUser['phone'] ?? '') ?>">
           </div>
           <div class="field">
             <label>Email (cannot be changed)</label>
             <input type="text" class="inp" disabled value="<?= htmlspecialchars($currentUser['email']) ?>" style="opacity:.6;">
           </div>
-          <button type="submit" class="btn-primary"><span>Save Changes</span></button>
+          <button type="submit" class="btn-primary"><span><?= ui_t('p_save') ?></span></button>
         </form>
         <?php if ($avatarUrl): ?>
           <div style="margin-top:1rem;text-align:center;">
@@ -938,26 +1032,26 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
   </script>
   <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem;">
     <div>
-      <h1 style="font-size:1.8rem;font-weight:900;color:#fff;">My Websites &amp; Projects 👋</h1>
-      <p style="color:#94a3b8;font-size:0.88rem;margin-top:0.25rem;">Welcome back! Manage your active web properties, open CMS admin panels, and add AI features.</p>
+      <h1 style="font-size:1.8rem;font-weight:900;color:#fff;"><?= ui_t('p_dash_title') ?></h1>
+      <p style="color:#94a3b8;font-size:0.88rem;margin-top:0.25rem;"><?= ui_t('p_dash_sub') ?></p>
     </div>
-    <a href="builder.php" class="act-btn act-btn-primary">➕ Create New Website</a>
+    <a href="builder.php" class="act-btn act-btn-primary"><?= ui_t('p_btn_create') ?></a>
   </div>
 
   <!-- Quick Stats -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-lbl">Total Websites</div>
+      <div class="stat-lbl"><?= ui_t('p_stat_total') ?></div>
       <div class="stat-val"><?= count($customerOrders) ?></div>
-      <div style="font-size:0.72rem;color:#64748b;">Owned under your account</div>
+      <div style="font-size:0.72rem;color:#64748b;"><?= ui_t('p_stat_total_sub') ?></div>
     </div>
     <div class="stat-card">
-      <div class="stat-lbl">Active Online</div>
+      <div class="stat-lbl"><?= ui_t('p_stat_active') ?></div>
       <div class="stat-val" style="color:#34d399;"><?= count(array_filter($customerOrders, fn($o) => !empty($o['site_active']))) ?> 🟢</div>
-      <div style="font-size:0.72rem;color:#64748b;">Hosted &amp; live right now</div>
+      <div style="font-size:0.72rem;color:#64748b;"><?= ui_t('p_stat_active_sub') ?></div>
     </div>
     <div class="stat-card">
-      <div class="stat-lbl">Next Renewal Due</div>
+      <div class="stat-lbl"><?= ui_t('p_stat_renewal') ?></div>
       <?php 
         $nextDate = null;
         foreach ($customerOrders as $o) {
@@ -969,29 +1063,30 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         }
       ?>
       <div class="stat-val" style="font-size:1.35rem;color:#facc15;"><?= $nextDate ? date('M j, Y', strtotime($nextDate)) : 'Active' ?></div>
-      <div style="font-size:0.72rem;color:#64748b;">Subscription auto-billing</div>
+      <div style="font-size:0.72rem;color:#64748b;"><?= ui_t('p_stat_renewal_sub') ?></div>
     </div>
     <div class="stat-card">
-      <div class="stat-lbl">Notifications</div>
+      <div class="stat-lbl"><?= ui_t('p_stat_notifs') ?></div>
       <div class="stat-val" style="color:#818cf8;"><?= count($customerNotifs) ?></div>
-      <div style="font-size:0.72rem;color:#64748b;">Updates &amp; payment reminders</div>
+      <div style="font-size:0.72rem;color:#64748b;"><?= ui_t('p_stat_notifs_sub') ?></div>
     </div>
   </div>
 
   <!-- Tabs Navigation -->
   <div class="tabs-bar">
-    <button class="tab-btn active" onclick="switchPortalTab('sites')" id="ptab-sites">🌐 Published Websites (<?= count($customerOrders) ?>)</button>
-    <button class="tab-btn" onclick="switchPortalTab('notifs')" id="ptab-notifs">🔔 Notifications (<?= count($customerNotifs) ?>)</button>
+    <button class="tab-btn<?= $portalTab === 'sites' ? ' active' : '' ?>" onclick="switchPortalTab('sites')" id="ptab-sites"><?= ui_t('p_tab_sites') ?> (<?= count($customerOrders) ?>)</button>
+    <button class="tab-btn<?= $portalTab === 'notifs' ? ' active' : '' ?>" onclick="switchPortalTab('notifs')" id="ptab-notifs"><?= ui_t('p_tab_notifs') ?> (<?= count($customerNotifs) ?>)</button>
+    <button class="tab-btn<?= $portalTab === 'reviews' ? ' active' : '' ?>" onclick="switchPortalTab('reviews')" id="ptab-reviews"><?= ui_t('p_tab_reviews') ?> (<?= count($myReviews) ?>)</button>
   </div>
 
   <!-- ── SITES LIST TAB ── -->
-  <div id="psec-sites">
+  <div id="psec-sites"<?= $portalTab === 'sites' ? '' : ' style="display:none;"' ?>>
     <?php if (empty($customerOrders)): ?>
       <div style="background:#0c1220;border:1px dashed #1e293b;border-radius:18px;padding:3rem;text-align:center;">
         <div style="font-size:3rem;margin-bottom:1rem;">🚀</div>
-        <h3 style="color:#fff;font-size:1.2rem;margin-bottom:0.5rem;">No Published Websites Yet</h3>
-        <p style="color:#94a3b8;font-size:0.88rem;margin-bottom:1.5rem;">Start building your first stunning AI-powered website now.</p>
-        <a href="builder.php" class="act-btn act-btn-primary">Build a Website with AI →</a>
+        <h3 style="color:#fff;font-size:1.2rem;margin-bottom:0.5rem;"><?= ui_t('p_empty_sites_t') ?></h3>
+        <p style="color:#94a3b8;font-size:0.88rem;margin-bottom:1.5rem;"><?= ui_t('p_empty_sites_s') ?></p>
+        <a href="builder.php" class="act-btn act-btn-primary"><?= ui_t('p_btn_build_ai') ?></a>
       </div>
     <?php else: ?>
       <?php foreach ($customerOrders as $order): ?>
@@ -1067,10 +1162,10 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
   </div>
 
   <!-- ── NOTIFICATIONS TAB ── -->
-  <div id="psec-notifs" style="display:none;">
+  <div id="psec-notifs"<?= $portalTab === 'notifs' ? '' : ' style="display:none;"' ?>>
     <?php if (empty($customerNotifs)): ?>
       <div style="background:#0c1220;border:1px dashed #1e293b;border-radius:16px;padding:2.5rem;text-align:center;color:#94a3b8;">
-        🔔 No notifications yet. You're all caught up!
+        <?= ui_t('p_no_notifs') ?>
       </div>
     <?php else: ?>
       <?php foreach ($customerNotifs as $notif): ?>
@@ -1098,15 +1193,209 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
     <?php endif; ?>
   </div>
 
+  <!-- ── MY REVIEWS TAB ── -->
+  <div id="psec-reviews"<?= $portalTab === 'reviews' ? '' : ' style="display:none;"' ?>>
+    <?php if ($reviewErr): ?>
+      <div class="err-box">⚠️ <?= htmlspecialchars($reviewErr) ?></div>
+    <?php endif; ?>
+
+    <!-- Write a review -->
+    <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;">
+      <h3 style="color:#fff;font-size:1.05rem;margin-bottom:0.25rem;"><?= ui_t('r_write') ?></h3>
+      <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:1.1rem;"><?= ui_t('r_posting_as') ?> <strong style="color:#c7d2fe;"><?= htmlspecialchars($currentUser['name'] ?? 'Customer') ?></strong> · <?= ui_t('r_approved_note') ?></p>
+      <form method="POST" action="customer-portal.php?tab=reviews" id="rv-add-form">
+        <input type="hidden" name="action" value="review_add">
+        <div class="field">
+          <label><?= ui_t('r_rating') ?></label>
+          <div class="rv-stars" id="rv-stars-add" role="radiogroup" aria-label="Star rating">
+            <?php for ($s = 1; $s <= 5; $s++): ?>
+              <button type="button" data-v="<?= $s ?>" onclick="rvSetRating('add', <?= $s ?>)" aria-label="<?= $s ?> star<?= $s > 1 ? 's' : '' ?>">★</button>
+            <?php endfor; ?>
+          </div>
+          <input type="hidden" name="rv_rating" id="rv-rating-add" value="0">
+          <div id="rv-rating-hint-add" style="font-size:0.75rem;color:#64748b;margin-top:0.3rem;"><?= ui_t('r_rate_hint') ?></div>
+        </div>
+        <div class="field">
+          <label><?= ui_t('r_title') ?> <span style="font-weight:400;color:#64748b;"><?= ui_t('r_optional') ?></span></label>
+          <input type="text" name="rv_title" class="inp" maxlength="120" placeholder="<?= htmlspecialchars(ui_t('r_title_ph')) ?>">
+        </div>
+        <div class="field">
+          <label><?= ui_t('r_msg') ?></label>
+          <textarea name="rv_message" class="inp" rows="4" required minlength="10" maxlength="2000" placeholder="<?= htmlspecialchars(ui_t('r_msg_ph')) ?>"></textarea>
+        </div>
+        <div class="field">
+          <label><?= ui_t('r_role') ?> <span style="font-weight:400;color:#64748b;"><?= ui_t('r_optional') ?></span></label>
+          <input type="text" name="rv_role" class="inp" maxlength="120" placeholder="<?= htmlspecialchars(ui_t('r_role_ph')) ?>">
+        </div>
+        <button type="submit" class="btn-primary"><span><?= ui_t('r_submit') ?></span></button>
+      </form>
+    </div>
+
+    <!-- Own reviews -->
+    <h3 style="color:#fff;font-size:1.05rem;margin:0 0 0.9rem;"><?= ui_t('r_yours') ?> (<?= count($myReviews) ?>)</h3>
+    <?php if (empty($myReviews)): ?>
+      <div style="background:#0c1220;border:1px dashed #1e293b;border-radius:16px;padding:2.5rem;text-align:center;color:#94a3b8;">
+        <?= ui_t('r_empty') ?>
+      </div>
+    <?php else: ?>
+      <?php foreach ($myReviews as $rv): ?>
+        <?php
+          $rvId = (int)($rv['id'] ?? 0);
+          $rvStatus = $rv['status'] ?? 'pending';
+          $rvStatusLbl = $rvStatus === 'approved' ? ui_t('r_st_approved') : ($rvStatus === 'rejected' ? ui_t('r_st_rejected') : ui_t('r_st_pending'));
+          $rvPill = $rvStatus === 'approved' ? 'background:rgba(16,185,129,.14);color:#6ee7b7;border-color:rgba(16,185,129,.4);'
+            : ($rvStatus === 'rejected' ? 'background:rgba(239,68,68,.12);color:#fca5a5;border-color:rgba(239,68,68,.4);'
+            : 'background:rgba(245,158,11,.12);color:#fcd34d;border-color:rgba(245,158,11,.4);');
+        ?>
+        <div class="rv-row">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.35rem;">
+              <span class="rv-stars-static"><?= str_repeat('★', max(0, min(5, (int)($rv['rating'] ?? 0)))) ?><?= str_repeat('☆', 5 - max(0, min(5, (int)($rv['rating'] ?? 0)))) ?></span>
+              <span class="rv-pill" style="<?= $rvPill ?>"><?= htmlspecialchars($rvStatusLbl) ?></span>
+              <span style="font-size:0.72rem;color:#64748b;"><?= htmlspecialchars(!empty($rv['created_at']) ? date('M j, Y', strtotime($rv['created_at'])) : '') ?></span>
+            </div>
+            <?php if (!empty($rv['review_title'])): ?>
+              <div style="color:#fff;font-weight:800;font-size:0.9rem;"><?= htmlspecialchars($rv['review_title']) ?></div>
+            <?php endif; ?>
+            <div style="color:#cbd5e1;font-size:0.84rem;line-height:1.55;margin-top:0.2rem;"><?= nl2br(htmlspecialchars($rv['review_message'] ?? '')) ?></div>
+            <?php if (!empty($rv['customer_role'])): ?>
+              <div style="font-size:0.72rem;color:#64748b;margin-top:0.25rem;"><?= htmlspecialchars($rv['customer_role']) ?></div>
+            <?php endif; ?>
+          </div>
+          <div class="rv-row-actions">
+            <button class="rv-mini-btn" onclick='rvOpenEdit(<?= $rvId ?>, <?= json_encode((int)($rv['rating'] ?? 5)) ?>, <?= json_encode($rv['review_title'] ?? '', JSON_HEX_APOS | JSON_HEX_QUOT) ?>, <?= json_encode($rv['review_message'] ?? '', JSON_HEX_APOS | JSON_HEX_QUOT) ?>, <?= json_encode($rv['customer_role'] ?? '', JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'><?= ui_t('r_edit') ?></button>
+            <?php if ($reviewNeedsPw): ?>
+              <button class="rv-mini-btn rv-del" onclick="rvAskDelete(<?= $rvId ?>)"><?= ui_t('r_delete') ?></button>
+            <?php else: ?>
+            <form method="POST" action="customer-portal.php?tab=reviews" onsubmit="return confirm('Delete this review? This cannot be undone.')" style="margin:0;">
+              <input type="hidden" name="action" value="review_delete">
+              <input type="hidden" name="rv_id" value="<?= $rvId ?>">
+              <button type="submit" class="rv-mini-btn rv-del"><?= ui_t('r_delete') ?></button>
+            </form>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
+
+  <!-- ── REVIEW EDIT MODAL ── -->
+  <div id="rv-edit-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;" onclick="if(event.target===this)rvCloseEdit()">
+    <div style="background:#111622;border:1.5px solid #28334d;border-radius:20px;width:100%;max-width:480px;margin:1rem;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;background:#0d121c;border-bottom:1px solid #1e293b;">
+        <strong style="color:#fff;font-size:1rem;"><?= ui_t('r_edit_title') ?></strong>
+        <button onclick="rvCloseEdit()" style="background:none;border:none;color:#64748b;font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+      </div>
+      <div style="padding:1.4rem;">
+        <form method="POST" action="customer-portal.php?tab=reviews" id="rv-edit-form">
+          <input type="hidden" name="action" value="review_edit">
+          <input type="hidden" name="rv_id" id="rv-edit-id" value="">
+          <div class="field">
+            <label><?= ui_t('r_rating') ?></label>
+            <div class="rv-stars" id="rv-stars-edit" role="radiogroup" aria-label="Star rating">
+              <?php for ($s = 1; $s <= 5; $s++): ?>
+                <button type="button" data-v="<?= $s ?>" onclick="rvSetRating('edit', <?= $s ?>)" aria-label="<?= $s ?> star<?= $s > 1 ? 's' : '' ?>">★</button>
+              <?php endfor; ?>
+            </div>
+            <input type="hidden" name="rv_rating" id="rv-rating-edit" value="5">
+            <div id="rv-rating-hint-edit" style="font-size:0.75rem;color:#64748b;margin-top:0.3rem;">5/5</div>
+          </div>
+          <div class="field">
+            <label><?= ui_t('r_title') ?> <span style="font-weight:400;color:#64748b;"><?= ui_t('r_optional') ?></span></label>
+            <input type="text" name="rv_title" id="rv-edit-title" class="inp" maxlength="120">
+          </div>
+          <div class="field">
+            <label><?= ui_t('r_msg') ?></label>
+            <textarea name="rv_message" id="rv-edit-message" class="inp" rows="4" required minlength="10" maxlength="2000"></textarea>
+          </div>
+          <div class="field">
+            <label><?= ui_t('r_role') ?> <span style="font-weight:400;color:#64748b;"><?= ui_t('r_optional') ?></span></label>
+            <input type="text" name="rv_role" id="rv-edit-role" class="inp" maxlength="120">
+          </div>
+          <button type="submit" class="btn-primary"><span><?= ui_t('r_save') ?></span></button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REVIEW DELETE CONFIRM (password re-verification) ── -->
+  <div id="rv-del-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;" onclick="if(event.target===this)rvCloseDelete()">
+    <div style="background:#111622;border:1.5px solid #7f1d1d;border-radius:20px;width:100%;max-width:400px;margin:1rem;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;background:#0d121c;border-bottom:1px solid #1e293b;">
+        <strong style="color:#fca5a5;font-size:1rem;"><?= ui_t('r_del_title') ?></strong>
+        <button onclick="rvCloseDelete()" style="background:none;border:none;color:#64748b;font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+      </div>
+      <div style="padding:1.4rem;">
+        <p style="color:#cbd5e1;font-size:0.84rem;line-height:1.6;margin-bottom:1rem;"><?= ui_t('r_del_msg') ?></p>
+        <form method="POST" action="customer-portal.php?tab=reviews">
+          <input type="hidden" name="action" value="review_delete">
+          <input type="hidden" name="rv_id" id="rv-del-id" value="">
+          <div class="field">
+            <label><?= ui_t('r_pw') ?></label>
+            <input type="password" name="rv_password" class="inp" required autocomplete="current-password" placeholder="••••••••">
+          </div>
+          <div style="display:flex;gap:0.6rem;">
+            <button type="button" onclick="rvCloseDelete()" class="btn-primary" style="background:#1e293b;box-shadow:none;"><span><?= ui_t('r_cancel') ?></span></button>
+            <button type="submit" class="btn-primary" style="background:linear-gradient(135deg,#dc2626,#991b1b);box-shadow:0 8px 24px rgba(220,38,38,.4);"><span><?= ui_t('r_del_go') ?></span></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
 function switchPortalTab(tab) {
-  document.getElementById('psec-sites').style.display = (tab === 'sites') ? 'block' : 'none';
-  document.getElementById('psec-notifs').style.display = (tab === 'notifs') ? 'block' : 'none';
-  document.getElementById('ptab-sites').classList.toggle('active', tab === 'sites');
-  document.getElementById('ptab-notifs').classList.toggle('active', tab === 'notifs');
+  ['sites', 'notifs', 'reviews'].forEach(function (t) {
+    var sec = document.getElementById('psec-' + t);
+    if (sec) sec.style.display = (tab === t) ? 'block' : 'none';
+    var btn = document.getElementById('ptab-' + t);
+    if (btn) btn.classList.toggle('active', tab === t);
+  });
 }
+/* Interactive star ratings (add + edit forms share logic) */
+function rvSetRating(which, n) {
+  var hid = document.getElementById('rv-rating-' + which);
+  var hint = document.getElementById('rv-rating-hint-' + which);
+  if (hid) hid.value = n;
+  var wrap = document.getElementById('rv-stars-' + which);
+  if (wrap) {
+    wrap.querySelectorAll('button').forEach(function (b) {
+      b.classList.toggle('on', parseInt(b.dataset.v, 10) <= n);
+    });
+  }
+  if (hint) hint.textContent = n + '/5' + (n === 5 ? ' — Excellent!' : n === 4 ? ' — Great!' : n === 3 ? ' — Good' : n === 2 ? ' — Fair' : ' — Poor');
+}
+function rvOpenEdit(id, rating, title, message, role) {
+  document.getElementById('rv-edit-id').value = id;
+  document.getElementById('rv-edit-title').value = title || '';
+  document.getElementById('rv-edit-message').value = message || '';
+  document.getElementById('rv-edit-role').value = role || '';
+  rvSetRating('edit', rating || 5);
+  var m = document.getElementById('rv-edit-modal');
+  if (m) m.style.display = 'flex';
+}
+function rvCloseEdit() {
+  var m = document.getElementById('rv-edit-modal');
+  if (m) m.style.display = 'none';
+}
+function rvAskDelete(id) {
+  document.getElementById('rv-del-id').value = id;
+  var m = document.getElementById('rv-del-modal');
+  if (m) m.style.display = 'flex';
+}
+function rvCloseDelete() {
+  var m = document.getElementById('rv-del-modal');
+  if (m) m.style.display = 'none';
+}
+document.getElementById('rv-add-form').addEventListener('submit', function (e) {
+  if (parseInt(document.getElementById('rv-rating-add').value, 10) < 1) {
+    e.preventDefault();
+    alert('Please select a star rating first.');
+  }
+});
+<?php if ($reviewErr): ?>switchPortalTab('reviews');<?php endif; ?>
 </script>
 <?php endif; ?>
 

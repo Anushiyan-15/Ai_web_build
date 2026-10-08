@@ -132,3 +132,23 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+
+-- ─── 8. Customer Reviews & Ratings ───────────────────────────
+-- One row per submitted review. Ownership keyed on customer_email
+-- (canonical identity app-wide). Only status='approved' is public.
+CREATE TABLE IF NOT EXISTS reviews (
+    id BIGSERIAL PRIMARY KEY,
+    customer_id VARCHAR(64) NULL,
+    customer_email VARCHAR(255) NOT NULL,
+    customer_name VARCHAR(255) NOT NULL DEFAULT '',
+    customer_role VARCHAR(120) NOT NULL DEFAULT '',
+    rating SMALLINT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review_title VARCHAR(255) NOT NULL DEFAULT '',
+    review_message TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_email ON reviews(customer_email);
+CREATE INDEX IF NOT EXISTS idx_reviews_status ON reviews(status);

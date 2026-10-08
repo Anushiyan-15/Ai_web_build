@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/reviews.php';
 $page_title = 'Home — AI Website Builder';
 $page_desc  = 'Build stunning, professional websites in seconds with AI. Describe your vision, watch it come alive.';
 require_once __DIR__ . '/includes/nav.php';
@@ -193,9 +194,25 @@ require_once __DIR__ . '/includes/nav.php';
   width:40px;height:40px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:1.1rem;font-weight:700;color:#fff;
+  position:relative;overflow:hidden;flex-shrink:0;
 }
+.testi-avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .testi-name{font-size:.875rem;font-weight:700;color:var(--n900)}
 .testi-role{font-size:.78rem;color:var(--n400)}
+.testi-title{font-size:.92rem;font-weight:800;color:var(--n900);margin-bottom:.35rem}
+.testi-date{font-size:.72rem;color:var(--n400);margin-top:.1rem}
+/* Overall rating summary */
+.testi-summary{display:flex;align-items:center;justify-content:center;gap:.9rem;margin-bottom:2.25rem;flex-wrap:wrap}
+.avg-stars{position:relative;display:inline-block;font-size:1.5rem;line-height:1;letter-spacing:.1em}
+.avg-stars-bg{color:var(--n200)}
+.avg-stars-fg{position:absolute;inset:0;overflow:hidden;white-space:nowrap;color:#f59e0b}
+.testi-avg-num{font-size:1.6rem;font-weight:900;color:var(--n900)}
+.testi-avg-sub{font-size:.82rem;color:var(--n500)}
+/* Progressive loading */
+.testi-card.testi-new{animation:testiIn .45s ease}
+@keyframes testiIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.testi-more-wrap{text-align:center;margin-top:2rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+@media(max-width:580px){.testi-card{padding:1.25rem}}
 
 /* CTA section */
 .cta-section{
@@ -396,34 +413,93 @@ require_once __DIR__ . '/includes/nav.php';
   </div>
 </section>
 
-<!-- ══ TESTIMONIALS ══════════════════════════════════════ -->
-<section class="section" style="background:var(--n50)">
+<!-- ══ TESTIMONIALS (dynamic — approved reviews, 5 at a time) ══ -->
+<section class="section" style="background:var(--n50)" id="testimonials">
   <div class="container">
-    <div class="text-center" style="margin-bottom:3rem">
+    <div class="text-center" style="margin-bottom:1.5rem">
       <div class="badge">Testimonials</div>
       <h2 class="heading-lg">Loved by businesses everywhere</h2>
     </div>
-    <div class="grid-3">
-      <?php
-      $testis = [
-        ['⭐⭐⭐⭐⭐','"Generated my entire restaurant website in under 2 minutes. The code was clean and I only had to change the phone number!"','Sarah M.','Restaurant Owner','#ef4444'],
-        ['⭐⭐⭐⭐⭐','"I used this to build a landing page for my startup. The AI even added animations I didn\'t ask for. Absolutely brilliant."','James K.','SaaS Founder','#6366f1'],
-        ['⭐⭐⭐⭐⭐','"My client needed a portfolio site urgently. I used WebCraft AI to generate the base and customized it live. Saved me 8 hours."','Priya R.','Freelance Designer','#10b981'],
-      ];
-      foreach($testis as [$stars,$text,$name,$role,$color]): ?>
-      <div class="testi-card">
-        <div class="testi-stars"><?= $stars ?></div>
-        <p class="testi-text"><?= $text ?></p>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:<?= $color ?>"><?= $name[0] ?></div>
-          <div>
-            <div class="testi-name"><?= $name ?></div>
-            <div class="testi-role"><?= $role ?></div>
-          </div>
-        </div>
-      </div>
-      <?php endforeach; ?>
+    <?php
+    $testiSummary = reviews_rating_summary();
+    $testiTotal   = (int)$testiSummary['count'];
+    $testiAvg     = (float)$testiSummary['average'];
+    $testiFirst   = reviews_public(REVIEW_PAGE_SIZE, 0);
+    ?>
+    <?php if ($testiTotal > 0): ?>
+    <div class="testi-summary">
+      <?= review_avg_stars_html($testiAvg) ?>
+      <span class="testi-avg-num"><?= htmlspecialchars(number_format($testiAvg, 1)) ?> / 5</span>
+      <span class="testi-avg-sub">Based on <?= $testiTotal ?> verified review<?= $testiTotal === 1 ? '' : 's' ?></span>
     </div>
+    <?php endif; ?>
+    <?php if (empty($testiFirst)): ?>
+      <div class="text-center" style="padding:2rem;color:var(--n500);">
+        <div style="font-size:2.5rem;margin-bottom:.75rem;">⭐</div>
+        <p class="lead center">No reviews yet — be the first to share your experience!</p>
+        <p style="margin-top:1rem;"><a href="<?= SITE_URL ?>/customer-portal.php?view=signup" class="btn btn-primary">Write the First Review</a></p>
+      </div>
+    <?php else: ?>
+    <div class="grid-3" id="testi-grid" data-total="<?= $testiTotal ?>" data-offset="<?= count($testiFirst) ?>">
+      <?php foreach ($testiFirst as $tr) echo review_card_html($tr); ?>
+    </div>
+    <div class="testi-more-wrap">
+      <?php if ($testiTotal > count($testiFirst)): ?>
+        <button class="btn btn-primary" id="testi-more-btn" onclick="testiLoadMore()">Show More Reviews</button>
+      <?php endif; ?>
+      <button class="btn" id="testi-less-btn" onclick="testiShowLess()" style="display:none;border:1px solid var(--n200);background:#fff;">Show Less</button>
+    </div>
+    <script>
+    (function () {
+      var grid = document.getElementById('testi-grid');
+      if (!grid) return;
+      var total = parseInt(grid.dataset.total, 10) || 0;
+      var loading = false;
+      window.testiLoadMore = function () {
+        if (loading) return;
+        loading = true;
+        var btn = document.getElementById('testi-more-btn');
+        var offset = parseInt(grid.dataset.offset, 10) || 0;
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+        fetch('<?= SITE_URL ?>/api/reviews.php?action=list&limit=5&offset=' + offset)
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            loading = false;
+            if (!d || !d.success) throw new Error('load failed');
+            (d.items || []).forEach(function (it) {
+              var tmp = document.createElement('div');
+              tmp.innerHTML = it.html;
+              var card = tmp.firstElementChild;
+              if (card) { card.classList.add('testi-new'); grid.appendChild(card); }
+            });
+            grid.dataset.offset = offset + (d.items || []).length;
+            var shown = parseInt(grid.dataset.offset, 10) || 0;
+            var less = document.getElementById('testi-less-btn');
+            if (less && shown > 5) less.style.display = '';
+            if (btn) {
+              if (d.has_more) { btn.disabled = false; btn.textContent = 'Show More Reviews'; }
+              else { btn.textContent = 'All Reviews Shown'; btn.disabled = true; btn.style.opacity = '.6'; }
+            }
+          })
+          .catch(function () {
+            loading = false;
+            if (btn) { btn.disabled = false; btn.textContent = 'Show More Reviews'; }
+            alert('Could not load more reviews. Please try again.');
+          });
+      };
+      window.testiShowLess = function () {
+        var cards = grid.querySelectorAll('.testi-card');
+        for (var i = cards.length - 1; i >= 5; i--) cards[i].remove();
+        grid.dataset.offset = Math.min(5, cards.length ? 5 : 0);
+        var btn = document.getElementById('testi-more-btn');
+        if (btn && total > 5) { btn.textContent = 'Show More Reviews'; btn.disabled = false; btn.style.opacity = ''; }
+        var less = document.getElementById('testi-less-btn');
+        if (less) less.style.display = 'none';
+        document.getElementById('testimonials').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+    })();
+    </script>
+    <?php endif; ?>
   </div>
 </section>
 

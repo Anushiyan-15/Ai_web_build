@@ -661,6 +661,7 @@ function render_sidebar(string $active = 'dashboard'): void {
             'notifications' => ['href' => 'notifications.php', 'perm' => 'notifications_view', 'icon' => 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',             'label' => 'Notification Hub'],
             'send_email'    => ['href' => 'send-email.php',    'perm' => 'notifications_send',  'icon' => 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6', 'label' => 'Send Email to User'],
             'customers'     => ['href' => 'customers.php',     'perm' => 'notifications_view',  'icon' => 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', 'label' => 'Customers & Accounts'],
+            'reviews'       => ['href' => 'reviews.php',       'perm' => 'reviews_manage',      'icon' => 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z', 'label' => 'Reviews & Ratings'],
         ],
         'Security & Team' => [
             'audit' => ['href' => 'audit-logs.php', 'perm' => 'audit_logs', 'icon' => 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8', 'label' => 'Audit Trail'],

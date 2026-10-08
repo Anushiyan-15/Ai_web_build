@@ -126,22 +126,29 @@ window.OpenCodeAI = (function () {
     try {
       const j = await post('/api/opencode.php', { action: 'analyze', data, taste: tastePrefs(), model: getModel() }, 12000);
       if (j && j.brief) {
+        // Track Gemini health: analyze rides the Gemini lite lane. If it
+        // failed we know Gemini is down → route generation quick-first
+        // (OpenCode) so we still get AI results instead of 0/3.
+        service.geminiDown = !j.ai;
         if (onProgress) onProgress({ stage: 'analyzing', pct: 30, message: 'Design brief ready' + (j.model ? ' (' + j.model + ')' : '') });
         return j.brief;
       }
-    } catch (e) { console.warn('[OpenCodeAI] analyze failed, using fallback brief:', e?.message); }
+    } catch (e) { console.warn('[OpenCodeAI] analyze failed, using fallback brief:', e?.message); service.geminiDown = true; }
     const d = data || {};
     return `AUDIENCE: ${d.biz_audience || 'Modern clients'}\nSECTIONS: ${(d.sections || []).join(', ') || 'hero, services, about, metrics, contact, footer'}\nPALETTE: ${d.color_palette || 'purple'}\nTYPE: Plus Jakarta Sans + Inter\nDIFFERENTIATORS: glass nav; clay CTAs; scroll-reveal`;
   }
 
   /* Fixed lane split (no picker — customer never chooses):
-     Variation 1 (classic) + Variation 2 (bold) → gemini-3.5-flash-lite.
-     Variation 3 (editorial) → OpenCode space-bunny-free (quick lane).
+     Variation 1 (classic) + Variation 2 (bold) → gemini-3.5-flash-lite first.
+     Variation 3 (editorial) → OpenCode space-bunny-free FIRST (quick lane),
+     so one AI result survives even when Gemini is fully down.
      NOTE: muse-spark-1.3 was requested but OpenCode rejects it over HTTP
      with 403 "free tier can only be used from within OpenCode" (verified
      2026-10-06 probe — same for big-pickle/mimo; only space-bunny works
      with this key). One-line swap if OpenCode allowlists it later.
-     Every fallback stays inside AI — server templates are never used. */
+     When the analyze step already proved Gemini down, ALL slots go
+     quick-first (see lanesFor()). Every fallback stays inside AI —
+     server templates are never used. */
   const OPENCODE_SLOT3_MODEL = 'space-bunny-free';
   const SLOT_LANES = [
     [ { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.7 },
@@ -150,10 +157,22 @@ window.OpenCodeAI = (function () {
     [ { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.95 },
       { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.85 },
       { kind: 'quick', model: OPENCODE_SLOT3_MODEL,     temp: 0.95 } ],
-    [ { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.55 },
-      { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.65 },
-      { kind: 'quick', model: OPENCODE_SLOT3_MODEL,     temp: 0.6 } ]
+    [ { kind: 'quick', model: OPENCODE_SLOT3_MODEL,     temp: 0.6 },
+      { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.55 },
+      { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.65 } ]
   ];
+  /* Lane order per slot: Gemini-down (proven by analyze step) → quick
+     first everywhere, so 3 parallel OpenCode gens replace 3 hung Gemini
+     calls instead of burning the whole race budget on timeouts. */
+  function lanesFor(i) {
+    const base = SLOT_LANES[i] || SLOT_LANES[0];
+    if (service.geminiDown) {
+      const quick = base.filter(l => l.kind === 'quick');
+      const fast = base.filter(l => l.kind !== 'quick');
+      return [...quick, ...fast];
+    }
+    return base;
+  }
 
   /* Shop guarantee: ecommerce must ship a WORKING cart (quantity +/-, drawer,
      totals, checkout). Backend injectShopIfMissing ensures this on every
@@ -266,7 +285,7 @@ window.OpenCodeAI = (function () {
      Diversity via temperature + layout brief + slot direction + taste dials.
      Partial fallback: 1-2 AI ready → return them, caller fills the rest
      with server templates by variation id. Throws only on 0/3.
-     Bounded ≈ 175s (gen ~25s/slot solo + optional taste polish). */
+     Bounded ≈ 100s (95s race + polish within budget). */
   async function generateConcepts(data, mode, options) {
     options = options || {};
     const onProgress = options.onProgress;
@@ -298,9 +317,11 @@ window.OpenCodeAI = (function () {
     let laneDone = false;
     const pending = [];
     const lane1 = Promise.all(VARIATIONS.map(async (v, i) => {
-      if (i > 0) await new Promise(r => setTimeout(r, i * 250));
+      // Wider stagger when all slots share the OpenCode lane (Gemini down)
+      // so the 3 parallel gens don't trip free-tier rate limits together.
+      await new Promise(r => setTimeout(r, i * (service.geminiDown ? 2000 : 250)));
       try {
-        const { j, engine } = await runSlotLanes(data, v, mode, brief, -1, SLOT_LANES[i]);
+        const { j, engine } = await runSlotLanes(data, v, mode, brief, -1, lanesFor(i));
         if (laneDone) return;
         tok += (j.usage?.prompt || 0) + (j.usage?.completion || 0);
         pending.push({ v, j, engine, i });
@@ -311,9 +332,9 @@ window.OpenCodeAI = (function () {
     await Promise.race([
       lane1,
       new Promise(r => setTimeout(() => {
-        if (!laneDone) errors.push('lane timeout 52s — proceeding with ready variations');
+        if (!laneDone) errors.push('lane timeout 95s — proceeding with ready variations');
         r();
-      }, 52000))
+      }, 95000))
     ]);
     laneDone = true;
     // Concurrent polish batch (failing pages only, threshold 70, within budget).
@@ -370,9 +391,9 @@ window.OpenCodeAI = (function () {
     let subDone = false;
     const pendingSub = [];
     const subAll = Promise.all([0, 1, 2].map(async (s) => {
-      if (s > 0) await new Promise(r => setTimeout(r, s * 250));
+      await new Promise(r => setTimeout(r, s * (service.geminiDown ? 2000 : 250)));
       try {
-        const { j, engine } = await runSlotLanes(data, variation, mode, brief, s, SLOT_LANES[s]);
+        const { j, engine } = await runSlotLanes(data, variation, mode, brief, s, lanesFor(s));
         if (subDone) return;
         tok += (j.usage?.prompt || 0) + (j.usage?.completion || 0);
         pendingSub.push({ j, engine, s });
@@ -393,9 +414,9 @@ window.OpenCodeAI = (function () {
     await Promise.race([
       subAll,
       new Promise(r => setTimeout(() => {
-        if (!subDone) errors.push('layout lane timeout 52s — proceeding with ready layouts');
+        if (!subDone) errors.push('layout lane timeout 95s — proceeding with ready layouts');
         r();
-      }, 52000))
+      }, 95000))
     ]);
     subDone = true;
     // Concurrent polish batch (failing pages only, within budget).
@@ -585,6 +606,7 @@ window.OpenCodeAI = (function () {
   const service = {
     FREE_MODELS, VARIATIONS, AI_CHAT_DEFAULT,
     selectedModel: getModel(),
+    geminiDown: false,
     getModel, setModel, getModels, getChatModel,
     analyzeRequirements, generateOne, generateQuick, generateConcepts, generateSubDesigns,
     chatAndEdit, editSnippet, editWithFallback, enrichTanglish, refreshModelDropdown

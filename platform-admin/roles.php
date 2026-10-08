@@ -38,7 +38,8 @@ function get_role_definitions(): array {
             'icon'        => '🎧',
             'permissions' => [
                 'dashboard', 'tenants_view', 'customer_view', 'tickets',
-                'notifications_send', 'notifications_view', 'sites_preview'
+                'notifications_send', 'notifications_view', 'sites_preview',
+                'reviews_manage'
             ],
         ],
         ROLE_BILLING => [

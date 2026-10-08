@@ -238,15 +238,18 @@ function taste_audit_html(string $html): array {
         $fail('scroll-reveal without prefers-reduced-motion fallback');
     }
 
-    // 9b. Reveal deadlock: content hidden by DEFAULT in CSS (`.reveal{opacity:0}`)
-    // with no watchdog/noscript fallback stays blank forever if the one inline
-    // script throws — header renders, body empty. The safety net injects
-    // data-wcl-reveal-watchdog; anything still unprotected fails here.
-    if (stripos($html, 'wcl-reveal-watchdog') === false
-        && stripos($html, '.reveal') !== false
+    // 9b. Reveal deadlock: content hidden by DEFAULT in CSS (`.reveal`,
+    // `.will-reveal`, `.fade-up`, … + `opacity:0`) with no guard/noscript
+    // fallback stays blank if the one inline script throws — header renders,
+    // body/section empty or blanking after ~1s. The safety net injects
+    // data-wcl-reveal-guard (legacy data-wcl-reveal-watchdog also accepted);
+    // anything still unprotected fails here.
+    $hasRevealGuard = (stripos($html, 'wcl-reveal-guard') !== false)
+        || (stripos($html, 'wcl-reveal-watchdog') !== false);
+    if (!$hasRevealGuard
         && stripos($html, 'IntersectionObserver') !== false
-        && preg_match('/\.reveal[^{]*\{[^}]*opacity\s*:\s*0/i', $html)) {
-        $fail('scroll-reveal hides content by default with no fallback — blank page if JS fails');
+        && preg_match('/\.(reveal|will-reveal|fade-up|fade-in-up|reveal-up|scroll-reveal|js-reveal|anim-up|reveal-item|fade-in)[^{]*\{[^}]*opacity\s*:\s*0/i', $html)) {
+        $fail('scroll-reveal hides content by default with no fallback — blank page/section if JS fails');
     }
 
     // 10. Mobile collapse declared
@@ -293,19 +296,54 @@ function taste_apply_safety_net(string $html): string {
     }
     // Auto-fix missing image alt attributes for accessibility & instant audit pass
     $html = preg_replace('/<img(?![^>]*alt=)([^>]*?)>/i', '<img alt="Visual showcase"$1>', $html);
-    // Reveal watchdog: CSS-default-hidden `.reveal{opacity:0}` + IO, but no
-    // watchdog yet → inject one idempotent script before </body>.
-    if (stripos($html, 'wcl-reveal-watchdog') === false
-        && stripos($html, '.reveal') !== false
-        && stripos($html, 'IntersectionObserver') !== false
-        && preg_match('/\.reveal[^{]*\{[^}]*opacity\s*:\s*0/i', $html)) {
-        $watchdog = '<script data-wcl-reveal-watchdog>setTimeout(function(){try{'
-            . 'document.querySelectorAll(\'.reveal:not(.in)\').forEach(function(el){el.classList.add(\'in\')})'
-            . '}catch(e){}},2500);</script>';
+    // Reveal guard: Space Bunny hides sections by DEFAULT in CSS using MANY
+    // conventions (`.reveal{opacity:0}` + `.in`, `.will-reveal` + `.visible`,
+    // `.fade-up` + `.visible`, …) + ONE inline script that unhides via
+    // IntersectionObserver. If that script throws — or adds hidden classes
+    // IO never clears (zero-area iframe, threshold miss) — the section shows
+    // for a second, then goes/stays blank (verified 2026-10-07: preview
+    // sections blanking after ~1s). One idempotent guard covers every known
+    // hidden→visible class pair: 2.2s after load it adds the visible class to
+    // still-hidden members, skipping position:fixed (drawers/toasts/modals)
+    // and anything inside <nav> (menus toggle visibility by design).
+    $revealPairs = [
+        ['reveal', 'in'], ['will-reveal', 'visible'], ['fade-up', 'visible'],
+        ['fade-in-up', 'visible'], ['reveal-up', 'visible'],
+        ['scroll-reveal', 'visible'], ['js-reveal', 'visible'],
+        ['anim-up', 'visible'], ['reveal-item', 'visible'], ['fade-in', 'visible'],
+    ];
+    $needsGuard = (stripos($html, 'wcl-reveal-guard') === false);
+    if ($needsGuard) {
+        foreach ($revealPairs as $pair) {
+            [$hcls, $vcls] = $pair;
+            if (preg_match('/\.' . preg_quote($hcls, '/') . '[^{]*\{[^}]*opacity\s*:\s*0/i', $html)
+                && stripos($html, '.' . $hcls) !== false) {
+                $needsGuard = $hcls . ':' . $vcls;
+                break;
+            }
+        }
+        if ($needsGuard === true) $needsGuard = false;
+    }
+    if ($needsGuard !== false) {
+        $guard = '<script data-wcl-reveal-guard>setTimeout(function(){try{'
+            . 'var P=[["reveal","in"],["will-reveal","visible"],["fade-up","visible"],["fade-in-up","visible"],'
+            . '["reveal-up","visible"],["scroll-reveal","visible"],["js-reveal","visible"],'
+            . '["anim-up","visible"],["reveal-item","visible"],["fade-in","visible"]];'
+            . 'var css="";try{var ss=document.querySelectorAll("style");'
+            . 'for(var k=0;k<ss.length;k++){css+=" "+(ss[k].textContent||"")}}catch(e){}'
+            . 'P.forEach(function(p){var H=p[0],V=p[1];'
+            . 'var rx=new RegExp("\\\\."+H+"\\\\b[^{]*\\\\{[^}]*opacity\\\\s*:\\\\s*0","i");'
+            . 'if(!rx.test(css))return;'
+            . 'try{document.querySelectorAll("."+H+":not(."+V+")").forEach(function(el){'
+            . 'try{if(el.closest&&el.closest("nav"))return;'
+            . 'var cs=null;try{cs=window.getComputedStyle(el)}catch(e){}'
+            . 'if(cs&&cs.position==="fixed")return;'
+            . 'el.classList.add(V)}catch(e){}})}catch(e){}})'
+            . '}catch(e){}},2200);</script>';
         if (stripos($html, '</body>') !== false) {
-            $html = str_ireplace('</body>', $watchdog . '</body>', $html);
+            $html = str_ireplace('</body>', $guard . '</body>', $html);
         } else {
-            $html .= $watchdog;
+            $html .= $guard;
         }
     }
     // Count-up: stat numbers (50k+, 99.8%, 30+) animate 0-to-target when

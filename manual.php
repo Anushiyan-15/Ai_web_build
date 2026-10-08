@@ -247,7 +247,7 @@ a.uf-next:hover{background:rgba(99,102,241,.25);color:#fff;}
       <ul>
         <li><b>✦ Model</b> (top of the panel, default Gemini Flash Lite) — change it anytime; AI chat uses it for every edit.</li>
         <li><b>🎯 Editing target</b> (top of the panel) — check <b>which variation</b> the AI will change before sending.</li>
-        <li><b>🎤 Mic</b> — dictate (Tamil / English / Hindi); <b>➤</b> sends (Enter works too).</li>
+        <li><b>🎤 Mic</b> — dictate (Tamil / Sinhala / English / Hindi); <b>➤</b> sends (Enter works too).</li>
         <li>Wrong result? <b>↶ Undo AI</b> in the toolbar reverts it.</li>
         <li>In <b>Studio</b>, the same AI is far more powerful — Ask/Edit modes, audit, history, section insert (§7 below).</li>
       </ul>

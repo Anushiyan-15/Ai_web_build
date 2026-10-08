@@ -8,6 +8,8 @@ if (!headers_sent()) {
 }
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/ui-lang.php';
+$UI_LANG = ui_resolve_lang();
 
 $customerUser  = $_SESSION['customer_user'] ?? null;
 $customerEmail = $customerUser['email'] ?? null;
@@ -1293,7 +1295,7 @@ body.builder-focus .resume-banner { top: 12px; }
       <div class="wizard-step active" id="step1">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.1rem; flex-wrap:wrap; gap:0.6rem; background:#0e1320; padding:0.65rem 0.9rem; border-radius:10px; border:1px solid #1e293b;">
           <div>
-            <div class="wiz-section-label" style="margin-bottom:0; font-size:0.78rem;">Step 1 of 4 · Business Profile</div>
+            <div class="wiz-section-label" style="margin-bottom:0; font-size:0.78rem;"><?= ui_t('b_step1') ?></div>
             <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">Enter your business details below, or click Demo to test.</div>
           </div>
           <div style="display:flex; gap:0.45rem; align-items:center;">
@@ -1332,51 +1334,38 @@ body.builder-focus .resume-banner { top: 12px; }
         </div>
         <div class="w-row">
           <div class="w-group">
-            <label class="w-label" for="biz_name">Business / Brand Name <span class="req">*</span></label>
+            <label class="w-label" for="biz_name"><?= ui_t('b_biz_name') ?> <span class="req">*</span></label>
             <input class="w-input" type="text" id="biz_name" placeholder="e.g. Apex Studio, Zen Cafe, Dr. Smith Clinic" value="">
           </div>
           <div class="w-group">
-            <label class="w-label" for="biz_type">Industry / Category <span class="req">*</span></label>
+            <label class="w-label" for="biz_type"><?= ui_t('b_biz_type') ?> <span class="req">*</span></label>
             <select class="w-select" id="biz_type">
-              <option>Creative &amp; Digital Agency</option>
-              <option>Restaurant, Cafe &amp; Bar</option>
-              <option>Tech Startup &amp; SaaS</option>
-              <option>Professional Services &amp; Legal</option>
-              <option>Healthcare &amp; Wellness Clinic</option>
-              <option>Real Estate &amp; Architecture</option>
-              <option>Fitness Center &amp; Personal Trainer</option>
-              <option>E-Commerce &amp; Retail</option>
-              <option>Consultant / Advisor</option>
-              <option>Coach (Life / Business)</option>
-              <option>Therapist / Counselor</option>
-              <option>Tradesperson (Plumber / Electrician / Handyman)</option>
-              <option>Cleaning Service</option>
-              <option>Tutor / Trainer</option>
-              <option>Personal Portfolio &amp; Creator</option>
-              <option>School / College / Education</option>
-              <option>Other</option>
+              <?php $inds = ['Creative & Digital Agency','Restaurant, Cafe & Bar','Tech Startup & SaaS','Professional Services & Legal','Healthcare & Wellness Clinic','Real Estate & Architecture','Fitness Center & Personal Trainer','E-Commerce & Retail','Consultant / Advisor','Coach (Life / Business)','Therapist / Counselor','Tradesperson (Plumber / Electrician / Handyman)','Cleaning Service','Tutor / Trainer','Personal Portfolio & Creator','School / College / Education','Other']; ?>
+              <?php foreach ($inds as $ii => $iv): ?>
+                <option value="<?= htmlspecialchars($iv) ?>"><?= ui_t('b_ind' . $ii) ?></option>
+              <?php endforeach; ?>
             </select>
           </div>
         </div>
         <div class="w-group">
-          <label class="w-label" for="biz_tagline">Core Mission / Tagline <span class="req">*</span></label>
+          <label class="w-label" for="biz_tagline"><?= ui_t('b_biz_tagline') ?> <span class="req">*</span></label>
           <input class="w-input" type="text" id="biz_tagline" placeholder="e.g. Crafting exceptional experiences that inspire and scale." value="">
         </div>
         <div class="w-group">
-          <label class="w-label" for="biz_audience">Target Audience</label>
+          <label class="w-label" for="biz_audience"><?= ui_t('b_biz_audience') ?></label>
           <input class="w-input" type="text" id="biz_audience" placeholder="e.g. High-growth brands, modern businesses, local community..." value="">
         </div>
         <div class="w-group">
-          <label class="w-label" for="biz_services">Services / Products Offered</label>
+          <label class="w-label" for="biz_services"><?= ui_t('b_biz_services') ?></label>
           <input class="w-input" type="text" id="biz_services" placeholder="e.g. UI/UX Design, Web Development, Brand Identity, Consulting..." value="">
         </div>
         <div class="w-group">
-          <label class="w-label" for="biz_products">🛒 Product List <span style="font-weight:400;color:#94a3b8;">(for product companies — one per line)</span></label>
+          <label class="w-label" for="biz_products"><?= ui_t('b_biz_products') ?> <span style="font-weight:400;color:#94a3b8;">(for product companies — one per line)</span></label>
           <textarea class="w-textarea" id="biz_products" rows="4" placeholder="Example:&#10;Cotton T-Shirt | ₹499 | https://example.com/tshirt.jpg&#10;Denim Jacket | ₹1499&#10;Leather Wallet | Ask price"></textarea>
           <div class="w-hint">Format per line: <strong style="color:#a5b4fc">Name | Price | ImageURL (optional)</strong> — no price = Enquire button. Empty = no shop section (unless business type is a shop).</div>
         </div>
         <div class="w-group">
-          <label class="w-label" for="biz_reviews">⭐ Client Reviews <span style="font-weight:400;color:#94a3b8;">(paste from Google/Yelp/Facebook — one per line)</span></label>
+          <label class="w-label" for="biz_reviews"><?= ui_t('b_biz_reviews') ?> <span style="font-weight:400;color:#94a3b8;">(paste from Google/Yelp/Facebook — one per line)</span></label>
           <textarea class="w-textarea" id="biz_reviews" rows="3" placeholder="Example:&#10;Priya Sharma | Fantastic service, highly recommended! | Happy Customer&#10;Rahul Verma | Professional work, on time every time."></textarea>
           <div class="w-hint">Format per line: <strong style="color:#a5b4fc">Name | Review text | Role (optional)</strong> — rendered verbatim in testimonials.</div>
         </div>
@@ -1384,25 +1373,25 @@ body.builder-focus .resume-banner { top: 12px; }
 
       <!-- STEP 2 -->
       <div class="wizard-step" id="step2">
-        <div class="wiz-section-label">Step 2 of 4 · Primary Design Direction</div>
+        <div class="wiz-section-label"><?= ui_t('b_step2') ?></div>
         <p class="w-hint" style="margin-bottom:1.5rem;">
           Tell us the aesthetic you want. <strong style="color:#a5b4fc">All 3 style variations we generate will follow this direction</strong> — only the layout approach will differ.
         </p>
         <div class="w-group">
-          <label class="w-label">Design Aesthetic <span class="req">*</span></label>
+          <label class="w-label"><?= ui_t('b_design_style') ?> <span class="req">*</span></label>
           <div class="style-grid">
-            <div class="style-card"><input type="radio" name="design_style" id="st_modern" value="modern" checked><label for="st_modern"><span style="font-size:1.4rem">🎯</span>Modern &amp; Clean</label></div>
-            <div class="style-card"><input type="radio" name="design_style" id="st_bold" value="bold"><label for="st_bold"><span style="font-size:1.4rem">⚡</span>Bold &amp; Dynamic</label></div>
-            <div class="style-card"><input type="radio" name="design_style" id="st_dark" value="dark"><label for="st_dark"><span style="font-size:1.4rem">🌙</span>Luxury &amp; Dark</label></div>
+            <div class="style-card"><input type="radio" name="design_style" id="st_modern" value="modern" checked><label for="st_modern"><span style="font-size:1.4rem">🎯</span><?= ui_t('b_style_modern') ?></label></div>
+            <div class="style-card"><input type="radio" name="design_style" id="st_bold" value="bold"><label for="st_bold"><span style="font-size:1.4rem">⚡</span><?= ui_t('b_style_bold') ?></label></div>
+            <div class="style-card"><input type="radio" name="design_style" id="st_dark" value="dark"><label for="st_dark"><span style="font-size:1.4rem">🌙</span><?= ui_t('b_style_dark') ?></label></div>
           </div>
         </div>
         <div class="w-group">
-          <label class="w-label" for="design_direction">Describe your design direction (optional)</label>
+          <label class="w-label" for="design_direction"><?= ui_t('b_design_dir') ?></label>
           <textarea class="w-textarea" id="design_direction" rows="3" placeholder="e.g. Minimal Scandinavian with warm neutrals, generous whitespace, editorial typography…"></textarea>
           <div class="w-hint">Free-text adds extra guidance on top of the aesthetic above.</div>
         </div>
         <div class="w-group">
-          <label class="w-label">Brand Color Accent</label>
+          <label class="w-label"><?= ui_t('b_color') ?></label>
           <div class="color-grid">
             <div class="color-swatch"><input type="radio" name="color_palette" id="cp_purple" value="purple" checked><label for="cp_purple" style="background:linear-gradient(135deg,#6366f1,#a855f7)"></label></div>
             <div class="color-swatch"><input type="radio" name="color_palette" id="cp_blue" value="blue"><label for="cp_blue" style="background:linear-gradient(135deg,#2563eb,#06b6d4)"></label></div>
@@ -1413,20 +1402,20 @@ body.builder-focus .resume-banner { top: 12px; }
           </div>
         </div>
         <div class="w-group taste-block">
-          <label class="w-label">✦ Design Intelligence <span style="font-weight:400;color:#94a3b8;">(Taste Skill — reads your brief, sets the taste)</span></label>
+          <label class="w-label"><?= ui_t('b_taste') ?> <span style="font-weight:400;color:#94a3b8;">(Taste Skill — reads your brief, sets the taste)</span></label>
           <div class="taste-vibes">
-            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="auto" checked><span>✦ Auto</span></label>
-            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="minimalist"><span>Minimal</span></label>
-            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="premium"><span>Premium</span></label>
-            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="playful"><span>Playful</span></label>
-            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="editorial"><span>Editorial</span></label>
-            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="brutalist"><span>Brutalist</span></label>
-            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="trust"><span>Trust-first</span></label>
+            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="auto" checked><span><?= ui_t('b_vibe_auto') ?></span></label>
+            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="minimalist"><span><?= ui_t('b_vibe_min') ?></span></label>
+            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="premium"><span><?= ui_t('b_vibe_prem') ?></span></label>
+            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="playful"><span><?= ui_t('b_vibe_play') ?></span></label>
+            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="editorial"><span><?= ui_t('b_vibe_edit') ?></span></label>
+            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="brutalist"><span><?= ui_t('b_vibe_brut') ?></span></label>
+            <label class="taste-vibe"><input type="radio" name="taste_vibe" value="trust"><span><?= ui_t('b_vibe_trust') ?></span></label>
           </div>
           <div class="taste-dials">
-            <div class="taste-dial"><span class="td-name">Layout variance</span><input type="range" id="taste_variance" min="0" max="10" value="0" oninput="updateTasteRead()"><span class="td-val" id="taste_variance_val">Auto</span></div>
-            <div class="taste-dial"><span class="td-name">Motion intensity</span><input type="range" id="taste_motion" min="0" max="10" value="0" oninput="updateTasteRead()"><span class="td-val" id="taste_motion_val">Auto</span></div>
-            <div class="taste-dial"><span class="td-name">Visual density</span><input type="range" id="taste_density" min="0" max="10" value="0" oninput="updateTasteRead()"><span class="td-val" id="taste_density_val">Auto</span></div>
+            <div class="taste-dial"><span class="td-name"><?= ui_t('b_dial_var') ?></span><input type="range" id="taste_variance" min="0" max="10" value="0" oninput="updateTasteRead()"><span class="td-val" id="taste_variance_val">Auto</span></div>
+            <div class="taste-dial"><span class="td-name"><?= ui_t('b_dial_mot') ?></span><input type="range" id="taste_motion" min="0" max="10" value="0" oninput="updateTasteRead()"><span class="td-val" id="taste_motion_val">Auto</span></div>
+            <div class="taste-dial"><span class="td-name"><?= ui_t('b_dial_den') ?></span><input type="range" id="taste_density" min="0" max="10" value="0" oninput="updateTasteRead()"><span class="td-val" id="taste_density_val">Auto</span></div>
           </div>
           <div class="w-hint" id="taste-read">✦ Auto: the AI reads your business + direction and picks the design language + dials (baseline 8/6/4). Move a slider to override.</div>
         </div>
@@ -1434,24 +1423,24 @@ body.builder-focus .resume-banner { top: 12px; }
 
       <!-- STEP 3 -->
       <div class="wizard-step" id="step3">
-        <div class="wiz-section-label">Step 3 of 4 · Website Sections</div>
+        <div class="wiz-section-label"><?= ui_t('b_step3') ?></div>
         <div class="w-group">
-          <label class="w-label">Include Sections</label>
+          <label class="w-label"><?= ui_t('b_sections') ?></label>
           <div class="check-grid">
-            <label class="wcheck"><input type="checkbox" name="sections[]" value="hero" checked><span>Hero &amp; Value Proposition</span></label>
-            <label class="wcheck"><input type="checkbox" name="sections[]" value="services" checked><span>Services &amp; Offerings</span></label>
-            <label class="wcheck"><input type="checkbox" name="sections[]" value="about" checked><span>About &amp; Story</span></label>
-            <label class="wcheck"><input type="checkbox" name="sections[]" value="metrics" checked><span>Key Metrics &amp; Stats</span></label>
-            <label class="wcheck"><input type="checkbox" name="sections[]" value="shop"><span>🛒 Shop &amp; Products (working cart)</span></label>
-            <label class="wcheck"><input type="checkbox" name="sections[]" value="contact" checked><span>Interactive Contact Section</span></label>
-            <label class="wcheck"><input type="checkbox" name="sections[]" value="footer" checked><span>Footer with Links</span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="hero" checked><span><?= ui_t('b_sec_hero') ?></span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="services" checked><span><?= ui_t('b_sec_services') ?></span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="about" checked><span><?= ui_t('b_sec_about') ?></span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="metrics" checked><span><?= ui_t('b_sec_metrics') ?></span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="shop"><span><?= ui_t('b_sec_shop') ?></span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="contact" checked><span><?= ui_t('b_sec_contact') ?></span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="footer" checked><span><?= ui_t('b_sec_footer') ?></span></label>
           </div>
         </div>
       </div>
 
       <!-- STEP 4 -->
       <div class="wizard-step" id="step4">
-        <div class="wiz-section-label">Step 4 of 4 · Contact Info &amp; Generate</div>
+        <div class="wiz-section-label"><?= ui_t('b_step4') ?></div>
         <div class="account-bar" id="account-bar" style="background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(16,185,129,0.1)); border: 1.5px solid rgba(99,102,241,0.35);">
           <div class="account-info">
             <div class="account-avatar" id="account-avatar" style="background: linear-gradient(135deg, #10b981, #059669); color:#fff; font-weight:800;">✦</div>
@@ -1466,19 +1455,19 @@ body.builder-focus .resume-banner { top: 12px; }
         </div>
 
         <div class="w-row">
-          <div class="w-group"><label class="w-label" for="biz_phone">Phone Number</label><input class="w-input" type="text" id="biz_phone" value="+1 (555) 890-1234"></div>
-          <div class="w-group"><label class="w-label" for="biz_email">Contact Email</label><input class="w-input" type="email" id="biz_email" value="hello@zenithstudio.com"></div>
+          <div class="w-group"><label class="w-label" for="biz_phone"><?= ui_t('b_phone') ?></label><input class="w-input" type="text" id="biz_phone" value="+1 (555) 890-1234"></div>
+          <div class="w-group"><label class="w-label" for="biz_email"><?= ui_t('b_email') ?></label><input class="w-input" type="email" id="biz_email" value="hello@zenithstudio.com"></div>
         </div>
-        <div class="w-group"><label class="w-label" for="biz_address">Headquarters / Location</label><input class="w-input" type="text" id="biz_address" value="450 Innovation Parkway, San Francisco, CA"></div>
+        <div class="w-group"><label class="w-label" for="biz_address"><?= ui_t('b_address') ?></label><input class="w-input" type="text" id="biz_address" value="450 Innovation Parkway, San Francisco, CA"></div>
 
         <div class="w-group">
-          <label class="w-label" for="biz_logo">🏷️ Brand Logo URL <span style="font-weight:400;color:#94a3b8;">(optional — empty = text brand name)</span></label>
+          <label class="w-label" for="biz_logo"><?= ui_t('b_logo') ?> <span style="font-weight:400;color:#94a3b8;">(optional — empty = text brand name)</span></label>
           <input class="w-input" type="url" id="biz_logo" placeholder="https://example.com/logo.png">
           <div class="w-hint">Customer logo iruntha link kodunga — navbar + footer la <strong style="color:#a5b4fc">img</strong> aaga varum. Vendam-na empty-a vidunga.</div>
         </div>
 
         <div class="w-group">
-          <label class="w-label">📣 Social Media Links <span style="font-weight:400;color:#94a3b8;">(optional — kodutha link mattum footer la varum)</span></label>
+          <label class="w-label"><?= ui_t('b_social') ?> <span style="font-weight:400;color:#94a3b8;">(optional — kodutha link mattum footer la varum)</span></label>
           <div class="w-row">
             <div class="w-group"><label class="w-label" for="biz_instagram" style="font-size:.72rem;">Instagram URL</label><input class="w-input" type="url" id="biz_instagram" placeholder="https://instagram.com/yourpage"></div>
             <div class="w-group"><label class="w-label" for="biz_facebook" style="font-size:.72rem;">Facebook URL</label><input class="w-input" type="url" id="biz_facebook" placeholder="https://facebook.com/yourpage"></div>
@@ -1491,10 +1480,10 @@ body.builder-focus .resume-banner { top: 12px; }
         </div>
 
         <div class="gen-block">
-          <h3>Ready to Generate</h3>
+          <h3><?= ui_t('b_gen_title') ?></h3>
           <p>We'll create <strong style="color:#a5b4fc">3 distinct style variations</strong> based on your design direction.<br>Each variation uses your exact content — only the layout differs.</p>
           <button class="wbtn wbtn-generate" id="wiz-generate-btn" onclick="openGenerateModal()" disabled>
-            <span>✦</span><span>Generate 3 Style Variations</span>
+            <span>✦</span><span><?= ui_t('b_gen_btn') ?></span>
           </button>
         </div>
 
@@ -1506,9 +1495,9 @@ body.builder-focus .resume-banner { top: 12px; }
     </div>
 
     <div class="wizard-footer">
-      <button class="wbtn wbtn-ghost" id="wiz-prev" onclick="wizNav(-1)" disabled>&larr; Back</button>
+      <button class="wbtn wbtn-ghost" id="wiz-prev" onclick="wizNav(-1)" disabled>&larr; <?= ui_t('b_back') ?></button>
       <div id="wiz-step-counter" style="font-size:0.85rem; color:#64748b; font-weight:600">Step 1 of 4</div>
-      <button class="wbtn wbtn-primary" id="wiz-next" onclick="wizNav(1)">Next Step &rarr;</button>
+      <button class="wbtn wbtn-primary" id="wiz-next" onclick="wizNav(1)"><?= ui_t('b_next') ?></button>
       <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
         <button class="wbtn wbtn-clear" id="wiz-clear" onclick="clearAndSwitchAccount()" style="display:none;">✕ Clear</button>
       </div>
@@ -1679,6 +1668,7 @@ body.builder-focus .resume-banner { top: 12px; }
     <button class="magic-mic-btn" id="btn-voice" onclick="toggleVoiceInput()" title="Voice chat"><span id="mic-icon">🎤</span></button>
     <select class="magic-lang-select" id="voice-lang" title="Voice language">
       <option value="ta-IN">🇮🇳 Tamil</option>
+      <option value="si-LK">🇱🇰 Sinhala</option>
       <option value="en-IN" selected>🇮🇳 EN-IN</option>
       <option value="en-US">🇺🇸 EN-US</option>
       <option value="hi-IN">🇮🇳 Hindi</option>
@@ -1987,6 +1977,10 @@ window.__CUSTOMER__ = <?= json_encode($customerUser ?: null) ?>;
 ═════════════════════════════════════════════════ */
 let generatedDesigns = [];
 const SITE_URL_JS = <?= json_encode(SITE_URL) ?>;
+window.WC_UI = <?= json_encode(['lang' => $UI_LANG, 't' => [
+  'brief_t' => ui_t('b_brief_t'), 'brief_s' => ui_t('b_brief_s'),
+  'brief_btn' => ui_t('b_brief_btn'), 'brandkit' => ui_t('b_brandkit'),
+]], JSON_UNESCAPED_UNICODE) ?>;
 if (typeof SITE_URL === 'undefined') { var SITE_URL = SITE_URL_JS; }
 let activeDesignIndex = 0;
 let currentHtml = '';
@@ -4469,18 +4463,26 @@ const WC_COUNT_FIX_JS = '<script data-wc-count-fix>(function(){if(window.__wcCou
    page all behave the same:
    (a) wc-nav-fix: header anchor links smooth-scroll (+scroll-margin).
    (b) wc-count-fix: stat numbers (50k+, 99.8%, 30+) count up from 0 when
-       scrolled into view (IntersectionObserver, once, easeOutExpo). */
+       scrolled into view (IntersectionObserver, once, easeOutExpo).
+   (c) wcl-reveal-guard: Space Bunny hides sections by default
+       (.reveal/.will-reveal/.fade-up… + opacity:0) with one inline script
+       to unhide — if that script throws, sections show ~1s then blank.
+       Guard re-adds the visible class after 2.2s (skips fixed/nav). */
+const WC_REVEAL_GUARD_JS = '<script data-wcl-reveal-guard>setTimeout(function(){try{var P=[["reveal","in"],["will-reveal","visible"],["fade-up","visible"],["fade-in-up","visible"],["reveal-up","visible"],["scroll-reveal","visible"],["js-reveal","visible"],["anim-up","visible"],["reveal-item","visible"],["fade-in","visible"]];var css="";try{var ss=document.querySelectorAll("style");for(var k=0;k<ss.length;k++){css+=" "+(ss[k].textContent||"")}}catch(e){}P.forEach(function(p){var H=p[0],V=p[1];var rx=new RegExp("\\."+H+"\\b[^{]*\\{[^}]*opacity\\s*:\\s*0","i");if(!rx.test(css))return;try{document.querySelectorAll("."+H+":not(."+V+")").forEach(function(el){try{if(el.closest&&el.closest("nav"))return;var cs=null;try{cs=window.getComputedStyle(el)}catch(e){}if(cs&&cs.position==="fixed")return;el.classList.add(V)}catch(e){}})}catch(e){}})}catch(e){}},2200);<\/script>';
 function withWorkspaceNavFix(html) {
   if (!html) return html;
   const haveNav = html.indexOf('wc-nav-fix') !== -1;
   const haveCount = html.indexOf('wc-count-fix') !== -1;
-  if (haveNav && haveCount) return html;
+  const needGuard = html.indexOf('wcl-reveal-guard') === -1
+    && /\.(reveal|will-reveal|fade-up|fade-in-up|reveal-up|scroll-reveal|js-reveal|anim-up|reveal-item|fade-in)\b[^{]*\{[^}]*opacity\s*:\s*0/i.test(html);
+  if (haveNav && haveCount && !needGuard) return html;
   let bundle = '';
   if (!haveNav) {
     bundle += '<style data-wc-nav-fix-css>html{scroll-behavior:smooth!important}section[id],div[id],footer[id],header[id],main[id],article[id]{scroll-margin-top:88px!important}</style>';
     bundle += '<script data-wc-nav-fix>(function(){document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;var href=a.getAttribute("href")||"";if(href.length<2)return;var id=href.slice(1).split("?")[0].split("#")[0];try{id=decodeURIComponent(id)}catch(_){}id=(id||"").trim();if(!id)return;var t=document.getElementById(id);if(!t)return;e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(_){try{t.scrollIntoView()}catch(__){}}try{history.replaceState(null,"","#"+id)}catch(__){}var d=document.getElementById("mobile-drawer");if(d)d.classList.remove("open")},true)})();<\/script>';
   }
   if (!haveCount) bundle += WC_COUNT_FIX_JS;
+  if (needGuard) bundle += WC_REVEAL_GUARD_JS;
   // NOTE: function replacers — the bundle contains '$' (currency guard),
   // which a string replacer would misread as a $pattern. Function returns
   // are inserted literally.
@@ -5090,6 +5092,11 @@ function showToast(text, ms, type) {
   toastTimeout = setTimeout(() => t.classList.remove('show'), ms);
 }
 </script>
+
+<!-- ★ WebCraft AI Suite — additive UX upgrades (brief, brand kit, health, versions, dashboard, publish gate). Reuses existing systems. -->
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/wc-ai-suite.css">
+<script src="<?= SITE_URL ?>/assets/js/wc-ai-suite.js"></script>
+<script src="<?= SITE_URL ?>/assets/js/wc-builder-suite.js"></script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 </body>

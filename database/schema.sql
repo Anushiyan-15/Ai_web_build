@@ -148,3 +148,21 @@ CREATE TABLE IF NOT EXISTS `customers` (
   `updated_at`    DATETIME     ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_cust_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ─── Customer Reviews & Ratings ──────────────────────────────
+-- Ownership keyed on customer_email. Only status='approved' is public.
+CREATE TABLE IF NOT EXISTS `reviews` (
+  `id`             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `customer_id`    VARCHAR(64)  NULL,
+  `customer_email` VARCHAR(255) NOT NULL,
+  `customer_name`  VARCHAR(255) NOT NULL DEFAULT '',
+  `customer_role`  VARCHAR(120) NOT NULL DEFAULT '',
+  `rating`         TINYINT      NOT NULL,
+  `review_title`   VARCHAR(255) NOT NULL DEFAULT '',
+  `review_message` TEXT         NOT NULL,
+  `status`         VARCHAR(20)  NOT NULL DEFAULT 'pending',
+  `created_at`     DATETIME     NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`     DATETIME     NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_reviews_email` (`customer_email`),
+  INDEX `idx_reviews_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
