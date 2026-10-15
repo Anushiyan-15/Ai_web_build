@@ -1,0 +1,37 @@
+/* ═══════════════════════════════════════════════════════════
+   wc-smart-dnd.css — parent-frame visuals for Smart DnD.
+   Canvas-frame visuals are injected by wc-smart-dnd.js into the
+   GrapesJS iframe as #wc-smart-dnd-css (iframe has its own document).
+   This file only styles host UI (badges, test panel, toasts).
+   ═══════════════════════════════════════════════════════════ */
+.wc-smart-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+.wc-smart-toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100002;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  display: none;
+}
+.wc-smart-toast.on { display: block; }

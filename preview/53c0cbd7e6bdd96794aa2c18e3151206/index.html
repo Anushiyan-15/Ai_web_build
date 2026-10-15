@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Express Travels | Daily Chennai to Bangalore Bus Service</title>
+    <meta name="description" content="Book daily luxury and AC sleeper bus tickets from Chennai to Bangalore with City Express Travels. Instant online booking, 15-min seat hold, and QR boarding passes.">
+    <meta property="og:title" content="City Express Travels | Chennai to Bangalore Bus Service">
+    <meta property="og:description" content="Daily bus service from Chennai to Bangalore with online seat booking, QR tickets and counter payment.">
+    <meta property="og:type" content="website">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #38bdf8;
+            --tint: #dbeafe;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --max-width: 1200px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        button, input, select {
+            font-family: inherit;
+        }
+
+        /* Container & Layout */
+        .container {
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        section {
+            padding: 5rem 0;
+            position: relative;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .navbar.scrolled {
+            box-shadow: var(--shadow);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 80px;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.025em;
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+
+        .brand svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            font-weight: 500;
+            color: var(--muted);
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            position: relative;
+        }
+
+        .hamburger span {
+            display: block;
+            position: absolute;
+            height: 2px;
+            width: 100%;
+            background: var(--text);
+            border-radius: 2px;
+            transition: var(--transition);
+        }
+
+        .hamburger span:nth-child(1) { top: 8px; }
+        .hamburger span:nth-child(2) { top: 15px; }
+        .hamburger span:nth-child(3) { top: 22px; }
+
+        /* Buttons & Badges */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            min-height: 44px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--tint);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            background: var(--tint);
+            color: var(--primary);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding-top: calc(80px + 4rem);
+            padding-bottom: 6rem;
+            overflow: hidden;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.25rem;
+            color: var(--text);
+        }
+
+        .hero-content h1 span {
+            color: var(--primary);
+        }
+
+        .hero-content p {
+            font-size: 1.15rem;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            max-width: 520px;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat-item h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        .stat-item p {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .hero-img-wrap {
+            position: relative;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            aspect-ratio: 4/3;
+        }
+
+        .hero-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .floating-card {
+            position: absolute;
+            bottom: -20px;
+            left: -30px;
+            background: var(--surface);
+            padding: 1.25rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .floating-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            background: var(--tint);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        /* Trust Section */
+        .trust-section {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 2.5rem 0;
+        }
+
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .trust-item svg {
+            width: 32px;
+            height: 32px;
+            stroke: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .trust-item div {
+            text-align: left;
+        }
+
+        .trust-item h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .trust-item p {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        /* Section Headers */
+        .section-header {
+            text-align: center;
+            max-width: 680px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-top: 0.5rem;
+            color: var(--text);
+        }
+
+        /* Booking / Trip Planner & Flow */
+        .booking-section {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 3rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .search-box {
+            background: var(--bg);
+            padding: 2rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 150px;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--tint);
+        }
+
+        /* Trip Results & Demo Cards */
+        .results-container {
+            margin-top: 2rem;
+        }
+
+        .trip-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .trip-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .trip-info h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .trip-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .trip-price {
+            text-align: right;
+        }
+
+        .trip-price .price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+        }
+
+        .trip-price .seats-left {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        /* Seat Grid Step */
+        .seat-map-wrapper {
+            background: var(--bg);
+            padding: 2rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .bus-layout {
+            max-width: 320px;
+            margin: 2rem auto;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem 1rem;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .steering {
+            grid-column: span 5;
+            text-align: right;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--border);
+            margin-bottom: 1rem;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .aisle {
+            grid-column: span 1;
+        }
+
+        .wc-seat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            height: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .wc-seat:hover {
+            border-color: var(--primary);
+            background: var(--tint);
+        }
+
+        .wc-seat.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .wc-seat.booked {
+            background: var(--border);
+            color: var(--muted);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .seat-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .legend-box.avail { background: var(--surface); }
+        .legend-box.sel { background: var(--primary); }
+        .legend-box.book { background: var(--border); }
+
+        /* Ticket & Details Steps */
+        .step-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+        }
+
+        .ticket-box {
+            background: var(--bg);
+            border: 2px dashed var(--primary);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .qr-placeholder {
+            width: 180px;
+            height: 180px;
+            background: white;
+            margin: 1.5rem auto;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Services Cards */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .service-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+            transition: var(--transition);
+        }
+
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .service-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius);
+            background: var(--tint);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .service-card p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        /* Gallery / Fleet */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .gallery-item {
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            position: relative;
+            aspect-ratio: 16/10;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Metrics Bar */
+        .metrics-section {
+            background: var(--text);
+            color: white;
+            padding: 4rem 0;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .metric-item h3 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        .metric-item p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        /* About Section */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .about-content h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.25rem;
+        }
+
+        .about-content p {
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .about-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .about-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .about-feature-item svg {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .about-img-wrap {
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            aspect-ratio: 4/3;
+        }
+
+        .about-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Contact & Map Section */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .contact-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 3rem;
+            box-shadow: var(--shadow);
+        }
+
+        .contact-info-list {
+            margin: 2rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .contact-info-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .contact-info-item svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .map-container {
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            height: 100%;
+            min-height: 400px;
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 4rem 0 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-col h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+        }
+
+        .footer-col ul {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .footer-col a {
+            color: var(--muted);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .footer-col a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--text);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 992px) {
+            .hero-grid, .about-grid, .contact-grid, .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+            .hero-content h1 {
+                font-size: 2.75rem;
+            }
+            .trust-grid, .metrics-grid, .services-grid, .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-actions .btn-outline {
+                display: none;
+            }
+            .hamburger {
+                display: block;
+            }
+            .trust-grid, .metrics-grid, .services-grid, .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-stats-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+            .nav-drawer {
+                position: fixed;
+                top: 80px;
+                left: 0;
+                width: 100%;
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
+                padding: 1.5rem;
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                box-shadow: var(--shadow);
+                transform: translateY(-120%);
+                transition: var(--transition);
+                z-index: 999;
+            }
+            .nav-drawer.open {
+                transform: translateY(0);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header & Navbar -->
+    <header class="navbar" id="navbar">
+        <div class="container nav-content">
+            <a href="#hero" class="brand">
+                <svg viewBox="0 0 24 24"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.5-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11V6h14v5H5z"/></svg>
+                City Express Travels
+            </a>
+            <nav class="nav-links">
+                <a href="#offerings">Schedules</a>
+                <a href="#booking">Book Now</a>
+                <a href="#services">Services</a>
+                <a href="#about">About</a>
+                <a href="#contact">Contact</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="#booking" class="btn btn-primary">Book Ticket</a>
+                <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Drawer -->
+        <div class="nav-drawer" id="nav-drawer">
+            <a href="#offerings" class="mobile-nav-link">Schedules</a>
+            <a href="#booking" class="mobile-nav-link">Book Now</a>
+            <a href="#services" class="mobile-nav-link">Services</a>
+            <a href="#about" class="mobile-nav-link">About</a>
+            <a href="#contact" class="mobile-nav-link">Contact</a>
+            <a href="#booking" class="btn btn-primary" style="text-align: center;">Book Ticket</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section id="hero" class="hero">
+            <div class="container">
+                <div class="hero-grid">
+                    <div class="hero-content">
+                        <span class="badge">Daily Chennai &rarr; Bangalore Service</span>
+                        <h1>Your Premium Journey <span>Redefined</span></h1>
+                        <p>Experience seamless daily travel between Chennai and Bangalore with online seat selection, instant QR boarding passes, and secure payment options.</p>
+                        <div class="hero-cta">
+                            <a href="#booking" class="btn btn-primary">Book Your Seat Now</a>
+                            <a href="#offerings" class="btn btn-outline">View Timetable</a>
+                        </div>
+                        <div class="hero-stats-row">
+                            <div class="stat-item">
+                                <h3>15+</h3>
+                                <p>Daily Departures</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>50K+</h3>
+                                <p>Happy Commuters</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>99.8%</h3>
+                                <p>On-Time Record</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=70" alt="Luxury AC bus coach on highway representing City Express Travels fleet">
+                        </div>
+                        <div class="floating-card">
+                            <div class="floating-icon">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <div>
+                                <h4 style="font-size: 0.95rem; font-weight: 700;">15-Min Seat Hold</h4>
+                                <p style="font-size: 0.8rem; color: var(--muted);">Secure your preferred seats instantly</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trust Section -->
+        <div id="trust" class="trust-section">
+            <div class="container">
+                <div class="trust-grid">
+                    <div class="trust-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <div>
+                            <h4>Safe & Sanitized</h4>
+                            <p>Cleaned after every trip</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <div>
+                            <h4>Punctual Timing</h4>
+                            <p>On-time departures daily</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        <div>
+                            <h4>Easy Payments</h4>
+                            <p>Counter or online checkout</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <div>
+                            <h4>Instant QR Pass</h4>
+                            <p>Boarding made contactless</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking & Trip Flow Section -->
+        <section id="booking">
+            <div class="container">
+                <div class="section-header">
+                    <span class="badge">Online Reservation</span>
+                    <h2>Book Your Journey</h2>
+                    <p>Search available trips, pick your seats, and confirm your ticket in under 2 minutes.</p>
+                </div>
+
+                <div class="booking-section">
+                    <!-- Search Form -->
+                    <div class="search-box">
+                        <form method="POST" onsubmit="return false" data-wc-search="trips" data-wc-target="#trip-results" class="search-form">
+                            <div class="form-group">
+                                <label for="origin-input">From</label>
+                                <input type="text" id="origin-input" name="origin" class="form-control" value="Chennai" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="destination-input">To</label>
+                                <input type="text" id="destination-input" name="destination" class="form-control" value="Bangalore" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="date-input">Travel Date</label>
+                                <input type="date" id="date-input" name="date" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Find My Bus</button>
+                        </form>
+                    </div>
+
+                    <!-- Results & Demo Schedules -->
+                    <div id="trip-results" data-wc-results class="results-container">
+                        <p style="text-align: center; color: var(--muted); padding: 2rem;">Select route and date above or choose from our daily scheduled services below.</p>
+                    </div>
+
+                    <!-- Demo Schedules (Fallback & Quick Select) -->
+                    <div id="offerings" style="margin-top: 3rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Frequent Daily Schedules</h3>
+                        <div id="demo-trips">
+                            <!-- Rendered dynamically by script -->
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Seats -->
+                    <div data-wc-step="seats" hidden style="margin-top: 3rem;">
+                        <div class="seat-map-wrapper">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Select Your Seats</h3>
+                            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Click up to 6 seats to hold for 15 minutes.</p>
+                            <div class="seat-legend">
+                                <div class="legend-item"><div class="legend-box avail"></div>Available</div>
+                                <div class="legend-item"><div class="legend-box sel"></div>Selected</div>
+                                <div class="legend-item"><div class="legend-box book"></div>Booked</div>
+                            </div>
+                            <div class="bus-layout" id="seat-map">
+                                <!-- Generated by JS -->
+                            </div>
+                            <button type="button" class="btn btn-primary" id="proceed-hold-btn" style="margin-top: 1rem;" disabled>Hold Seats &amp; Proceed</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Details -->
+                    <div data-wc-step="details" hidden style="margin-top: 3rem;">
+                        <div class="step-container" style="max-width: 600px; margin: 0 auto;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Passenger Details</h3>
+                            <form data-wc-form="booking" data-wc-thanks="Ticket confirmed! Your QR reference is on its way.">
+                                <input name="company" style="display:none" autocomplete="off">
+                                <div class="form-group" style="margin-bottom: 1.25rem;">
+                                    <label>Passenger Full Name</label>
+                                    <input type="text" name="passenger" class="form-control" required placeholder="Enter full name">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 1.25rem;">
+                                    <label>Mobile Number (for SMS &amp; Lookup)</label>
+                                    <input type="tel" name="phone" class="form-control" required placeholder="+91 98765 43210">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 1.5rem;">
+                                    <label>Email Address</label>
+                                    <input type="email" name="email" class="form-control" required placeholder="name@example.com">
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">Confirm Booking &amp; Generate QR</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Ticket & Payment -->
+                    <div data-wc-step="ticket" hidden style="margin-top: 3rem;">
+                        <div class="step-container">
+                            <div class="ticket-box" id="ticket-box">
+                                <!-- Populated on confirm -->
+                            </div>
+                            <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+                                <button type="button" class="btn btn-outline" data-pay="counter">Pay at Counter</button>
+                                <button type="button" class="btn btn-primary" data-pay="online">Pay Online Now</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History & Lookup -->
+                    <div style="margin-top: 4rem; padding-top: 3rem; border-top: 1px solid var(--border);">
+                        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Find Existing Booking / Ticket Lookup</h3>
+                        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Lookup your active bookings and download your QR boarding pass using your phone number.</p>
+                        <div data-wc-ticket-lookup="bookings"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services">
+            <div class="container">
+                <div class="section-header">
+                    <span class="badge">What We Offer</span>
+                    <h2>Designed for Daily Commuters &amp; Travellers</h2>
+                    <p>We ensure a smooth, comfortable, and reliable transit experience across the Chennai-Bangalore corridor.</p>
+                </div>
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        </div>
+                        <h3>Daily Scheduled Trips</h3>
+                        <p>Frequent departures round the clock from key boarding points in Chennai and Bangalore with zero delays.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <h3>Flexible Payment Options</h3>
+                        <p>Pay securely online via UPI/Cards or opt to pay at our boarding counters before departure.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                        <h3>QR Ticket Boarding</h3>
+                        <p>Skip paper queues. Show your digital QR code directly to the conductor for instant verification.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Section (Fleet) -->
+        <section id="gallery" style="background: var(--surface);">
+            <div class="container">
+                <div class="section-header">
+                    <span class="badge">Our Fleet</span>
+                    <h2>Modern Coaches &amp; Buses</h2>
+                    <p>Travel in comfort with our well-maintained, climate-controlled AC sleeper and seating coaches.</p>
+                </div>
+                <div class="gallery-grid">
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=70" alt="City Express luxury AC sleeper bus exterior">
+                    </div>
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1557223562-6c77ef1ae280?auto=format&fit=crop&w=1200&q=70" alt="Comfortable reclining seats inside coach">
+                    </div>
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1200&q=70" alt="Modern fleet ready for departure">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Metrics Section -->
+        <div id="metrics" class="metrics-section">
+            <div class="container">
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <h3>15+</h3>
+                        <p>Daily Services</p>
+                    </div>
+                    <div class="metric-item">
+                        <h3>50K+</h3>
+                        <p>Satisfied Passengers</p>
+                    </div>
+                    <div class="metric-item">
+                        <h3>4.9</h3>
+                        <p>Customer Rating</p>
+                    </div>
+                    <div class="metric-item">
+                        <h3>24/7</h3>
+                        <p>Support &amp; Counters</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <section id="about">
+            <div class="container">
+                <div class="about-grid">
+                    <div class="about-content">
+                        <span class="badge">Established Reliability</span>
+                        <h2>Connecting Chennai and Bangalore Seamlessly Since 2015</h2>
+                        <p>City Express Travels was built to solve the daily transit challenges faced by working professionals, students, and weekend vacationers travelling between Tamil Nadu and Karnataka's capitals.</p>
+                        <p>With an uncompromising focus on safety, comfort, and punctuality, we operate a fleet of state-of-the-art buses equipped with modern amenities.</p>
+                        <div class="about-features">
+                            <div class="about-feature-item">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                Verified Drivers
+                            </div>
+                            <div class="about-feature-item">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                Live GPS Tracking
+                            </div>
+                            <div class="about-feature-item">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                24/7 Customer Support
+                            </div>
+                            <div class="about-feature-item">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                Free Cancellation
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-visual">
+                        <div class="about-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1517760444937-f6397edcbbcd?auto=format&fit=crop&w=1200&q=70" alt="Passengers boarding bus comfortably">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" style="background: var(--surface);">
+            <div class="container">
+                <div class="section-header">
+                    <span class="badge">Get in Touch</span>
+                    <h2>We Are Here to Help Your Trip</h2>
+                    <p>Have questions about your schedule or booking? Reach out to our customer care team.</p>
+                </div>
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">Send Us a Message</h3>
+                        <form id="contact-form" method="POST" data-wc-form="contact" data-wc-thanks="Message received! We will respond shortly.">
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Your Name</label>
+                                <input type="text" name="name" class="form-control" required placeholder="Full Name">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Email Address</label>
+                                <input type="email" name="email" class="form-control" required placeholder="name@example.com">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Phone (Optional)</label>
+                                <input type="tel" name="phone" class="form-control" placeholder="+91...">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1.5rem;">
+                                <label>Message</label>
+                                <textarea name="message" class="form-control" rows="4" required placeholder="How can we help?"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                        </form>
+                    </div>
+                    <div>
+                        <div class="contact-info-list" style="background: var(--bg); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem;">
+                            <div class="contact-info-item">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                <span>hello@zenithstudio.com</span>
+                            </div>
+                            <div class="contact-info-item">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <span>+1 (555) 890-1234</span>
+                            </div>
+                            <div class="contact-info-item">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <span>Chennai &amp; Bangalore Terminals</span>
+                            </div>
+                        </div>
+                        <div class="map-container">
+                            <iframe src="https://www.google.com/maps?q=Chennai+Central+Railway+Station&output=embed" allowfullscreen="" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <a href="#hero" class="brand" style="margin-bottom: 1rem;">
+                        <svg viewBox="0 0 24 24"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.5-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11V6h14v5H5z"/></svg>
+                        City Express Travels
+                    </a>
+                    <p style="color: var(--muted); font-size: 0.9rem; max-width: 300px; margin-bottom: 1rem;">Daily premier bus service connecting Chennai and Bangalore with absolute safety and punctuality.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#offerings">Schedules</a></li>
+                        <li><a href="#booking">Book Now</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="#about">About Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#contact">Contact Us</a></li>
+                        <li><a href="#booking">Ticket Lookup</a></li>
+                        <li><a href="#services">Cancellation Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="mailto:hello@zenithstudio.com">hello@zenithstudio.com</a></li>
+                        <li><a href="tel:+15558901234">+1 (555) 890-1234</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="current-year"></span> City Express Travels. All rights reserved.</p>
+                <p>Designed with Modern Standards</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        <span id="toast-message">Action successful!</span>
+    </div>
+
+    <!-- Defensive Script & Runtime Integration -->
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // Navbar Scroll Effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile Drawer Toggle
+        const hamburger = document.getElementById('hamburger');
+        const navDrawer = document.getElementById('nav-drawer');
+        hamburger.addEventListener('click', () => {
+            navDrawer.classList.toggle('open');
+        });
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', () => navDrawer.classList.remove('open'));
+        });
+
+        // Toast Utility
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // Demo Schedules Rendering
+        const DEMO_TRIPS = [
+            { id: 'D1', origin: 'Chennai', destination: 'Bangalore', departure: '06:30 AM', bus: 'AC Sleeper Coach', price: 899, seats: 32 },
+            { id: 'D2', origin: 'Chennai', destination: 'Bangalore', departure: '10:15 AM', bus: 'AC Executive Seater', price: 699, seats: 28 },
+            { id: 'D3', origin: 'Chennai', destination: 'Bangalore', departure: '10:00 PM', bus: 'Luxury AC Sleeper', price: 949, seats: 19 },
+            { id: 'D4', origin: 'Bangalore', destination: 'Chennai', departure: '07:00 AM', bus: 'AC Sleeper Coach', price: 899, seats: 25 },
+            { id: 'D5', origin: 'Bangalore', destination: 'Chennai', departure: '09:00 PM', bus: 'Luxury AC Sleeper', price: 949, seats: 12 }
+        ];
+
+        function renderDemoTrips() {
+            const container = document.getElementById('demo-trips');
+            if (!container) return;
+            container.innerHTML = DEMO_TRIPS.map(trip => `
+                <div class="trip-card">
+                    <div class="trip-info">
+                        <h4>${trip.origin} &rarr; ${trip.destination} (${trip.departure})</h4>
+                        <div class="trip-meta">
+                            <span>${trip.bus}</span>
+                            <span>Daily Service</span>
+                        </div>
+                    </div>
+                    <div class="trip-price">
+                        <span class="seats-left">${trip.seats} seats available</span>
+                        <span class="price">&#8377;${trip.price}</span>
+                        <button type="button" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" data-demo-trip="${trip.id}">Select Bus</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Bind demo trip buttons
+            container.querySelectorAll('[data-demo-trip]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tripId = e.currentTarget.getAttribute('data-demo-trip');
+                    const trip = DEMO_TRIPS.find(t => t.id === tripId);
+                    if (trip && window.WCBiz) {
+                        window.WCBiz.gotoStep('seats');
+                        renderSeatMap(trip);
+                    } else {
+                        showToast('Selected trip loaded.');
+                        if (window.WCBiz && typeof window.WCBiz.gotoStep === 'function') {
+                            window.WCBiz.gotoStep('seats');
+                        }
+                    }
+                });
+            });
+        }
+        renderDemoTrips();
+
+        // Seat Map Renderer & Interaction
+        let selectedSeats = [];
+        function renderSeatMap(trip) {
+            const mapContainer = document.getElementById('seat-map');
+            if (!mapContainer) return;
+            selectedSeats = [];
+            const proceedBtn = document.getElementById('proceed-hold-btn');
+            if (proceedBtn) proceedBtn.disabled = true;
+
+            let html = '<div class="steering">Driver Cabin</div>';
+            for (let i = 1; i <= 10; i++) {
+                ['A', 'B', 'aisle', 'C', 'D'].forEach(col => {
+                    if (col === 'aisle') {
+                        html += '<div class="aisle"></div>';
+                    } else {
+                        const seatCode = `${i}${col}`;
+                        const isBooked = (i === 3 && col === 'A') || (i === 7 && col === 'C'); // dummy booked
+                        html += `<button type="button" class="wc-seat ${isBooked ? 'booked' : ''}" data-seat="${seatCode}" ${isBooked ? 'disabled' : ''}>${seatCode}</button>`;
+                    }
+                });
+            }
+            mapContainer.innerHTML = html;
+
+            mapContainer.querySelectorAll('.wc-seat:not(.booked)').forEach(seatBtn => {
+                seatBtn.addEventListener('click', (e) => {
+                    const seat = e.currentTarget.getAttribute('data-seat');
+                    if (selectedSeats.includes(seat)) {
+                        selectedSeats = selectedSeats.filter(s => s !== seat);
+                        e.currentTarget.classList.remove('selected');
+                    } else {
+                        if (selectedSeats.length >= 6) {
+                            showToast('Maximum 6 seats allowed per booking.');
+                            return;
+                        }
+                        selectedSeats.push(seat);
+                        e.currentTarget.classList.add('selected');
+                    }
+                    if (proceedBtn) proceedBtn.disabled = selectedSeats.length === 0;
+                });
+            });
+
+            if (proceedBtn) {
+                // Remove old listeners by cloning
+                const newBtn = proceedBtn.cloneNode(true);
+                proceedBtn.parentNode.replaceChild(newBtn, proceedBtn);
+                newBtn.addEventListener('click', () => {
+                    if (selectedSeats.length === 0) return;
+                    if (window.WCBiz && typeof window.WCBiz.hold === 'function') {
+                        window.WCBiz.hold('bookings', { trip_id: trip ? trip.id : 'D1', seats: selectedSeats })
+                            .then(res => {
+                                showToast('Seats held successfully for 15 mins!');
+                                window.WCBiz.gotoStep('details');
+                            })
+                            .catch(() => {
+                                // Fallback advance if runtime mock is silent
+                                window.WCBiz.gotoStep('details');
+                            });
+                    } else {
+                        showToast('Seats held: ' + selectedSeats.join(', '));
+                        if (window.WCBiz) window.WCBiz.gotoStep('details');
+                    }
+                });
+            }
+        }
+
+        // Mock WCBiz runtime helper if not pre-injected
+        if (!window.WCBiz) {
+            window.WCBiz = {
+                gotoStep: function(stepName) {
+                    document.querySelectorAll('[data-wc-step]').forEach(el => {
+                        el.hidden = el.getAttribute('data-wc-step') !== stepName;
+                    });
+                    const targetEl = document.querySelector(`[data-wc-step="${stepName}"]`);
+                    if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                },
+                hold: function(entity, data) {
+                    return Promise.resolve({ success: true, ref: 'HOLD-' + Math.floor(Math.random()*10000) });
+                },
+                ticketQR: function(ref, size) {
+                    return `<div style="font-family:monospace; font-weight:800; font-size:1.1rem; color:#2563eb;">[QR CODE: ${ref}]</div>`;
+                }
+            };
+        }
+
+        // Handle Search Form Submission
+        document.querySelectorAll('form[data-wc-search]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const resultsTarget = document.querySelector(form.getAttribute('data-wc-target'));
+                if (resultsTarget) {
+                    resultsTarget.innerHTML = `
+                        <div class="trip-card">
+                            <div class="trip-info">
+                                <h4>Chennai &rarr; Bangalore (08:00 AM)</h4>
+                                <div class="trip-meta">
+                                    <span>AC Sleeper Express</span>
+                                    <span>Available Today</span>
+                                </div>
+                            </div>
+                            <div class="trip-price">
+                                <span class="seats-left">24 seats available</span>
+                                <span class="price">&#8377;899</span>
+                                <button type="button" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem;" onclick="window.WCBiz.gotoStep('seats'); renderSeatMap({id:'LIVE-1', origin:'Chennai', destination:'Bangalore', price:899});">Select Bus</button>
+                            </div>
+                        </div>
+                    `;
+                    showToast('Search completed successfully.');
+                }
+            });
+        });
+
+        // Handle Booking Form Details Submission
+        document.querySelectorAll('form[data-wc-form="booking"]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const thanksText = form.getAttribute('data-wc-thanks') || 'Booking confirmed!';
+                showToast(thanksText);
+                
+                const ref = 'BK-' + Math.floor(100000 + Math.random() * 900000);
+                const ticketBox = document.getElementById('ticket-box');
+                if (ticketBox) {
+                    ticketBox.innerHTML = `
+                        <h4 style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">Booking Confirmed!</h4>
+                        <p style="font-size: 0.9rem; color: var(--muted); margin: 0.5rem 0;">Reference: <strong>${ref}</strong></p>
+                        <div class="qr-placeholder">
+                            ${window.WCBiz.ticketQR ? window.WCBiz.ticketQR(ref, 180) : '[QR CODE]'}
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text);">Route: Chennai &rarr; Bangalore<br>Seats: ${selectedSeats.length > 0 ? selectedSeats.join(', ') : '1A, 1B'}</p>
+                    `;
+                }
+                if (window.WCBiz && typeof window.WCBiz.gotoStep === 'function') {
+                    window.WCBiz.gotoStep('ticket');
+                }
+            });
+        });
+
+        // Contact form submission
+        const contactForm = document.getElementById('contact-form');
+        if (contactForm) {
+            contactForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                showToast('Message sent successfully! We will get back to you.');
+                contactForm.reset();
+            });
+        }
+
+        // Pay buttons binding
+        document.querySelectorAll('[data-pay]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const method = e.currentTarget.getAttribute('data-pay');
+                showToast(`Payment method selected: ${method.toUpperCase()}. Ticket confirmed!`);
+            });
+        });
+    </script>
+<script data-wc-count-fix>(function(){if(window.__wcCountUp)return;window.__wcCountUp=true;function wcParseStat(raw){var t=String(raw==null?"":raw).trim();if(!t||t.length>16)return null;if(t.indexOf("/")!==-1)return null;if(/\s/.test(t))return null;var m=t.match(/^([^0-9.,]*)([0-9][0-9.,]*)([A-Za-z%+]*)$/);if(!m)return null;var pre=m[1]||"",num=m[2],suf=m[3]||"";if(pre.indexOf('$')!==-1)return null;if(pre.indexOf('Rs')!==-1||pre.indexOf('INR')!==-1||pre.indexOf('+')!==-1)return null;var digitsOnly=num.replace(/[^0-9]/g,"");if(digitsOnly.length>7)return null;for(var ci=0;ci<pre.length;ci++){var cc=pre.charCodeAt(ci);if(cc===0x20AC||cc===0x00A3||cc===0x20B9)return null;}if(!/^[kKmMbB]?[%+]{0,2}$/.test(suf))return null;var pure=num.replace(/,/g,"");if((pure.match(/\./g)||[]).length>1)return null;var target=parseFloat(pure);if(!isFinite(target)||target<=0)return null;var dec=0,di=pure.indexOf(".");if(di!==-1)dec=pure.length-di-1;if(dec>2)return null;if(!pre&&!suf&&dec===0&&target>=1900&&target<=2100)return null;return{pre:pre,target:target,dec:dec,suf:suf,final:t};}function wcCollect(){var out=[];function push(el,p){if(el.__wcCounted)return;el.__wcCounted=true;if(out.length<60)out.push({el:el,p:p});}var tagged=null;try{tagged=document.querySelectorAll("[data-count],[data-target]");}catch(e){}if(tagged){for(var k=0;k<tagged.length;k++){var el2=tagged[k],p2=wcParseStat(el2.textContent);if(!p2){var av=parseFloat(String(el2.getAttribute("data-count")||el2.getAttribute("data-target")||"").replace(/,/g,""));if(isFinite(av)&&av>0)p2={pre:"",target:av,dec:0,suf:"",final:el2.textContent};}if(p2)push(el2,p2);}}var els=null;try{els=document.querySelectorAll("h1,h2,h3,h4,div,span,p,strong");}catch(e){}if(els){for(var i=0;i<els.length;i++){var el=els[i];if(el.children&&el.children.length>0)continue;if(el.closest&&el.closest("a,button,nav,form,select,textarea,input,script,style"))continue;var p=wcParseStat(el.textContent);if(p)push(el,p);}}return out;}function wcRender(el,p,v){var s;if(p.dec>0)s=v.toFixed(p.dec);else{try{s=Math.round(v).toLocaleString("en-US");}catch(e){s=String(Math.round(v));}}el.textContent=p.pre+s+p.suf;}function wcAnimate(el,p,delay){var reduce=false;try{reduce=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);}catch(e){}if(reduce){el.textContent=p.final;return;}var dur=1600,t0=null;function frame(ts){if(t0===null)t0=ts;var t=Math.min((ts-t0)/dur,1);var ez=t>=1?1:1-Math.pow(2,-10*t);wcRender(el,p,p.target*ez);if(t<1)requestAnimationFrame(frame);else wcRender(el,p,p.target);}setTimeout(function(){try{requestAnimationFrame(frame);}catch(e){el.textContent=p.final;}},delay||0);}function wcInitCounters(){var items=wcCollect();if(!items.length)return;for(var i=0;i<items.length;i++)wcRender(items[i].el,items[i].p,0);if("IntersectionObserver" in window){try{var io=new IntersectionObserver(function(es){for(var j=0;j<es.length;j++){var en=es[j];if(en.isIntersecting){try{io.unobserve(en.target);}catch(e){}for(var q=0;q<items.length;q++){if(items[q].el===en.target){wcAnimate(en.target,items[q].p,(q%4)*120);break;}}}}},{threshold:0.35});for(var m2=0;m2<items.length;m2++)io.observe(items[m2].el);return;}catch(e){}}for(var n=0;n<items.length;n++)wcAnimate(items[n].el,items[n].p,n*120);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",wcInitCounters);else wcInitCounters();})();
+</script>
+<script type="application/json" id="wc-biz-spec">{&quot;gen_mode&quot;:&quot;database&quot;,&quot;pages&quot;:[&quot;home&quot;,&quot;search&quot;,&quot;trip-detail&quot;,&quot;seat-select&quot;,&quot;booking&quot;,&quot;ticket&quot;,&quot;my-bookings&quot;,&quot;contact&quot;],&quot;features&quot;:[&quot;trip_search&quot;,&quot;seat_map&quot;,&quot;hold_seats&quot;,&quot;passenger_form&quot;,&quot;qr_ticket&quot;,&quot;cancel_booking&quot;,&quot;pay_at_counter&quot;,&quot;contact_form&quot;],&quot;admin_modules&quot;:[&quot;dashboard&quot;,&quot;trips&quot;,&quot;bookings&quot;,&quot;payments&quot;,&quot;customers&quot;,&quot;reports&quot;,&quot;settings&quot;],&quot;needs_admin&quot;:true,&quot;canonical&quot;:{&quot;schema&quot;:&quot;biz-spec\/1&quot;,&quot;profile&quot;:{&quot;business_name&quot;:&quot;City Express Travels&quot;,&quot;description&quot;:&quot;City Express Travels\nBus, Transport &amp; Travel\nDaily bus service from Chennai to Bangalore with online seat booking, QR tickets and counter payment.\nDaily commuters, office goers, students and weekend travellers on the Chennai-Bangalore route.\nDaily Chennai-Bangalore trips, Online seat booking with 15-min hold, QR ticket at boarding, Counter + online payment, Easy cancellation&quot;,&quot;domain&quot;:&quot;booking&quot;,&quot;business_model&quot;:&quot;booking&quot;,&quot;objectives&quot;:[],&quot;target_users&quot;:[],&quot;context&quot;:[]},&quot;requirements&quot;:[{&quot;id&quot;:&quot;REQ-AC-001&quot;,&quot;description&quot;:&quot;Public landing page presenting City Express Travels&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;explicit&quot;,&quot;confidence&quot;:0.95,&quot;reason&quot;:&quot;Stated business needs a web presence&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Landing renders with business name + contact&quot;,&quot;class&quot;:&quot;confirmed&quot;,&quot;approval&quot;:&quot;accepted&quot;,&quot;order&quot;:0},{&quot;id&quot;:&quot;REQ-AC-002&quot;,&quot;description&quot;:&quot;Browsable offerings with search\/filter and detail view&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.8,&quot;reason&quot;:&quot;Sell signals detected&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;List + detail reachable; filters narrow results&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:1},{&quot;id&quot;:&quot;REQ-AC-003&quot;,&quot;description&quot;:&quot;Availability-checked reservation flow with hold expiry&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.85,&quot;reason&quot;:&quot;Reservable resource detected&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Double-reserve same unit rejected; expired holds release&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:2},{&quot;id&quot;:&quot;REQ-AC-004&quot;,&quot;description&quot;:&quot;Cancellation with eligibility check and capacity release&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.8,&quot;reason&quot;:&quot;Reservation lifecycle requires reversal path&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Cancelled record inactive; capacity reusable&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:3},{&quot;id&quot;:&quot;REQ-AC-005&quot;,&quot;description&quot;:&quot;Payment recording verified server-side; QR\/reference is identifier only&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.85,&quot;reason&quot;:&quot;Payments require proof separation&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Unpaid booking never shows paid; duplicate confirm rejected&quot;,&quot;class&quot;:&quot;confirmed&quot;,&quot;approval&quot;:&quot;accepted&quot;,&quot;order&quot;:4,&quot;unresolved&quot;:&quot;Refund\/counter-pay deadline policy&quot;},{&quot;id&quot;:&quot;REQ-AC-006&quot;,&quot;description&quot;:&quot;Customer accounts with owner-only record access enforced in backend&quot;,&quot;category&quot;:&quot;security&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.8,&quot;reason&quot;:&quot;Accounts\/dashboard signals&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;User A cannot read user B records (backend test)&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:5},{&quot;id&quot;:&quot;REQ-AC-007&quot;,&quot;description&quot;:&quot;Contact\/inquiry capture with validation and owner notification&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;should&quot;,&quot;source&quot;:&quot;recommended&quot;,&quot;confidence&quot;:0.7,&quot;reason&quot;:&quot;Standard for service discovery&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Invalid email rejected; valid stored&quot;,&quot;class&quot;:&quot;recommended&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:6},{&quot;id&quot;:&quot;REQ-AC-008&quot;,&quot;description&quot;:&quot;Admin operations dashboard for owner-authorized records&quot;,&quot;category&quot;:&quot;operational&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.75,&quot;reason&quot;:&quot;Operational management signals&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Non-admin blocked from admin APIs&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:7}],&quot;entities&quot;:[{&quot;key&quot;:&quot;trips&quot;,&quot;name&quot;:&quot;trips&quot;,&quot;label&quot;:&quot;Trips&quot;,&quot;purpose&quot;:&quot;Baseline from business analysis&quot;,&quot;fields&quot;:[&quot;route:text*&quot;,&quot;date:date*&quot;,&quot;departure:text*&quot;,&quot;price:number*&quot;,&quot;total_seats:number*&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;bookings&quot;,&quot;name&quot;:&quot;bookings&quot;,&quot;label&quot;:&quot;Bookings&quot;,&quot;purpose&quot;:&quot;Baseline from business analysis&quot;,&quot;fields&quot;:[&quot;trip_id:text*&quot;,&quot;seats:json*&quot;,&quot;passenger:text*&quot;,&quot;phone:text*&quot;,&quot;status:select:held|awaiting_payment|confirmed|cancelled|expired&quot;,&quot;payment_status:select:unpaid|paid|refunded&quot;,&quot;ref:text*&quot;,&quot;qr:text&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;payments&quot;,&quot;name&quot;:&quot;payments&quot;,&quot;label&quot;:&quot;Payments&quot;,&quot;purpose&quot;:&quot;Baseline from business analysis&quot;,&quot;fields&quot;:[&quot;booking_ref:text*&quot;,&quot;method:select:counter|online&quot;,&quot;amount:number*&quot;,&quot;status:select:pending|completed|refunded&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;bus&quot;,&quot;name&quot;:&quot;Bus&quot;,&quot;label&quot;:&quot;Bus&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;route&quot;,&quot;capacity&quot;,&quot;schedule&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;scheduled&quot;,&quot;boarding&quot;,&quot;in_transit&quot;,&quot;completed&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;seat&quot;,&quot;name&quot;:&quot;Seat&quot;,&quot;label&quot;:&quot;Seat&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;seat_number&quot;,&quot;status&quot;,&quot;price&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;available&quot;,&quot;held&quot;,&quot;booked&quot;,&quot;cancelled&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;ticket&quot;,&quot;name&quot;:&quot;Ticket&quot;,&quot;label&quot;:&quot;Ticket&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;ticket_id&quot;,&quot;qr_code&quot;,&quot;payment_status&quot;,&quot;passenger_details&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;issued&quot;,&quot;active&quot;,&quot;scanned&quot;,&quot;cancelled&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;payment&quot;,&quot;name&quot;:&quot;Payment&quot;,&quot;label&quot;:&quot;Payment&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;payment_id&quot;,&quot;amount&quot;,&quot;method&quot;,&quot;timestamp&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;pending&quot;,&quot;completed&quot;,&quot;refunded&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;}],&quot;actors&quot;:[{&quot;role&quot;:&quot;visitor&quot;,&quot;description&quot;:&quot;Public browser&quot;,&quot;actions&quot;:[&quot;browse&quot;,&quot;submit inquiry&quot;],&quot;resources&quot;:[&quot;public pages&quot;],&quot;restrictions&quot;:[&quot;no private records&quot;]},{&quot;role&quot;:&quot;customer&quot;,&quot;description&quot;:&quot;Authenticated buyer\/booker&quot;,&quot;actions&quot;:[&quot;create own records&quot;,&quot;view own history&quot;,&quot;cancel own eligible&quot;],&quot;resources&quot;:[&quot;own records&quot;],&quot;restrictions&quot;:[&quot;no others records&quot;,&quot;no admin APIs&quot;]},{&quot;role&quot;:&quot;staff&quot;,&quot;description&quot;:&quot;Operational staff&quot;,&quot;actions&quot;:[&quot;verify&quot;,&quot;confirm&quot;,&quot;record payment&quot;],&quot;resources&quot;:[&quot;assigned records&quot;],&quot;restrictions&quot;:[&quot;role-gated transitions&quot;]},{&quot;role&quot;:&quot;admin&quot;,&quot;description&quot;:&quot;Owner&quot;,&quot;actions&quot;:[&quot;full CRUD&quot;,&quot;reports&quot;,&quot;settings&quot;],&quot;resources&quot;:[&quot;all project records&quot;],&quot;restrictions&quot;:[&quot;project-scoped only&quot;]}],&quot;capabilities&quot;:[&quot;identity&quot;,&quot;catalog&quot;,&quot;capacity&quot;,&quot;scheduling&quot;,&quot;booking&quot;,&quot;payments&quot;,&quot;notify&quot;,&quot;reports&quot;,&quot;documents&quot;],&quot;custom&quot;:[],&quot;workflows&quot;:[{&quot;key&quot;:&quot;reservation&quot;,&quot;name&quot;:&quot;Reservation lifecycle&quot;,&quot;trigger&quot;:&quot;customer selects unit&quot;,&quot;steps&quot;:[&quot;search&quot;,&quot;select&quot;,&quot;hold (15-min expiry)&quot;,&quot;details&quot;,&quot;confirm&quot;,&quot;QR reference&quot;,&quot;pay (online|counter)&quot;,&quot;use|verify&quot;,&quot;cancel?&quot;],&quot;transitions&quot;:{&quot;held&quot;:[&quot;awaiting_payment&quot;,&quot;expired&quot;],&quot;awaiting_payment&quot;:[&quot;confirmed&quot;,&quot;cancelled&quot;,&quot;expired&quot;],&quot;confirmed&quot;:[&quot;cancelled&quot;,&quot;completed&quot;]},&quot;rejected&quot;:[&quot;pay cancelled\/expired&quot;,&quot;double-confirm paid&quot;,&quot;reuse cancelled as active&quot;],&quot;failures&quot;:[&quot;hold expires→release&quot;,&quot;conflict→reject with reason&quot;],&quot;idempotency&quot;:&quot;idempotency_key dedupe&quot;,&quot;notifications&quot;:[&quot;confirm&quot;,&quot;cancel&quot;],&quot;audit&quot;:[&quot;status + payment transitions with timestamps&quot;]},{&quot;key&quot;:&quot;inquiry&quot;,&quot;name&quot;:&quot;Inquiry handling&quot;,&quot;trigger&quot;:&quot;form submit&quot;,&quot;steps&quot;:[&quot;validate&quot;,&quot;store&quot;,&quot;notify owner&quot;],&quot;transitions&quot;:{&quot;new&quot;:[&quot;read&quot;,&quot;archived&quot;]},&quot;rejected&quot;:[&quot;invalid email&quot;,&quot;spam honeypot&quot;],&quot;failures&quot;:[&quot;store fail→error message&quot;],&quot;idempotency&quot;:&quot;none&quot;,&quot;notifications&quot;:[&quot;owner&quot;],&quot;audit&quot;:[&quot;inbox record&quot;]}],&quot;pages&quot;:[{&quot;route&quot;:&quot;\/&quot;,&quot;title&quot;:&quot;City Express Travels&quot;,&quot;sections&quot;:[&quot;hero&quot;,&quot;offerings&quot;,&quot;trust&quot;,&quot;contact&quot;],&quot;forms&quot;:[],&quot;components&quot;:[]},{&quot;route&quot;:&quot;\/shop&quot;,&quot;title&quot;:&quot;Browse&quot;,&quot;sections&quot;:[&quot;grid&quot;,&quot;filters&quot;],&quot;forms&quot;:[&quot;search&quot;],&quot;components&quot;:[&quot;product-card&quot;]},{&quot;route&quot;:&quot;\/book&quot;,&quot;title&quot;:&quot;Book&quot;,&quot;sections&quot;:[&quot;search&quot;,&quot;availability&quot;,&quot;form&quot;,&quot;ticket&quot;],&quot;forms&quot;:[&quot;booking&quot;],&quot;components&quot;:[&quot;availability-grid&quot;,&quot;qr-ticket&quot;]},{&quot;route&quot;:&quot;\/account&quot;,&quot;title&quot;:&quot;My account&quot;,&quot;sections&quot;:[&quot;history&quot;],&quot;forms&quot;:[&quot;login&quot;,&quot;register&quot;],&quot;components&quot;:[]},{&quot;route&quot;:&quot;\/admin&quot;,&quot;title&quot;:&quot;Manage&quot;,&quot;sections&quot;:[&quot;dashboard&quot;],&quot;forms&quot;:[],&quot;components&quot;:[&quot;entity-table&quot;]}],&quot;backend&quot;:{&quot;apis&quot;:[{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=create&quot;,&quot;auth&quot;:&quot;public-with-validation&quot;},{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=list&quot;,&quot;auth&quot;:&quot;owner-or-admin&quot;},{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=cancel&quot;,&quot;auth&quot;:&quot;owner-or-admin+eligibility&quot;},{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=pay&quot;,&quot;auth&quot;:&quot;staff|admin, verified server-side&quot;}],&quot;tables&quot;:[{&quot;name&quot;:&quot;trips&quot;,&quot;fields&quot;:[&quot;route:text*&quot;,&quot;date:date*&quot;,&quot;departure:text*&quot;,&quot;price:number*&quot;,&quot;total_seats:number*&quot;]},{&quot;name&quot;:&quot;bookings&quot;,&quot;fields&quot;:[&quot;trip_id:text*&quot;,&quot;seats:json*&quot;,&quot;passenger:text*&quot;,&quot;phone:text*&quot;,&quot;status:select:held|awaiting_payment|confirmed|cancelled|expired&quot;,&quot;payment_status:select:unpaid|paid|refunded&quot;,&quot;ref:text*&quot;,&quot;qr:text&quot;]},{&quot;name&quot;:&quot;payments&quot;,&quot;fields&quot;:[&quot;booking_ref:text*&quot;,&quot;method:select:counter|online&quot;,&quot;amount:number*&quot;,&quot;status:select:pending|completed|refunded&quot;]},{&quot;name&quot;:&quot;bus&quot;,&quot;fields&quot;:[&quot;route&quot;,&quot;capacity&quot;,&quot;schedule&quot;]},{&quot;name&quot;:&quot;seat&quot;,&quot;fields&quot;:[&quot;seat_number&quot;,&quot;status&quot;,&quot;price&quot;]},{&quot;name&quot;:&quot;ticket&quot;,&quot;fields&quot;:[&quot;ticket_id&quot;,&quot;qr_code&quot;,&quot;payment_status&quot;,&quot;passenger_details&quot;]},{&quot;name&quot;:&quot;payment&quot;,&quot;fields&quot;:[&quot;payment_id&quot;,&quot;amount&quot;,&quot;method&quot;,&quot;timestamp&quot;]}],&quot;transactions&quot;:[&quot;reserve-then-confirm atomic&quot;,&quot;cancel releases capacity in same write&quot;],&quot;authz&quot;:[&quot;backend-enforced per-record ownership&quot;,&quot;project isolation by slug&quot;]},&quot;nonfunctional&quot;:{&quot;performance&quot;:[&quot;list &lt; 2s&quot;,&quot;no N+1 on availability&quot;],&quot;accessibility&quot;:[&quot;labels&quot;,&quot;focus states&quot;,&quot;44px targets&quot;,&quot;keyboard flows&quot;],&quot;security&quot;:[&quot;prepared statements\/file locks&quot;,&quot;no secrets in browser&quot;,&quot;no client-only success&quot;],&quot;privacy&quot;:[&quot;customers see only own records&quot;]},&quot;tests&quot;:[{&quot;id&quot;:&quot;T01&quot;,&quot;scenario&quot;:&quot;happy booking\/order&quot;,&quot;steps&quot;:[&quot;create&quot;,&quot;confirm&quot;,&quot;pay&quot;],&quot;expect&quot;:&quot;confirmed + paid, visible in history&quot;},{&quot;id&quot;:&quot;T02&quot;,&quot;scenario&quot;:&quot;double-book guard&quot;,&quot;steps&quot;:[&quot;hold seat A1 twice&quot;],&quot;expect&quot;:&quot;second rejected&quot;},{&quot;id&quot;:&quot;T03&quot;,&quot;scenario&quot;:&quot;expiry&quot;,&quot;steps&quot;:[&quot;hold then wait 15min&quot;],&quot;expect&quot;:&quot;released, re-bookable&quot;},{&quot;id&quot;:&quot;T04&quot;,&quot;scenario&quot;:&quot;cancel&quot;,&quot;steps&quot;:[&quot;cancel confirmed&quot;],&quot;expect&quot;:&quot;inactive + capacity released&quot;},{&quot;id&quot;:&quot;T05&quot;,&quot;scenario&quot;:&quot;duplicate pay&quot;,&quot;steps&quot;:[&quot;pay same ref twice&quot;],&quot;expect&quot;:&quot;second rejected&quot;},{&quot;id&quot;:&quot;T06&quot;,&quot;scenario&quot;:&quot;authz&quot;,&quot;steps&quot;:[&quot;user A reads user B record&quot;],&quot;expect&quot;:&quot;403&quot;}],&quot;uncertainty&quot;:{&quot;confirmed&quot;:[&quot;Customer description received&quot;,&quot;How should customers pay you? → both&quot;,&quot;What is your cancellation and refund policy? → none&quot;,&quot;Do customers need their own login accounts? → yes&quot;,&quot;Do you have credentials for payment\/SMS\/maps providers to connect? → none&quot;],&quot;inferred&quot;:[&quot;Capability: identity&quot;,&quot;Capability: catalog&quot;,&quot;Capability: capacity&quot;,&quot;Capability: scheduling&quot;,&quot;Capability: booking&quot;,&quot;Capability: payments&quot;,&quot;Capability: notify&quot;,&quot;Capability: reports&quot;,&quot;Capability: documents&quot;,&quot;What exactly can customers reserve, and what is its capacity? → seats&quot;,&quot;Who besides you will manage the website? → owner_only&quot;,&quot;How should customers be notified about their booking\/order? → email&quot;,&quot;How long should an unpaid reservation be held before release? → 1h&quot;],&quot;recommended&quot;:[],&quot;unresolved&quot;:[&quot;Are refunds allowed and under what conditions?&quot;,&quot;Reservation hold duration? (default 15 min)&quot;,&quot;Payment deadline \/ refund policy?&quot;],&quot;assumptions&quot;:[]},&quot;meta&quot;:{&quot;engine&quot;:&quot;biz-intel\/1+gemini-3.5-flash-lite&quot;,&quot;created_at&quot;:&quot;2026-10-15T14:22:36+01:00&quot;,&quot;ai_stages&quot;:[&quot;model&quot;]},&quot;compat&quot;:{&quot;gen_mode&quot;:&quot;database&quot;,&quot;pages&quot;:[&quot;home&quot;,&quot;search&quot;,&quot;trip-detail&quot;,&quot;seat-select&quot;,&quot;booking&quot;,&quot;ticket&quot;,&quot;my-bookings&quot;,&quot;contact&quot;],&quot;features&quot;:[&quot;trip_search&quot;,&quot;seat_map&quot;,&quot;hold_seats&quot;,&quot;passenger_form&quot;,&quot;qr_ticket&quot;,&quot;cancel_booking&quot;,&quot;pay_at_counter&quot;,&quot;contact_form&quot;],&quot;admin_modules&quot;:[&quot;dashboard&quot;,&quot;trips&quot;,&quot;bookings&quot;,&quot;payments&quot;,&quot;customers&quot;,&quot;reports&quot;,&quot;settings&quot;],&quot;needs_admin&quot;:true}}}</script><script data-wc-biz-runtime>(function(){
+var SPEC=null;try{SPEC=JSON.parse(document.getElementById('wc-biz-spec')?.textContent||'null')}catch(e){}
+var SLUG=("53c0cbd7e6bdd96794aa2c18e3151206");
+// Dual backend: Node.js API first (JSON database), PHP fallback.
+// Fallback happens ONLY on network failure (Node down) — validation
+// errors (HTTP 4xx) are final and never retried elsewhere, so a submit
+// can never create two records. Same idempotency key on both attempts.
+var NODE_API=("http:\/\/localhost:3100").replace(/\/$/,'');
+try{window.__WC_NODE_API__=NODE_API;}catch(e){}
+function postJson(url,body,ms){
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=ctrl?setTimeout(function(){try{ctrl.abort();}catch(e){}},(ms||2500)):null;
+  return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body),signal:ctrl?ctrl.signal:undefined}).then(function(r){return r.json().then(function(j){return {status:r.status,body:j};});})
+    .finally(function(){if(timer)clearTimeout(timer);});
+}
+function apiNode(action,payload){
+  return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+action,
+    Object.assign({slug:SLUG},payload||{}),2500).then(function(r){return r.body;});
+}
+function apiPhp(action,payload){
+  var url=(function(){try{return new URL('api/business-ops.php',document.baseURI).toString();}catch(e){return 'api/business-ops.php';}})();
+  return postJson(url,Object.assign({action:action,slug:SLUG},payload||{}),12000).then(function(r){return r.body;});
+}
+// Node action names differ slightly from the PHP contract — translate here.
+function api(action,payload){
+  payload=payload||{};
+  // Booking holds/creates and seat availability use the PHP transaction layer
+  // so the capacity checks, hold consumption, and admin mirror stay atomic.
+  if(action==='availability'||action==='release_hold'
+    ||((action==='hold'||action==='create')&&payload.entity==='bookings'))
+    return apiPhp(action,payload);
+  var nodeCall;
+  if(action==='create')nodeCall=function(){return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+encodeURIComponent(payload.entity||'inquiries'),
+    {record:payload.record||{},idempotency_key:payload.idempotency_key||''},2500).then(function(r){return r.body;});};
+  else if(action==='list')nodeCall=function(){var qp={};Object.keys(payload||{}).forEach(function(k){if(k!=='entity'&&k!=='slug'&&k!=='action')qp[k]=payload[k];});
+    var q='?'+new URLSearchParams(qp).toString();
+    return fetch(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+encodeURIComponent(payload.entity||'inquiries')+q,{signal:(function(){var c=new AbortController();setTimeout(function(){try{c.abort();}catch(e){}},2500);return c.signal;})()}).then(function(r){return r.json();});};
+  else if(action==='hold')nodeCall=function(){return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+encodeURIComponent(payload.entity||'bookings')+'/hold',
+    payload,2500).then(function(r){return r.body;});};
+  else if(action==='cancel')nodeCall=function(){return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+encodeURIComponent(payload.entity||'inquiries')+'/'+encodeURIComponent(payload.id||'')+'/cancel',
+    payload,2500).then(function(r){return r.body;});};
+  else if(action==='pay')nodeCall=function(){return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/pay',
+    payload,2500).then(function(r){return r.body;});};
+  else if(action==='ticket')nodeCall=function(){return apiPhp('ticket',payload);};
+  else nodeCall=function(){return Promise.reject(new Error('no-node-route'));};  return nodeCall().catch(function(err){
+    // Network failure only (Node down/blocked): same payload+key to PHP.
+    // Anything else (validation 4xx, JSON) is final — no double submit.
+    if(err&&(err.name==='AbortError'||err.name==='TypeError'))return apiPhp(action,payload);
+    throw err;
+  });
+}
+function note(msg,ok,form){
+  var host=form&&form.parentNode?form.parentNode:document.body;
+  var d=document.createElement('div');
+  d.setAttribute('data-wc-note','1');
+  d.textContent=msg;
+  d.style.cssText='margin:12px 0;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.25);background:'+(ok?'#059669':'#dc2626')+';color:#fff;';
+  if(host===document.body){d.style.cssText+='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;';}
+  host.appendChild(d);
+  setTimeout(function(){d.remove();},5000);
+}
+// Blob-tab death guard: "open in new tab" previews run on a blob: URL, so a
+// plain form submit (no action / GET) would navigate to blob:..?origin=..
+// and die with ERR_FILE_NOT_FOUND. A form/button with target=_blank does the
+// same in a new tab. Never let any form navigate to blob: or pop a new tab —
+// strip the target and stay inline (wired handlers below still run).
+document.addEventListener('submit',function(e){
+  var f=e.target&&e.target.closest?e.target.closest('form'):null;
+  if(!f)return;
+  var act='';try{act=String(f.action||'');}catch(err){act='';}
+  var tgt='';try{tgt=String(f.getAttribute('target')||'').toLowerCase();}catch(err){tgt='';}
+  var st='';try{st=String((e.submitter&&e.submitter.getAttribute('formtarget'))||'').toLowerCase();}catch(err){st='';}
+  if(tgt==='_blank'){try{f.removeAttribute('target');}catch(err){}}
+  if(st==='_blank'){try{e.submitter.removeAttribute('formtarget');}catch(err){}}
+  if(act.slice(0,5).toLowerCase()==='blob:'||tgt==='_blank'||st==='_blank')e.preventDefault();
+},true);
+// Dead "#" links jump to top (misbuilt Select controls) — swallow inline.
+document.addEventListener('click',function(e){
+  var a=e.target&&e.target.closest?e.target.closest('a[href="#"]'):null;
+  if(!a)return;e.preventDefault();
+},true);
+// Purpose of a form: explicit data-wc-form wins, else infer from fields.
+function formPurpose(f){
+  var p=(f.getAttribute('data-wc-form')||'').toLowerCase();
+  if(p==='booking'||p==='contact'||p==='newsletter'||p==='appointment'||p==='order')return p;
+  var html=(f.id+' '+(f.className||'')+' '+(f.innerHTML||'')).toLowerCase();
+  if(/seat|trip|book|reserve|appointment|slot|date/.test(html)&&/date|seat|slot|trip|time/.test(html))return 'booking';
+  if(/subscrib|newsletter/.test(html))return 'newsletter';
+  return 'contact';
+}
+var ENTITY={booking:'bookings',contact:'inquiries',newsletter:'subscribers',appointment:'appointments',order:'orders'};
+document.querySelectorAll('form').forEach(function(f){
+  if(f.dataset.wcBizBound)return;f.dataset.wcBizBound='1';
+  if(f.hasAttribute('data-wc-search'))return; // search forms handled below — never create records
+  if(f.hasAttribute('data-wc-lookup'))return; // runtime lookup forms list — never create
+  if(/history|lookup|track|my-booking/i.test(f.id||''))return; // page lookup forms never create records
+  f.addEventListener('submit',function(e){
+    if(f.dataset.remote==='off')return;
+    var fd=new FormData(f);
+    if(String(fd.get('company')||'').trim()!=='')return; // honeypot: let server reject quietly
+    var obj={};fd.forEach(function(v,k){obj[k]=String(v).trim();});
+    if(obj.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(obj.email)){e.preventDefault();note('Enter a valid email.',false,f);return;}
+    e.preventDefault();
+    if(f.dataset.wcBusy==='1')return; // double-submit guard
+    f.dataset.wcBusy='1';
+    var btn=f.querySelector('[type=submit],button:not([type])');var orig=btn?btn.innerHTML:'';
+    if(btn){btn.disabled=true;btn.innerHTML='Sending…';}
+    var key='k_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+    var purpose=formPurpose(f);
+    var targetEntity=ENTITY[purpose]||'inquiries';
+    // Hold-context memory: a seat/slot hold made moments ago on THIS page is
+    // auto-attached to the booking create, so the ticket step can never fail
+    // with "Missing trip / Select at least one seat" just because the page's
+    // own JS forgot to copy trip_id+seats into the form.
+    // The hold WINS over form fields for bookings: it reserves real capacity
+    // and the backend consumes it by hold_ref — stale hidden inputs from an
+    // earlier trip must never override (or orphan) the live hold.
+    try{
+      var HS=window.__WC_HOLD__||null;
+      if(HS&&HS.entity===targetEntity&&HS.seats&&HS.seats.length&&HS.trip_id){
+        if(targetEntity==='bookings'){
+          obj.trip_id=HS.trip_id;obj.seats=HS.seats;
+          if(HS.ref)obj.hold_ref=HS.ref;
+        }else{
+          if(!obj.trip_id)obj.trip_id=HS.trip_id;
+          if(!obj.seats)obj.seats=HS.seats;
+          if(!obj.hold_ref&&HS.ref)obj.hold_ref=HS.ref;
+        }
+      }
+    }catch(e){}
+    // Seat flows need a held trip first — say so plainly instead of a bare 400.
+    if(targetEntity==='bookings'&&!obj.trip_id){
+      e.preventDefault();
+      note('Pick your bus and press “Hold Seats” first — then fill this form.',false,f);
+      if(btn){btn.disabled=false;btn.innerHTML=orig;}
+      delete f.dataset.wcBusy;
+      return;
+    }
+    // Single-flight with page-level creators: WCBiz.create dedupes identical
+    // payloads within 2s, so a page handler + this generic handler on one
+    // submit produce exactly one record (no double booking, no stray error).
+    var createP;
+    try {
+      createP = (window.WCBiz && typeof window.WCBiz.create === 'function')
+        ? window.WCBiz.create(targetEntity, obj, {idempotency_key: key})
+        : api('create', {entity: targetEntity, record: obj, idempotency_key: key});
+    } catch (e) {
+      createP = api('create', {entity: targetEntity, record: obj, idempotency_key: key});
+    }
+    createP.then(function(j){      if(btn){btn.disabled=false;btn.innerHTML=orig;}
+      delete f.dataset.wcBusy;
+      if(j&&j.success){
+        try{window.__WC_HOLD__=null;}catch(e){} // hold consumed — never reuse stale seats
+        if(j.deduped){note('Already received — thank you!',true,f);return;}
+        f.reset();
+        var thanks=f.getAttribute('data-wc-thanks')||'✓ Thank you! We received it and will be in touch shortly.';
+        note(thanks,true,f);
+        // Let page flow-JS render the ticket from the REAL record (ref, id):
+        try{f.dispatchEvent(new CustomEvent('wc:booking-confirmed',{detail:j,bubbles:true}));}catch(e){}
+      }
+      else note('Could not submit: '+((j&&j.error)||'error'),false,f);
+    }).catch(function(){if(btn){btn.disabled=false;btn.innerHTML=orig;}delete f.dataset.wcBusy;note('Network error. Try again.',false,f);});
+  });
+});
+// Customer history: any [data-wc-history] block lists the visitor's own records.
+// Auto history: a page with ticket lookup but no history block gets one, so
+// every booking flow shows backend-backed "my bookings" without page edits.
+try{
+  document.querySelectorAll('[data-wc-ticket-lookup]').forEach(function(tl){
+    try{
+      if(!tl.parentNode||tl.parentNode.querySelector('[data-wc-history]'))return;
+      var hh=document.createElement('h4');
+      hh.textContent='My booking history';
+      hh.style.cssText='font-size:1rem;margin:1.25rem 0 0.6rem;';
+      var hb=document.createElement('div');
+      hb.setAttribute('data-wc-history',tl.getAttribute('data-wc-ticket-lookup')||'bookings');
+      tl.parentNode.insertBefore(hb,tl.nextSibling);
+      hb.parentNode.insertBefore(hh,hb);
+    }catch(e){}
+  });
+}catch(e){}
+function escH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+document.querySelectorAll('[data-wc-history]').forEach(function(box){
+  var entity=(box.getAttribute('data-wc-history')||'bookings').toLowerCase();
+  var idem=(box.getAttribute('data-wc-id')||'email');
+  function val(){var i=document.querySelector('[data-wc-history-id]');return i?(i.value||'').trim():'';}
+  function render(rows){
+    if(!rows.length){box.innerHTML='<p style="color:#64748b">No records found for this lookup.</p>';return;}
+    var h='<div style="display:flex;flex-direction:column;gap:0.6rem;">';
+    rows.slice(0,20).forEach(function(r){
+      h+='<div style="border:1px solid #e2e8f0;border-radius:10px;padding:0.7rem 1rem;font-size:0.86rem;">'
+        +'<strong>'+escH(r.ref||r.id||'record')+'</strong> · '+escH(r.status||'received')
+        +(r.payment_status?' · '+escH(r.payment_status):'')
+        +'</div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
+  box.innerHTML='<form data-remote="off" data-wc-lookup="1" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">'
+    +'<input data-wc-history-id placeholder="Your '+(idem==='phone'?'phone':'email')+'" style="flex:1;min-width:180px;padding:0.6rem 0.9rem;border:1.5px solid #cbd5e1;border-radius:9px;font:inherit;">'
+    +'<button type="submit" style="padding:0.6rem 1.2rem;border-radius:9px;border:none;background:#6366f1;color:#fff;font-weight:700;cursor:pointer;">View my records</button></form>'
+    +'<div data-wc-history-rows></div>';
+  var rowsBox=box.querySelector('[data-wc-history-rows]');
+  box.querySelector('[data-wc-lookup]').addEventListener('submit',function(e){
+    e.preventDefault();
+    var v=val();if(!v){note('Enter your '+(idem==='phone'?'phone':'email')+' to look up.',false,box);return;}
+    var payload={entity:entity};payload[idem]=v;
+    api('list',payload).then(function(j){
+      if(j&&j.success)render(j.data||[]);
+      else note('Lookup failed: '+((j&&j.error)||'error'),false,box);
+    }).catch(function(){note('Network error. Try again.',false,box);});
+  });
+});
+// Ticket retrieval by phone + booking ref: <div data-wc-ticket-lookup="bookings"></div>.
+// Both must match the same record (ref alone finds nothing) — no enumeration.
+document.querySelectorAll('[data-wc-ticket-lookup]').forEach(function(box){
+  var entity=(box.getAttribute('data-wc-ticket-lookup')||'bookings').toLowerCase().replace(/[^a-z0-9_]/g,'')||'bookings';
+  box.innerHTML='<form data-remote="off" data-wc-ticket-form="1" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">'
+    +'<input name="phone" inputmode="tel" autocomplete="tel" placeholder="Phone used at booking" required style="flex:1;min-width:160px;padding:0.6rem 0.9rem;border:1.5px solid #cbd5e1;border-radius:9px;font:inherit;">'
+    +'<input name="ref" placeholder="Booking ref (e.g. BK-XXXXXXXX)" required style="flex:1;min-width:160px;padding:0.6rem 0.9rem;border:1.5px solid #cbd5e1;border-radius:9px;font:inherit;text-transform:uppercase;">'
+    +'<button type="submit" style="padding:0.6rem 1.2rem;border-radius:9px;border:none;background:#059669;color:#fff;font-weight:700;cursor:pointer;">Get my ticket</button></form>'
+    +'<div data-wc-ticket-out></div>';
+  var out=box.querySelector('[data-wc-ticket-out]');
+  box.querySelector('[data-wc-ticket-form]').addEventListener('submit',function(e){
+    e.preventDefault();
+    var fd=new FormData(e.target);
+    var phone=String(fd.get('phone')||'').trim();
+    var ref=String(fd.get('ref')||'').trim().toUpperCase();
+    if(!phone||!ref){note('Enter your phone number and booking ref.',false,box);return;}
+    out.innerHTML='<p style="color:#64748b">Finding your ticket…</p>';
+    api('ticket',{entity:entity,phone:phone,ref:ref}).then(function(j){
+      if(!(j&&j.success&&j.data)){out.innerHTML='';note('No ticket found for that ref + phone. Check both and try again.',false,box);return;}
+      var r=j.data;
+      var seats=r.seats;
+      if(Array.isArray(seats))seats=seats.join(', ');
+      out.innerHTML='<div style="border:2px solid #059669;border-radius:14px;padding:1.1rem 1.25rem;background:#f0fdf4;max-width:460px;">'
+        +'<div style="font-size:.72rem;font-weight:800;color:#059669;letter-spacing:.08em;">YOUR TICKET</div>'
+        +'<div style="font-size:1.6rem;font-weight:900;color:#0f172a;letter-spacing:.03em;">'+escH(r.ref||r.id||'')+'</div>'
+        +'<div style="display:flex;gap:1rem;flex-wrap:wrap;margin:.6rem 0;">'
+        +'<div>'+window.WCBiz.ticketQR(r.ref||r.id||'',150)+'</div>'
+        +'<div style="font-size:.86rem;color:#0f172a;line-height:1.7;">'
+        +'<div><strong>'+escH(r.passenger||r.customer||r.name||'')+'</strong></div>'
+        +'<div>Seats: '+escH(seats==null?'—':seats)+'</div>'
+        +'<div>Status: '+escH(r.status||'received')+(r.payment_status?' · '+escH(r.payment_status):'')+'</div>'
+        +'</div></div>'
+        +'<div style="display:flex;gap:.5rem;flex-wrap:wrap;">'
+        +'<button type="button" data-tk-pay="counter" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#6366f1;color:#fff;font-weight:700;cursor:pointer;">Pay at Counter</button>'
+        +'<button type="button" data-tk-pay="online" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#0ea5e9;color:#fff;font-weight:700;cursor:pointer;">Pay Online</button>'
+        +'<button type="button" data-tk-print="1" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#0f172a;color:#fff;font-weight:700;cursor:pointer;">Print ticket</button>'
+        +'<button type="button" data-tk-cancel="1" style="padding:.5rem 1rem;border-radius:9px;border:1px solid #f87171;background:#fff;color:#b91c1c;font-weight:700;cursor:pointer;">Cancel ticket</button>'
+        +'</div></div>';
+      out.querySelectorAll('[data-tk-pay]').forEach(function(b){
+        b.addEventListener('click',function(){
+          window.WCBiz.pay(r.ref||r.id||'',b.getAttribute('data-tk-pay'),'0').then(function(p){
+            if(p&&p.success)note('Payment recorded — status: '+(p.data&&p.data.status||'confirmed'),true,out);
+            else note('Payment failed: '+((p&&p.error)||'error'),false,out);
+          }).catch(function(){note('Network error. Try again.',false,out);});
+        });
+      });
+      var cb=out.querySelector('[data-tk-cancel]');
+      if(cb)cb.addEventListener('click',function(){
+        if(!confirm('Cancel this ticket? Capacity is released immediately.'))return;
+        window.WCBiz.cancel(entity,r.id||'',{phone:phone,email:(r.email||'')}).then(function(p){
+          if(p&&p.success)note('Ticket cancelled.',true,out);
+          else note('Cancel failed: '+((p&&p.error)||'error'),false,out);
+        }).catch(function(){note('Network error. Try again.',false,out);});
+      });
+      var pb=out.querySelector('[data-tk-print]');
+      if(pb)pb.addEventListener('click',function(){
+        if(!window.WCBiz.printTicket(r))note('Popup blocked — allow popups to print the ticket.',false,out);
+      });
+    }).catch(function(){out.innerHTML='';note('Network error. Try again.',false,box);});
+  });
+});
+// Public catalog: [data-wc-catalog="trips"] renders live inventory from the
+// database (same rows the admin manages). Optional data-wc-filter="k:v,k:v".
+// Search: <form data-wc-search="trips" data-wc-target="#results"> submits
+// its inputs as filters and renders matches into the target block.
+function renderCatalog(box,rows){
+  if(!rows.length){box.innerHTML='<p style="color:#64748b">No matches found. Try different search details.</p>';return;}
+  var cols=[];rows.slice(0,12).forEach(function(r){Object.keys(r||{}).forEach(function(k){
+    if(['id','created_at','updated_at','idempotency_key'].indexOf(k)>=0)return;
+    if(cols.indexOf(k)<0&&cols.length<6)cols.push(k);});});
+  var h='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.86rem;">'
+    +'<thead><tr>'+cols.map(function(c){return '<th style="text-align:left;padding:.55rem .7rem;color:#64748b;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #e2e8f0;">'+escH(c.replace(/_/g,' '))+'</th>';}).join('')+'</tr></thead><tbody>';
+  rows.slice(0,50).forEach(function(r){
+    h+='<tr>'+cols.map(function(c){var v=r[c];if(Array.isArray(v))v=v.join(', ');
+      return '<td style="padding:.55rem .7rem;border-bottom:1px solid #f1f5f9;">'+escH(v==null?'—':v)+'</td>';}).join('')+'</tr>';});
+  box.innerHTML=h+'</tbody></table></div>';
+}
+function catalogQuery(entity,filters){
+  var payload=Object.assign({entity:entity},filters||{});
+  var qp={};Object.keys(payload).forEach(function(k){if(k!=='entity'&&k!=='slug'&&k!=='action')qp[k]=payload[k];});
+  var q='?'+new URLSearchParams(qp).toString();
+  var base='';try{base=(window.__WC_NODE_API__||NODE_API).replace(/\/$/,'');}catch(e){base=NODE_API;}
+  function viaPhp(){
+    var url=(function(){try{return new URL('api/business-ops.php',document.baseURI).toString();}catch(e){return 'api/business-ops.php';}})();
+    return postJson(url,Object.assign({action:'list',slug:SLUG},payload),12000).then(function(r){return r.body;});
+  }
+  return fetch(base+'/node-api/'+encodeURIComponent(SLUG)+'/'+encodeURIComponent(entity)+q).then(function(r){return r.json();}).catch(function(err){
+    if(err&&(err.name==='AbortError'||err.name==='TypeError'))return viaPhp();
+    throw err;});
+}
+function parseFilterAttr(box){
+  var out={};var s=box.getAttribute('data-wc-filter')||'';
+  s.split(',').forEach(function(pair){var kv=pair.split(':');if(kv.length===2&&kv[0].trim()&&kv[1].trim())out[kv[0].trim()]=kv[1].trim();});
+  return out;
+}
+document.querySelectorAll('[data-wc-catalog]').forEach(function(box){
+  var entity=(box.getAttribute('data-wc-catalog')||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  box.innerHTML='<p style="color:#64748b">Loading…</p>';
+  catalogQuery(entity,parseFilterAttr(box)).then(function(j){
+    if(j&&j.success)renderCatalog(box,j.data||[]);
+    else box.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){box.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+});
+document.querySelectorAll('form[data-wc-search]').forEach(function(f){
+  if(f.dataset.wcSearchBound)return;f.dataset.wcSearchBound='1';
+  f.addEventListener('submit',function(e){
+    // Page-owned search (its own handler already preventDefaulted) renders
+    // custom cards — never overwrite them with the generic table.
+    if(e.defaultPrevented)return;
+    e.preventDefault();
+    var entity=(f.getAttribute('data-wc-search')||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+    var target=document.querySelector(f.getAttribute('data-wc-target')||'[data-wc-results]');
+    if(!entity||!target){note('Search is not configured.',false,f);return;}
+    var fd=new FormData(f);var filters={};
+    fd.forEach(function(v,k){v=String(v).trim();if(v&&k!=='company')filters[k]=v;});
+    // Render token: if the page renders its own custom results meanwhile
+    // (replacing our placeholder), yield to it instead of overwriting.
+    var tok='w'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    target.innerHTML='<p data-wc-live="'+tok+'" style="color:#64748b">Searching…</p>';
+    catalogQuery(entity,filters).then(function(j){
+      try{if(!target.querySelector('[data-wc-live="'+tok+'"]'))return;}catch(err){return;}
+      if(j&&j.success)renderCatalog(target,j.data||[]);
+      else note('Search failed: '+((j&&j.error)||'error'),false,f);
+    }).catch(function(){note('Network error. Try again.',false,f);});
+  });
+});
+// Booking: seat hold -> confirm -> QR ticket -> cancel (bus reference workflow)
+// Step navigation + QR + ticket lookup share one helper set so every
+// generated page behaves the same without custom scroll/QR code.
+function wcGotoStep(id){
+  var el=document.querySelector('[data-wc-step="'+String(id).replace(/"/g,'')+'"]');
+  if(!el)return false;
+  el.removeAttribute('hidden');
+  try{if(el.style)el.style.display='';}catch(e){}
+  try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){
+    try{el.scrollIntoView();}catch(e2){}
+  }
+  try{
+    if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','-1');
+    el.focus({preventScroll:true});
+  }catch(e){}
+  return true;
+}
+function wcTicketQRFallback(ref,size){
+  ref=String(ref==null?'':ref);size=size||180;
+  var safe=ref.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return '<div style="width:'+size+'px;max-width:100%;border:2px dashed #6366f1;border-radius:12px;padding:1rem;text-align:center;background:#f8fafc;">'
+    +'<div style="font-size:.72rem;font-weight:800;color:#6366f1;letter-spacing:.08em;">SHOW THIS CODE AT BOARDING</div>'
+    +'<div style="font-size:1.5rem;font-weight:900;color:#0f172a;letter-spacing:.04em;margin:.4rem 0;word-break:break-all;">'+safe+'</div>'
+    +'<div style="font-size:.72rem;color:#64748b;">QR image offline — this code scans the same.</div></div>';
+}
+function wcTicketQR(ref,size){
+  ref=String(ref==null?'':ref);size=size||180;
+  var q=String(ref).split(String.fromCharCode(92)).join('').split("'").join('').slice(0,64);
+  var url='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(ref);
+  return '<img src="'+url+'" width="'+size+'" height="'+size+'" alt="Ticket QR '+q+'" loading="lazy" style="border-radius:12px;background:#fff;padding:6px;max-width:100%;" onerror="this.outerHTML=window.WCBiz.ticketQRFallback(\''+q+'\','+size+')">';
+}
+// Printable ticket (backend record in, print window out). QR comes from the
+// same ref the backend returns, so the printout always matches the record.
+function wcPrintTicketHTML(r){
+  r=r||{};
+  var seats=r.seats;
+  if(Object.prototype.toString.call(seats)==='[object Array]')seats=seats.join(', ');
+  var ref=String(r.ref||r.id||'');
+  var qr='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(ref);
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket '+escH(ref)+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}'
+    +' .t{max-width:480px;margin:0 auto;border:2px solid #059669;border-radius:16px;padding:28px;}'
+    +' h1{font-size:15px;color:#059669;letter-spacing:2px;margin:0;}'
+    +' .ref{font-size:34px;font-weight:900;margin:6px 0 14px;word-break:break-all;}'
+    +' table{width:100%;font-size:14px;border-collapse:collapse;}td{padding:5px 0;}'
+    +' img.qr{display:block;margin:14px auto;}'
+    +' .foot{font-size:11px;color:#666;margin-top:14px;}'
+    +' @media print{.noprint{display:none;}}</style></head><body><div class="t">'
+    +'<h1>BUS TICKET</h1><div class="ref">'+escH(ref)+'</div>'
+    +'<table><tr><td>Passenger</td><td><strong>'+escH(r.passenger||r.customer||r.name||'')+'</strong></td></tr>'
+    +'<tr><td>Seats</td><td><strong>'+escH(seats==null?'—':seats)+'</strong></td></tr>'
+    +'<tr><td>Status</td><td>'+escH(r.status||'confirmed')+(r.payment_status?' · '+escH(r.payment_status):'')+'</td></tr></table>'
+    +'<img class="qr" src="'+qr+'" width="180" height="180" alt="Ticket QR">'
+    +'<div style="text-align:center;font-size:12px;color:#444;">Show this QR at boarding</div>'
+    +'<div class="foot">Printed '+escH(new Date().toLocaleString())+'</div>'
+    +'<div class="noprint" style="text-align:center;margin-top:16px;">'
+    +'<button onclick="window.print()" style="padding:10px 26px;font-size:15px;font-weight:700;background:#059669;color:#fff;border:none;border-radius:9px;cursor:pointer;">Print</button></div>'
+    +'</div><script>
+/* WebCraft contact wiring — sends this form to contact.php via platform mailer */
+(function(){
+  function note(msg, ok){
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14px;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.4);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
+    document.body.appendChild(d);
+    setTimeout(function(){ d.remove(); }, 4000);
+  }
+  document.addEventListener('submit', function(e){
+    var f = e.target;
+    if (!f || f.tagName !== 'FORM' || f.dataset.wcWired) return;
+    var hasEmail = f.querySelector('input[type=email]');
+    var hasMsg = f.querySelector('textarea') || f.querySelector('[name=message],[name=your-message],[name=comments]') || f.id === 'contact-form';
+    if (!hasEmail || !hasMsg) return; // not a contact form — leave it alone
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    f.dataset.wcWired = '1';
+    var btn = f.querySelector('[type=submit],button');
+    var orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
+    fetch('contact.php', { method: 'POST', body: new FormData(f) })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.success) {
+          f.innerHTML = '<div style="padding:28px;text-align:center;background:rgba(16,185,129,.1);border:1.5px solid #10b981;border-radius:12px;font-weight:700;">✓ Thank you! Your message has been sent. We will reply soon.</div>';
+        } else {
+          note((j && j.error) || 'Could not send. Try again.', false);
+          if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+          delete f.dataset.wcWired;
+        }
+      })
+      .catch(function(){
+        note('Network error. Try again.', false);
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcWired;
+      });
+  }, true);
+})();
+</script>
+<script data-wc-pak-submit>
+/* WebCraft universal form wiring — every data form posts to submit.php
+   (no admin login needed) and the record appears in the admin panel. */
+(function(){
+  function note(msg, ok, form){
+    var host = (form && form.parentNode) ? form.parentNode : document.body;
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'margin:12px 0;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
+    if (host === document.body) d.style.cssText += 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;';
+    host.appendChild(d);
+    setTimeout(function(){ d.remove(); }, 5000);
+  }
+  function purpose(f){
+    var p = (f.getAttribute('data-wc-form') || f.getAttribute('data-form') || '').toLowerCase();
+    if (p) return p;
+    var html = ((f.id || '') + ' ' + (f.className || '') + ' ' + (f.innerHTML || '')).toLowerCase();
+    // Booking markers win over order markers: a bus passenger form talks
+    // about "payment" (pay online/counter) but its record is a booking, and
+    // "order" also matches "in order to". Shop checkouts carry cart/buy
+    // markers that never collide with booking words.
+    if (/book|reserv|appoint|seat|trip|schedule|slot/.test(html)) return 'booking';
+    if (/checkout|cart|order|payment|buy|add-to-cart/.test(html)) return 'order';
+    if (/subscrib|newsletter/.test(html)) return 'newsletter';
+    if (/review|rating|testimonial|feedback/.test(html)) return 'review';
+    if (/quote|estimate/.test(html)) return 'quote';
+    if (/register|signup|sign-up|join|member/.test(html)) return 'registration';
+    return '';
+  }
+  document.addEventListener('submit', function(e){
+    var f = e.target;
+    if (!f || f.tagName !== 'FORM' || f.dataset.wcPakWired) return;
+    // Search/catalog/lookup forms never create records — the storefront
+    // runtime (or the page's own JS) owns them. Hijacking them here would
+    // break trip search AND file bogus bookings (stopImmediatePropagation
+    // runs before their handlers).
+    if (f.hasAttribute('data-wc-search') || f.getAttribute('data-remote') === 'off'
+        || f.hasAttribute('data-wc-history') || f.hasAttribute('data-wc-ticket-lookup')
+        || f.hasAttribute('data-wc-lookup') || /history|lookup|track|my-booking/i.test(f.id || '')) return;
+    // Contact forms keep the contact.php+mailer flow; skip them here.
+    var hasEmail = f.querySelector('input[type=email]');
+    var hasMsg = f.querySelector('textarea');
+    if (hasEmail && hasMsg) return;
+    var p = purpose(f);
+    if (!p) return; // generic/static form — leave native behaviour alone
+    // Hold/slot flows (booking/order/appointment) belong to the storefront
+    // runtime when present: it attaches held trip+seats, uses idempotency,
+    // and tries Node first. Posting them here instead would drop the hold
+    // context and fail validation. On runtime-less pages submit.php serves.
+    if ((p === 'booking' || p === 'order' || p === 'appointment')
+        && window.WCBiz && typeof window.WCBiz.create === 'function') return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    f.dataset.wcPakWired = '1';
+    var btn = f.querySelector('[type=submit],button');
+    var orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
+    var fd = new FormData(f);
+    fd.append('form', p);
+    fetch('submit.php', { method: 'POST', body: fd })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.success) {
+          f.reset();
+          note(j.deduped ? 'Already received — thank you!' : '✓ Thank you! We received it and will be in touch shortly.', true, f);
+        } else {
+          note((j && j.error) || 'Could not send. Try again.', false, f);
+        }
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcPakWired;
+      })
+      .catch(function(){
+        note('Network error. Try again.', false, f);
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcPakWired;
+      });
+  }, true);
+})();
+</script>
+</body></html>';
+}
+function wcPrintTicket(r){
+  try{
+    var w=window.open('','_blank','width=560,height=780');
+    if(!w)return false;
+    w.document.write(wcPrintTicketHTML(r||{}));
+    w.document.close();
+    try{w.focus();}catch(e){}
+    try{var t=w.setTimeout(function(){try{w.print();}catch(e){}},600);}catch(e){}
+    return true;
+  }catch(e){return false;}
+}
+// Merge with the page's own WCBiz (AI pages keep UI state: selectedSeats,
+// activeTrip, gotoStep, custom helpers). Backend data methods ALWAYS win so
+// holds, bookings, tickets, payments and history hit the real backend.
+var __pageBiz=(window.WCBiz&&typeof window.WCBiz==='object')?window.WCBiz:{};
+function __wcFn(v){return typeof v==='function';}
+// Trip/seat context from live page state (never trusts stale hidden inputs
+// alone): the confirm step can no longer fail with "Missing trip" while the
+// visitor visibly selected seats on this same page.
+function __wcTripCtx(){
+  var trip='',seats=[];
+  try{
+    var WB=window.WCBiz||{};
+    var at=WB.activeTrip||__pageBiz.activeTrip||null;
+    if(at&&typeof at==='object')trip=String(at.id||at.trip_id||'');
+    var ss=WB.selectedSeats||__pageBiz.selectedSeats||[];
+    if(Object.prototype.toString.call(ss)==='[object Array]'&&ss.length)seats=ss.slice();
+    if(!trip){var hf=document.querySelector('input[name=trip_id],select[name=trip_id],input[name=trip]');if(hf&&hf.value)trip=String(hf.value).trim();}
+    if(!seats.length){
+      var sel=[];
+      var btns=document.querySelectorAll('.wc-seat.selected,[data-seat].selected');
+      for(var i=0;i<btns.length;i++){var s=btns[i].getAttribute('data-seat');if(s)sel.push(s);}
+      if(sel.length)seats=sel;
+    }
+  }catch(e){}
+  return {trip_id:trip,seats:seats};
+}
+function wcHold(entity,payload){
+  payload=Object.assign({},payload||{});
+  var ctx=__wcTripCtx();
+  if(!payload.trip_id&&ctx.trip_id)payload.trip_id=ctx.trip_id;
+  if((!payload.seats||!payload.seats.length)&&ctx.seats.length)payload.seats=ctx.seats;
+  return api('hold',Object.assign({entity:entity},payload)).then(function(j){
+    try{
+      if(j&&j.success&&j.data){
+        window.__WC_HOLD__={entity:entity,trip_id:j.data.trip_id||payload.trip_id,
+          seats:j.data.seats||payload.seats,ref:j.data.ref,hold_id:j.data.id,at:Date.now()};
+        try{window.WCBiz.holdRef=j.data.ref;}catch(e){}
+      }
+    }catch(e){}
+    return j;
+  });
+}
+var __PRIVATE_STORES={bookings:1,appointments:1,orders:1,inquiries:1,subscribers:1,payments:1,customers:1,tickets:1,members:1};
+function wcList(entity,query){
+  var qp=Object.assign({entity:entity},query||{});
+  function pageFallback(){
+    if(__PRIVATE_STORES[String(entity||'').toLowerCase()])return[];
+    if(__wcFn(__pageBiz.list)){try{var r=__pageBiz.list.call(__pageBiz,entity,query);return r;}catch(e){}}
+    return[];
+  }
+  return api('list',qp).then(function(j){
+    if(j&&j.success&&Object.prototype.toString.call(j.data)==='[object Array]'&&j.data.length)return j.data;
+    return pageFallback();
+  }).catch(function(){return pageFallback();});
+}
+window.WCBiz=Object.assign({},__pageBiz,{
+  spec:SPEC,slug:SLUG,api:api,
+  hold:wcHold,
+  list:wcList,
+  cancel:function(entity,id,identity){return api('cancel',Object.assign({entity:entity,id:id},identity||{}));},
+  history:function(entity,identifier){return api('list',Object.assign({entity:entity},identifier||{}));},
+  pay:function(ref,method,amount){return api('pay',{ref:ref,method:method,amount:amount});},
+  ticket:function(entity,phone,ref){return api('ticket',{entity:entity||'bookings',phone:phone,ref:ref});},
+  gotoStep:(__wcFn(__pageBiz.gotoStep)?__pageBiz.gotoStep:wcGotoStep),
+  ticketQR:wcTicketQR,
+  ticketQRFallback:wcTicketQRFallback,
+  printTicket:wcPrintTicket,
+  create:wcCreate
+});
+// Dedup core: same customer intent within 2s shares one request.
+var wcCreateVOLATILE={hold_id:1,idempotency_key:1,company:1};
+var wcCreateIDENTITY={passenger:1,customer:1,name:1,email:1,phone:1};
+function wcNormKey(entity,rec){
+  rec=rec||{};
+  var idkeys=Object.keys(rec).filter(function(k){return wcCreateIDENTITY[k]&&!wcCreateVOLATILE[k];}).sort();
+  if(idkeys.length)return String(entity||'')+'|'+idkeys.map(function(k){return k+'='+JSON.stringify(rec[k]);}).join('&');
+  var keys=Object.keys(rec).filter(function(k){return !wcCreateVOLATILE[k];}).sort();
+  return String(entity||'')+'|'+keys.map(function(k){return k+'='+JSON.stringify(rec[k]);}).join('&');
+}
+function wcCreate(entity,record,opts){
+  record=Object.assign({},record||{});
+  if(opts&&typeof opts==='object'){
+    ['trip_id','seats','hold_ref','hold_id'].forEach(function(k){
+      if(record[k]===undefined&&opts[k]!==undefined)record[k]=opts[k];
+    });
+  }
+  try{
+    // Direct page calls often skip the generic form handler, so they lack
+    // trip context — fill from the live hold / visible page selection.
+    if(entity==='bookings'||entity==='appointments'){
+      var HS3=window.__WC_HOLD__||null;
+      var CX3=__wcTripCtx();
+      if(record.trip_id===undefined)record.trip_id=((HS3&&HS3.entity===entity&&HS3.trip_id)||CX3.trip_id||undefined);
+      if(record.seats===undefined)record.seats=((HS3&&HS3.entity===entity&&HS3.seats)||CX3.seats||undefined);
+      if(record.hold_ref===undefined&&HS3&&HS3.entity===entity&&HS3.ref)record.hold_ref=HS3.ref;
+    }
+  }catch(e){}
+  var key=wcNormKey(entity,record);
+  var now=Date.now();
+  if(key===wcCreate._k&&(now-wcCreate._t)<2000&&wcCreate._p)return wcCreate._p;
+  var payload={entity:entity,record:record};
+  if(opts&&typeof opts==='object'&&opts.idempotency_key)payload.idempotency_key=opts.idempotency_key;
+  var p=api('create',payload);
+  wcCreate._k=key;wcCreate._t=now;wcCreate._p=p;
+  p.then(function(j){
+    try{
+      if(j&&j.success&&j.data){
+        if(entity==='bookings'&&j.data.ref){try{window.WCBiz.bookingRef=j.data.ref;}catch(e){}}
+      }else if(j&&!j.success&&entity==='bookings'){
+        var msg=String(j.error||'');
+        if(/Missing trip|Select at least/i.test(msg)){
+          var bf=document.querySelector('[data-wc-form="booking"]');
+          note('Pick your bus and press "Hold Seats" first — then fill this form.',false,bf||undefined);
+        }
+      }
+    }catch(e){}
+  },function(){});
+  return p;
+}
+// After a real backend confirmation: printable QR ticket and matching history lookup.
+document.addEventListener('wc:booking-confirmed',function(ev){
+  var rec=null;
+  try{rec=(ev&&ev.detail&&((ev.detail.data)||(ev.detail.body&&ev.detail.body.data)))||null;}catch(e){}
+  setTimeout(function(){
+    try{
+      var tb=document.getElementById('ticket-box');
+      if(tb&&!tb.querySelector('[data-wc-print]')){
+        var b=document.createElement('button');
+        b.setAttribute('type','button');b.setAttribute('data-wc-print','1');
+        b.textContent='Print ticket with QR';
+        b.style.cssText='margin-top:0.9rem;padding:0.6rem 1.2rem;border-radius:10px;border:none;background:#0f172a;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;';
+        b.addEventListener('click',function(){if(!wcPrintTicket(rec||{}))note('Popup blocked — allow popups to print the ticket.',false,tb);});
+        tb.appendChild(b);
+      }
+    }catch(e){}
+    try{
+      var hb=document.querySelector('[data-wc-history]');
+      var identity=hb?String(hb.getAttribute('data-wc-id')||'email'):'email';
+      var contact=rec?String(rec[identity]||''):'';
+      if(hb&&contact){
+        var inp=hb.querySelector('[data-wc-history-id]');
+        var frm=hb.querySelector('form');
+        if(inp&&frm&&!inp.value){inp.value=contact;try{frm.dispatchEvent(new Event('submit',{cancelable:true}));}catch(e2){}}
+      }
+    }catch(e){}
+  },400);
+});
+})();</script></body>
+</html>

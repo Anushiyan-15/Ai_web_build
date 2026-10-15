@@ -1,0 +1,345 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "global-travel",
+    "order_id": "PREVIEW-e211ca9d",
+    "business": {
+        "name": "global travel",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "trips",
+            "name": "Trips",
+            "singular": "Trip",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "departure",
+                    "label": "Departure",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "total_seats",
+                    "label": "Total Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "trip_id",
+                    "label": "Trip Id",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passenger",
+                    "label": "Passenger",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "payment_status",
+                    "label": "Payment Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "ref",
+                    "label": "Ref",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "qr",
+                    "label": "Qr",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "payments",
+            "name": "Payments",
+            "singular": "Payment",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "booking_ref",
+                    "label": "Booking Ref",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "method",
+                    "label": "Method",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "amount",
+                    "label": "Amount",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "buses",
+            "name": "Bus",
+            "singular": "Bus",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "busid",
+                    "label": "Busid",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "operator",
+                    "label": "Operator",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "departurelocation",
+                    "label": "Departurelocation",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "destination",
+                    "label": "Destination",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "capacity",
+                    "label": "Capacity",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "departuretime",
+                    "label": "Departuretime",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "arrivaltime",
+                    "label": "Arrivaltime",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "tickets",
+            "name": "Ticket",
+            "singular": "Ticket",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "ticketid",
+                    "label": "Ticketid",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "bookingreference",
+                    "label": "Bookingreference",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passengername",
+                    "label": "Passengername",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seatnumber",
+                    "label": "Seatnumber",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "bookingdate",
+                    "label": "Bookingdate",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "search_query",
+            "name": "Search Query",
+            "singular": "Search Query",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "departure",
+                    "label": "Departure",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "destination",
+                    "label": "Destination",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passengercount",
+                    "label": "Passengercount",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "trips",
+            "label": "Trips",
+            "icon": "📁",
+            "entity": "trips"
+        },
+        {
+            "id": "bookings",
+            "label": "Bookings",
+            "icon": "📁",
+            "entity": "bookings"
+        },
+        {
+            "id": "payments",
+            "label": "Payments",
+            "icon": "📁",
+            "entity": "payments"
+        },
+        {
+            "id": "buses",
+            "label": "Bus",
+            "icon": "📁",
+            "entity": "buses"
+        },
+        {
+            "id": "tickets",
+            "label": "Ticket",
+            "icon": "📁",
+            "entity": "tickets"
+        },
+        {
+            "id": "search_query",
+            "label": "Search Query",
+            "icon": "📁",
+            "entity": "search_query"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-14T11:35:48+01:00"
+}

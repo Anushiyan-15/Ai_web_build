@@ -1,0 +1,13 @@
+[
+    {
+        "busid": "",
+        "busnumber": "bhf0031",
+        "operator": "kundan",
+        "capacity": "34",
+        "bustype": "omini",
+        "amenities": "24",
+        "id": "r_7b862c19450f436e",
+        "created_at": "2026-10-14T11:00:46+01:00",
+        "updated_at": "2026-10-14T11:00:46+01:00"
+    }
+]

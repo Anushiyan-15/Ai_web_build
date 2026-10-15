@@ -652,9 +652,10 @@ function render_sidebar(string $active = 'dashboard'): void {
             'billing'   => ['href' => 'billing.php',  'perm' => 'billing',      'icon' => 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',                             'label' => 'Subscriptions'],
         ],
         'Infrastructure' => [
-            'deployments' => ['href' => 'deployments.php', 'perm' => 'deployments', 'icon' => 'M22 12h-4l-3 9L9 3l-3 9H2',                                                          'label' => 'Deployments & Rollback'],
-            'domains'     => ['href' => 'domains.php',     'perm' => 'domains_ssl', 'icon' => 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',                                         'label' => 'Domains & SSL'],
-            'ai_usage'    => ['href' => 'ai-usage.php',    'perm' => 'ai_usage',    'icon' => 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',                                                      'label' => 'AI Tokens & Cost'],
+            'server_control' => ['href' => 'server-control.php', 'perm' => '*',            'icon' => 'M13 10V3L4 14h7v7l9-11h-7z',                                                            'label' => '⚡ Node.js Server'],
+            'deployments'    => ['href' => 'deployments.php',    'perm' => 'deployments',  'icon' => 'M22 12h-4l-3 9L9 3l-3 9H2',                                                          'label' => 'Deployments & Rollback'],
+            'domains'        => ['href' => 'domains.php',        'perm' => 'domains_ssl',  'icon' => 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',                                         'label' => 'Domains & SSL'],
+            'ai_usage'       => ['href' => 'ai-usage.php',       'perm' => 'ai_usage',     'icon' => 'M13 2L3 14h9l-1 8 10-12h-9l1-8z',                                                      'label' => 'AI Tokens & Cost'],
         ],
         'Support & CRM' => [
             'tickets'       => ['href' => 'tickets.php',       'perm' => 'tickets',            'icon' => 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',                   'label' => 'Support Tickets'],

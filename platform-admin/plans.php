@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     // Sanitize and validate
     $clean = [];
     foreach ($data as $key => $p) {
-        $id = strtolower(preg_replace('/[^a-z0-9_-]/', '', $key));
+        $id = strtolower(preg_replace('/[^a-z0-9_-]/i', '', $key));
         if (!$id) continue;
         $clean[$id] = [
             'id'       => $id,

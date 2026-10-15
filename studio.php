@@ -20,6 +20,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/css/grapes.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/grapes.min.js"></script>
   <script src="<?= SITE_URL ?>/assets/js/opencode-service.js"></script>
+  <?php require_once __DIR__ . '/includes/theme-head.php'; ?>
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/loader-3d.css">
   <script src="<?= SITE_URL ?>/assets/js/loader-3d.js"></script>
   <style>
@@ -1698,6 +1699,15 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <button class="hdr-btn edit-toggle-btn active" id="btn-studio-edit-mode" onclick="toggleStudioEditMode()" title="Edit mode: ON = full visual editing. OFF = clean normal page preview.">✏️ <span class="lbl">Edit: ON</span></button>
       <button class="hdr-btn" onclick="openStudioPreview()" title="Preview in a new tab — opens in the selected device view (PC / Laptop / Tablet / Phone)">👁️ <span class="lbl">Preview</span></button>
       <button class="hdr-btn save-btn" onclick="saveAndReturnToBuilder()" title="Save all changes and return">✓ <span class="lbl">Save</span></button>
+      <div class="header-divider"></div>
+      <div class="theme-wrap" title="Appearance theme">
+        <select class="theme-select" id="themeModeSelect" aria-label="Appearance mode" style="height:34px;font-size:.74rem;">
+          <option value="dark">🌙 Dark</option>
+          <option value="light">☀️ Light</option>
+          <option value="custom">🎨 Custom</option>
+        </select>
+        <a class="theme-gear" href="<?= SITE_URL ?>/settings.php" title="Appearance settings" aria-label="Appearance settings" style="font-size:.95rem;">⚙️</a>
+      </div>
     </div>
   </header>
 
@@ -4892,6 +4902,12 @@ p{color:#64748b;max-width:520px;line-height:1.6}
         activeDesignIndex: (typeof p.activeDesignIndex === 'number') ? p.activeDesignIndex : 0,
         ownerEmail: p.ownerEmail || null,
         savedAt: p.savedAt || 0,
+        // ★ Publish linkage (written by publish.php, preserved by builder
+        // autosaves): resolves the REAL per-project admin entry point.
+        published: (p.published && p.published.adminUrl) ? {
+          orderId: p.published.orderId || '', slug: p.published.slug || '',
+          adminUrl: p.published.adminUrl, liveUrl: p.published.liveUrl || ''
+        } : null,
         designs: designs.map((d, i) => ({
           name: d.name || ('Concept ' + (i + 1)),
           description: d.description || '',
@@ -4945,6 +4961,7 @@ p{color:#64748b;max-width:520px;line-height:1.6}
             best = {
               bizName: qb.bizName || 'My Website',
               activeDesignIndex: (typeof qb.activeDesignIndex === 'number') ? qb.activeDesignIndex : activeConceptIndex,
+              published: (qb.published && qb.published.adminUrl) ? qb.published : null,
               designs: [{ name: 'Concept 1', html: qb.html, adminHtml: qb.adminHtml || null }]
             };
             console.log('[studio] loaded from quick bridge: webcraft_studio_bridge');
@@ -4986,8 +5003,11 @@ p{color:#64748b;max-width:520px;line-height:1.6}
 
       const design = projectData.designs[activeConceptIndex] || projectData.designs[0];
       let rawHtml = '';
+      const __pub0 = (projectData && projectData.published && projectData.published.adminUrl) ? projectData.published : null;
       if (currentStudioView === 'admin' && design && design.adminHtml) {
         rawHtml = design.adminHtml.trim();
+      } else if (currentStudioView === 'admin' && __pub0) {
+        rawHtml = studioLiveAdminDoc(__pub0, projectData.bizName || 'Website');
       } else {
         currentStudioView = 'site';
         rawHtml = (design && typeof design.html === 'string') ? design.html.trim() : '';
@@ -5009,8 +5029,10 @@ p{color:#64748b;max-width:520px;line-height:1.6}
         }
       });
 
-      // Show view tabs if adminHtml is present in any design
-      const hasAdmin = projectData.designs.some(d => d && !!d.adminHtml);
+      // Show view tabs if any design has an admin preview OR the project is
+      // published (real per-project admin resolvable via publish metadata).
+      const hasAdmin = projectData.designs.some(d => d && !!d.adminHtml)
+        || !!((projectData.published || {}).adminUrl);
       const vTabs = document.getElementById('studio-view-tabs');
       const vDiv = document.getElementById('st-view-divider');
       if (vTabs) vTabs.style.display = hasAdmin ? 'flex' : 'none';
@@ -5155,6 +5177,8 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       const d = projectData.designs[index];
       if (currentStudioView === 'admin' && d.adminHtml) {
         currentHtml = d.adminHtml;
+      } else if (currentStudioView === 'admin' && studioPublishedAdmin()) {
+        currentHtml = studioLiveAdminDoc(studioPublishedAdmin(), projectData.bizName || 'Website');
       } else {
         currentStudioView = 'site';
         currentHtml = d.html || WC_FALLBACK_HTML;
@@ -5177,10 +5201,51 @@ p{color:#64748b;max-width:520px;line-height:1.6}
       } catch (e) {}
     }
 
+    /* ★ Live-admin resolution: when this project is published, the Admin tab
+       opens THIS project's real admin entry (per-project URL from publish
+       metadata) instead of a generic mock. Login happens on the live page
+       itself — Studio never handles admin credentials. */
+    function studioPublishedAdmin() {
+      const p = (typeof projectData !== 'undefined' && projectData && projectData.published) || null;
+      return (p && p.adminUrl) ? p : null;
+    }
+    function studioLiveAdminDoc(pub, biz) {
+      const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const url = String(pub.adminUrl || '');
+      const slug = String(pub.slug || '');
+      const order = String(pub.orderId || '');
+      return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+        + '<meta name="wc-live-admin" content="1">'
+        + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        + '<title>' + esc(biz || 'Website') + ' &mdash; Live Admin</title></head>'
+        + '<body style="margin:0;font-family:system-ui,sans-serif;background:#0a0d14;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;">'
+        + '<div style="max-width:560px;text-align:center;background:#111622;border:1px solid #1e293b;border-radius:20px;padding:2.5rem;">'
+        + '<div style="font-size:2.4rem;margin-bottom:.75rem">🔐</div>'
+        + '<h1 style="font-size:1.3rem;margin-bottom:.4rem">' + esc(biz || 'Website') + ' &mdash; Admin Panel</h1>'
+        + '<p style="color:#94a3b8;font-size:.86rem;line-height:1.6;margin-bottom:.4rem">This project is published'
+        + (slug ? ' as <strong style="color:#c7d2fe">' + esc(slug) + '</strong>' : '')
+        + (order ? ' (' + esc(order) + ')' : '') + '. Sign in on the live admin page with your configured credentials.</p>'
+        + '<a href="' + esc(url) + '" target="_blank" style="display:inline-block;margin-top:1rem;padding:.85rem 1.8rem;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:800;text-decoration:none;">Open live admin login &rarr;</a>'
+        + '<p style="color:#64748b;font-size:.75rem;margin-top:1rem;word-break:break-all">' + esc(url) + '</p>'
+        + '</div></body></html>';
+    }
     function switchStudioView(view) {
       if (view === currentStudioView) return;
       const d = projectData?.designs?.[activeConceptIndex];
       if (view === 'admin' && (!d || !d.adminHtml)) {
+        const pub = studioPublishedAdmin();
+        if (pub) {
+          syncCanvasToHtml();
+          currentStudioView = 'admin';
+          document.getElementById('st-vtab-site')?.classList.toggle('active', false);
+          document.getElementById('st-vtab-admin')?.classList.toggle('active', true);
+          currentHtml = studioLiveAdminDoc(pub, (typeof projectData !== 'undefined' && projectData.bizName) || 'Website');
+          lockTheme(currentHtml, true);
+          showCanvasLoading();
+          loadHtmlIntoStudioCanvas();
+          showToast('🔐 Live admin for this project — open the login link to manage it');
+          return;
+        }
         showToast('⚠️ No admin panel exists for this concept yet.');
         return;
       }
@@ -5456,6 +5521,11 @@ p{color:#64748b;max-width:520px;line-height:1.6}
         storageManager: false,
         noticeOnUnload: false,
         showOffsets: 1,
+        // Real structured DnD: components reflow via Flex/Grid/document order
+        // (never absolute canvas). Undo/redo + touch enabled.
+        undoManager: { maximumStackLength: 50 },
+        dragMode: 'absolute',
+        canvas: { styles: [], scripts: [] },
         blockManager: {
           appendTo: '#gjs-blocks',
           blocks: [
@@ -5547,7 +5617,9 @@ p{color:#64748b;max-width:520px;line-height:1.6}
         updateFloatingContentBtn(model);
         updateAiSelectedTarget(model);
         updateCtxPanel(model);
-        if (isButtonLike(model) && !suppressEditorOpen && !activeFreeDrag) openButtonEditor(model);
+        // ★ Click/tap = SELECT ONLY (never auto-edit). Edit opens from
+        // right-click menu (✏️ Edit) or the layers ✏️ button. Auto-opening
+        // the editor on every touch made buttons impossible to move.
       });
       grapesEditor.on('component:dblclick', (model) => {
         if ((model.get('tagName') || '').toLowerCase() === 'img') openImageEditor(model);
@@ -5732,6 +5804,9 @@ p{color:#64748b;max-width:520px;line-height:1.6}
           if (e.button !== 0) return;
           const target = e.target?.closest?.('a,button');
           if (!target) return;
+          // ★ SmartDnD: header/nav/flow buttons reorder in-flow (push neighbours)
+          // instead of absolute free-drag. Let the smart layer own those.
+          try { if (window.WCSmartDnd?.shouldHandleButton?.(target)) return; } catch (err) {}
           const comp = componentFromElement(target);
           if (!comp || !isButtonLike(comp)) return;
           const wrapper = grapesEditor.DomComponents.getWrapper();
@@ -5747,6 +5822,7 @@ p{color:#64748b;max-width:520px;line-height:1.6}
         const move = (e) => {
           const d = activeFreeDrag;
           if (!d || e.pointerId !== d.pointerId) return;
+          autoScrollCanvas(e);
           const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
           if (!d.moved && Math.hypot(dx, dy) < 5) return;
           if (!d.moved) {
@@ -5761,29 +5837,173 @@ p{color:#64748b;max-width:520px;line-height:1.6}
             st.setProperty('margin', '0', 'important');
             st.setProperty('z-index', '1000', 'important');
             st.setProperty('max-width', 'none', 'important');
+            st.setProperty('pointer-events', 'none', 'important');
             d.target.classList.add('webcraft-free-button-dragging');
           }
           e.preventDefault();
           const page = getCanvasPagePoint(e);
-          const left = Math.max(0, Math.round(page.x - d.grabX)),
+          let left = Math.max(0, Math.round(page.x - d.grabX)),
             top = Math.max(0, Math.round(page.y - d.grabY));
+          // ★ Drop target: which section/container is under the pointer?
+          // Hovering one shows a highlight + a push-aside placeholder, and
+          // dropping inserts the button INTO the flow there (auto-adjust).
+          const drop = findButtonDropTarget(e, d);
+          d.dropTarget = drop || null;
+          updateButtonDropIndicator(d, drop, e);
+          if (drop) {
+            try {
+              const cr = drop.containerEl.getBoundingClientRect();
+              const cx = cr.left + cr.width / 2, w = Math.max(40, d.target.offsetWidth || 120);
+              if (Math.abs(e.clientX - cx) < 12) left = Math.max(0, Math.round(cx - w / 2 - (getCanvasBody()?.getBoundingClientRect().left || 0) + ((getCanvasBody()?.scrollLeft) || 0)));
+            } catch (err) {}
+          }
           d.target.style.setProperty('left', left + 'px', 'important');
           d.target.style.setProperty('top', top + 'px', 'important');
           d.lastLeft = left;
           d.lastTop = top;
         };
+        // ★ Which droppable section/container sits under the pointer, and at
+        // which in-flow index would the button land (neighbours push aside)?
+        const findButtonDropTarget = (e, d) => {
+          try {
+            const canvasDoc = grapesEditor?.Canvas?.getDocument();
+            if (!canvasDoc || !d || !d.target) return null;
+            const hit = canvasDoc.elementFromPoint(e.clientX, e.clientY);
+            if (!hit) return null;
+            if (hit === d.target || (d.target.contains && d.target.contains(hit))) return null;
+            let node = hit, containerEl = null, containerComp = null;
+            while (node && node !== canvasDoc.body && node !== canvasDoc.documentElement) {
+              const c = componentFromElement(node);
+              const ownEl = d.comp.getEl && d.comp.getEl();
+              if (c && c !== d.comp && !(ownEl && ownEl.contains && ownEl.contains(node))) {
+                const tag = (c.get('tagName') || '').toLowerCase();
+                if (['section', 'header', 'footer', 'div', 'form', 'main', 'article', 'aside', 'nav', 'figure'].includes(tag) && c.get('droppable') !== false) {
+                  containerEl = node;
+                  containerComp = c;
+                  break;
+                }
+              }
+              node = node.parentElement;
+            }
+            if (!containerEl || !containerComp) return null;
+            const kids = [...containerEl.children].filter(k =>
+              !k.classList.contains('wc-drop-placeholder') && k.id !== 'wc-drop-highlight' && k !== d.target);
+            let view;
+            try { view = containerEl.ownerDocument.defaultView; } catch (err) { view = null; }
+            let horizontal = false;
+            try {
+              const cs = view && view.getComputedStyle ? view.getComputedStyle(containerEl) : null;
+              horizontal = !!cs && (cs.flexDirection === 'row' || cs.display === 'inline-flex');
+            } catch (err) {}
+            const comps = [...(containerComp.components ? containerComp.components() : [])];
+            const directIdx = (el) => {
+              try {
+                const kc = componentFromElement(el);
+                return kc ? comps.indexOf(kc) : -1;
+              } catch (err) { return -1; }
+            };
+            let index = comps.length, domIndex = kids.length, n = 0, anchored = false;
+            for (let i = 0; i < kids.length; i++) {
+              const r = kids[i].getBoundingClientRect();
+              const p = horizontal ? e.clientX : e.clientY;
+              const mid = horizontal ? (r.left + r.width / 2) : (r.top + r.height / 2);
+              if (!anchored && p < mid) { index = n; domIndex = i; anchored = true; }
+              if (directIdx(kids[i]) !== -1) n++;
+            }
+            if (!anchored) index = n;
+            return { containerEl, containerComp, index, domIndex };
+          } catch (err) { return null; }
+        };
+        // ★ Highlight + push-aside placeholder inside the hovered container.
+        const updateButtonDropIndicator = (d, drop, e) => {
+          try {
+            const canvasDoc = grapesEditor?.Canvas?.getDocument(), body = getCanvasBody();
+            if (!canvasDoc || !body) return;
+            canvasDoc.querySelectorAll('.wc-drop-placeholder').forEach(n => n.remove());
+            let hl = canvasDoc.getElementById('wc-drop-highlight');
+            if (!drop) { if (hl) hl.remove(); return; }
+            const bodyRect = body.getBoundingClientRect();
+            const sx = body.scrollLeft || 0, sy = body.scrollTop || 0;
+            const cr = drop.containerEl.getBoundingClientRect();
+            if (!hl) {
+              hl = canvasDoc.createElement('div');
+              hl.id = 'wc-drop-highlight';
+              body.appendChild(hl);
+            }
+            hl.setAttribute('style', 'position:absolute;pointer-events:none;z-index:9998;'
+              + 'left:' + Math.max(0, Math.round(cr.left - bodyRect.left + sx)) + 'px;'
+              + 'top:' + Math.max(0, Math.round(cr.top - bodyRect.top + sy)) + 'px;'
+              + 'width:' + Math.round(cr.width) + 'px;height:' + Math.round(cr.height) + 'px;'
+              + 'outline:2px dashed #818cf8;outline-offset:-2px;border-radius:8px;'
+              + 'background:rgba(99,102,241,0.08);');
+            const ph = canvasDoc.createElement('div');
+            ph.className = 'wc-drop-placeholder';
+            const h = Math.max(36, Math.round(d.target.offsetHeight || 44));
+            ph.setAttribute('style', 'height:' + h + 'px;border:2px dashed #818cf8;border-radius:10px;'
+              + 'background:rgba(99,102,241,0.12);margin:6px 0;pointer-events:none;');
+            ph.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;'
+              + 'font:700 12px sans-serif;color:#a5b4fc;">⇣ Drop here — auto-adjusts ⇣</div>';
+            const ref = drop.containerEl.children[drop.domIndex] || null;
+            if (ref) drop.containerEl.insertBefore(ph, ref);
+            else drop.containerEl.appendChild(ph);
+          } catch (err) {}
+        };
+        const clearButtonDropIndicator = () => {
+          try {
+            const canvasDoc = grapesEditor?.Canvas?.getDocument();
+            if (!canvasDoc) return;
+            canvasDoc.querySelectorAll('.wc-drop-placeholder').forEach(n => n.remove());
+            const hl = canvasDoc.getElementById('wc-drop-highlight');
+            if (hl) hl.remove();
+          } catch (err) {}
+        };
+        // ★ Edge auto-scroll while dragging (canvas pushes under the pointer).
+        const autoScrollCanvas = (e) => {
+          try {
+            const frame = grapesEditor?.Canvas?.getFrameEl?.();
+            const doc = grapesEditor?.Canvas?.getDocument();
+            if (!doc) return;
+            const r = frame && frame.getBoundingClientRect ? frame.getBoundingClientRect() : { top: 0, bottom: (window.innerHeight || 800) };
+            const M = 70, STEP = 16;
+            const targets = [doc.body, doc.documentElement].filter(Boolean);
+            if (e.clientY < r.top + M) targets.forEach(t => { t.scrollTop -= STEP; });
+            else if (e.clientY > r.bottom - M) targets.forEach(t => { t.scrollTop += STEP; });
+          } catch (err) {}
+        };
         const finish = (e) => {
           const d = activeFreeDrag;
           if (!d || (e.pointerId != null && e.pointerId !== d.pointerId)) return;
+          try { d.target?.style.removeProperty('pointer-events'); } catch (err) {}
           d.target?.classList.remove('webcraft-free-button-dragging');
+          clearButtonDropIndicator();
           if (d.moved) {
             try { e.preventDefault(); } catch (err) {}
-            d.comp.addStyle({
-              position: 'absolute', margin: '0', 'z-index': '1000',
-              'max-width': 'none',
-              left: (d.lastLeft ?? 0) + 'px',
-              top: (d.lastTop ?? 0) + 'px'
-            });
+            if (d.dropTarget && d.dropTarget.containerComp) {
+              // ★ In-flow drop: button joins the section, auto-adjusted —
+              // absolute styles cleared so it flows with its neighbours.
+              try { d.comp.move(d.dropTarget.containerComp, { at: d.dropTarget.index }); } catch (err) {}
+              try {
+                const st = Object.assign({}, d.comp.getStyle() || {});
+                ['position', 'left', 'top', 'margin', 'z-index', 'max-width'].forEach(k => { delete st[k]; });
+                d.comp.setStyle(st);
+              } catch (err) {}
+              try {
+                const fresh = d.comp.getEl && d.comp.getEl();
+                if (fresh) {
+                  ['position', 'left', 'top', 'margin', 'z-index', 'max-width'].forEach(k => { try { fresh.style.removeProperty(k); } catch (err2) {} });
+                  fresh.classList.remove('webcraft-free-button-dragging');
+                }
+              } catch (err) {}
+              showToast('📥 Button placed — section auto-adjusted');
+            } else {
+              d.comp.addStyle({
+                position: 'absolute', margin: '0', 'z-index': '1000',
+                'max-width': 'none',
+                left: (d.lastLeft ?? 0) + 'px',
+                top: (d.lastTop ?? 0) + 'px'
+              });
+              showToast('🔘 Button dropped');
+            }
             suppressEditorOpen = true;
             setTimeout(() => suppressEditorOpen = false, 120);
             const swallowClick = (ce) => {
@@ -5792,9 +6012,12 @@ p{color:#64748b;max-width:520px;line-height:1.6}
               d.target?.removeEventListener('click', swallowClick, true);
             };
             d.target?.addEventListener('click', swallowClick, true);
-            showToast('🔘 Button dropped');
             renderSmartLayers();
-          } else if (isButtonLike(d.comp)) openButtonEditor(d.comp);
+          } else {
+            // ★ Plain click/tap = SELECT ONLY. Edit opens from right-click
+            // menu (✏️ Edit) — never automatically.
+            try { grapesEditor.select(d.comp); } catch (err) {}
+          }
           activeFreeDrag = null;
         };
         canvasDoc.addEventListener('pointerdown', down, true);
@@ -6186,6 +6409,8 @@ a, button { -webkit-user-drag: none; }`;
           setupContextMenu();
           setupFreeButtonDragging();
           setupSectionDragging();
+          // ★ SmartDnD: universal local-first collision-aware reflow (additive).
+          try { window.WCSmartDnd?.attach?.(); } catch (e) {}
 
           setTimeout(() => {
             setupAnimationsInCanvas();
@@ -6322,6 +6547,11 @@ ${WC_ANIMATION_RUNTIME}
 </body>
 </html>`;
       if (projectData && projectData.designs && projectData.designs[activeConceptIndex]) {
+        // ★ Live-admin link doc is navigation-only — never persist it as adminHtml.
+        if (currentStudioView === 'admin' && currentHtml.indexOf('wc-live-admin') !== -1) {
+          setTimeout(refreshSectionDragHandles, 0);
+          return true;
+        }
         if (currentStudioView === 'admin') {
           projectData.designs[activeConceptIndex].adminHtml = currentHtml;
         } else {
@@ -7361,6 +7591,7 @@ ${WC_ANIMATION_RUNTIME}
     function applyBtnBg(val) {
       if (!editingButton) return;
       const hex = normalizeHex(val) || val;
+      try { window.WCSmartDnd?.ensureStableId?.(editingButton); } catch (e) {}
       editingButton.addStyle({ 'background': hex, 'background-color': hex });
       document.getElementById('be-bg-color').value = hex;
       document.getElementById('be-bg-hex').value = hex.toUpperCase();
@@ -7370,6 +7601,7 @@ ${WC_ANIMATION_RUNTIME}
     function applyBtnTextColor(val) {
       if (!editingButton) return;
       const hex = normalizeHex(val) || val;
+      try { window.WCSmartDnd?.ensureStableId?.(editingButton); } catch (e) {}
       editingButton.addStyle({ 'color': hex });
       document.getElementById('be-text-color').value = hex;
       document.getElementById('be-text-hex').value = hex.toUpperCase();
@@ -7378,6 +7610,7 @@ ${WC_ANIMATION_RUNTIME}
 
     function applyBtnFontSize(val) {
       if (!editingButton) return;
+      try { window.WCSmartDnd?.ensureStableId?.(editingButton); } catch (e) {}
       editingButton.addStyle({ 'font-size': val + 'px' });
       document.getElementById('be-font-size-val').textContent = val + 'px';
       updatePreview();
@@ -7385,6 +7618,7 @@ ${WC_ANIMATION_RUNTIME}
 
     function applyBtnPadding(val) {
       if (!editingButton) return;
+      try { window.WCSmartDnd?.ensureStableId?.(editingButton); } catch (e) {}
       editingButton.addStyle({ 'padding': val + 'px ' + val + 'px' });
       document.getElementById('be-padding-val').textContent = val + 'px';
       updatePreview();
@@ -7392,6 +7626,7 @@ ${WC_ANIMATION_RUNTIME}
 
     function applyBtnRadius(val) {
       if (!editingButton) return;
+      try { window.WCSmartDnd?.ensureStableId?.(editingButton); } catch (e) {}
       editingButton.addStyle({ 'border-radius': val + 'px' });
       document.getElementById('be-radius-val').textContent = val + 'px';
       updatePreview();
@@ -7399,6 +7634,7 @@ ${WC_ANIMATION_RUNTIME}
 
     function applyBtnShadow(type) {
       if (!editingButton) return;
+      try { window.WCSmartDnd?.ensureStableId?.(editingButton); } catch (e) {}
       const shadows = {
         none: 'none',
         soft: '0 4px 12px rgba(0,0,0,0.1)',
@@ -7860,6 +8096,9 @@ ${WC_ANIMATION_RUNTIME}
       if (font) newStyle['font-family'] = font;
       const shadow = document.getElementById('se-shadow').value;
       if (shadow && shadow !== 'none') newStyle['box-shadow'] = shadow;
+      // ★ Scoped: ensure instance id so this section's background/padding/etc.
+      // never leaks to other sections sharing a class/tag.
+      try { window.WCSmartDnd?.ensureStableId?.(editingSection); } catch (e) {}
       editingSection.addStyle(newStyle);
       if (isSection) {
         const innerComp = editingSection.components?.()?.at?.(0);
@@ -11397,7 +11636,9 @@ Return COMPLETE updated HTML document.`;
     }
 
     async function openStudioPreview() {
-      syncCanvasToHtml();
+      try { syncCanvasToHtml(); } catch (e) { console.warn('[preview] sync failed, using last HTML'); }
+      const html = String(currentHtml || '');
+      if (html.length <= 100) { showToast('⚠️ Nothing to preview yet — the canvas is empty'); return; }
       // Preview opens in the SELECTED device view (not always full PC width),
       // so the customer sees exactly what was chosen: PC / Laptop / Tablet / Phone.
       const dev = studioCurrentDevice || 'Desktop';
@@ -11426,14 +11667,17 @@ Return COMPLETE updated HTML document.`;
       win.document.open();
       win.document.write(shell);
       win.document.close();
+      // Paint the frame IMMEDIATELY so the tab is never blank: upgrade to the
+      // real-URL preview below only if preview.php answers in time.
+      const frame = win.document.getElementById('pv-frame');
+      if (frame) { try { frame.srcdoc = html; } catch (e) {} }
       // Real-URL preview (preview.php): the frame gets a true http(s) base URL,
       // so header clicks behave like the published site — #anchors scroll,
       // page links 404 honestly, and nothing can loop back into Studio.
       // Falls back to the classic srcdoc preview when offline/oversized.
       let frameUrl = null;
       try {
-        const html = String(currentHtml || '');
-        if (html.length > 100 && html.length <= 7 * 1024 * 1024) {
+        if (html.length <= 7 * 1024 * 1024) {
           const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
           const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 15000) : null;
           const res = await fetch('<?= SITE_URL ?>/preview.php', {
@@ -11445,10 +11689,9 @@ Return COMPLETE updated HTML document.`;
           const j = await res.json();
           if (j && j.success && j.url) frameUrl = j.url;
         }
-      } catch (e) { console.warn('[preview] URL preview failed, using srcdoc fallback'); }
-      // srcdoc via property (no HTML-escaping pitfalls with inline scripts).
-      const frame = win.document.getElementById('pv-frame');
-      if (frame) { if (frameUrl) frame.src = frameUrl; else frame.srcdoc = currentHtml; }
+      } catch (e) { console.warn('[preview] URL preview failed, keeping instant preview'); }
+      // Upgrade to the real URL only when available; instant srcdoc stays otherwise.
+      if (frameUrl && frame) { try { frame.src = frameUrl; } catch (e) {} }
     }
 
     function toggleFullscreen() {
@@ -14944,5 +15187,8 @@ Return COMPLETE updated HTML document.`;
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/wc-ai-suite.css">
   <script src="<?= SITE_URL ?>/assets/js/wc-ai-suite.js"></script>
   <script src="<?= SITE_URL ?>/assets/js/wc-studio-suite.js"></script>
+  <!-- ★ Smart DnD — local-first collision-aware reflow for ANY element (additive, reuses Studio save/undo). -->
+  <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/wc-smart-dnd.css">
+  <script src="<?= SITE_URL ?>/assets/js/wc-smart-dnd.js"></script>
 </body>
 </html>

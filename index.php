@@ -15,6 +15,10 @@ require_once __DIR__ . '/includes/nav.php';
   display:flex;align-items:center;
   position:relative;overflow:hidden;
   padding:5rem 0;
+  transition:background .25s;
+}
+[data-theme="dark"] .hero {
+  background:linear-gradient(160deg,#0a0f1d 0%,#11162b 50%,#091823 100%);
 }
 .hero::before{
   content:'';position:absolute;inset:0;
@@ -85,9 +89,10 @@ require_once __DIR__ . '/includes/nav.php';
 .preview-mini .mini-bar:nth-child(3){width:40%}
 .floating-badge{
   position:absolute;
-  background:#fff;border-radius:10px;padding:.6rem .9rem;
-  box-shadow:0 8px 24px rgba(0,0,0,.12);
-  font-size:.75rem;font-weight:600;color:var(--n800);
+  background:var(--surface);border-radius:10px;padding:.6rem .9rem;
+  box-shadow:0 8px 24px rgba(0,0,0,.15);
+  font-size:.75rem;font-weight:600;color:var(--text-primary);
+  border:1px solid var(--border);
   display:flex;align-items:center;gap:.4rem;
   animation:float 3s ease-in-out infinite;
 }
@@ -104,14 +109,15 @@ require_once __DIR__ . '/includes/nav.php';
 /* Stats strip */
 .stats-strip{
   padding:2.5rem 0;
-  background:#fff;border-top:1px solid var(--n200);border-bottom:1px solid var(--n200);
+  background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  transition:background .25s,border-color .25s;
 }
 .stats-grid{
   display:flex;justify-content:center;gap:4rem;flex-wrap:wrap;
 }
 .stat-item{text-align:center}
 .stat-num{font-size:2.2rem;font-weight:900;letter-spacing:-.03em;color:var(--p)}
-.stat-lbl{font-size:.85rem;color:var(--n500);font-weight:500;margin-top:.2rem}
+.stat-lbl{font-size:.85rem;color:var(--text-secondary);font-weight:500;margin-top:.2rem}
 
 /* How it works */
 .steps-wrap{
@@ -133,7 +139,7 @@ require_once __DIR__ . '/includes/nav.php';
   display:flex;align-items:center;justify-content:center;
   font-size:1.5rem;margin:0 auto 1rem;
   box-shadow:0 8px 24px rgba(99,102,241,.3);
-  border:4px solid #fff;
+  border:4px solid var(--surface);
 }
 .step-num{
   position:absolute;top:-4px;right:calc(50% - 46px);
@@ -141,24 +147,24 @@ require_once __DIR__ . '/includes/nav.php';
   color:#fff;font-size:.7rem;font-weight:800;
   border-radius:50%;display:flex;align-items:center;justify-content:center;
 }
-.step-item h3{font-size:1rem;font-weight:700;margin-bottom:.4rem;color:var(--n900)}
-.step-item p{font-size:.85rem;color:var(--n500)}
+.step-item h3{font-size:1rem;font-weight:700;margin-bottom:.4rem;color:var(--text-primary)}
+.step-item p{font-size:.85rem;color:var(--text-secondary)}
 
 /* Features */
 .feature-card{
   padding:1.75rem;border-radius:16px;
-  border:1px solid var(--n200);background:#fff;
-  transition:transform var(--t),box-shadow var(--t);
+  border:1px solid var(--border);background:var(--surface);
+  transition:transform var(--t),box-shadow var(--t),background .25s,border-color .25s;
 }
 .feature-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(99,102,241,.14)}
 .feature-icon{
   width:50px;height:50px;border-radius:12px;
-  background:var(--pl);color:var(--p);
+  background:var(--pl);color:var(--pd);
   display:flex;align-items:center;justify-content:center;
   font-size:1.4rem;margin-bottom:1rem;
 }
-.feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;color:var(--n900)}
-.feature-card p{font-size:.875rem;color:var(--n500);line-height:1.65}
+.feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;color:var(--text-primary)}
+.feature-card p{font-size:.875rem;color:var(--text-secondary);line-height:1.65}
 
 /* Examples */
 .examples-grid{
@@ -167,9 +173,10 @@ require_once __DIR__ . '/includes/nav.php';
 @media(max-width:760px){.examples-grid{grid-template-columns:1fr}}
 .example-card{
   border-radius:14px;overflow:hidden;
-  border:1px solid var(--n200);
+  border:1px solid var(--border);
+  background:var(--surface);
   box-shadow:0 4px 16px rgba(0,0,0,.06);
-  transition:transform var(--t),box-shadow var(--t);
+  transition:transform var(--t),box-shadow var(--t),background .25s,border-color .25s;
 }
 .example-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(99,102,241,.18)}
 .example-thumb{
@@ -178,17 +185,18 @@ require_once __DIR__ . '/includes/nav.php';
   display:flex;align-items:center;justify-content:center;
   font-size:2rem;position:relative;overflow:hidden;
 }
-.example-info{padding:1rem 1.25rem;background:#fff}
-.example-info h4{font-size:.95rem;font-weight:700;color:var(--n900);margin-bottom:.2rem}
-.example-info p{font-size:.8rem;color:var(--n400)}
+.example-info{padding:1rem 1.25rem;background:var(--surface)}
+.example-info h4{font-size:.95rem;font-weight:700;color:var(--text-primary);margin-bottom:.2rem}
+.example-info p{font-size:.8rem;color:var(--text-muted)}
 
 /* Testimonials */
 .testi-card{
-  background:#fff;border-radius:16px;border:1px solid var(--n200);
+  background:var(--surface);border-radius:16px;border:1px solid var(--border);
   padding:1.5rem;box-shadow:0 4px 16px rgba(0,0,0,.06);
+  transition:background .25s,border-color .25s;
 }
 .testi-stars{color:#f59e0b;font-size:.9rem;margin-bottom:.75rem}
-.testi-text{font-size:.9rem;color:var(--n600);line-height:1.7;margin-bottom:1rem;font-style:italic}
+.testi-text{font-size:.9rem;color:var(--text-secondary);line-height:1.7;margin-bottom:1rem;font-style:italic}
 .testi-author{display:flex;align-items:center;gap:.75rem}
 .testi-avatar{
   width:40px;height:40px;border-radius:50%;
@@ -197,17 +205,17 @@ require_once __DIR__ . '/includes/nav.php';
   position:relative;overflow:hidden;flex-shrink:0;
 }
 .testi-avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.testi-name{font-size:.875rem;font-weight:700;color:var(--n900)}
-.testi-role{font-size:.78rem;color:var(--n400)}
-.testi-title{font-size:.92rem;font-weight:800;color:var(--n900);margin-bottom:.35rem}
-.testi-date{font-size:.72rem;color:var(--n400);margin-top:.1rem}
+.testi-name{font-size:.875rem;font-weight:700;color:var(--text-primary)}
+.testi-role{font-size:.78rem;color:var(--text-muted)}
+.testi-title{font-size:.92rem;font-weight:800;color:var(--text-primary);margin-bottom:.35rem}
+.testi-date{font-size:.72rem;color:var(--text-muted);margin-top:.1rem}
 /* Overall rating summary */
 .testi-summary{display:flex;align-items:center;justify-content:center;gap:.9rem;margin-bottom:2.25rem;flex-wrap:wrap}
 .avg-stars{position:relative;display:inline-block;font-size:1.5rem;line-height:1;letter-spacing:.1em}
-.avg-stars-bg{color:var(--n200)}
+.avg-stars-bg{color:var(--border)}
 .avg-stars-fg{position:absolute;inset:0;overflow:hidden;white-space:nowrap;color:#f59e0b}
-.testi-avg-num{font-size:1.6rem;font-weight:900;color:var(--n900)}
-.testi-avg-sub{font-size:.82rem;color:var(--n500)}
+.testi-avg-num{font-size:1.6rem;font-weight:900;color:var(--text-primary)}
+.testi-avg-sub{font-size:.82rem;color:var(--text-muted)}
 /* Progressive loading */
 .testi-card.testi-new{animation:testiIn .45s ease}
 @keyframes testiIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -315,7 +323,7 @@ require_once __DIR__ . '/includes/nav.php';
 </section>
 
 <!-- ══ HOW IT WORKS ══════════════════════════════════════ -->
-<section class="section" style="background:#fff">
+<section class="section" style="background:var(--surface);transition:background .25s">
   <div class="container">
     <div class="text-center" style="margin-bottom:3.5rem">
       <div class="badge">How It Works</div>
@@ -376,7 +384,7 @@ require_once __DIR__ . '/includes/nav.php';
 </section>
 
 <!-- ══ EXAMPLE WEBSITES ══════════════════════════════════════ -->
-<section class="section" style="background:#fff">
+<section class="section" style="background:var(--surface);transition:background .25s">
   <div class="container">
     <div class="text-center" style="margin-bottom:3rem">
       <div class="badge">Examples</div>
@@ -447,7 +455,7 @@ require_once __DIR__ . '/includes/nav.php';
       <?php if ($testiTotal > count($testiFirst)): ?>
         <button class="btn btn-primary" id="testi-more-btn" onclick="testiLoadMore()">Show More Reviews</button>
       <?php endif; ?>
-      <button class="btn" id="testi-less-btn" onclick="testiShowLess()" style="display:none;border:1px solid var(--n200);background:#fff;">Show Less</button>
+      <button class="btn" id="testi-less-btn" onclick="testiShowLess()" style="display:none;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);">Show Less</button>
     </div>
     <script>
     (function () {

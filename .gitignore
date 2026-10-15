@@ -4,6 +4,7 @@ config/database.php
 config/paypal.php
 config/mail.php
 config/platform-admin.php
+config/social.php
 .env
 .env.*
 !.env.example

@@ -1,0 +1,16 @@
+[
+    {
+        "id": "h_1354172fee867c5a",
+        "trip_id": "r_5b3da30d30d9cd84",
+        "seats": [
+            "1A",
+            "1B"
+        ],
+        "status": "held",
+        "payment_status": "unpaid",
+        "ref": "HOLD-30323ED7",
+        "created_at": "2026-10-14T11:22:13+01:00",
+        "updated_at": "2026-10-14T11:22:13+01:00",
+        "expires_at": "2026-10-14T11:37:13+01:00"
+    }
+]

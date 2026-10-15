@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════
 //  includes/OpenCodeService.php — OpenCode Zen AI gateway client
 //
-//  CHAIN: OpenCode (all free models w/ fallback) → Gemini → Puter.js
+//  CHAIN: OpenCode (all free models w/ fallback) → Gemini
 //         → server templates. Nothing ever comes back empty.
 //
 //  Free models work inside OpenCode; via raw HTTP they may return
@@ -176,7 +176,7 @@ function opencode_add_usage(array $total, $u): array {
 // ── Single chat/completions call ───────────────────────────────
 // Returns [ok(bool), text(string), err(string|null), fatal(bool), usage[]]
 // fatal=true means don't retry other models (bad request, not quota).
-function opencode_chat_once(string $model, array $messages, float $temperature = 0.7, int $maxTokens = 12000, ?int $timeout = null): array {
+function opencode_chat_once(string $model, array $messages, float $temperature = 0.7, int $maxTokens = 20000, ?int $timeout = null): array {
     $key = opencode_api_key();
     if ($key === '') return [false, '', 'OpenCode API key not configured', true, ['prompt' => 0, 'completion' => 0]];
     $endpoint = defined('OPENCODE_CHAT_ENDPOINT') ? OPENCODE_CHAT_ENDPOINT : 'https://opencode.ai/zen/v1/chat/completions';
@@ -238,7 +238,7 @@ function opencode_chat_once(string $model, array $messages, float $temperature =
 // ── Chat with fallback across ALL free models ─────────────────
 // Returns [ok, text, modelUsed|null, errors[], usage{prompt,completion}]
 // $patient=false → no 8s 429-wait (for 30s-guillotine chunk requests).
-function opencode_chat_fallback(?string $preferred, array $messages, float $temperature = 0.7, int $maxTokens = 12000, ?int $timeout = null, bool $patient = true): array {
+function opencode_chat_fallback(?string $preferred, array $messages, float $temperature = 0.7, int $maxTokens = 20000, ?int $timeout = null, bool $patient = true): array {
     $free = opencode_free_models();
     $queue = [];
     if ($preferred && !in_array($preferred, $queue, true)) $queue[] = $preferred;
@@ -426,7 +426,14 @@ function opencode_requirements_block(array $d): string {
         $lines = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $raw)));
         return "\n" . implode("\n", array_map(fn($s) => '  • ' . $s, $lines));
     };
-    $shopOn = trim((string)($d['biz_products'] ?? '')) !== '' || in_array('shop', array_map('strtolower', (array)($d['sections'] ?? [])), true);
+    $shopSecs = array_map('strtolower', (array)($d['sections'] ?? []));
+    $shopType = (string)($d['biz_type'] ?? '');
+    $shopBookingType = function_exists('wc_is_booking_type')
+        ? wc_is_booking_type($shopType)
+        : (bool)preg_match('/bus|transport|coach|fleet|travel|tour|hotel|restaurant|salon|clinic|school|rental|booking|appointment/i', $shopType);
+    $shopOn = in_array('shop', $shopSecs, true)
+        || (bool)preg_match('/shop|store|product|retail|e-?commerce|boutique|mart|fashion|jewelry|grocery|bakery|furniture|electronics/i', $shopType)
+        || (trim((string)($d['biz_products'] ?? '')) !== '' && !$shopBookingType);
     $extra = $g('design_direction') !== '' ? "Additional Notes   : " . $g('design_direction') . "\n" : '';
     return "=== CLIENT REQUIREMENTS (MUST BE FOLLOWED EXACTLY) ===\n"
         . "Business Name      : " . ($g('biz_name') ?: 'Apex Studio') . "\n"
@@ -450,6 +457,9 @@ function opencode_requirements_block(array $d): string {
         . "SOCIAL RULE        : OPTIONAL — render footer social icons ONLY for URLs given above (real <a href> links, target=_blank). Empty = no icon, never fake/placeholder social links.\n"
         . "LOGO RULE          : OPTIONAL — if Brand Logo URL given, show <img src> in navbar + footer; else styled text brand name.\n"
         . "Required Sections  : " . $sections . "\n"
+        . ((trim((string)($d['gallery_subject'] ?? '')) !== '' && in_array('gallery', array_map('strtolower', (array)($d['sections'] ?? [])), true))
+            ? "Gallery Section    : REQUIRED — build a photo gallery section showing: " . trim((string)$d['gallery_subject']) . " (real Unsplash images, responsive grid, lightbox optional)\n"
+            : '')
         . "=== END CLIENT REQUIREMENTS ===";
 }
 
@@ -518,9 +528,16 @@ function opencode_palette_block(string $paletteName): string {
 // Keep in sync with gemini_shop_training_block().
 function opencode_shop_block(array $d): string {
     $raw = trim((string)($d['biz_products'] ?? ''));
-    $shopOn = $raw !== ''
-        || in_array('shop', array_map('strtolower', (array)($d['sections'] ?? [])), true)
-        || (bool)preg_match('/shop|store|product|retail|e-?commerce|boutique|mart|fashion|jewelry|grocery|bakery|furniture|electronics/i', (string)($d['biz_type'] ?? ''));
+    $bizType = (string)($d['biz_type'] ?? '');
+    $secs = array_map('strtolower', (array)($d['sections'] ?? []));
+    // Booking-style businesses never auto-shop: their products text is a
+    // catalog (trips/rooms/menu). Explicit shop section or shop industry opts in.
+    $isBookingType = function_exists('wc_is_booking_type')
+        ? wc_is_booking_type($bizType)
+        : (bool)preg_match('/bus|transport|coach|fleet|travel|tour|hotel|restaurant|salon|clinic|school|rental|booking|appointment/i', $bizType);
+    $shopOn = in_array('shop', $secs, true)
+        || (bool)preg_match('/shop|store|product|retail|e-?commerce|boutique|mart|fashion|jewelry|grocery|bakery|furniture|electronics/i', $bizType)
+        || ($raw !== '' && !$isBookingType);
     if (!$shopOn) return '';
     $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $raw))));
     $prodList = $lines ? implode("\n", array_slice($lines, 0, 12)) : '(none listed — use 6 plausible products for this business with real prices)';
@@ -534,6 +551,31 @@ function opencode_shop_block(array $d): string {
         . "<button type=\"button\" class=\"wc-add-btn\" data-idx=\"N\">Add to Cart</button> (N = 0-based index, minus never below 1). "
         . "DO NOT build #wc-cart-drawer / #wc-bill-modal / #wc-fab / cart <script> yourself. "
         . "Add nav <a href=\"#shop\">Shop</a>. Prices verbatim; type=\"button\" on all shop buttons; single-column <768px.\n\n";
+}
+
+// ── BOOKING CONTRACT shared by all AI lanes (bus/transport/appointments) ──
+// Lite models hallucinate a fake "Find bus → Showing flexible options…"
+// demo with hardcoded cities and NO seat/payment step. That is a FAILED
+// output. Real booking sites MUST wire to the backend runtime (BusinessOps
+// via window.WCBiz + data-wc-* attributes) so search lists REAL trips the
+// admin manages, seat hold → passenger → confirm → QR ref → pay works.
+function opencode_booking_block(array $d): string {
+    $hay = strtolower((string)($d['biz_type'] ?? '') . ' ' . (string)($d['biz_services'] ?? '')
+        . ' ' . (string)($d['biz_tagline'] ?? '') . ' ' . (string)($d['design_direction'] ?? '')
+        . ' ' . implode(' ', (array)($d['sections'] ?? [])));
+    $isBooking = (bool)preg_match('/bus|transport|travel|coach|fleet|trip|route|seat|ticket|book|reserve|appointment|schedule|hotel|restaurant|salon|clinic|rental|event|tour/i', $hay);
+    if (!$isBooking) return '';
+    return "## BOOKING CONTRACT — BOOKING MODE ON (bus/transport/appointments)\n"
+        . "This is a BOOKING site. A dead hardcoded result line (e.g. 'Showing flexible options from X to Y') with NO select button, NO seat select and NO payment = FAILED output. Selectable demo trip CARDS that drive the full flow (step 7) are REQUIRED, not fake.\n"
+        . "Build a REAL 5-step flow wired to the backend runtime (window.WCBiz is auto-injected — just call it; never invent your own API URLs):\n"
+        . "1) <section id=\"booking\"> AFTER services/about, BEFORE contact: heading 'Book Your Journey', sub + 5-step mini progress (Search → Seats → Details → Ticket → Pay).\n"
+        . "2) SEARCH form (exact contract, must never navigate): <form method=\"POST\" onsubmit=\"return false\" data-wc-search=\"trips\" data-wc-target=\"#trip-results\"> with inputs name=\"origin\" (required, placeholder e.g. Chennai), name=\"destination\" (required, e.g. Bangalore), name=\"date\" type=\"date\" (required). The Find control is a <button type=\"submit\"> INSIDE this form labeled 'Find My Bus' — never an <a> link, never target=\"_blank\", never formtarget, never window.open. Results div: <div id=\"trip-results\" data-wc-results><p>Enter route + date, hit Find — live trips appear here.</p></div>. NAV RULE (hard fail if violated): Find NEVER opens a new tab/window, NEVER uses method=GET or an action URL, NEVER builds blob: URLs — results render INLINE in #trip-results on the same page (a new tab or a blob:..?origin=.. File-not-found page = FAILED output).\n"
+        . "3) SEAT step (rendered by YOUR JS after a trip is picked): wrap it as <div data-wc-step=\"seats\" hidden> containing the seat grid container <div id=\"seat-map\"></div> + legend (available/selected/held). JS: on trip select, call WCBiz.list('trips') if needed, then render 40 seats (4-col x 10-row, aisle after col 2) as <button type=\"button\" class=\"wc-seat\" data-seat=\"1A\"> etc; click toggles .selected (max 6); 'Hold Seats' button calls WCBiz.hold('bookings',{trip_id, seats}) and shows hold ref + 15-min timer, then calls WCBiz.gotoStep('details'). CRITICAL: every step advance MUST call WCBiz.gotoStep('<step>') (it unhides the step AND smooth-scrolls to it) — NEVER location.hash, NEVER window.scrollTo(0,0), NEVER <a href=\"#...\"> for step buttons. A Select click that jumps to the top of the page or leaves the seat grid invisible = FAILED output. No hold = cannot proceed.\n"
+        . "4) DETAILS step: <div data-wc-step=\"details\" hidden> with <form data-wc-form=\"booking\" data-wc-thanks=\"Ticket confirmed! Your QR reference is on its way.\"> with honeypot <input name=\"company\" style=\"display:none\">, inputs name/passenger (required), phone (required), email type=email. Submit creates the booking via the runtime (the runtime auto-attaches the held trip_id+seats — never fake success text without API call). Listen for the `wc:booking-confirmed` CustomEvent on that form (event.detail = API result, .data.ref = booking ref, .data.id = id) → render the ticket and call WCBiz.gotoStep('ticket').\n"
+        . "5) TICKET + PAY step: <div data-wc-step=\"ticket\" hidden> with <div id=\"ticket-box\"> showing the booking ref big + QR via window.WCBiz.ticketQR(ref,180) (built-in offline fallback — never a bare <img> with no onerror) + trip/seats summary, then WCBiz.gotoStep('ticket'). Pay row: <button type=\"button\" data-pay=\"counter\">Pay at Counter</button> <button type=\"button\" data-pay=\"online\">Pay Online</button> calling WCBiz.pay(ref, method, amount). Cancel link calls WCBiz.cancel('bookings', id) with policy note 'Free cancel >24h; paid cancels → refund_pending'. A booked ticket that never renders its ref + QR = FAILED output.\n"
+        . "6) HISTORY + PHONE TICKET LOOKUP: <div data-wc-history=\"bookings\" data-wc-id=\"phone\"></div> so customers list tickets by phone, AND <div data-wc-ticket-lookup=\"bookings\"></div> so a customer re-enters phone + booking ref later and gets the full ticket back (QR + pay + cancel) — both rendered by the runtime, no custom API code.\n"
+        . "7) DEMO SCHEDULE (required — customers must see + select buses before the admin adds live trips): a <div id=\"demo-trips\"> card grid DIRECTLY under #trip-results AND repeated once more further down the page (below the fold, so scrollers find buses too). Your JS defines const DEMO_TRIPS=[{id:'D1',origin:'Chennai',destination:'Bangalore',departure:'06:30',bus:'AC Sleeper',price:899,seats:32},{id:'D2',origin:'Chennai',destination:'Bangalore',departure:'22:15',bus:'Non-AC Seater',price:549,seats:40},{id:'D3',origin:'Bangalore',destination:'Chennai',departure:'21:00',bus:'AC Sleeper',price:899,seats:32}] and renderDemoTrips() paints one card per trip (route big, time + bus type + Rs price + seats-left + <button type=\"button\" data-demo-trip=\"D1\">Select This Bus</button>). Select runs the SAME seat flow as live trips (seat grid → hold → details → ticket → pay, demo ref prefix DEMO-) and MUST call WCBiz.gotoStep('seats') immediately so the seat grid is scrolled into view (a Select that leaves the user staring at the top of the page = FAILED output). Live WCBiz.list('trips') rows render ABOVE the demo cards when the backend has trips; on an empty database the demo cards ARE the list (never a blank page, never a dead 'flexible options' line). Each card carries a small note 'Demo schedule — admin confirms live trips after publish'.\n"
+        . "RULES: nav <a href=\"#booking\">Book</a>; every button type=\"button\" except form submits; ASYNC LAW (violating this blanks the page): WCBiz.list/hold/create/pay return Promises — always await or .then, NEVER const x = WCBiz.list('trips') then x.map/x.filter (a Promise has no .map — it throws and kills the whole script, leaving an empty schedule grid); NEVER invent booking refs (no 'GT-'+random, no fake 'Booking Confirmed' without an API call — the ticket renders ONLY from the wc:booking-confirmed event detail .data.ref, a REAL BK- ref); NEVER overwrite the [data-wc-history] or [data-wc-ticket-lookup] containers with custom inputs (the runtime fills them with working phone/ref lookup — overwriting them orphans real tickets); lookup/history forms (phone/ref search) must carry data-remote=\"off\" and must NOT carry data-wc-form (they list records, never create them); use let/const (never var) for per-element loop bindings so seat buttons keep their own seat codes; DECLARE every state variable you assign (trip, selected, hold, holdRef, bookingRef — undeclared assignment throws under 'use strict' and silently kills hold→details→ticket); capture e.currentTarget.dataset/form fields into locals BEFORE any await (currentTarget is null after dispatch resolves — touching it post-await throws and fakes a failure toast on success); read window.WCBiz live at call time (never cache it in a const at load — the runtime injects after page scripts, a frozen copy breaks search/booking/history); at hold time ALSO write hidden inputs trip_id/seats(JSON)/hold_ref into the details form as fallback (Confirm must carry the trip even if hold memory is lost) + show the held trip/seats/ref in a status line; re-holding identical trip+seats reuses the live hold instead of erroring; search inputs SHOULD use the trip entity's real field names (route, departure, date) so admin-added schedules match — origin/destination also work as backend aliases; the Find control is a plain submit button inside the search form (no <a>, no target, no formtarget, no window.open anywhere in the booking flow); Select controls are <button type=\"button\"> too — never <a href=\"#\"> (bare-# links jump to top); every step is a <div data-wc-step=\"<name>\" hidden> block and every advance calls WCBiz.gotoStep('<name>') (search → seats → details → ticket) — no step may stay hidden after its action, no scroll jump to top; no hardcoded city result lines, no dead Find buttons, no new tabs/windows/blob URLs anywhere in the booking flow — everything happens on the same page; mobile single-column <768px, 44px+ tap targets.\n\n";
 }
 
 // ── Blank-page guard: complete HTML shell with no visible text ──
@@ -609,6 +651,7 @@ function opencode_generate_variation(array $data, string $variationId, string $m
         . opencode_palette_block((string)($data['color_palette'] ?? 'purple')) . "\n\n"
         . taste_prompt_block($data, $variationId, $slot) . "\n\n"
         . opencode_shop_block($data)
+        . opencode_booking_block($data)
         . flowcraft_fullstack_prompt_block($mode, $data)
         . "## FREE-LANE OUTPUT BUDGET (follow strictly)\n"
         . "- The page MUST be complete but efficient: all required sections, working nav/form/menu, responsive CSS (+ #shop grid + stepper when SHOP MODE is ON — never write cart drawer / bill modal / cart JS yourself, backend injects them).\n"
@@ -617,8 +660,8 @@ function opencode_generate_variation(array $data, string $variationId, string $m
     $lastRaw = '';
     $errors = [];
     $genTimeout = defined('OPENCODE_GEN_TIMEOUT') ? (int)OPENCODE_GEN_TIMEOUT : 180;
-    $CHUNK = 2500;
-    $MAXCHUNKS = 3;
+    $CHUNK = 4000;
+    $MAXCHUNKS = 4;
     $strictNote = '';
     $full = '';
     $usedModel = null;
@@ -706,6 +749,7 @@ function opencode_generate_quick(array $data, string $variationId, string $mode,
     }
     $shopBlock = opencode_shop_block($data);
     $isShopQ = ($shopBlock !== '');
+    $bookingBlock = function_exists('opencode_booking_block') ? opencode_booking_block($data) : '';
     $user = "## TASK\nGenerate the complete, production-ready HTML file for the \"{$variationId}\" variant — be BOLD and DISTINCTIVE, your own creative idea.\n\n"
         . "## GENERATION MODE — ALREADY DECIDED (DO NOT ASK)\nType: **{$modeLabel}**\nOutput the PUBLIC WEBSITE HTML only.\n\n"
         . "## AI DESIGN BRIEF (follow tightly)\n{$brief}\n\n"
@@ -715,13 +759,15 @@ function opencode_generate_quick(array $data, string $variationId, string $mode,
         . opencode_palette_block((string)($data['color_palette'] ?? 'purple')) . "\n\n"
         . taste_prompt_block($data, $variationId, $slot) . "\n\n"
         . $shopBlock
+        . $bookingBlock
         . ($isShopQ
             ? "## OUTPUT BUDGET (SHOP — GRID ONLY)\n- Complete but efficient: all required sections + #shop grid + stepper, working nav/form/menu, responsive CSS. DO NOT write cart drawer / bill modal / cart JS — backend injects them.\n- Tight CSS (shared classes, no repetition). End cleanly after the last FULL section.\n\n## NOW OUTPUT THE HTML FILE"
             : "## OUTPUT BUDGET\n- Complete but efficient single response: all required sections, working nav/form/menu, responsive CSS.\n- Tight CSS (shared classes, no repetition). End cleanly after the last FULL section.\n\n## NOW OUTPUT THE HTML FILE");
     $errors = [];
     $usageTotal = ['prompt' => 0, 'completion' => 0];
-    // Shop grids need a bigger completion budget or they truncate to fallback.
-    $qTokens = $isShopQ ? 12000 : 8000;
+    // MAX completion budget for full projects (was 12k/8k — truncated pages).
+    // Shop grids need the biggest budget or they cut off mid-file.
+    $qTokens = $isShopQ ? 20000 : 16000;
     [$ok, $text, $used, $errs, $cu] = opencode_chat_fallback(
         $model,
         [

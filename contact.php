@@ -63,40 +63,51 @@ require_once __DIR__ . '/includes/nav.php';
 .contact-hero{
   background:linear-gradient(135deg,#ede9fe 0%,#faf5ff 50%,#ecfdf5 100%);
   padding:5rem 0 3rem;text-align:center;
+  transition:background .25s;
+}
+[data-theme="dark"] .contact-hero{
+  background:linear-gradient(135deg,#0e1526 0%,#131b31 50%,#091722 100%);
 }
 .contact-grid{display:grid;grid-template-columns:1fr 1.8fr;gap:3rem;align-items:start;padding:4rem 0}
 @media(max-width:820px){.contact-grid{grid-template-columns:1fr}}
-.info-card{background:#fff;border-radius:16px;border:1px solid var(--n200);padding:1.5rem;margin-bottom:1.25rem;display:flex;gap:1rem;align-items:flex-start;box-shadow:0 2px 8px rgba(0,0,0,.05)}
-.info-icon{width:46px;height:46px;border-radius:12px;background:var(--pl);color:var(--p);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
-.info-title{font-size:.8rem;font-weight:700;color:var(--n500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem}
-.info-text{font-size:.95rem;font-weight:600;color:var(--n900)}
-.info-sub{font-size:.8rem;color:var(--n400);margin-top:.15rem}
-.form-wrap{background:#fff;border-radius:20px;border:1px solid var(--n200);padding:2.5rem;box-shadow:0 8px 32px rgba(99,102,241,.1)}
+.info-card{
+  background:var(--surface);border-radius:16px;border:1px solid var(--border);
+  padding:1.5rem;margin-bottom:1.25rem;display:flex;gap:1rem;align-items:flex-start;
+  box-shadow:var(--sh);transition:background .25s,border-color .25s;
+}
+.info-icon{width:46px;height:46px;border-radius:12px;background:var(--pl);color:var(--pd);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.info-title{font-size:.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem}
+.info-text{font-size:.95rem;font-weight:600;color:var(--text-primary)}
+.info-sub{font-size:.8rem;color:var(--text-secondary);margin-top:.15rem}
+.form-wrap{
+  background:var(--surface);border-radius:20px;border:1px solid var(--border);
+  padding:2.5rem;box-shadow:var(--sh);transition:background .25s,border-color .25s;
+}
 .fgroup{margin-bottom:1.35rem}
-label.flbl{display:block;font-size:.855rem;font-weight:600;color:var(--n700);margin-bottom:.4rem}
+label.flbl{display:block;font-size:.855rem;font-weight:600;color:var(--text-primary);margin-bottom:.4rem}
 label.flbl .req{color:var(--d);margin-left:.15rem}
 input.fin,select.fin,textarea.fin{
   width:100%;padding:.7rem 1rem;
-  border:1.5px solid var(--n300);border-radius:10px;
-  font-family:'Inter',sans-serif;font-size:.92rem;color:var(--n800);
-  background:var(--n50);transition:.18s ease;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-family:'Inter',sans-serif;font-size:.92rem;color:var(--text-primary);
+  background:var(--input-bg);transition:.18s ease;
 }
 input.fin:focus,select.fin:focus,textarea.fin:focus{
-  outline:none;border-color:var(--p);background:#fff;
-  box-shadow:0 0 0 3px rgba(99,102,241,.12);
+  outline:none;border-color:var(--p);background:var(--surface);
+  box-shadow:0 0 0 3px rgba(99,102,241,.18);
 }
-.has-err input,.has-err select,.has-err textarea,.has-err .fin{border-color:var(--d)!important;background:#fff5f5}
+.has-err input,.has-err select,.has-err textarea,.has-err .fin{border-color:var(--d)!important;background:rgba(239,68,68,.1)}
 .ferr{display:block;color:var(--d);font-size:.78rem;font-weight:500;margin-top:.35rem}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
 @media(max-width:500px){.frow{grid-template-columns:1fr}}
 textarea.fin{min-height:130px;resize:vertical}
 .success-box{
-  background:#ecfdf5;border:1px solid #6ee7b7;border-radius:14px;
+  background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);border-radius:14px;
   padding:2rem;text-align:center;
 }
 .success-box .s-icon{font-size:3rem;margin-bottom:.75rem}
-.success-box h3{font-size:1.3rem;font-weight:800;color:#065f46;margin-bottom:.5rem}
-.success-box p{color:#047857;font-size:.95rem}
+.success-box h3{font-size:1.3rem;font-weight:800;color:var(--s);margin-bottom:.5rem}
+.success-box p{color:var(--text-secondary);font-size:.95rem}
 </style>
 
 <div class="contact-hero">

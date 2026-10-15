@@ -37,6 +37,7 @@
     // Never fill a generic placeholder as the business name — leave empty for user/AI.
     if (/^(my business|my company|our business|a small|small|the business|business)$/i.test(biz_name)) biz_name = '';
     const typeMap = [
+      [/bus|coach service|transport|travels|ticket booking|seat booking|trip|route|fleet/i, 'Bus, Transport & Travel'],
       [/fitness|gym|yoga|personal train|workout|nutrition/i, 'Fitness Center & Personal Trainer'],
       [/restaurant|cafe|caf[eé]|bar|food|bakery|pizza|coffee/i, 'Restaurant, Cafe & Bar'],
       [/saas|software|startup|tech |app |ai /i, 'Tech Startup & SaaS'],
@@ -44,6 +45,12 @@
       [/real estate|property|architect/i, 'Real Estate & Architecture'],
       [/shop|e-?commerce|store|retail|boutique|fashion|clothing/i, 'E-Commerce & Retail'],
       [/school|college|tutor|train|coach|education|course|academy/i, 'School / College / Education'],
+      [/salon|beauty|spa|barber|haircut|bridal/i, 'Salon & Beauty'],
+      [/hotel|room booking|lodge|resort|accommodation/i, 'Hotel & Hospitality'],
+      [/travel agency|tour package|holiday|flight booking|visa service/i, 'Travel & Tours'],
+      [/event|wedding|concert|exhibition|birthday party/i, 'Events & Entertainment'],
+      [/rental|hire|lease|rent a/i, 'Rental & Hire'],
+      [/auto service|garage|car wash|bike repair|mechanic/i, 'Automotive & Repairs'],
       [/agency|design|studio|marketing|brand/i, 'Creative & Digital Agency'],
       [/legal|law|account|consult/i, 'Professional Services & Legal'],
       [/coach\s*\(|life coach|business coach/i, 'Coach (Life / Business)'],
@@ -339,8 +346,33 @@
   }
 
   /* ── 3. Inject Brief UI (grouped, not 30 buttons) ── */
+  /* Single-brief policy: builder.php already ships the canonical
+     #biz_brief box (Understand + Brand Kit). Injecting a second box
+     here created the duplicate "two Understand" bug, so this is now a
+     no-op guard — it only ensures the Brand Kit button exists. */
   function injectBriefUI() {
     try {
+      // Canonical box already present → nothing to inject. Remove any
+      // previously injected duplicate (stale-cache race) and only ensure
+      // the Brand Kit button exists on the native box (legacy cache).
+      if ($('biz_brief')) {
+        try {
+          document.querySelectorAll('#wc-brief-launcher').forEach((n) => n.remove());
+          if (!$('btn-brandkit-open') && !$('wc-brandkit-open') && window.openBrandKit) {
+            const host = document.querySelector('#step1 .w-group div');
+            if (host) {
+              const b = document.createElement('button');
+              b.type = 'button'; b.id = 'wc-brandkit-open';
+              b.className = 'wbtn wbtn-ghost';
+              b.style.cssText = 'font-size:.82rem;padding:.55rem 1.1rem;';
+              b.textContent = '🎨 Brand Kit';
+              b.onclick = () => { try { window.openBrandKit(); } catch (e) {} };
+              host.appendChild(b);
+            }
+          }
+        } catch (e) {}
+        return;
+      }
       const step1 = $('step1');
       if (!step1 || $('wc-brief-launcher')) return;
       const T = (window.WC_UI && window.WC_UI.t) || {};

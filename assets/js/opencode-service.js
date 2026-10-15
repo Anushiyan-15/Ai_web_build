@@ -2,10 +2,10 @@
    assets/js/opencode-service.js
    OpenCode Zen AI lane — generation + AI chat editing with fallback.
 
-   CHAIN (never empty, all AI — no server templates):
-     1. Variations 1-2 → Gemini gemini-3.5-flash-lite (FlowCraft-fed)
-     2. Variation 3 → OpenCode Muse Spark 1.3
-     3. Each slot has an AI backup lane (the other engine)
+   FRONTEND CHAIN (decided by generation-router.js, never parallel):
+     1. Space Bunny primary (all variations, big projects with admin too)
+     2. gemini-3.5-flash-lite fallback
+     3. Server templates last (spec-driven, offline-safe)
 
    Customer requirements are ANALYSED first (design brief), then the
    brief + FlowCraft layout direction feed every generation call so
@@ -135,29 +135,25 @@ window.OpenCodeAI = (function () {
       }
     } catch (e) { console.warn('[OpenCodeAI] analyze failed, using fallback brief:', e?.message); service.geminiDown = true; }
     const d = data || {};
-    return `AUDIENCE: ${d.biz_audience || 'Modern clients'}\nSECTIONS: ${(d.sections || []).join(', ') || 'hero, services, about, metrics, contact, footer'}\nPALETTE: ${d.color_palette || 'purple'}\nTYPE: Plus Jakarta Sans + Inter\nDIFFERENTIATORS: glass nav; clay CTAs; scroll-reveal`;
+    const _galSub = (d.gallery_subject || '').trim();
+    const _galOn = _galSub !== '' && Array.isArray(d.sections) && d.sections.map(s => String(s).toLowerCase()).includes('gallery');
+    return `AUDIENCE: ${d.biz_audience || 'Modern clients'}\nSECTIONS: ${(d.sections || []).join(', ') || 'hero, services, about, metrics, contact, footer'}${_galOn ? `\nGALLERY: photo gallery section showing: ${_galSub}` : ''}\nPALETTE: ${d.color_palette || 'purple'}\nTYPE: Plus Jakarta Sans + Inter\nDIFFERENTIATORS: glass nav; clay CTAs; scroll-reveal`;
   }
 
-  /* Fixed lane split (no picker — customer never chooses):
-     Variation 1 (classic) + Variation 2 (bold) → gemini-3.5-flash-lite first.
-     Variation 3 (editorial) → OpenCode space-bunny-free FIRST (quick lane),
-     so one AI result survives even when Gemini is fully down.
-     NOTE: muse-spark-1.3 was requested but OpenCode rejects it over HTTP
-     with 403 "free tier can only be used from within OpenCode" (verified
-     2026-10-06 probe — same for big-pickle/mimo; only space-bunny works
-     with this key). One-line swap if OpenCode allowlists it later.
-     When the analyze step already proved Gemini down, ALL slots go
-     quick-first (see lanesFor()). Every fallback stays inside AI —
-     server templates are never used. */
-  const OPENCODE_SLOT3_MODEL = 'space-bunny-free';
+  /* Fixed lane split — UNIVERSAL BUSINESS BUILDER policy:
+     Exactly 3 variations via Gemini gemini-3.5-flash-lite (no substitution).
+     Space Bunny is NEVER used here; it is reserved for the single selected
+     landing page via enhanceLandingWithSpaceBunny(). Every slot stays inside
+     AI (Gemini retry temps); server templates only fill gaps in caller. */
+  const OPENCODE_SLOT3_MODEL = 'space-bunny-free'; // reserved: landing-page enhance only
   const SLOT_LANES = [
     [ { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.7 },
       { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.8 },
-      { kind: 'quick', model: OPENCODE_SLOT3_MODEL,     temp: 0.7 } ],
+      { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.9 } ],
     [ { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.95 },
       { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.85 },
-      { kind: 'quick', model: OPENCODE_SLOT3_MODEL,     temp: 0.95 } ],
-    [ { kind: 'quick', model: OPENCODE_SLOT3_MODEL,     temp: 0.6 },
+      { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 1.0 } ],
+    [ { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.6 },
       { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.55 },
       { kind: 'fast',  model: 'gemini-3.5-flash-lite',   temp: 0.65 } ]
   ];
@@ -199,13 +195,13 @@ window.OpenCodeAI = (function () {
     return j;
   }
 
-  /* One fast-lane call (Gemini single-shot full page ~22s solo). */
+  /* One fast-lane call (Gemini MAX-budget full page ~40-70s). */
   async function generateFast(data, variation, mode, brief, slot, model, temp) {
     const j = await post('/api/opencode.php', {
       action: 'fast_one', data, variation, mode, brief, taste: tastePrefs(),
       model: model || undefined, temperature: (typeof temp === 'number' ? temp : undefined),
       slot: (typeof slot === 'number' ? slot : -1)
-    }, 75000);
+    }, 115000);
     if (j && j.success && j.html && j.html.length > 500) return assertShopOk(j, data, variation);
     throw new Error(((j && (j.errors || [])[0]) || (j && j.error) || 'fast lane failed') + ' [' + variation + ']');
   }
@@ -216,7 +212,7 @@ window.OpenCodeAI = (function () {
       action: 'quick_one', data, variation, mode, brief, taste: tastePrefs(), model: modelOverride || getModel(),
       temperature: (typeof temp === 'number' ? temp : undefined),
       slot: (typeof slot === 'number' ? slot : -1)
-    }, 100000);
+    }, 130000);
     if (j && j.success && j.html && j.html.length > 500) return assertShopOk(j, data, variation);
     throw new Error(((j && (j.errors || [])[0]) || (j && j.error) || 'quick lane failed') + ' [' + variation + ']');
   }
@@ -443,7 +439,7 @@ window.OpenCodeAI = (function () {
   }
 
   /* ── Free-model dropdown (live Zen list, recommended first) ──
-     OpenCode free models only — no Puter options. */
+     OpenCode free models only. */
   function shortLabel(id, known, recommended) {
     const base = known ? known.label.replace(/ \(Free.*$/, '') : id;
     return (id === recommended ? '★ ' : '') + base + ' (Free)';
@@ -576,8 +572,7 @@ window.OpenCodeAI = (function () {
   }
 
   /* ── Combined edit chain for one-click UI use ──
-     OpenCode free models → server Gemini/refine → smart template notice.
-     (No Puter dependency.) */
+     OpenCode free models → server Gemini/refine → smart template notice. */
   async function editWithFallback({ userPrompt, currentHtml = '', bizName = 'Website', model = null }) {
     const laneErrs = [];
     const chatModel = getChatModel(model);
@@ -603,12 +598,28 @@ window.OpenCodeAI = (function () {
     throw err;
   }
 
+  /* Space Bunny — SINGLE selected landing page ONLY.
+     Never used for the 3 variations. Called post-selection from
+     variations.php to polish the chosen landing page, then the app
+     integrates it with the remaining business pages. */
+  async function enhanceLandingWithSpaceBunny(html, data, brief) {
+    const j = await post('/api/opencode.php', {
+      action: 'quick_one', data: data || {}, variation: 'classic',
+      mode: (data && data.gen_mode) || 'static', brief: brief || 'Polish the selected landing page only. Keep design system, improve hero clarity.',
+      taste: tastePrefs(), model: OPENCODE_SLOT3_MODEL, landing_only: true,
+      current_html: String(html || '').slice(0, 40000)
+    }, 100000);
+    if (j && j.success && j.html && j.html.length > 500) return j;
+    throw new Error('Space Bunny landing enhance failed');
+  }
+
   const service = {
     FREE_MODELS, VARIATIONS, AI_CHAT_DEFAULT,
     selectedModel: getModel(),
     geminiDown: false,
     getModel, setModel, getModels, getChatModel,
-    analyzeRequirements, generateOne, generateQuick, generateConcepts, generateSubDesigns,
+    analyzeRequirements, generateOne, generateFast, generateQuick, generateConcepts, generateSubDesigns,
+    enhanceLandingWithSpaceBunny,
     chatAndEdit, editSnippet, editWithFallback, enrichTanglish, refreshModelDropdown
   };
   if (document.readyState === 'loading') {

@@ -1,0 +1,3 @@
+<FilesMatch "(^\.|\.json$|\.installed$|\.attempts\.json$|_hits\.json$)">
+  Require all denied
+</FilesMatch>

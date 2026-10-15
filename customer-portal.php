@@ -53,7 +53,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'social') {
     } else {
         $url = social_login_url($sp);
         if ($url === null) {
-            $socialError = ucfirst($sp) . ' sign-in is not set up yet — add your app keys in config/social.php (see social.example.php), then try again.';
+            $socialError = ucfirst($sp) . ' sign-in is not set up yet — add your app keys in config/social.php, then try again.';
         } else {
             header('Location: ' . $url);
             exit;
@@ -561,11 +561,51 @@ if ($currentUser) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Customer Project Portal — <?= SITE_NAME ?></title>
+<?php require_once __DIR__ . '/includes/theme-head.php'; ?>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/loader-3d.css">
+<script>
+/* Legacy bootstrap superseded by theme-head (wc_theme_mode aware); kept as no-op fallback. */
+(function(){
+  try {
+    if (document.documentElement.getAttribute('data-theme')) return;
+    var saved = localStorage.getItem('wc_theme');
+    var dark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  } catch(e) {}
+})();
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#060911;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;}
+:root {
+  --portal-bg: #f8fafc;
+  --portal-card: #ffffff;
+  --portal-border: #e2e8f0;
+  --portal-text: #0f172a;
+  --portal-muted: #64748b;
+  --portal-topbar: #ffffff;
+  --portal-inp-bg: #f1f5f9;
+}
+[data-theme="dark"] {
+  --portal-bg: #060911;
+  --portal-card: #0c1220;
+  --portal-border: #1e293b;
+  --portal-text: #e2e8f0;
+  --portal-muted: #94a3b8;
+  --portal-topbar: #0c1220;
+  --portal-inp-bg: #060a14;
+}
+/* Custom theme → follow the user's WCTheme custom tokens */
+[data-theme="custom"] {
+  --portal-bg: var(--wc-c-bg);
+  --portal-card: var(--wc-c-surface);
+  --portal-border: var(--wc-c-border);
+  --portal-text: var(--wc-c-text);
+  --portal-muted: var(--wc-c-text2);
+  --portal-topbar: var(--wc-c-surface);
+  --portal-inp-bg: var(--wc-c-bg2);
+}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--portal-bg);color:var(--portal-text);min-height:100vh;display:flex;flex-direction:column;transition:background .25s,color .25s;}
 a{color:inherit;text-decoration:none;}
 
 /* ── Top Bar ── */
@@ -703,6 +743,42 @@ a{color:inherit;text-decoration:none;}
 .rv-mini-btn:hover{border-color:#6366f1;color:#fff;}
 .rv-mini-btn.rv-del{color:#fca5a5;border-color:#7f1d1d;}
 .rv-mini-btn.rv-del:hover{background:#7f1d1d;color:#fff;}
+/* ── Theme unification: hardcoded dark dashboard components follow
+      Light + Custom (dark mode resolves to the same values, unchanged) ── */
+[data-theme="light"] .topbar,[data-theme="custom"] .topbar{background:var(--portal-topbar) !important;border-color:var(--portal-border) !important;}
+[data-theme="light"] .brand,[data-theme="custom"] .brand{color:var(--portal-text) !important;}
+[data-theme="light"] .stat-card,[data-theme="custom"] .stat-card{background:var(--portal-card) !important;border-color:var(--portal-border) !important;box-shadow:0 4px 18px rgba(15,23,42,.07) !important;}
+[data-theme="light"] .stat-val,[data-theme="custom"] .stat-val{color:var(--portal-text) !important;}
+[data-theme="light"] .stat-val[style*="34d399"],[data-theme="custom"] .stat-val[style*="34d399"]{color:#059669 !important;}
+[data-theme="light"] .stat-val[style*="facc15"],[data-theme="custom"] .stat-val[style*="facc15"]{color:#b45309 !important;}
+[data-theme="light"] .stat-val[style*="818cf8"],[data-theme="custom"] .stat-val[style*="818cf8"]{color:#4f46e5 !important;}
+[data-theme="light"] .stat-lbl,[data-theme="custom"] .stat-lbl{color:var(--portal-muted) !important;}
+[data-theme="light"] .tabs-bar,[data-theme="custom"] .tabs-bar{border-color:var(--portal-border) !important;}
+[data-theme="light"] .tab-btn,[data-theme="custom"] .tab-btn{color:var(--portal-muted) !important;}
+[data-theme="light"] .tab-btn:hover,[data-theme="custom"] .tab-btn:hover{color:var(--portal-text) !important;}
+[data-theme="light"] .project-card,[data-theme="custom"] .project-card{background:var(--portal-card) !important;border-color:var(--portal-border) !important;box-shadow:0 10px 28px rgba(15,23,42,.07) !important;}
+[data-theme="light"] .pc-title,[data-theme="custom"] .pc-title{color:var(--portal-text) !important;}
+[data-theme="light"] .pc-meta,[data-theme="custom"] .pc-meta{background:var(--portal-inp-bg) !important;border-color:var(--portal-border) !important;}
+[data-theme="light"] .pc-meta-item span,[data-theme="custom"] .pc-meta-item span{color:var(--portal-text) !important;}
+[data-theme="light"] .pc-meta-item strong,[data-theme="custom"] .pc-meta-item strong{color:var(--portal-muted) !important;}
+[data-theme="light"] .act-btn-dark,[data-theme="custom"] .act-btn-dark{background:var(--portal-inp-bg) !important;color:var(--portal-text) !important;border-color:var(--portal-border) !important;}
+[data-theme="light"] .notif-row,[data-theme="custom"] .notif-row,[data-theme="light"] .rv-row,[data-theme="custom"] .rv-row{background:var(--portal-card) !important;border-color:var(--portal-border) !important;}
+[data-theme="light"] .notif-title,[data-theme="custom"] .notif-title{color:var(--portal-text) !important;}
+[data-theme="light"] .notif-msg,[data-theme="custom"] .notif-msg{color:var(--portal-muted) !important;}
+[data-theme="light"] .rv-mini-btn,[data-theme="custom"] .rv-mini-btn{background:var(--portal-inp-bg) !important;border-color:var(--portal-border) !important;color:var(--portal-text) !important;}
+[data-theme="light"] .dash-wrap h1[style],[data-theme="custom"] .dash-wrap h1[style]{color:var(--portal-text) !important;}
+[data-theme="light"] .dash-wrap p[style],[data-theme="custom"] .dash-wrap p[style]{color:var(--portal-muted) !important;}
+[data-theme="light"] #profile-modal > div,[data-theme="custom"] #profile-modal > div,
+[data-theme="light"] #rv-edit-modal > div,[data-theme="custom"] #rv-edit-modal > div,
+[data-theme="light"] #rv-del-modal > div,[data-theme="custom"] #rv-del-modal > div{background:var(--portal-card) !important;border-color:var(--portal-border) !important;}
+[data-theme="light"] #profile-modal strong[style],[data-theme="custom"] #profile-modal strong[style],
+[data-theme="light"] #rv-edit-modal strong[style],[data-theme="custom"] #rv-edit-modal strong[style]{color:var(--portal-text) !important;}
+[data-theme="light"] .dash-wrap div[style*="color:#fff"],[data-theme="custom"] .dash-wrap div[style*="color:#fff"],
+[data-theme="light"] .dash-wrap h3[style],[data-theme="custom"] .dash-wrap h3[style]{color:var(--portal-text) !important;}
+[data-theme="light"] .dash-wrap div[style*="color:#94a3b8"],[data-theme="custom"] .dash-wrap div[style*="color:#94a3b8"],
+[data-theme="light"] .dash-wrap div[style*="color:#cbd5e1"],[data-theme="custom"] .dash-wrap div[style*="color:#cbd5e1"]{color:var(--portal-muted) !important;}
+[data-theme="light"] .dash-wrap strong[style*="c7d2fe"],[data-theme="custom"] .dash-wrap strong[style*="c7d2fe"]{color:#4f46e5 !important;}
+[data-theme="light"] footer[style],[data-theme="custom"] footer[style]{background:var(--portal-inp-bg) !important;border-color:var(--portal-border) !important;color:var(--portal-muted) !important;}
 </style>
 </head>
 <body>
@@ -728,6 +804,21 @@ a{color:inherit;text-decoration:none;}
       <span>⚡ Supabase Connected</span>
     </div>
 
+    <!-- Theme controls: same Dark/Light/Custom system as main header -->
+    <div class="theme-wrap">
+      <button type="button" class="theme-btn" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle dark/light mode">
+        <span class="theme-icon" id="themeToggleIcon">🌙</span>
+      </button>
+      <select class="theme-select" id="themeModeSelect" aria-label="Appearance mode">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+        <option value="custom">Custom</option>
+      </select>
+      <?php if ($currentUser): ?>
+      <a class="theme-gear" href="<?= SITE_URL ?>/settings.php" title="Appearance settings" aria-label="Appearance settings">⚙️</a>
+      <?php endif; ?>
+    </div>
+
     <?php if ($currentUser): ?>
       <div class="user-badge">
         <?php $topAvatar = customerAvatarUrl($currentUser); ?>
@@ -744,6 +835,7 @@ a{color:inherit;text-decoration:none;}
     <?php endif; ?>
   </div>
 </header>
+<!-- portal theme toggle is handled by WCTheme (themeToggleBtn/themeModeSelect above) -->
 
 <?php if (!$currentUser): ?>
 <!-- ══════════════════════════════════════════════════════════

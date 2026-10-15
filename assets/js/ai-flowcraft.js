@@ -13,8 +13,7 @@
           SKILLS registry + runSkill(n)/runSkillChain() + GUARDRAILS + formatAC.
           Setup 1-18 → Feature 19-21 → Testing 22-26 → Always-on 27-28.
 
-   Post-generation live editing stays on puter.js (PuterService) — untouched.
-   Admin panels per company + new AI features stay server-side — untouched.
+   Live editing uses the Gemini backend (api/generate.php). Admin panels per company stay server-side.
    ═══════════════════════════════════════════════════════════════ */
 window.AIFlowCraft = (function () {
   'use strict';
@@ -258,8 +257,9 @@ TASTE SKILL UI EDIT PROTOCOL:
   /* ═══════════════════════════════════════════════════
      HELPERS
      ═══════════════════════════════════════════════════ */
-  function puterReady() {
-    if (!window.puter?.ai) throw new Error('Puter.js not loaded');
+  function backendReady() {
+    // All AI goes through the Gemini backend.
+    return true;
   }
 
   function extractText(res) {
@@ -308,32 +308,44 @@ TASTE SKILL UI EDIT PROTOCOL:
   }
 
   function defaultModel() {
-    try {
-      if (window.PuterService?.getModel) return window.PuterService.getModel();
-      if (window.PuterService?.selectedModel) return window.PuterService.selectedModel;
-    } catch (e) {}
-    return 'deepseek/deepseek-chat';
+    return 'gemini-3.5-flash-lite';
+  }
+
+  async function callAIBackend(system, user) {
+    const siteUrl = (typeof SITE_URL !== 'undefined' && SITE_URL) ? SITE_URL : '';
+    const endpoint = (siteUrl ? siteUrl : '') + '/api/generate.php';
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ask', instruction: String(system || '') + '\n\n---\n\n' + String(user || '') })
+    });
+    if (!resp.ok) throw new Error('Backend AI request failed (HTTP ' + resp.status + ')');
+    const j = await resp.json();
+    if (j && j.success && (j.reply || j.text || j.response)) return String(j.reply || j.text || j.response);
+    throw new Error((j && (j.error || (j.errors || [])[0])) || 'Backend AI unavailable');
   }
 
   async function callAI(system, user, model, temperature) {
-    puterReady();
-    model = model || defaultModel();
-    temperature = (temperature == null) ? 0.7 : temperature;
-    try {
-      const res = await puter.ai.chat(
-        [
-          { role: 'system', content: system },
-          { role: 'user',   content: user }
-        ],
-        { model, temperature }
-      );
-      return extractText(res);
-    } catch (e) {
-      console.warn('[AI-FlowCraft] messages-array failed, falling back to combined prompt:', e?.message);
-    }
-    const combined = `${system}\n\n---\n\n${user}`;
-    const res2 = await puter.ai.chat(combined, { model, temperature });
-    return extractText(res2);
+    backendReady();
+    // Gemini backend (ask lane: Gemini -> OpenCode fallback).
+    // model/temperature kept for API compatibility; backend selects lane.
+    return callAIBackend(system, user);
+  }
+
+  /* HTML document edit via backend refine lane. */
+  async function callAIForHtmlEdit(currentHtml, instruction, attempt) {
+    const siteUrl = (typeof SITE_URL !== 'undefined' && SITE_URL) ? SITE_URL : '';
+    const endpoint = (siteUrl ? siteUrl : '') + '/api/generate.php';
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'refine', current_html: currentHtml.slice(0, 60000), instruction, attempt })
+    });
+    if (!resp.ok) throw new Error('Backend edit failed (HTTP ' + resp.status + ')');
+    const j = await resp.json();
+    const html = j.html || j.updatedHtml || j.reply || j.text || '';
+    if (!html) throw new Error((j && (j.error || (j.errors || [])[0])) || 'Backend edit returned empty output');
+    return String(html);
   }
 
   async function callAIForHtml(system, user, model, maxRetries) {
@@ -554,8 +566,7 @@ VALUES ('admin', '$2y$10$e0NRz1Fz7Lb3FfVfLJp1ZeDLqEjZk3lqk4F6Xn6yJ6pWz8QhA3Kq2')
 
   /* ═══════════════════════════════════════════════════
      MAIN: generateConcepts(data, mode, options)
-     AI-FlowCraft: ANALYZE → GENERATE ×3 → VERIFY
-     (Independent of Puter for website generation)
+     AI-FlowCraft: ANALYZE → GENERATE ×3 → VERIFY (server templates + Gemini backend)
      ═══════════════════════════════════════════════════ */
   async function generateConcepts(data, mode, options) {
     options = options || {};
@@ -753,7 +764,7 @@ VALUES ('admin', '$2y$10$e0NRz1Fz7Lb3FfVfLJp1ZeDLqEjZk3lqk4F6Xn6yJ6pWz8QhA3Kq2')
      ═══════════════════════════════════════════════════ */
   async function editViaPrompt(params) {
     params = params || {};
-    puterReady();
+    backendReady();
     const instruction = String(params.instruction || '').trim();
     const currentHtml = String(params.currentHtml || '');
     if (!instruction) throw new Error('Empty instruction');
@@ -774,7 +785,8 @@ Return the COMPLETE updated HTML document now.`.trim();
 
     let lastRaw = '';
     for (let attempt = 0; attempt <= 2; attempt++) {
-      const raw = await callAI(EDIT_SYSTEM, attempt === 0 ? userPrompt : (userPrompt + `\n\n⚠️ Previous attempt was unusable ("${lastRaw.slice(0, 80)}…"). Return ONLY the complete fixed HTML now.`), model, attempt === 0 ? 0.3 : 0.15);
+      // HTML edits go through the backend refine lane (Gemini -> OpenCode).
+      const raw = await callAIForHtmlEdit(currentHtml, instruction, attempt);
       lastRaw = raw;
       const html = cleanHtml(raw);
       if (looksLikeCompleteHtml(html)) {
@@ -958,23 +970,11 @@ RULES: smallest possible diff. No unrelated changes.`
   }
 
   /* ═══════════════════════════════════════════════════
-     AUTH + STORAGE (delegated — puter.js keeps working)
+     AUTH + STORAGE (local only)
      ═══════════════════════════════════════════════════ */
   async function getAuthState() {
-    if (window.PuterService) {
-      const isSignedIn = await window.PuterService.isSignedIn();
-      const user = await window.PuterService.getUser();
-      return { isSignedIn, user };
-    }
-    try {
-      const u = await puter.auth.getUser();
-      return { isSignedIn: !!u, user: u };
-    } catch (e) { return { isSignedIn: false, user: null }; }
+    return { isSignedIn: false, user: null };
   }
-
-  async function signIn()        { if (window.PuterService) return window.PuterService.signIn(); }
-  async function switchAccount() { if (window.PuterService) return window.PuterService.switchAccount(); }
-  function signOut()             { if (window.PuterService) return window.PuterService.signOut(); }
 
   function clearLocalState() {
     try {
@@ -983,8 +983,6 @@ RULES: smallest possible diff. No unrelated changes.`
       localStorage.removeItem('webcraft_user_uploads');
       localStorage.removeItem('webcraft_lang_state');
       localStorage.removeItem('webcraft_admin_assets');
-      localStorage.removeItem('webcraft_puter_model');
-      localStorage.removeItem('webcraft_puter_chat');
       localStorage.removeItem('gemini_api_key');
     } catch (e) {}
   }
@@ -1007,20 +1005,7 @@ RULES: smallest possible diff. No unrelated changes.`
     } catch (e) { console.warn('save project failed', e); }
   }
 
-  async function saveToPuterCloud(data) {
-    try {
-      if (!window.puter?.fs?.write) return null;
-      const path = `~/WebCraft/projects/${Date.now()}.json`;
-      await puter.fs.write(path, JSON.stringify(data));
-      return path;
-    } catch (e) {
-      console.warn('cloud save failed', e);
-      return null;
-    }
-  }
-
   function isQuotaOrCreditError(err) {
-    if (window.PuterService) return window.PuterService.isQuotaOrCreditError(err);
     const m = String(err?.message || err || '').toLowerCase();
     return /credit|quota|limit|402|429|payment/.test(m);
   }
@@ -1037,13 +1022,10 @@ RULES: smallest possible diff. No unrelated changes.`
     generateSolo,
     editViaPrompt,
     getAuthState,
-    signIn,
-    signOut,
-    switchAccount,
     clearLocalState,
     clearGeneratedProjects,
     saveGeneratedProject,
-    saveToPuterCloud,
     isQuotaOrCreditError
   };
 })();
+

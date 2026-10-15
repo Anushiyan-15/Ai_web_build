@@ -1,0 +1,12 @@
+[
+    {
+        "route": "chenni",
+        "date": "14.10.2026",
+        "departure": "chennai",
+        "price": "130",
+        "total_seats": "32",
+        "id": "r_82ce69dabb7aaff5",
+        "created_at": "2026-10-14T11:44:29+01:00",
+        "updated_at": "2026-10-14T11:44:29+01:00"
+    }
+]

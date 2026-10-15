@@ -90,7 +90,7 @@ function syncOrderToDatabase(array $order): bool {
                 ) VALUES (
                     :order_id, :paypal_capture_id, :site_name, :slug, :gen_mode,
                     :package, :amount, 'USD', :payment_method, 'completed',
-                    :status, :site_active, :live_url, :admin_url, :slug,
+                    :status, :site_active, :live_url, :admin_url, :published_slug,
                     :admin_username, :admin_email, :next_payment_due, :published_at, NOW()
                 )
                 ON CONFLICT (order_id) DO UPDATE SET
@@ -121,6 +121,7 @@ function syncOrderToDatabase(array $order): bool {
                 ':site_active'       => $siteActive ? 'true' : 'false',
                 ':live_url'          => $liveUrl,
                 ':admin_url'         => $adminUrl,
+                ':published_slug'    => $slug,
                 ':admin_username'    => $adminUser,
                 ':admin_email'       => $adminEmail,
                 ':next_payment_due'  => $nextPayment,
@@ -137,7 +138,7 @@ function syncOrderToDatabase(array $order): bool {
                 ) VALUES (
                     :order_id, :paypal_capture_id, :site_name, :slug, :gen_mode,
                     :package, :amount, 'USD', :payment_method, 'completed',
-                    :status, :site_active, :live_url, :admin_url, :slug,
+                    :status, :site_active, :live_url, :admin_url, :published_slug,
                     :admin_username, :admin_email, :next_payment_due, :published_at, NOW(), NOW()
                 )
                 ON DUPLICATE KEY UPDATE
@@ -168,6 +169,7 @@ function syncOrderToDatabase(array $order): bool {
                 ':site_active'       => $siteActive,
                 ':live_url'          => $liveUrl,
                 ':admin_url'         => $adminUrl,
+                ':published_slug'    => $slug,
                 ':admin_username'    => $adminUser,
                 ':admin_email'       => $adminEmail,
                 ':next_payment_due'  => $nextPayment,
@@ -254,12 +256,13 @@ function verifyCustomerLoginCredentials(string $emailOrId, string $password): ar
         return ['success' => false, 'error' => 'No account found with this email or Order ID.'];
     }
 
-    // Check if password matches any of their orders
+    // Check if password matches any of their orders (hash-only; legacy
+    // plaintext compare retained for old orders, no master passwords).
     foreach ($orders as $o) {
         $hash = $o['admin_password_hash'] ?? '';
         $plain = $o['admin_password_plain'] ?? '';
 
-        if (($hash && password_verify($password, $hash)) || ($plain && $plain === $password) || $password === 'WebCraft@2026!') {
+        if (($hash !== '' && password_verify($password, $hash)) || ($plain !== '' && hash_equals($plain, $password))) {
             $email = $o['admin_email'] ?: ($o['client_email'] ?? $emailOrId);
             $name  = $o['admin_username'] ?? $o['site_name'] ?? 'Customer';
             return [

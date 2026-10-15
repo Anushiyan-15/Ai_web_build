@@ -38,6 +38,27 @@ check('prompt has design read', strpos($pb, 'Design Read:') !== false);
 check('prompt has dials', strpos($pb, 'DESIGN_VARIANCE=9') !== false);
 check('prompt has hard bans', strpos($pb, 'Hard bans:') !== false);
 check('prompt has slot note', strpos($pb, 'layout slot 1') !== false);
+$seededPrompt = taste_prompt_block($data + ['design_seed' => 'generation-seed-001'], 'bold', 1);
+$seededPromptAgain = taste_prompt_block($data + ['design_seed' => 'generation-seed-001'], 'bold', 2);
+$seedDir = [];
+$seedDirAgain = [];
+preg_match('/Generation-specific art direction \(stable for this generation\): ([^\n]+)/', $seededPrompt, $seedDir);
+preg_match('/Generation-specific art direction \(stable for this generation\): ([^\n]+)/', $seededPromptAgain, $seedDirAgain);
+$differentSeedPrompt = '';
+for ($i = 2; $i < 20; $i++) {
+    $candidate = taste_prompt_block($data + ['design_seed' => 'generation-seed-' . str_pad((string)$i, 3, '0', STR_PAD_LEFT)], 'bold', 1);
+    $candidateDir = [];
+    preg_match('/Generation-specific art direction \(stable for this generation\): ([^\n]+)/', $candidate, $candidateDir);
+    if (!empty($candidateDir[1]) && $candidateDir[1] !== ($seedDir[1] ?? '')) {
+        $differentSeedPrompt = $candidate;
+        break;
+    }
+}
+check('generation style seed is represented in prompt', strpos($seededPrompt, 'generation-seed-001') !== false);
+check('same generation keeps stable art direction across variants',
+    !empty($seedDir[1]) && !empty($seedDirAgain[1]) && $seedDir[1] === $seedDirAgain[1]);
+check('new generation seed can select a different art direction',
+    $differentSeedPrompt !== '' && strpos($differentSeedPrompt, 'Generation-specific art direction') !== false);
 
 // 4. system addenda
 check('gen addendum non-empty', strlen(taste_system_addendum()) > 100);

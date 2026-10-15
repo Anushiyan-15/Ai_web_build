@@ -125,6 +125,23 @@ SYS;
 function taste_prompt_block(array $data, string $variationId = 'classic', int $slot = -1, array $taste = []): string {
     if (isset($data['taste']) && empty($taste)) $taste = (array)$data['taste'];
     $b = taste_infer_brief($data, $taste);
+    $seed = trim((string)($data['design_seed'] ?? ''));
+    $styleDirection = '';
+    if ($seed !== '') {
+        $directions = [
+            'Build an offset split-hero with an oversized route/offer detail column and a compact action rail.',
+            'Use a Swiss editorial grid with hard alignment, narrow copy measure, and one deliberately oversized visual.',
+            'Use a full-width image-led opening, then transition into dense horizontal information bands.',
+            'Use a utilitarian dashboard-like hierarchy for search and booking controls, balanced by a spacious opening.',
+            'Use a layered collage with asymmetric image crops and strong left-aligned navigation.',
+            'Use a quiet storefront/venue composition with generous whitespace and a single dominant action.',
+            'Use a modular bento rhythm with mixed-width sections, avoiding repeated equal cards.',
+            'Use a high-contrast typography-led composition with restrained imagery and clear action grouping.',
+        ];
+        $index = hexdec(substr(hash('sha256', $seed . '|style-direction'), 0, 8)) % count($directions);
+        $styleDirection = "Generation-specific art direction (stable for this generation): {$directions[$index]}\n"
+            . "Style seed: {$seed}. Use this direction consistently across retries and variants, but preserve any explicit user-requested layout, brand colors, and business requirements.\n";
+    }
     $layout = [
         'classic'   => 'offset/split hero (variance-gated), varied rhythm, no 3-equal-cards default',
         'bold'      => 'asymmetric bento + oversized display type + gradient mesh used with intent',
@@ -134,6 +151,7 @@ function taste_prompt_block(array $data, string $variationId = 'classic', int $s
     return "## TASTE LAYER — DESIGN INTELLIGENCE (follow tightly)\n"
         . "Design Read: {$b['design_read']}\n"
         . "Dials: DESIGN_VARIANCE={$b['variance']} MOTION_INTENSITY={$b['motion']} VISUAL_DENSITY={$b['density']}\n"
+        . $styleDirection
         . "Layout direction for this variant: {$layout}.\n"
         . "Hard bans: (1) no purple/blue AI-glow unless brand palette is purple; (2) centered hero only if brief is editorial/manifesto; "
         . "(3) max 1 eyebrow label per 3 sections; (4) one accent color page-wide; (5) hero: headline ≤2 lines, subtext ≤20 words, CTA above fold; "

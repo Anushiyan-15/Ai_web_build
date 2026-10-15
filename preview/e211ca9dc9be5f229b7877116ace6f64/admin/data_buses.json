@@ -1,0 +1,15 @@
+[
+    {
+        "busid": "1",
+        "operator": "kundan",
+        "departurelocation": "chennai",
+        "destination": "mathakal",
+        "capacity": "34",
+        "departuretime": "12",
+        "arrivaltime": "21hr",
+        "price": "130",
+        "id": "r_8e54f595dc0e6cb8",
+        "created_at": "2026-10-14T11:45:11+01:00",
+        "updated_at": "2026-10-14T11:45:11+01:00"
+    }
+]

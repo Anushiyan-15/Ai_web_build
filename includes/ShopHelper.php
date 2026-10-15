@@ -6,11 +6,20 @@
 // ═══════════════════════════════════════════════════════════════
 
 if (!function_exists('isShopSite')) {
+    // Booking-style businesses (bus/travel/hotel/food/salon/clinic/…) sell
+    // seats/slots/rooms, NOT cart goods: their "products" text is a catalog
+    // (trips, rooms, menu) and must never trigger a shop cart. They opt in
+    // explicitly via the shop section checkbox or a shop-like industry.
+    function wc_is_booking_type($bizType) {
+        return (bool) preg_match('/bus|transport|coach|fleet|travel|tour|hotel|restaurant|salon|clinic|school|rental|booking|appointment/i', (string)($bizType ?? ''));
+    }
     function isShopSite($bizType, $sections, $productsRaw) {
-        if (!empty(trim((string)($productsRaw ?? '')))) return true;
-        if (is_array($sections) && in_array('shop', array_map('strtolower', $sections), true)) return true;
+        $secs = is_array($sections) ? array_map('strtolower', $sections) : [];
+        if (in_array('shop', $secs, true)) return true;
         $t = strtolower((string)($bizType ?? ''));
-        return (bool) preg_match('/shop|store|product|retail|e-?commerce|boutique|mart|trading|enterprise|fashion|jewelry|grocery|bakery|furniture|electronics|pharma/i', $t);
+        if ((bool) preg_match('/shop|store|product|retail|e-?commerce|boutique|mart|trading|enterprise|fashion|jewelry|grocery|bakery|furniture|electronics|pharma/i', $t)) return true;
+        if (!empty(trim((string)($productsRaw ?? ''))) && !wc_is_booking_type($bizType)) return true;
+        return false;
     }
 }
 
@@ -255,6 +264,7 @@ DRAWER;
     <div style="display:flex;gap:0.75rem;justify-content:flex-end;flex-wrap:wrap;">
       <button type="button" id="wc-btn-print-pdf2" style="flex:1;min-width:180px;padding:0.85rem;border-radius:10px;border:none;cursor:pointer;font-weight:800;font-size:0.92rem;font-family:inherit;background:{$g};color:#fff;display:flex;align-items:center;justify-content:center;gap:0.4rem;">&#x1F4E5; Save / Download as PDF</button>
       <button type="button" id="wc-btn-bill-wa" style="flex:1;min-width:180px;padding:0.85rem;border-radius:10px;border:none;cursor:pointer;font-weight:800;font-size:0.92rem;font-family:inherit;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;gap:0.4rem;">&#x1F4AC; Send Bill via WhatsApp</button>
+      <button type="button" id="wc-btn-place-order" style="flex:1;min-width:180px;padding:0.85rem;border-radius:10px;border:none;cursor:pointer;font-weight:800;font-size:0.92rem;font-family:inherit;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;gap:0.4rem;">&#10003; Place Order Online</button>
       <button type="button" id="wc-btn-close-bill2" style="padding:0.85rem 1.25rem;border-radius:10px;border:1.5px solid #475569;background:#0f172a;color:#cbd5e1;cursor:pointer;font-weight:700;font-size:0.9rem;">&times; Close</button>
     </div>
   </div>
@@ -431,6 +441,59 @@ function sendBillWa(){
   window.open('https://wa.me/'+PHONE+'?text='+encodeURIComponent(lines.filter(Boolean).join('\n')),'_blank');
 }
 
+// ── Place order online: real backend record (admin sees it in Manage Data) ──
+function opsUrl(){
+  try{return new URL('api/business-ops.php',document.baseURI).toString();}catch(e){return 'api/business-ops.php';}
+}
+function nodeOrdersUrl(){
+  try{
+    var base=window.__WC_NODE_API__||'http://localhost:3100';
+    return String(base).replace(/\/$/,'')+'/node-api/'+encodeURIComponent(pageSlug())+'/orders';
+  }catch(e){return null;}
+}
+function pageSlug(){
+  try{var m=location.pathname.match(/published\/([^\/]+)/);if(m&&m[1])return m[1];}catch(e){}
+  return 'site';
+}
+WC.checkoutOrder=function(){
+  var c=load();if(!c.length){alert('Please add items to cart first!');return Promise.resolve(null);}
+  var nm=((gel('wc-bill-name')||{}).value||'').trim()||'Customer';
+  var ph=((gel('wc-bill-phone')||{}).value||'').trim();
+  var ad=((gel('wc-bill-address')||{}).value||'').trim()||'Standard Delivery';
+  var key='wc_ord_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+  var items=c.map(function(i){return {name:i.name,qty:i.qty,price:(i.num||0)};});
+  var payload={action:'create',slug:pageSlug(),entity:'orders',idempotency_key:key,
+    record:{customer:nm,phone:ph,address:ad,items:items,total:total(c),invoice:((gel('wc-inv-no')||{}).textContent||INV)}};
+  // Node API first (JSON database), PHP fallback on network failure only.
+  // Same idempotency key both attempts: validation errors never double-post.
+  function postPhp(){
+    return fetch(opsUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();});
+  }
+  function postNode(){
+    var u=nodeOrdersUrl();if(!u)return Promise.reject(new Error('no-node'));
+    var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    var timer=ctrl?setTimeout(function(){try{ctrl.abort();}catch(e){}},2500):null;
+    return fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({record:payload.record,idempotency_key:key}),signal:ctrl?ctrl.signal:undefined})
+      .then(function(r){return r.json();})
+      .finally(function(){if(timer)clearTimeout(timer);});
+  }
+  return postNode().catch(function(err){
+    if(err&&(err.name==='AbortError'||err.name==='TypeError'))return postPhp();
+    throw err;
+  }).then(function(j){
+      if(j&&j.success){
+        save([]);renderDrawer();closeBill();
+        var ref=(j.data&&(j.data.ref||j.data.id))||'';
+        alert('✓ Order placed! Reference: '+ref+(j.deduped?' (already received)':''));
+        return j.data;
+      }
+      alert('Could not place order: '+((j&&j.error)||'error'));
+      return null;
+    }).catch(function(){alert('Network error. Try again.');return null;});
+};
+
 // ── Unified Button Delegation (stepper + cart + drawer) ──
 document.addEventListener('click',function(e){
   var t=e.target;
@@ -516,6 +579,7 @@ function bindAll(){
   on('wc-btn-print-pdf2',printPdf);
   on('wc-btn-download-html',downloadHtml);
   on('wc-btn-bill-wa',sendBillWa);
+  on('wc-btn-place-order',function(){WC.checkoutOrder();});
   on('wc-btn-checkout-wa',function(){window.open('https://wa.me/'+PHONE+'?text='+encodeURIComponent(orderText()),'_blank');});
   on('wc-btn-checkout-form',function(){
     var sec=document.getElementById('contact')||document.querySelector('#contact-form');

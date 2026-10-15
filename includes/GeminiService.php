@@ -95,9 +95,18 @@ function gemini_flowcraft_skill_context(): string {
 // Apache/JS timeouts instead of truncating to "AI generation failed".
 function gemini_shop_training_block(array $data): string {
     $raw = trim((string)($data['biz_products'] ?? ''));
-    if ($raw === '' && stripos((string)($data['biz_type'] ?? ''), 'shop') === false
-        && !in_array('shop', array_map('strtolower', (array)($data['sections'] ?? [])), true)
-        && !preg_match('/shop|store|product|retail|e-?commerce|boutique|mart|fashion|jewelry|grocery|bakery|furniture|electronics/i', (string)($data['biz_type'] ?? ''))) {
+    $bizType = (string)($data['biz_type'] ?? '');
+    $secs = array_map('strtolower', (array)($data['sections'] ?? []));
+    // Booking-style businesses never auto-shop: their products text is a
+    // catalog (trips/rooms/menu). Explicit shop section or shop industry opts in.
+    $isBookingType = function_exists('wc_is_booking_type')
+        ? wc_is_booking_type($bizType)
+        : (bool)preg_match('/bus|transport|coach|fleet|travel|tour|hotel|restaurant|salon|clinic|school|rental|booking|appointment/i', $bizType);
+    $shopOn = in_array('shop', $secs, true)
+        || stripos($bizType, 'shop') !== false
+        || (bool)preg_match('/shop|store|product|retail|e-?commerce|boutique|mart|fashion|jewelry|grocery|bakery|furniture|electronics/i', $bizType)
+        || ($raw !== '' && !$isBookingType);
+    if (!$shopOn) {
         return '';
     }
     $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $raw))));
@@ -118,6 +127,14 @@ function gemini_shop_training_block(array $data): string {
         . "5) RULES: prices verbatim (no currency swaps); nav link <a href=\"#shop\">Shop</a>; stepper/add buttons type=\"button\" (never submit); mobile single-column <768px; 44px+ tap targets; tight CSS (shared classes).\n\n";
 }
 
+// ── BOOKING TRAINING for gemini-3.5-flash-lite (mirrors opencode_booking_block) ──
+// Lite models fake bus results ("Showing flexible options…") with no seats/pay.
+// This contract forces the real 5-step wired flow, same as the OpenCode lane.
+function gemini_booking_training_block(array $data): string {
+    if (function_exists('opencode_booking_block')) return opencode_booking_block($data);
+    return '';
+}
+
 // ── GEMINI-FIRST brief: the analyze step used to ride the slow OpenCode
 // free-model lane (28s timeout, sequential fallback). Lite writes the same
 // brief shape in ~2-3s. Returns [ok, brief, modelUsed|null, errors[], usage].
@@ -127,7 +144,9 @@ function gemini_template_brief(array $data): string {
     $type = trim((string)($data['biz_type'] ?? 'Business'));
     $aud = trim((string)($data['biz_audience'] ?? 'Modern clients'));
     $secs = (!empty($data['sections']) && is_array($data['sections'])) ? implode(', ', $data['sections']) : 'hero, services, about, metrics, contact, footer';
-    return "AUDIENCE: {$aud} seeking premium {$type} services\nSECTIONS: {$secs}\nPALETTE: brand-mapped primary/secondary/accent\nTYPE: Plus Jakarta Sans display + Inter body\nDIFFERENTIATORS: glassmorphism nav; clay CTAs; scroll-reveal + counters\nPRODUCTS: " . (trim((string)($data['biz_products'] ?? '')) !== '' ? 'see Shop Products in requirements' : 'NONE') . "\nADMIN_ENTITIES: NONE\nRISKS: avoid generic stock look for {$biz}";
+    $gal = (trim((string)($data['gallery_subject'] ?? '')) !== '' && in_array('gallery', array_map('strtolower', (array)($data['sections'] ?? [])), true))
+        ? "\nGALLERY: photo gallery section showing: " . trim((string)$data['gallery_subject']) : '';
+    return "AUDIENCE: {$aud} seeking premium {$type} services\nSECTIONS: {$secs}{$gal}\nPALETTE: brand-mapped primary/secondary/accent\nTYPE: Plus Jakarta Sans display + Inter body\nDIFFERENTIATORS: glassmorphism nav; clay CTAs; scroll-reveal + counters\nPRODUCTS: " . (trim((string)($data['biz_products'] ?? '')) !== '' ? 'see Shop Products in requirements' : 'NONE') . "\nADMIN_ENTITIES: NONE\nRISKS: avoid generic stock look for {$biz}";
 }
 
 function gemini_analyze_requirements(array $data): array {
@@ -177,10 +196,14 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
     $modeLabel = ['static' => 'Static Website (HTML/CSS/JS only)', 'admin' => 'Website + Admin Panel + PHP Backend (JSON storage, NO database)', 'database' => 'Website + Admin Panel + PHP Backend + MySQL Database (full stack)'][$mode] ?? $mode;
     $shopTraining = gemini_shop_training_block($data);
     $isShop = ($shopTraining !== '');
-    // Shop-aware output budget: slim grid-only contract fits ~12k, but give
-    // headroom so 6-product grids never truncate to "AI generation failed".
-    // Non-shop pages stay lean for speed. Lite supports 32k; 16k is safe.
-    $outTokens = $isShop ? 16000 : 12000;
+    $bookingTraining = gemini_booking_training_block($data);
+    $isBooking = ($bookingTraining !== '');
+    // MAX output budget: model-max tokens so projects come out complete.
+    // gemini-3.5-flash-lite supports 32k output; we request 28k (shop) /
+    // 24k (standard) — the largest safe single-shot budget. Bigger budget =
+    // fuller sections, no mid-file truncation = nalla project.
+    // Booking flow needs headroom for seat JS → same max budget as shop.
+    $outTokens = ($isShop || $isBooking) ? 28000 : 24000;
     $user = "## TASK\nGenerate the complete, production-ready HTML file for the \"{$variationId}\" variant.\n\n"
         . "## GENERATION MODE — ALREADY DECIDED (DO NOT ASK)\nType: **{$modeLabel}**\nOutput the PUBLIC WEBSITE HTML only.\n\n"
         . "## AI DESIGN BRIEF (follow tightly)\n{$brief}\n\n"
@@ -190,6 +213,7 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
         . opencode_palette_block((string)($data['color_palette'] ?? 'purple')) . "\n\n"
         . taste_prompt_block($data, $variationId, $slot) . "\n\n"
         . $shopTraining
+        . $bookingTraining
         . gemini_flowcraft_skill_context()
         . flowcraft_fullstack_prompt_block($mode, $data)
         . ($isShop
@@ -215,11 +239,11 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
     $usageTotal = ['prompt' => 0, 'completion' => 0];
     $attempt = 0;
     foreach ($queue as $model) {
-        // 55s per attempt: full pages take ~25-45s; shop grids need the headroom.
-        // Fits Apache 60s + frontend 75s budgets on the FIRST attempt so the
+        // 75s per attempt: MAX-budget pages take ~40-70s; shop grids need headroom.
+        // Fits frontend ~110s budget on the FIRST attempt so the
         // retry below only fires on fast API errors, not on healthy slowness.
         $tryTemp = $attempt === 0 ? $temperature : max(0.1, $temperature - 0.25);
-        [$ok, $text, $err, $u] = gemini_chat_once($model, opencode_gen_system(), $user, $tryTemp, $outTokens, 55);
+        [$ok, $text, $err, $u] = gemini_chat_once($model, opencode_gen_system(), $user, $tryTemp, $outTokens, 75);
         $attempt++;
         $usageTotal = opencode_add_usage($usageTotal, $u);
         if (!$ok) {
@@ -228,7 +252,7 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
             // Skip retry when the first call already burned ~50s+ (would exceed
             // the HTTP budget and force a template fallback anyway).
             if ($attempt === 1 && stripos((string)$err, 'timed out') === false && stripos((string)$err, 'Timeout') === false) {
-                [$ok2, $text2, $err2, $u2] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 55);
+                [$ok2, $text2, $err2, $u2] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 75);
                 $usageTotal = opencode_add_usage($usageTotal, $u2);
                 if ($ok2) { $ok = true; $text = $text2; }
                 else { $errors[] = $err2; continue; }
@@ -250,7 +274,7 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
         // calmer-temp second attempt (same lite model, no model hopping).
         // Truncation retries get the bigger shop-aware budget too.
         if ($attempt === 1) {
-            [$rok, $rtext, $rerr, $ru] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 55);
+            [$rok, $rtext, $rerr, $ru] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 75);
             $usageTotal = opencode_add_usage($usageTotal, $ru);
             if ($rok && !opencode_is_refusal($rtext)) {
                 $rhtml = opencode_clean_html($rtext);

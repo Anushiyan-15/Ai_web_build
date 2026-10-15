@@ -79,13 +79,23 @@ class Mailer {
      * Build publish-notification payload without sending (for queue).
      * Returns [to, subject, html, text].
      */
-    public static function buildPublishPayload(array $order): array {
+    public static function buildPublishPayload(array $order, string $oneTimePass = ''): array {
         $to = $order['admin_email'] ?: ($order['client_email'] ?? '');
         $siteName    = htmlspecialchars($order['site_name'] ?? 'Your Website');
         $liveUrl     = $order['live_url'] ?? '#';
         $adminUrl    = $order['admin_url'] ?? '';
         $adminUser   = htmlspecialchars($order['admin_username'] ?? 'admin');
-        $adminPass   = htmlspecialchars($order['admin_password_plain'] ?? 'WebCraft@2026!');
+        // Passwords are never stored; only an explicitly passed one-time value
+        // (setup moment) may be shown, otherwise point to configured creds.
+        $adminPassRow = $oneTimePass !== ''
+            ? "<tr>
+            <td style=\"padding:6px 0;color:#64748b;\">Admin Password:</td>
+            <td style=\"padding:6px 0;color:#facc15;font-weight:700;\">" . htmlspecialchars($oneTimePass) . " <span style=\"color:#64748b;font-weight:400;\">(shown once — keep it safe)</span></td>
+          </tr>"
+            : "<tr>
+            <td style=\"padding:6px 0;color:#64748b;\">Admin Password:</td>
+            <td style=\"padding:6px 0;color:#94a3b8;\">The password you configured at setup</td>
+          </tr>";
         $orderId     = htmlspecialchars($order['order_id'] ?? '');
         $package     = htmlspecialchars(ucfirst($order['package'] ?? 'Pro'));
         $amount      = number_format((float)($order['amount'] ?? 19.00), 2);
@@ -142,14 +152,7 @@ class Mailer {
             <td style=\"padding:6px 0;color:#64748b;\">Admin Username:</td>
             <td style=\"padding:6px 0;color:#34d399;font-weight:700;\">{$adminUser}</td>
           </tr>
-          <tr>
-            <td style=\"padding:6px 0;color:#64748b;\">Admin Password:</td>
-            <td style=\"padding:6px 0;color:#facc15;font-weight:700;\">{$adminPass}</td>
-          </tr>
-          <tr>
-            <td style=\"padding:6px 0;color:#64748b;\">Demo Login:</td>
-            <td style=\"padding:6px 0;color:#6ee7b7;font-weight:700;\">demo / Demo@1234 <span style=\"color:#64748b;font-weight:400;\">(shareable preview)</span></td>
-          </tr>
+          {$adminPassRow}
           " : "") . "
           <tr>
             <td style=\"padding:6px 0;color:#64748b;\">Subscription:</td>

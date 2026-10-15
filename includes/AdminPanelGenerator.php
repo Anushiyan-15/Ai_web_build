@@ -3,14 +3,16 @@
  * includes/AdminPanelGenerator.php — Standalone, Production-Grade CMS Admin Panel Builder
  * 
  * Automatically generates a complete, fully-functional, beautiful PHP CMS Admin Panel
- * for any published customer website.
- * 
+ * for any published customer website. Admin modules are driven by the
+ * business spec entities ($order['admin_entities']) — every business gets
+ * its own modules, never a fixed one-size-fits-all panel.
+ *
  * Features included:
- * - Secure login with 1-Click Quick Fill & Auto-Login support (?autologin=1)
+ * - Secure login (bcrypt hash only, rate-limited, generic errors, no defaults)
  * - Modern responsive dark dashboard (Stats, Quick actions, Live site link)
  * - Website Content Editor (live update headings, phone, email, text in index.html)
- * - Dynamic Entity Manager (full CRUD for Products, Services, Team, Appointments, etc.)
- * - Settings page with Customer Password Change (updates .auth.json & order record)
+ * - Dynamic Entity Manager (full CRUD for the business's own entities)
+ * - Settings page with secure Password Change (hash only, never plaintext)
  * - Section 18.5 compliance: canShowRequirementBuilder() guard
  */
 
@@ -26,27 +28,37 @@ class AdminPanelGenerator {
 
         $siteName   = $order['site_name'] ?? 'My Website';
         $slug       = $order['slug'] ?? 'site';
-        $username   = $order['admin_username'] ?? 'admin';
-        $email      = $order['admin_email'] ?? 'admin@example.com';
-        $plainPass  = $order['admin_password_plain'] ?? 'password123';
-        $passHash   = !empty($order['admin_password_hash']) 
-                        ? $order['admin_password_hash'] 
-                        : password_hash($plainPass, PASSWORD_DEFAULT);
+        $username   = trim((string)($order['admin_username'] ?? ''));
+        $email      = trim((string)($order['admin_email'] ?? ''));
+        if ($username === '' || !preg_match('/^[a-z][a-z0-9_]{3,19}$/', $username)) {
+            throw new InvalidArgumentException('Admin username is required (4-20 chars, start with a letter).');
+        }
+        // Hash-only auth: the order must carry a bcrypt hash. Plaintext is
+        // NEVER written to disk. Legacy orders with only a plaintext password
+        // are hashed once here and the plaintext is discarded (not stored).
+        $passHash = (string)($order['admin_password_hash'] ?? '');
+        if ($passHash === '' || (!str_starts_with($passHash, '$2y$') && !str_starts_with($passHash, '$argon2'))) {
+            $legacyPlain = (string)($order['admin_password_plain'] ?? '');
+            if (strlen($legacyPlain) < 8) {
+                throw new InvalidArgumentException('Admin password hash is required (min 8-char password at setup).');
+            }
+            $passHash = password_hash($legacyPlain, PASSWORD_DEFAULT);
+        }
         $orderId    = $order['order_id'] ?? '';
-        $entities   = !empty($order['admin_entities']) ? $order['admin_entities'] : self::getDefaultEntities($siteName);
+        // Canonical-spec entities first (per-business modules); any other
+        // list is normalized (unique ids, icons, safe fields); generic
+        // defaults ONLY when nothing was specified at all.
+        $entities   = self::normalizeEntities(!empty($order['admin_entities']) ? $order['admin_entities'] : []);
+        if (empty($entities)) $entities = self::getDefaultEntities($siteName);
+        // Canonical installs seed EMPTY tables (no fake sample records in a
+        // real business admin); template/default installs keep samples.
+        $seedEmpty  = !empty($order['admin_seed_empty']);
 
-        // 1. Write .auth.json (owner account + shareable demo account)
-        $demoPass = 'Demo@1234';
+        // 1. Write .auth.json (owner account, hash only — no plaintext, no demo)
         file_put_contents($adminDir . '/.auth.json', json_encode([
             'username'       => $username,
             'email'          => $email,
             'hash'           => $passHash,
-            'password_plain' => $plainPass,
-            'demo'           => [
-                'username'       => 'demo',
-                'hash'           => password_hash($demoPass, PASSWORD_DEFAULT),
-                'password_plain' => $demoPass,
-            ],
             'order_id'       => $orderId,
             'created'        => date('Y-m-d H:i:s'),
         ], JSON_PRETTY_PRINT));
@@ -54,8 +66,8 @@ class AdminPanelGenerator {
         // 2. Write auth.php
         file_put_contents($adminDir . '/auth.php', self::getAuthPhpCode());
 
-        // 3. Write login.php (with Quick-Fill, Demo Access & Autologin)
-        file_put_contents($adminDir . '/login.php', self::getLoginPhpCode($siteName, $username, $plainPass));
+        // 3. Write login.php (hash-only, rate-limited, generic errors)
+        file_put_contents($adminDir . '/login.php', self::getLoginPhpCode($siteName));
 
         // 4. Write logout.php
         file_put_contents($adminDir . '/logout.php', self::getLogoutPhpCode());
@@ -79,26 +91,30 @@ class AdminPanelGenerator {
         file_put_contents($adminDir . '/messages.php', self::getMessagesPhpCode($siteName));
 
         // 9b. Write features.php (AI Feature & Requirement Builder)
-        file_put_contents($adminDir . '/features.php', self::getFeaturesPhpCode($siteName, $orderId));
+        $nodeApi = defined('NODE_API_URL') ? NODE_API_URL : (getenv('NODE_API_URL') ?: 'http://localhost:3100');
+        file_put_contents($adminDir . '/features.php', self::getFeaturesPhpCode($siteName, $orderId, ($order['slug'] ?? 'site'), $nodeApi));
 
         // 10. Seed initial data files for entities
         foreach ($entities as $ent) {
             $entId = is_array($ent) ? ($ent['id'] ?? 'items') : 'items';
             $dataFile = $adminDir . '/data_' . $entId . '.json';
             if (!file_exists($dataFile)) {
-                $sampleData = self::getSampleDataForEntity($ent);
+                $sampleData = $seedEmpty ? [] : self::getSampleDataForEntity($ent);
                 file_put_contents($dataFile, json_encode($sampleData, JSON_PRETTY_PRINT));
             }
         }
 
-        // 11. Initial content.json for website editor
+        // 11. Initial content.json for website editor (real owner contacts
+        // from the order — never foreign placeholder identities).
+        $ownerEmail = trim((string)($order['contact_email'] ?? $email));
+        if ($ownerEmail === '' || !filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) $ownerEmail = $email;
         $contentFile = $adminDir . '/content.json';
         if (!file_exists($contentFile)) {
             file_put_contents($contentFile, json_encode([
                 'business_name'  => $siteName,
                 'tagline'        => 'Quality & Excellence Delivered',
-                'phone'          => '+1 (555) 019-2834',
-                'email'          => $email,
+                'phone'          => trim((string)($order['contact_phone'] ?? '')) !== '' ? trim((string)$order['contact_phone']) : '',
+                'email'          => $ownerEmail,
                 'address'        => '123 Business Avenue, Suite 100',
                 'hours'          => 'Mon - Fri: 9:00 AM - 6:00 PM',
                 'hero_title'     => 'Welcome to ' . $siteName,
@@ -109,6 +125,202 @@ class AdminPanelGenerator {
         }
 
         return true;
+    }
+
+    /**
+     * Embed JSON inside a single-quoted PHP string in generated code.
+     * addslashes() also escapes double quotes, which corrupts JSON
+     * (json_decode('{\"a\":1}') fails at runtime → empty nav/tabs).
+     * Single-quoted PHP only needs backslash + single-quote escaped.
+     */
+    private static function jsEmbed(string $json): string {
+        return str_replace(['\\', "'"], ['\\\\', "\\'"], $json);
+    }
+
+    /**
+     * Parse one spec field in ANY supported shape:
+     *  - "name:type*" string (canonical: "email:email", "price:number*",
+     *    "status:select:pending|confirmed" — trailing * = required)
+     *  - "name:Label:type*" string (label-preserving: "price:Base Fare:number*")
+     *  - ["name"=>..,"label"=>..,"type"=>..,"required"=>..] array
+     * Returns null for unusable entries. Never invents field names.
+     */
+    private static function parseField($f): ?array {
+        $known = ['text', 'email', 'tel', 'number', 'date', 'time', 'datetime', 'textarea', 'select', 'url'];
+        if (is_string($f)) {
+            $t = trim($f);
+            if ($t === '') return null;
+            // Required star may sit mid-string ("...:select*:opt|opt") since
+            // options are appended after it — any star means required.
+            $req = str_contains($t, '*');
+            $core = str_replace('*', '', $t);
+            $segs = explode(':', $core);
+            $fn = strtolower(preg_replace('/[^a-z0-9]+/i', '_', trim($segs[0] ?? '')));
+            $fn = trim($fn, '_');
+            if ($fn === '' || $fn === 'id') return null;
+            $rest = array_values(array_filter(array_map('trim', array_slice($segs, 1)), fn($s) => $s !== ''));
+            $label = '';
+            $tt = 'text';
+            $optStr = '';
+            if (!empty($rest)) {
+                $first = strtolower(trim(explode('|', $rest[0])[0]));
+                if ($first === 'phone') $first = 'tel';
+                if (in_array($first, $known, true)) {
+                    // "name:type[:options]" — classic shape.
+                    $tt = $first;
+                    $optStr = implode(':', array_slice($rest, 1));
+                } elseif (count($rest) >= 2) {
+                    // "name:Label:type[:options]" — label-preserving shape.
+                    $label = array_shift($rest);
+                    $t2 = strtolower(trim(explode('|', $rest[0] ?? 'text')[0]));
+                    if ($t2 === 'phone') $t2 = 'tel';
+                    $tt = in_array($t2, $known, true) ? $t2 : 'text';
+                    $optStr = implode(':', array_slice($rest, 1));
+                } else {
+                    // Unknown lone type word (json/bool/…) — plain text, auto label.
+                    $tt = 'text';
+                }
+            }
+            $opts = [];
+            if ($tt === 'select') {
+                foreach (explode('|', $optStr) as $o) {
+                    $o = trim((string)$o);
+                    if ($o !== '' && !in_array($o, $opts, true)) $opts[] = $o;
+                    if (count($opts) >= 12) break;
+                }
+            }
+            if ($label === '') $label = ucwords(str_replace('_', ' ', $fn));
+            return ['name' => $fn, 'label' => $label, 'type' => $tt, 'required' => $req, 'options' => $opts];
+        }
+        if (!is_array($f)) return null;
+        $fn = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string)($f['name'] ?? $f['key'] ?? '')));
+        $fn = trim($fn, '_');
+        if ($fn === '' || $fn === 'id') return null;
+        $fl = trim((string)($f['label'] ?? ucwords(str_replace('_', ' ', $fn))));
+        $ft = strtolower((string)($f['type'] ?? 'text'));
+        $type = in_array($ft, ['text', 'email', 'phone', 'tel', 'number', 'date', 'time', 'datetime', 'textarea', 'select', 'url'], true)
+            ? ($ft === 'phone' ? 'tel' : $ft) : 'text';
+        $opts = [];
+        if ($type === 'select' && !empty($f['options']) && is_array($f['options'])) {
+            foreach ($f['options'] as $o) {
+                $o = trim((string)(is_array($o) ? ($o['value'] ?? $o['label'] ?? '') : $o));
+                if ($o !== '' && !in_array($o, $opts, true)) $opts[] = $o;
+                if (count($opts) >= 12) break;
+            }
+        }
+        return ['name' => $fn, 'label' => $fl !== '' ? $fl : ucwords(str_replace('_', ' ', $fn)),
+            'type' => $type, 'required' => !empty($f['required']), 'options' => $opts];
+    }
+
+    /**
+     * Canonical-spec entity map (biz-spec/1) → admin module shape.
+     * Every business gets its own modules (ids, labels, icons, fields);
+     * generic defaults are used ONLY when the spec carries no entities.
+     */
+    public static function entitiesFromCanonical(array $spec): array {
+        $list = $spec['entities'] ?? [];
+        if (!is_array($list) || empty($list)) return [];
+        $out = [];
+        foreach (array_slice($list, 0, 8) as $e) {
+            if (!is_array($e)) continue;
+            $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string)($e['key'] ?? $e['name'] ?? '')));
+            $key = trim($key, '_');
+            if ($key === '') continue;
+            $label = trim((string)($e['label'] ?? $e['name'] ?? ucwords(str_replace('_', ' ', $key))));
+            if ($label === '') $label = ucwords(str_replace('_', ' ', $key));
+            $fields = [];
+            foreach (array_slice((array)($e['fields'] ?? []), 0, 15) as $f) {
+                $p = self::parseField($f);
+                if ($p !== null) $fields[] = $p;
+            }
+            $singular = $label;
+            if (substr($singular, -1) === 's' && strlen($singular) > 3) $singular = substr($singular, 0, -1);
+            $out[] = ['id' => $key, 'name' => $label, 'singular' => $singular,
+                'icon' => self::iconForEntity($key, $label), 'fields' => $fields];
+        }
+        // De-dupe by id, keep first.
+        $seen = []; $ded = [];
+        foreach ($out as $o) { if (!isset($seen[$o['id']])) { $seen[$o['id']] = true; $ded[] = $o; } }
+        return $ded;
+    }
+
+    private static function iconForEntity(string $key, string $label): string {
+        $t = strtolower($key . ' ' . $label);
+        $map = [
+            '🚌' => ['trip', 'bus', 'route', 'schedule', 'seat'],
+            '🎫' => ['book', 'ticket', 'reservation', 'appointment'],
+            '🛍️' => ['product', 'shop', 'item', 'catalog', 'inventor', 'stock'],
+            '🧾' => ['order', 'sale', 'payment', 'invoice', 'transaction'],
+            '✉️' => ['inquir', 'message', 'contact', 'lead', 'subscriber', 'newsletter'],
+            '⭐' => ['review', 'rating', 'testimonial', 'feedback'],
+            '👥' => ['staff', 'team', 'employee', 'member', 'customer', 'client', 'user'],
+            '📅' => ['event', 'slot', 'calendar', 'availab'],
+            '🍽️' => ['menu', 'dish', 'food', 'table', 'restaurant'],
+            '🏠' => ['room', 'property', 'listing'],
+            '🎓' => ['student', 'teacher', 'class', 'course', 'school'],
+        ];
+        foreach ($map as $icon => $words) {
+            foreach ($words as $w) { if (strpos($t, $w) !== false) return $icon; }
+        }
+        return '📁';
+    }
+
+    /**
+     * Normalize ANY entity list into install-safe module shape
+     * (unique ids, labels, icons, field arrays). Unknown shapes degrade to
+     * a Title/Details pair — never to another business's modules.
+     */
+    public static function normalizeEntities(array $list): array {
+        if (!function_exists('business_registry_canonical_entity')) {
+            @require_once __DIR__ . '/BusinessRegistry.php';
+        }
+        $out = [];
+        foreach (array_slice($list, 0, 8) as $e) {
+            if (is_string($e)) $e = ['name' => $e];
+            if (!is_array($e)) continue;
+            $id = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string)($e['id'] ?? $e['key'] ?? $e['name'] ?? '')));
+            $id = trim($id, '_');
+            if ($id === '') continue;
+            // ★ Canonicalize singular AI ids (bus/trip/booking/…) to the
+            // registry plural (buses/trips/bookings/…) so admin writes and
+            // frontend reads converge on ONE store — never split files.
+            if (function_exists('business_registry_canonical_entity')) {
+                $id = business_registry_canonical_entity($id);
+            }
+            $label = trim((string)($e['label'] ?? $e['name'] ?? ucwords(str_replace('_', ' ', $id))));
+            $fields = [];
+            foreach (array_slice((array)($e['fields'] ?? []), 0, 15) as $f) {
+                $p = self::parseField($f);
+                if ($p !== null) $fields[] = $p;
+            }
+            if (empty($fields)) {
+                $fields = [
+                    ['name' => 'title', 'label' => 'Title', 'type' => 'text', 'required' => true],
+                    ['name' => 'details', 'label' => 'Details', 'type' => 'textarea', 'required' => false],
+                ];
+            }
+            $singular = $label;
+            if (substr($singular, -1) === 's' && strlen($singular) > 3) $singular = substr($singular, 0, -1);
+            $out[] = ['id' => $id, 'name' => $label, 'singular' => $singular,
+                'icon' => (string)($e['icon'] ?? self::iconForEntity($id, $label)), 'fields' => $fields];
+        }
+        // De-dupe by id, keep first — merging fields so a canonical entry
+        // plus its former singular twin lose nothing.
+        $seen = []; $ded = [];
+        foreach ($out as $o) {
+            if (!isset($seen[$o['id']])) { $seen[$o['id']] = true; $ded[] = $o; continue; }
+            foreach ($ded as &$d) {
+                if ($d['id'] !== $o['id']) continue;
+                $have = [];
+                foreach (($d['fields'] ?? []) as $f) $have[strtolower((string)($f['name'] ?? ''))] = true;
+                foreach (($o['fields'] ?? []) as $f) {
+                    if (!isset($have[strtolower((string)($f['name'] ?? ''))])) $d['fields'][] = $f;
+                }
+                break;
+            }
+            unset($d);
+        }
+        return $ded;
     }
 
     /**
@@ -183,15 +395,49 @@ function requireAdmin(): void {
     }
 }
 
-/** True when logged in via the shareable demo account. */
-function isDemo(): bool {
-    return !empty($_SESSION['admin_auth']) && !empty($_SESSION['demo_mode']);
+/** Login rate limiter: max 5 attempts per 5 minutes per IP. */
+function admin_login_allowed(): bool {
+    $file = __DIR__ . '/.login_attempts.json';
+    $now = time();
+    $rows = file_exists($file) ? (json_decode(@file_get_contents($file), true) ?: []) : [];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'cli';
+    $rows = array_values(array_filter($rows, fn($r) => ($r['at'] ?? 0) > $now - 300));
+    $n = 0;
+    foreach ($rows as $r) { if (($r['ip'] ?? '') === $ip) $n++; }
+    @file_put_contents($file, json_encode($rows, JSON_UNESCAPED_UNICODE), LOCK_EX);
+    return $n < 5;
+}
+
+function admin_login_failed(): void {
+    $file = __DIR__ . '/.login_attempts.json';
+    $rows = file_exists($file) ? (json_decode(@file_get_contents($file), true) ?: []) : [];
+    $rows[] = ['ip' => $_SERVER['REMOTE_ADDR'] ?? 'cli', 'at' => time()];
+    @file_put_contents($file, json_encode(array_slice($rows, -50), JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
 function getAuthData(): array {
     $file = __DIR__ . '/.auth.json';
     if (!file_exists($file)) return [];
     return json_decode(file_get_contents($file), true) ?: [];
+}
+
+/** CSRF protection for session-authenticated admin POST forms. */
+function admin_csrf_token(): string {
+    if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+    return (string)$_SESSION['admin_csrf'];
+}
+
+function admin_csrf_field(): string {
+    return '<input type="hidden" name="csrf" value="' . htmlspecialchars(admin_csrf_token(), ENT_QUOTES) . '">';
+}
+
+function admin_require_csrf(): void {
+    $t = (string)($_POST['csrf'] ?? '');
+    $s = (string)($_SESSION['admin_csrf'] ?? '');
+    if ($t === '' || $s === '' || !hash_equals($s, $t)) {
+        http_response_code(403);
+        exit('Invalid session token. Please reload the page and try again.');
+    }
 }
 
 /**
@@ -205,33 +451,19 @@ PHP;
     }
 
     /**
-     * Code for login.php
+     * Code for login.php — hash-only, rate-limited, generic errors.
+     * No embedded credentials, no autologin, no demo account.
      */
-    private static function getLoginPhpCode(string $siteName, string $defUser, string $defPass): string {
+    private static function getLoginPhpCode(string $siteName): string {
         $safeSite = htmlspecialchars($siteName, ENT_QUOTES);
-        $safeUser = htmlspecialchars($defUser, ENT_QUOTES);
-        $safePass = htmlspecialchars($defPass, ENT_QUOTES);
 
         return <<<PHP
 <?php
 require_once __DIR__ . '/auth.php';
 
 \$authData = getAuthData();
-\$storedUser = \$authData['username'] ?? '$safeUser';
-\$storedPassPlain = \$authData['password_plain'] ?? '$safePass';
-\$storedHash = \$authData['hash'] ?? '';
-\$demoUser = \$authData['demo']['username'] ?? 'demo';
-\$demoHash = \$authData['demo']['hash'] ?? '';
-\$demoPassPlain = \$authData['demo']['password_plain'] ?? '';
-
-// Check Autologin parameter
-if (!empty(\$_GET['autologin']) && \$_GET['autologin'] === '1') {
-    \$_SESSION['admin_auth'] = true;
-    \$_SESSION['admin_username'] = \$storedUser;
-    \$_SESSION['admin_email'] = \$authData['email'] ?? '';
-    header('Location: index.php');
-    exit;
-}
+\$storedUser = (string)(\$authData['username'] ?? '');
+\$storedHash = (string)(\$authData['hash'] ?? '');
 
 // Already logged in?
 if (!empty(\$_SESSION['admin_auth'])) {
@@ -241,43 +473,26 @@ if (!empty(\$_SESSION['admin_auth'])) {
 
 \$error = '';
 if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
-    \$u = trim(\$_POST['username'] ?? '');
-    \$p = trim(\$_POST['password'] ?? '');
-
-    \$userMatches = (strtolower(\$u) === strtolower(\$storedUser));
-    \$passMatches = false;
-
-    if (\$storedHash) {
-        \$passMatches = password_verify(\$p, \$storedHash);
-    }
-    if (!\$passMatches && \$storedPassPlain && \$p === \$storedPassPlain) {
-        \$passMatches = true;
-    }
-
-    // Shareable demo account (demo / Demo@1234) — full preview access
-    \$isDemoLogin = false;
-    if (!\$passMatches && \$demoUser && strtolower(\$u) === strtolower(\$demoUser)) {
-        if ((\$demoHash && password_verify(\$p, \$demoHash)) || (\$demoPassPlain && \$p === \$demoPassPlain)) {
-            \$passMatches = true;
-            \$isDemoLogin = true;
-        }
-    }
-
-    if (\$userMatches && \$passMatches) {
-        \$_SESSION['admin_auth'] = true;
-        \$_SESSION['admin_username'] = \$storedUser;
-        \$_SESSION['admin_email'] = \$authData['email'] ?? '';
-        \$_SESSION['demo_mode'] = false;
-        header('Location: index.php');
-        exit;
-    } elseif (\$isDemoLogin) {
-        \$_SESSION['admin_auth'] = true;
-        \$_SESSION['admin_username'] = \$demoUser . ' (demo)';
-        \$_SESSION['admin_email'] = \$authData['email'] ?? '';
-        \$_SESSION['demo_mode'] = true;
-        header('Location: index.php');
-        exit;
+    if (!admin_login_allowed()) {
+        \$error = 'Too many attempts. Please wait 5 minutes and try again.';
     } else {
+        \$u = trim(\$_POST['username'] ?? '');
+        \$p = (string)(\$_POST['password'] ?? '');
+
+        \$ok = false;
+        if (\$storedUser !== '' && \$storedHash !== '' && hash_equals(strtolower(\$storedUser), strtolower(\$u))) {
+            \$ok = password_verify(\$p, \$storedHash);
+        }
+        if (\$ok) {
+            session_regenerate_id(true);
+            \$_SESSION['admin_auth'] = true;
+            \$_SESSION['admin_username'] = \$storedUser;
+            \$_SESSION['admin_email'] = \$authData['email'] ?? '';
+            header('Location: index.php');
+            exit;
+        }
+        admin_login_failed();
+        // Generic error: never reveal whether the username or password was wrong.
         \$error = 'Invalid username or password. Please try again.';
     }
 }
@@ -324,41 +539,18 @@ h1{font-size:1.45rem;font-weight:800;color:#fff;text-align:center;margin-bottom:
   <form method="POST" id="loginForm">
     <div class="field">
       <label class="lbl" for="username">Username</label>
-      <input type="text" name="username" id="username" class="inp" required autofocus value="<?= htmlspecialchars(\$storedUser) ?>" placeholder="Enter admin username">
+      <input type="text" name="username" id="username" class="inp" required autofocus autocomplete="username" placeholder="Enter admin username">
     </div>
     <div class="field">
       <label class="lbl" for="password">Password</label>
-      <input type="password" name="password" id="password" class="inp" required value="<?= htmlspecialchars(\$storedPassPlain) ?>" placeholder="Enter password">
+      <input type="password" name="password" id="password" class="inp" required autocomplete="current-password" placeholder="Enter password">
     </div>
     <button type="submit" class="btn-submit">Sign In to Dashboard &rarr;</button>
   </form>
 
-  <!-- Quick Fill Box for convenience -->
-  <div class="quick-box">
-    <div class="quick-title">⚡ CLIENT CREDENTIALS (SAVED)</div>
-    <button type="button" class="btn-quick" onclick="quickFill()">
-      <span>🔑</span> One-Click Auto-Fill &amp; Sign In
-    </button>
-    <button type="button" class="btn-quick" onclick="demoFill()" style="margin-top:.55rem;border-color:#10b981;color:#6ee7b7;">
-      <span>🎭</span> Try Demo Access (demo / Demo@1234)
-    </button>
-  </div>
-
   <a href="../index.html" class="site-link">&larr; Return to Live Website</a>
 </div>
 
-<script>
-function quickFill() {
-  document.getElementById('username').value = <?= json_encode(\$storedUser) ?>;
-  document.getElementById('password').value = <?= json_encode(\$storedPassPlain) ?>;
-  document.getElementById('loginForm').submit();
-}
-function demoFill() {
-  document.getElementById('username').value = <?= json_encode(\$demoUser) ?>;
-  document.getElementById('password').value = <?= json_encode(\$demoPassPlain) ?>;
-  document.getElementById('loginForm').submit();
-}
-</script>
 </body>
 </html>
 PHP;
@@ -390,12 +582,16 @@ PHP;
      */
     private static function getLayoutPhpCode(string $siteName, array $entities): string {
         $safeSite = htmlspecialchars($siteName, ENT_QUOTES);
-        $entitiesJson = json_encode($entities);
+        $entitiesJson = self::jsEmbed(json_encode($entities));
 
         return <<<PHP
 <?php
 require_once __DIR__ . '/auth.php';
 requireAdmin();
+
+// Business-specific modules (from the validated business spec — every
+// business gets its own nav, never a fixed one-size-fits-all set).
+\$navEntities = json_decode('$entitiesJson', true) ?: [];
 
 function renderAdminHeader(string \$activeTab = 'dashboard', string \$pageTitle = ''): void {
     \$auth = getAuthData();
@@ -480,6 +676,9 @@ tr:hover td{background:#0b0f17}
     <a href="messages.php" class="nav-item <?= \$activeTab === 'messages' ? 'active' : '' ?>">✉️ Inbox<?= \$inboxBadge ?></a>
     <a href="content.php" class="nav-item <?= \$activeTab === 'content' ? 'active' : '' ?>">📝 Edit Content</a>
     <a href="manage.php" class="nav-item <?= \$activeTab === 'manage' ? 'active' : '' ?>">📋 Manage Data</a>
+    <?php foreach (\$navEntities as \$ne): ?>
+      <a href="manage.php?entity=<?= urlencode(\$ne['id'] ?? '') ?>" class="nav-item" style="padding-left:2.5rem;font-size:.8rem"><?= htmlspecialchars((\$ne['icon'] ?? '📁') . ' ' . (\$ne['name'] ?? \$ne['id'] ?? '')) ?></a>
+    <?php endforeach; ?>
     <a href="features.php" class="nav-item <?= \$activeTab === 'features' ? 'active' : '' ?>" style="color:#c7d2fe;background:rgba(99,102,241,0.12);border:1px dashed rgba(99,102,241,0.4)">🤖 Add Functions (AI)</a>
     <a href="settings.php" class="nav-item <?= \$activeTab === 'settings' ? 'active' : '' ?>">⚙️ Settings &amp; Password</a>
   </nav>
@@ -534,13 +733,21 @@ if (!is_array(\$inboxRows)) \$inboxRows = [];
 \$unreadCount = 0;
 foreach (\$inboxRows as \$ir) { if (empty(\$ir['read'])) \$unreadCount++; }
 \$latestInquiry = \$inboxRows[0] ?? null;
+// Real counts from persisted records — never fabricated.
+\$__secCount = 0;
+\$__idxHtml = @file_get_contents(__DIR__ . '/../index.html');
+if (is_string(\$__idxHtml)) \$__secCount = preg_match_all('/<section\\b/i', \$__idxHtml);
+\$__recTotal = 0;
+foreach (glob(__DIR__ . '/data_*.json') ?: [] as \$__df) {
+    if (basename(\$__df) === 'data_inquiries.json') continue;
+    \$__jr = json_decode(@file_get_contents(\$__df), true);
+    if (is_array(\$__jr)) \$__recTotal += count(\$__jr);
+}
+// Honest status: HTTPS reflects the live request scheme; the site file
+// check reflects this published directory. No unverified claims.
+\$__isHttps = (!empty(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] !== 'off') || ((int)(\$_SERVER['SERVER_PORT'] ?? 80) === 443);
+\$__siteLive = is_file(__DIR__ . '/../index.html');
 ?>
-<?php if (!empty(\$_SESSION['demo_mode'])): ?>
-<div class="card" style="border-color:#10b981;background:rgba(16,185,129,.07);margin-bottom:1.5rem">
-  <strong style="color:#6ee7b7">🎭 Demo Mode</strong>
-  <span style="color:#94a3b8;font-size:.85rem"> — you are previewing with the shareable demo account. Changes you make are real; sign in with the owner account for full control.</span>
-</div>
-<?php endif; ?>
 <div class="top-actions">
   <div>
     <h1 class="page-title">Welcome, <?= htmlspecialchars(\$_SESSION['admin_username'] ?? 'Admin') ?> 👋</h1>
@@ -555,18 +762,23 @@ foreach (\$inboxRows as \$ir) { if (empty(\$ir['read'])) \$unreadCount++; }
 <div class="grid4">
   <div class="stat-box">
     <div class="stat-lbl">Website Status</div>
-    <div class="stat-val" style="color:#10b981">Live 🟢</div>
-    <div style="font-size:.75rem;color:#64748b">Hosted &amp; Published</div>
+    <div class="stat-val" style="color:<?= \$__siteLive ? '#10b981' : '#f59e0b' ?>"><?= \$__siteLive ? 'Live 🟢' : 'No site file ⚠️' ?></div>
+    <div style="font-size:.75rem;color:#64748b">Published directory</div>
   </div>
   <div class="stat-box">
-    <div class="stat-lbl">SSL Certificate</div>
-    <div class="stat-val" style="color:#a5b4fc">Active 🔒</div>
-    <div style="font-size:.75rem;color:#64748b">HTTPS Secured</div>
+    <div class="stat-lbl">Connection</div>
+    <div class="stat-val" style="color:<?= \$__isHttps ? '#a5b4fc' : '#f59e0b' ?>"><?= \$__isHttps ? 'HTTPS 🔒' : 'HTTP — enable HTTPS' ?></div>
+    <div style="font-size:.75rem;color:#64748b">Live request scheme</div>
   </div>
   <div class="stat-box">
     <div class="stat-lbl">Content Sections</div>
-    <div class="stat-val">6</div>
-    <div style="font-size:.75rem;color:#64748b">Hero, Services, Contact &amp; More</div>
+    <div class="stat-val"><?= (int)\$__secCount ?></div>
+    <div style="font-size:.75rem;color:#64748b">Live site sections</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-lbl">Stored Records</div>
+    <div class="stat-val"><?= (int)\$__recTotal ?></div>
+    <div style="font-size:.75rem;color:#64748b"><a href="manage.php" style="color:#818cf8;text-decoration:none">Manage Data &rarr;</a></div>
   </div>
   <div class="stat-box">
     <div class="stat-lbl">New Inquiries</div>
@@ -631,6 +843,7 @@ require_once __DIR__ . '/layout.php';
 \$msg = '';
 
 if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
+    admin_require_csrf();
     \$data = [
         'business_name' => trim(\$_POST['business_name'] ?? ''),
         'tagline'       => trim(\$_POST['tagline'] ?? ''),
@@ -675,6 +888,7 @@ renderAdminHeader('content', 'Edit Website Content');
 <?php endif; ?>
 
 <form method="POST">
+  <?= admin_csrf_field() ?>
   <!-- General Info Card -->
   <div class="card">
     <h2 style="font-size:1.15rem;font-weight:800;color:#fff;margin-bottom:1.25rem">🏢 Business Profile &amp; Contact</h2>
@@ -744,13 +958,34 @@ PHP;
      * Code for manage.php (Entities Manager CRUD)
      */
     private static function getManagePhpCode(string $siteName, array $entities): string {
-        $safeEntitiesJson = json_encode($entities);
+        $safeEntitiesJson = self::jsEmbed(json_encode($entities));
 
         return <<<PHP
 <?php
 require_once __DIR__ . '/layout.php';
 
 \$entities = json_decode('$safeEntitiesJson', true) ?: [];
+// Live data files created since publish (e.g. storefront-submitted records
+// mirrored from the API) appear as extra modules. Columns derive
+// from their own records — nothing hidden, nothing hardcoded.
+\$__knownIds = [];
+foreach (\$entities as \$ent) { \$__knownIds[(string)(\$ent['id'] ?? '')] = true; }
+foreach (glob(__DIR__ . '/data_*.json') ?: [] as \$df) {
+    \$did = preg_replace('/^data_|\.json$/', '', basename(\$df));
+    if (\$did === '' || isset(\$__knownIds[\$did]) || \$did === 'inquiries') continue;
+    \$__sample = [];
+    \$__jr = json_decode(@file_get_contents(\$df), true);
+    if (is_array(\$__jr)) { foreach (\$__jr as \$__rr) { if (is_array(\$__rr)) { \$__sample = \$__rr; break; } } }
+    \$__dfields = [];
+    foreach (array_keys(\$__sample) as \$__k) {
+        if (\$__k === 'id') continue;
+        \$__dfields[] = ['name' => \$__k, 'label' => ucwords(str_replace('_', ' ', \$__k)), 'type' => 'text', 'required' => false];
+        if (count(\$__dfields) >= 8) break;
+    }
+    \$entities[] = ['id' => \$did, 'name' => ucwords(str_replace('_', ' ', \$did)),
+        'singular' => ucwords(str_replace('_', ' ', \$did)), 'icon' => '📁', 'fields' => \$__dfields];
+    \$__knownIds[\$did] = true;
+}
 \$activeEntityId = \$_GET['entity'] ?? (\$entities[0]['id'] ?? 'services');
 
 \$activeEntity = null;
@@ -768,17 +1003,125 @@ if (!\$activeEntity && !empty(\$entities)) {
 \$dataFile = __DIR__ . '/data_' . \$activeEntityId . '.json';
 \$records = file_exists(\$dataFile) ? json_decode(file_get_contents(\$dataFile), true) : [];
 if (!is_array(\$records)) \$records = [];
+// Read-repair: union customer-submitted rows from the JSON stores
+// (storage/collections + storage/sites) so frontend activity is NEVER
+// invisible here — e.g. submitted before this admin dir existed, via the
+// Node API (sites/), or for entities added after publish. Upsert by id.
+\$__entSafe = preg_replace('/[^a-z0-9_]/i', '', \$activeEntityId);
+\$__byId = [];
+foreach (\$records as \$__rr) { if (is_array(\$__rr) && isset(\$__rr['id'])) \$__byId[(string)\$__rr['id']] = \$__rr; }
+\$__extra = 0;
+foreach ([dirname(__FILE__, 3) . '/storage/collections/' . basename(dirname(__DIR__)) . '/' . \$__entSafe . '.json',
+          dirname(__FILE__, 3) . '/storage/sites/' . basename(dirname(__DIR__)) . '/' . \$__entSafe . '.json'] as \$__sf) {
+    if (!is_file(\$__sf)) continue;
+    \$__sj = json_decode(@file_get_contents(\$__sf), true);
+    if (!is_array(\$__sj)) continue;
+    foreach (\$__sj as \$__sr) {
+        if (is_array(\$__sr) && isset(\$__sr['id']) && !isset(\$__byId[(string)\$__sr['id']])) {
+            \$__byId[(string)\$__sr['id']] = \$__sr; \$__extra++;
+        }
+    }
+}
+if (\$__extra > 0) {
+    \$records = array_values(\$__byId);
+    if (count(\$records) > 2000) \$records = array_slice(\$records, -2000);
+    @file_put_contents(\$dataFile, json_encode(array_values(\$records), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+// Extra columns: submitted keys beyond the spec fields (ref, status,
+// payment, seats, ...) render too — the admin sees ALL customer data.
+// System keys stay hidden.
+\$__sysKeys = ['id' => true, 'created_at' => true, 'updated_at' => true, 'idempotency_key' => true];
+\$__fieldNames = [];
+foreach (\$activeEntity['fields'] ?? [] as \$__ff) { \$__fieldNames[(string)(\$__ff['name'] ?? '')] = true; }
+\$__extraCols = [];
+foreach (\$records as \$__rr) {
+    if (!is_array(\$__rr)) continue;
+    foreach (\$__rr as \$__k => \$__v) {
+        if (isset(\$__sysKeys[\$__k]) || isset(\$__fieldNames[\$__k])) continue;
+        if (!in_array(\$__k, \$__extraCols, true)) \$__extraCols[] = (string)\$__k;
+        if (count(\$__extraCols) >= 6) break 2;
+    }
+}
+\$__cell = function (\$v) {
+    if (is_array(\$v)) \$v = count(\$v) > 0 && array_keys(\$v) === range(0, count(\$v) - 1)
+        ? implode(', ', array_map('strval', array_slice(\$v, 0, 6)))
+        : json_encode(\$v, JSON_UNESCAPED_UNICODE);
+    \$s = (string)(\$v ?? '—');
+    if (\$s === '') \$s = '—';
+    if (strlen(\$s) > 120) \$s = substr(\$s, 0, 120) . '…';
+    return htmlspecialchars(\$s);
+};
+
+// Sync helper: admin edits propagate to the platform collections store so
+// customer-facing history (business-ops list) reflects permitted changes.
+// Convergent by id — the same upsert rule the API mirror uses.
+\$__slug = basename(dirname(dirname(__FILE__)));
+\$__collFile = dirname(__FILE__, 3) . '/storage/collections/' . preg_replace('/[^a-z0-9\-]/i', '', \$__slug) . '/' . preg_replace('/[^a-z0-9_]/i', '', \$activeEntityId) . '.json';
+\$__syncCollections = function (\$rows) use (\$__collFile) {
+    \$d = dirname(\$__collFile);
+    if (!is_dir(\$d)) @mkdir(\$d, 0755, true);
+    \$h = @fopen(\$__collFile, 'c+');
+    if (!\$h) return;
+    if (!flock(\$h, LOCK_EX)) { fclose(\$h); return; }
+    \$raw = stream_get_contents(\$h);
+    \$coll = (\$raw !== false && \$raw !== '') ? (json_decode(\$raw, true) ?: []) : [];
+    if (!is_array(\$coll)) \$coll = [];
+    \$byId = [];
+    foreach (\$coll as \$c) { if (is_array(\$c) && isset(\$c['id'])) \$byId[(string)\$c['id']] = \$c; }
+    foreach ((array)\$rows as \$r) { if (is_array(\$r) && isset(\$r['id'])) \$byId[(string)\$r['id']] = \$r; }
+    \$ids = [];
+    foreach ((array)\$rows as \$r) { if (is_array(\$r) && isset(\$r['id'])) \$ids[(string)\$r['id']] = true; }
+    // Deletions propagate: drop collection rows absent from admin data.
+    foreach (array_keys(\$byId) as \$k) { if (!isset(\$ids[\$k])) unset(\$byId[\$k]); }
+    ftruncate(\$h, 0); rewind(\$h);
+    fwrite(\$h, json_encode(array_values(\$byId), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    fflush(\$h); flock(\$h, LOCK_UN); fclose(\$h);
+};
 
 \$msg = '';
 // Handle Add / Edit POST
 if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
+    admin_require_csrf();
     \$action = \$_POST['action'] ?? '';
 
     if (\$action === 'save_item') {
         \$id = trim(\$_POST['item_id'] ?? '');
         \$isEdit = !empty(\$id);
+        // Server-side validation mirrors the form: required fields + select
+        // options. Admin Add/Edit is a real function, never a silent write.
+        \$__errs = [];
+        foreach (\$activeEntity['fields'] ?? [] as \$__vf) {
+            \$__vn = (string)(\$__vf['name'] ?? '');
+            if (\$__vn === '') continue;
+            \$__vv = trim((string)(\$_POST[\$__vn] ?? ''));
+            if (!empty(\$__vf['required']) && \$__vv === '') {
+                \$__errs[] = '“' . (\$__vf['label'] ?? \$__vn) . '” is required.';
+                continue;
+            }
+            if (\$__vv !== '' && (\$__vf['type'] ?? '') === 'select'
+                && !empty(\$__vf['options']) && is_array(\$__vf['options'])
+                && !in_array(\$__vv, array_map('strval', \$__vf['options']), true)) {
+                \$__errs[] = '“' . (\$__vf['label'] ?? \$__vn) . '” has an invalid option.';
+            }
+            if (\$__vv !== '' && (\$__vf['type'] ?? '') === 'email'
+                && !filter_var(\$__vv, FILTER_VALIDATE_EMAIL)) {
+                \$__errs[] = '“' . (\$__vf['label'] ?? \$__vn) . '” must be a valid email.';
+            }
+        }
+        if (!empty(\$__errs)) {
+            \$msg = '⚠️ ' . implode(' ', array_slice(\$__errs, 0, 3));
+        } else {
 
-        \$item = ['id' => \$isEdit ? \$id : (string)time()];
+        // Edit preserves keys the form does not render (ref, payment, seats,
+        // ...); only known fields are overwritten. Nothing is ever dropped.
+        \$base = ['id' => \$isEdit ? \$id : (string)time()];
+        if (\$isEdit) {
+            foreach (\$records as \$__er) {
+                if (is_array(\$__er) && (string)(\$__er['id'] ?? '') === \$id) { \$base = \$__er; break; }
+            }
+            \$base['id'] = \$id;
+        }
+        \$item = \$base;
         foreach (\$activeEntity['fields'] ?? [] as \$f) {
             \$fname = \$f['name'];
             \$item[\$fname] = trim(\$_POST[\$fname] ?? '');
@@ -794,14 +1137,17 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             array_unshift(\$records, \$item);
         }
-        file_put_contents(\$dataFile, json_encode(\$records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents(\$dataFile, json_encode(\$records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+        \$__syncCollections(\$records);
         \$msg = \$isEdit ? 'Record updated successfully!' : 'New record added successfully!';
+        }
     }
 
     if (\$action === 'delete_item') {
         \$delId = trim(\$_POST['item_id'] ?? '');
         \$records = array_values(array_filter(\$records, fn(\$r) => (\$r['id'] ?? '') !== \$delId));
-        file_put_contents(\$dataFile, json_encode(\$records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents(\$dataFile, json_encode(\$records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+        \$__syncCollections(\$records);
         \$msg = 'Record deleted.';
     }
 }
@@ -854,6 +1200,9 @@ renderAdminHeader('manage', 'Manage Data');
             <?php foreach (\$activeEntity['fields'] ?? [] as \$f): ?>
               <th><?= htmlspecialchars(\$f['label'] ?? \$f['name']) ?></th>
             <?php endforeach; ?>
+            <?php foreach (\$__extraCols as \$__ec): ?>
+              <th><?= htmlspecialchars(ucwords(str_replace('_', ' ', \$__ec))) ?></th>
+            <?php endforeach; ?>
             <th style="text-align:right">Actions</th>
           </tr>
         </thead>
@@ -861,14 +1210,17 @@ renderAdminHeader('manage', 'Manage Data');
           <?php foreach (\$records as \$row): ?>
             <tr>
               <?php foreach (\$activeEntity['fields'] ?? [] as \$f): 
-                \$val = \$row[\$f['name']] ?? '—';
               ?>
-                <td><?= htmlspecialchars(\$val) ?></td>
+                <td><?= \$__cell(\$row[\$f['name']] ?? null) ?></td>
+              <?php endforeach; ?>
+              <?php foreach (\$__extraCols as \$__ec): ?>
+                <td><?= \$__cell(\$row[\$__ec] ?? null) ?></td>
               <?php endforeach; ?>
               <td style="text-align:right;white-space:nowrap">
                 <button type="button" class="btn btn-ghost" style="padding:.35rem .75rem;font-size:.78rem;margin-right:.4rem"
                         onclick='openEditModal(<?= json_encode(\$row) ?>)'>✏️ Edit</button>
                 <form method="POST" style="display:inline" onsubmit="return confirm('Delete this record?');">
+                  <?= admin_csrf_field() ?>
                   <input type="hidden" name="action" value="delete_item">
                   <input type="hidden" name="item_id" value="<?= htmlspecialchars(\$row['id'] ?? '') ?>">
                   <button type="submit" class="btn btn-danger" style="padding:.35rem .75rem;font-size:.78rem">🗑️</button>
@@ -891,20 +1243,32 @@ renderAdminHeader('manage', 'Manage Data');
     </div>
 
     <form method="POST" id="itemForm">
+      <?= admin_csrf_field() ?>
       <input type="hidden" name="action" value="save_item">
       <input type="hidden" name="item_id" id="modal_item_id" value="">
 
-      <?php foreach (\$activeEntity['fields'] ?? [] as \$f): 
+      <?php foreach (\$activeEntity['fields'] ?? [] as \$f):
         \$fname = \$f['name'];
         \$ftype = \$f['type'] ?? 'text';
+        \$freq = !empty(\$f['required']);
+        \$fopts = (isset(\$f['options']) && is_array(\$f['options'])) ? array_values(array_filter(array_map('strval', \$f['options']))) : [];
       ?>
         <div class="field">
-          <label class="lbl"><?= htmlspecialchars(\$f['label'] ?? \$fname) ?></label>
+          <label class="lbl"><?= htmlspecialchars(\$f['label'] ?? \$fname) ?><?= \$freq ? ' *' : '' ?></label>
           <?php if (\$ftype === 'textarea'): ?>
-            <textarea name="<?= \$fname ?>" id="inp_<?= \$fname ?>" rows="3" class="inp"></textarea>
+            <textarea name="<?= \$fname ?>" id="inp_<?= \$fname ?>" rows="3" class="inp"<?= \$freq ? ' required' : '' ?>></textarea>
+          <?php elseif (\$ftype === 'select'): ?>
+            <select name="<?= \$fname ?>" id="inp_<?= \$fname ?>" class="inp"<?= \$freq ? ' required' : '' ?>>
+              <option value="">— Select —</option>
+              <?php foreach (\$fopts as \$__o): ?>
+                <option value="<?= htmlspecialchars(\$__o) ?>"><?= htmlspecialchars(\$__o) ?></option>
+              <?php endforeach; ?>
+            </select>
+          <?php elseif (\$ftype === 'number'): ?>
+            <input type="number" step="any" name="<?= \$fname ?>" id="inp_<?= \$fname ?>" class="inp"<?= \$freq ? ' required' : '' ?>>
           <?php else: ?>
-            <input type="<?= \$ftype === 'email' ? 'email' : (\$ftype === 'date' ? 'date' : 'text') ?>" 
-                   name="<?= \$fname ?>" id="inp_<?= \$fname ?>" class="inp">
+            <input type="<?= \$ftype === 'email' ? 'email' : (\$ftype === 'date' ? 'date' : ((\$ftype === 'tel' || \$ftype === 'url') ? \$ftype : 'text')) ?>"
+                   name="<?= \$fname ?>" id="inp_<?= \$fname ?>" class="inp"<?= \$freq ? ' required' : '' ?>>
           <?php endif; ?>
         </div>
       <?php endforeach; ?>
@@ -977,8 +1341,18 @@ $authData = file_exists($authFile) ? json_decode(file_get_contents($authFile), t
 $successMsg = '';
 $errorMsg = '';
 
+function apg_save_json_atomic(string $file, array $data): bool {
+    $tmp = $file . '.tmp-' . bin2hex(random_bytes(4));
+    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if ($json === false || @file_put_contents($tmp, $json, LOCK_EX) === false) return false;
+    if (@rename($tmp, $file)) return true;
+    @unlink($tmp);
+    return false;
+}
+
 // Handle Password Change POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    admin_require_csrf();
     $action = $_POST['action'] ?? '';
 
     if ($action === 'backup') {
@@ -1000,51 +1374,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'change_password') {
-        $currPass = trim($_POST['current_password'] ?? '');
-        $newPass  = trim($_POST['new_password'] ?? '');
-        $confPass = trim($_POST['confirm_password'] ?? '');
+        $currPass = (string)($_POST['current_password'] ?? '');
+        $newPass  = (string)($_POST['new_password'] ?? '');
+        $confPass = (string)($_POST['confirm_password'] ?? '');
 
-        // Verify current password
-        $storedHash  = $authData['hash'] ?? '';
-        $storedPlain = $authData['password_plain'] ?? '';
+        // Verify current password against the bcrypt hash only.
+        $storedHash  = (string)($authData['hash'] ?? '');
 
-        $currValid = false;
-        if ($storedHash && password_verify($currPass, $storedHash)) {
-            $currValid = true;
-        } elseif ($storedPlain && $currPass === $storedPlain) {
-            $currValid = true;
-        }
+        $currValid = ($storedHash !== '' && password_verify($currPass, $storedHash));
 
         if (!$currValid) {
             $errorMsg = 'Current password is incorrect. Please check and try again.';
-        } elseif (strlen($newPass) < 6) {
-            $errorMsg = 'New password must be at least 6 characters long.';
+        } elseif (strlen($newPass) < 8) {
+            $errorMsg = 'New password must be at least 8 characters long.';
         } elseif ($newPass !== $confPass) {
             $errorMsg = 'New passwords do not match. Please re-enter.';
         } else {
-            // Update .auth.json
+            // Update .auth.json (hash only — plaintext is never stored)
             $newHash = password_hash($newPass, PASSWORD_DEFAULT);
             $authData['hash'] = $newHash;
-            $authData['password_plain'] = $newPass;
+            unset($authData['password_plain']);
             $authData['updated_at'] = date('Y-m-d H:i:s');
-            file_put_contents($authFile, json_encode($authData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-            // Also synchronize with storage/orders if order_id is present
-            $orderId = $authData['order_id'] ?? '';
-            if ($orderId) {
-                $orderDir = dirname(__DIR__, 2) . '/storage/orders';
-                $orderFile = $orderDir . '/' . $orderId . '.json';
-                if (file_exists($orderFile)) {
-                    $order = json_decode(file_get_contents($orderFile), true);
-                    if ($order) {
-                        $order['admin_password_hash'] = $newHash;
-                        $order['admin_password_plain'] = $newPass;
-                        file_put_contents($orderFile, json_encode($order, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            if (!apg_save_json_atomic($authFile, $authData)) {
+                $errorMsg = 'Could not save the new password. Your current password is unchanged.';
+            } else {
+                // Keep the platform order in sync so republishing preserves it.
+                $orderId = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($authData['order_id'] ?? ''));
+                if ($orderId) {
+                    $orderFile = dirname(__DIR__, 3) . '/storage/orders/' . $orderId . '.json';
+                    if (is_file($orderFile)) {
+                        $order = json_decode((string)@file_get_contents($orderFile), true);
+                        if (is_array($order)) {
+                            $order['admin_password_hash'] = $newHash;
+                            unset($order['admin_password_plain']);
+                            if (!apg_save_json_atomic($orderFile, $order)) {
+                                $errorMsg = 'Password changed, but saved generation credentials could not be synchronized. Check storage permissions.';
+                            }
+                        } else {
+                            $errorMsg = 'Password changed, but saved generation credentials could not be read.';
+                        }
                     }
                 }
+                if ($errorMsg === '') $successMsg = 'Your password has been changed successfully!';
             }
-
-            $successMsg = 'Your password has been changed successfully!';
         }
     }
 
@@ -1089,6 +1461,7 @@ renderAdminHeader('settings', 'Settings & Password');
     </h2>
     <form method="POST">
       <input type="hidden" name="action" value="change_password">
+      <?= admin_csrf_field() ?>
 
       <div class="field">
         <label class="lbl" for="current_password">Current Password</label>
@@ -1097,12 +1470,12 @@ renderAdminHeader('settings', 'Settings & Password');
 
       <div class="field">
         <label class="lbl" for="new_password">New Password</label>
-        <input type="password" name="new_password" id="new_password" class="inp" required minlength="6" placeholder="At least 6 characters">
+        <input type="password" name="new_password" id="new_password" class="inp" required minlength="8" placeholder="At least 8 characters">
       </div>
 
       <div class="field">
         <label class="lbl" for="confirm_password">Confirm New Password</label>
-        <input type="password" name="confirm_password" id="confirm_password" class="inp" required minlength="6" placeholder="Re-enter new password">
+        <input type="password" name="confirm_password" id="confirm_password" class="inp" required minlength="8" placeholder="Re-enter new password">
       </div>
 
       <button type="submit" class="btn btn-primary" style="width:100%;margin-top:.5rem">
@@ -1118,6 +1491,7 @@ renderAdminHeader('settings', 'Settings & Password');
     </h2>
     <form method="POST">
       <input type="hidden" name="action" value="update_profile">
+      <?= admin_csrf_field() ?>
 
       <div class="field">
         <label class="lbl">Admin Username</label>
@@ -1148,6 +1522,7 @@ renderAdminHeader('settings', 'Settings & Password');
   </p>
   <form method="POST">
     <input type="hidden" name="action" value="backup">
+    <?= admin_csrf_field() ?>
     <button type="submit" class="btn btn-success" style="width:100%">
       ⬇️ Download Full Backup
     </button>
@@ -1173,6 +1548,7 @@ if (!is_array($inbox)) $inbox = [];
 $notice = '';
 // Actions: mark read / delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    admin_require_csrf();
     $act = $_POST['op'] ?? '';
     $id  = (string)($_POST['id'] ?? '');
     if ($act === 'read' || $act === 'unread' || $act === 'delete') {
@@ -1184,7 +1560,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         $inbox = array_values($inbox);
-        @file_put_contents($inboxFile, json_encode($inbox, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        @file_put_contents($inboxFile, json_encode($inbox, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
         $notice = $act === 'delete' ? 'Message deleted.' : 'Message updated.';
     } elseif ($act === 'mark_all_read') {
         foreach ($inbox as $k => $row) $inbox[$k]['read'] = true;
@@ -1204,6 +1580,7 @@ renderAdminHeader('messages', 'Customer Inbox');
   </div>
   <?php if (!empty($inbox)): ?>
   <form method="POST"><input type="hidden" name="op" value="mark_all_read">
+    <?= admin_csrf_field() ?>
     <button type="submit" class="btn btn-ghost">✓ Mark all read</button>
   </form>
   <?php endif; ?>
@@ -1242,6 +1619,7 @@ renderAdminHeader('messages', 'Customer Inbox');
       <div style="display:flex;gap:.4rem;flex-wrap:wrap">
         <a class="btn btn-success" style="padding:.45rem .9rem;font-size:.78rem" href="mailto:<?= $remail ?>?subject=<?= rawurlencode('Re: Your enquiry') ?>">↩ Reply</a>
         <form method="POST" style="display:inline">
+          <?= admin_csrf_field() ?>
           <input type="hidden" name="id" value="<?= $rid ?>">
           <?php if ($isNew): ?>
             <button type="submit" name="op" value="read" class="btn btn-ghost" style="padding:.45rem .9rem;font-size:.78rem">✓ Read</button>
@@ -1263,15 +1641,32 @@ PHP;
 
     /**
      * Code for features.php (AI Feature Adder & Requirement Builder)
+     * Real workflow: Analyze (Node) → review findings → Install module.
+     * No fake success: every state (analyzing/empty/applied/offline) is shown.
      */
-    private static function getFeaturesPhpCode(string $siteName, string $orderId): string {
+    private static function getFeaturesPhpCode(string $siteName, string $orderId, string $slug = '', string $nodeApi = ''): string {
         $safeSite = htmlspecialchars($siteName, ENT_QUOTES);
         $safeOid  = htmlspecialchars($orderId, ENT_QUOTES);
+        $safeSlug = htmlspecialchars($slug !== '' ? $slug : 'site', ENT_QUOTES);
+        $safeNode = htmlspecialchars($nodeApi !== '' ? $nodeApi : 'http://localhost:3100', ENT_QUOTES);
 
         return <<<PHP
 <?php
 require_once __DIR__ . '/layout.php';
-renderAdminHeader('🤖 Add Functions (AI Feature Builder)', 'features', '$safeSite');
+renderAdminHeader('🤖 Add Functions (AI Feature Builder)', 'features', '\$safeSite');
+// SSO bridge: this page already verified the admin session (requireAdmin).
+// Mint a 5-minute HMAC handoff so the JS can trade it for a Node Bearer
+// token — no password handling, no secrets in markup beyond the window.
+\$__bridgeTs = (string)time();
+\$__bridgeSig = '';
+\$__bridgeSlug = basename(dirname(__FILE__));
+try {
+    \$__secFile = dirname(__FILE__, 3) . '/storage/sites/' . preg_replace('/[^a-z0-9\-]/i', '', \$__bridgeSlug) . '/node_secret';
+    if (is_file(\$__secFile)) {
+        \$__secret = trim((string)@file_get_contents(\$__secFile));
+        if (strlen(\$__secret) >= 32) \$__bridgeSig = hash_hmac('sha256', \$__bridgeTs . ':' . \$__bridgeSlug, \$__secret);
+    }
+} catch (Throwable \$__e) {}
 ?>
 
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
@@ -1303,7 +1698,17 @@ renderAdminHeader('🤖 Add Functions (AI Feature Builder)', 'features', '$safeS
     <textarea id="feature-req-input" rows="4" class="inp" placeholder="e.g. Add an Appointment Booking system with Customer Name, Phone, Email, Date, Time, and Status..."></textarea>
   </div>
 
+  <div class="field">
+    <label class="lbl">Record fields (comma-separated, optional — e.g. holder, tier, expires)</label>
+    <input id="feature-fields-input" class="inp" placeholder="title, details">
+  </div>
+
+  <div id="feat-result" style="display:none;border:1.5px solid #334155;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.84rem;color:#e2e8f0"></div>
+
   <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+    <button type="button" class="btn btn-ghost" id="feat-analyze-btn" onclick="analyzeFeatures()">
+      <span>🔍 Analyze Missing Functions</span>
+    </button>
     <button type="button" class="btn btn-success" onclick="installFeature()">
       <span>✨ Generate &amp; Install Module</span>
     </button>
@@ -1314,6 +1719,8 @@ renderAdminHeader('🤖 Add Functions (AI Feature Builder)', 'features', '$safeS
     <?php endif; ?>
   </div>
 </div>
+
+<div id="feat-findings" style="margin-top:1rem"></div>
 
 <div class="card">
   <h3 style="color:#fff;font-size:1.05rem;margin-bottom:1rem">📦 Installed Business Modules</h3>
@@ -1328,21 +1735,133 @@ renderAdminHeader('🤖 Add Functions (AI Feature Builder)', 'features', '$safeS
 </div>
 
 <script>
+var WC_NODE_API = '$safeNode';
+var WC_SLUG = '$safeSlug';
+var WC_BRIDGE = { ts: '<?= \$__bridgeTs ?>', sig: '<?= \$__bridgeSig ?>' };
+// Trade the PHP-minted HMAC handoff for a Node Bearer token (5-min window).
+// Falls back to manual Node login only if the bridge is unavailable.
+async function wcNodeToken() {
+  let t = null;
+  try { t = sessionStorage.getItem('wc_node_token'); } catch (e) {}
+  if (t) return t;
+  try {
+    const r = await fetch(WC_NODE_API + '/node-api/' + encodeURIComponent(WC_SLUG) + '/auth/bridge', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ts: WC_BRIDGE.ts, sig: WC_BRIDGE.sig })
+    });
+    const j = await r.json();
+    if (j && j.success && j.data && j.data.token) {
+      try { sessionStorage.setItem('wc_node_token', j.data.token); } catch (e) {}
+      return j.data.token;
+    }
+  } catch (e) {}
+  return null;
+}
 function usePreset(t) {
   const el = document.getElementById('feature-req-input');
   if (el) { el.value = t; el.focus(); }
 }
+function featMsg(html, ok) {
+  let box = document.getElementById('feat-result');
+  if (!box) return;
+  box.style.display = 'block';
+  box.style.borderColor = ok ? '#10b981' : '#ef4444';
+  box.innerHTML = html;
+}
+function escH(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-function installFeature() {
-  const req = document.getElementById('feature-req-input').value.trim();
-  if (!req) { showToast('⚠️ Please describe what you want to add'); return; }
-  const oid = '$safeOid';
-  if (oid) {
-    window.location.href = '../../site-manager.php?order_id=' + encodeURIComponent(oid) + '#ai-adder';
-  } else {
-    showToast('✨ Feature generator initialized!');
+// Step 1: Analyze — the Node engine inspects THIS business (manifest +
+// live site HTML) and reports genuinely missing functions with safe plans.
+async function analyzeFeatures() {
+  const out = document.getElementById('feat-findings');
+  const btn = document.getElementById('feat-analyze-btn');
+  out.innerHTML = '<p style="color:#94a3b8">🔍 Analyzing your website vs business requirements…</p>';
+  if (btn) btn.disabled = true;
+  try {
+    let siteHtml = '';
+    try {
+      const r = await fetch('../index.html');
+      if (r.ok) siteHtml = (await r.text()).slice(0, 120000);
+    } catch (e) {}
+    const res = await fetch(WC_NODE_API + '/node-api/' + encodeURIComponent(WC_SLUG) + '/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html: siteHtml, business: '$safeSite' })
+    });
+    const j = await res.json();
+    if (!j || !j.success) throw new Error((j && j.error) || 'analyze failed');
+    const f = j.data.findings || [];
+    if (!f.length) {
+      out.innerHTML = '<div class="card" style="border-color:#10b981">✅ No missing functions found — frontend, backend and admin are in sync.</div>';
+    } else {
+      out.innerHTML = '<div class="card"><h3 style="color:#fff;margin-bottom:.75rem">🔍 Missing / incomplete functions (' + f.length + ')</h3>'
+        + f.map(function (x, i) {
+          return '<div style="padding:.6rem 0;border-bottom:1px solid #1e293b;font-size:.84rem">'
+            + '<strong style="color:#fff">' + escH(x.area) + '</strong> '
+            + '<span class="badge" style="background:' + (x.severity === 'high' ? '#7f1d1d' : '#1e1b4b') + ';color:' + (x.severity === 'high' ? '#fca5a5' : '#a5b4fc') + '">' + escH(x.severity) + '</span><br>'
+            + '<span style="color:#94a3b8">' + escH(x.detail) + '</span>'
+            + (x.plan && x.plan !== 'manual'
+              ? '<br><button type="button" class="btn btn-ghost" style="margin-top:.4rem;padding:.35rem .8rem;font-size:.76rem" onclick="applyPlan(' + i + ')">⚙️ Auto-fix: ' + escH(x.plan) + '</button>'
+              : '<br><span style="color:#64748b;font-size:.76rem">Needs content decisions — describe it below and install as a module.</span>')
+            + '</div>';
+        }).join('') + '</div>';
+      window.__featFindings = f;
+    }
+    featMsg('Analysis complete: ' + f.length + ' finding(s).', true);
+  } catch (e) {
+    out.innerHTML = '<div class="card" style="border-color:#ef4444">⚠️ Analyzer unreachable — is the Node backend running? '
+      + '(<code>node server/server.js</code>). Your existing admin functions keep working; nothing was faked.</div>';
+    featMsg('Node backend offline — start it to use AI analysis.', false);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
+
+// Step 2: Install a real module (entity + data file + audit + backup).
+// Modules appear in Manage Data immediately via live-module discovery.
+async function installFeature() {
+  const req = document.getElementById('feature-req-input').value.trim();
+  const fieldsRaw = (document.getElementById('feature-fields-input') || {}).value || '';
+  if (!req) { featMsg('⚠️ Describe what you want to add first (or run Analyze).', false); return; }
+  if (!confirm('Install "' + req.slice(0, 60) + '" as a new admin module? A backup is taken first.')) return;
+  featMsg('⏳ Installing module… (backup first, then files)', true);
+  try {
+    const token = await wcNodeToken();
+    const res = await fetch(WC_NODE_API + '/node-api/' + encodeURIComponent(WC_SLUG) + '/features/apply', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      body: JSON.stringify({ module: { name: req.slice(0, 60),
+        fields: fieldsRaw.split(',').map(s => s.trim()).filter(Boolean).slice(0, 12) } })
+    });
+    const j = await res.json();
+    if (!j || !j.success) throw new Error((j && j.error) || 'install failed');
+    featMsg('✅ Installed <strong>' + escH(j.data.name) + '</strong> — open <a href="manage.php?entity=' + encodeURIComponent(j.data.id) + '" style="color:#818cf8">Manage Data</a> to use it.', true);
+    loadInstalledFeatures();
+  } catch (e) {
+    featMsg('❌ Install failed: ' + escH(e.message) + (String(e.message).includes('Failed to fetch') ? ' — is the Node backend running?' : ''), false);
+  }
+}
+
+async function loadInstalledFeatures() {
+  try {
+    const token = await wcNodeToken();
+    const res = await fetch(WC_NODE_API + '/node-api/' + encodeURIComponent(WC_SLUG) + '/features', {
+      headers: token ? { Authorization: 'Bearer ' + token } : {}
+    });
+    const j = await res.json();
+    const tb = document.querySelector('#features-table tbody');
+    if (tb && j && j.success) {
+      (j.data || []).forEach(function (m) {
+        if (document.getElementById('featmod-' + m.id)) return;
+        const tr = document.createElement('tr');
+        tr.id = 'featmod-' + m.id;
+        tr.innerHTML = '<td><strong>' + escH(m.name) + '</strong></td><td>AI Module</td><td>JSON Storage</td>'
+          + '<td><span class="badge badge-green">Active</span></td>'
+          + '<td><a href="manage.php?entity=' + encodeURIComponent(m.id) + '" style="color:#818cf8;font-weight:700;text-decoration:none">Open</a></td>';
+        tb.appendChild(tr);
+      });
+    }
+  } catch (e) {}
+}
+loadInstalledFeatures();
 </script>
 
 <?php renderAdminFooter(); ?>

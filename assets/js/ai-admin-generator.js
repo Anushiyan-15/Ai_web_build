@@ -1,9 +1,12 @@
 /**
  * ai-admin-generator.js
- * 
+ *
  * Bolt.new / Lovable style — lets AI write COMPLETE admin panel code.
  * No templates. AI generates every PHP file, SQL schema, and asset
  * based on the user's actual requirements.
+ *
+ * BACKEND CHAIN: api/admin-generate.php
+ *   (OpenRouter free → OpenCode SpaceBunny → gemini-3.5-flash-lite → server).
  */
 
 window.AIAdminGenerator = (function () {
@@ -165,7 +168,7 @@ Respond with ONLY a single valid JSON object (no markdown fences, no explanation
 Begin your JSON response now:`;
   }
 
-  /* ─── The main generator call ───────────────────────── */
+  /* ─── The main generator call (OpenRouter → SpaceBunny → Gemini → server) ─── */
   async function generate(opts, onProgress) {
     const prompt = buildPrompt(opts);
     const progress = typeof onProgress === 'function' ? onProgress : () => {};
@@ -174,24 +177,17 @@ Begin your JSON response now:`;
 
     let raw;
     try {
-      // Try Puter (primary)
-      if (window.puter && window.PuterService) {
-        const model = window.PuterService.selectedModel || 'deepseek/deepseek-chat';
-        progress({ stage: 'generating', message: `Generating admin panel with ${model.split('/').pop()}…` });
-        raw = await window.PuterService.chat(prompt, { temperature: 0.3, max_tokens: 16000 });
-      } else if (window.puter) {
-        raw = await window.puter.ai.chat(prompt);
-      } else {
-        throw new Error('Puter.js not available');
-      }
+      // Backend chain: OpenRouter free → SpaceBunny → gemini-3.5-flash-lite → server.
+      progress({ stage: 'generating', message: 'Generating admin panel (OpenRouter → SpaceBunny → Gemini)…' });
+      raw = await callBackendGenerate(opts);
+      if (!raw) throw new Error('Backend returned empty response');
     } catch (err) {
-      // Fallback: try backend Gemini
-      progress({ stage: 'fallback', message: 'Trying backup AI…' });
-      raw = await callBackendFallback(prompt);
+      throw new Error('Admin generation failed: ' + (err?.message || err));
     }
 
     progress({ stage: 'parsing', message: 'Parsing generated code…' });
-    const parsed = parseStructuredJson(raw);
+    // Backend already returns validated structure; accept it directly.
+    const parsed = (raw && raw.files) ? raw : parseStructuredJson(raw);
     if (!parsed || !parsed.files) {
       throw new Error('AI did not return valid code structure. Try again or rephrase requirements.');
     }
@@ -237,7 +233,28 @@ Begin your JSON response now:`;
     }
   }
 
-  /* ─── Backend Gemini fallback ───────────────────────── */
+  /* ─── Backend chain (api/admin-generate.php: OpenRouter → Bunny → Gemini → server) ─── */
+  async function callBackendGenerate(opts) {
+    const res = await fetch('api/admin-generate.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'generate',
+        bizName: opts.bizName || 'Business',
+        bizType: opts.bizType || 'business',
+        userRequirements: opts.userRequirements || '',
+        genMode: opts.genMode || 'admin',
+        entities: Array.isArray(opts.entities) ? opts.entities.slice(0, 8) : [],
+        workflows: Array.isArray(opts.workflows) ? opts.workflows.slice(0, 8) : []
+      })
+    });
+    if (!res.ok) throw new Error('Backend AI request failed');
+    const j = await res.json();
+    if (!j.success) throw new Error(j.error || 'Backend error');
+    return j;
+  }
+
+  /* ─── Legacy raw-text backend (kept for fixFile compat) ─── */
   async function callBackendFallback(prompt) {
     const res = await fetch('api/generate.php', {
       method: 'POST',
@@ -270,8 +287,19 @@ ${currentCode}
 Return the fixed file now:`;
 
     let fixed;
-    if (window.puter) fixed = await window.puter.ai.chat(prompt);
-    else fixed = await callBackendFallback(prompt);
+    try {
+      const res = await fetch('api/admin-generate.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'fix_file', filePath, issue, currentCode })
+      });
+      const j = await res.json();
+      if (!j.success) throw new Error(j.error || 'Fix failed');
+      fixed = j.fixed;
+    } catch (e) {
+      // Last-resort legacy path
+      fixed = await callBackendFallback(`Fix this PHP file. Return ONLY the corrected file content.\nFILE: ${filePath}\nISSUE: ${issue}\n\n${currentCode}`);
+    }
 
     // Strip fences
     fixed = String(fixed).replace(/^```(?:php|html|js)?\s*/i, '').replace(/```\s*$/i, '').trim();

@@ -629,3 +629,70 @@
 .wcl-back .trail i:nth-child(2) { right: 0; width: 42px; margin-top: 2px; animation-delay: .35s; }
 .wcl-back .trail i:nth-child(3) { right: 10px; width: 24px; margin-top: 24px; animation-delay: .7s; }
 @keyframes wclBackTrail { from { transform: translateX(26px); opacity: 0; } 35% { opacity: 1; } to { transform: translateX(-30px); opacity: 0; } }
+
+/* ═════════ PREMIUM LOADER POLISH (visual-only additive layer) ═════════
+   Deeper overlay, theme-aware surfaces, skeleton + determinate progress.
+   No change to Loader3D.show()/hide() API. Transform/opacity motion only. */
+#wcl-overlay {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+#wcl-overlay::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background:
+    radial-gradient(700px 320px at 50% -60px, rgba(129,140,248,.22), transparent 65%),
+    radial-gradient(120% 90% at 50% 115%, rgba(0,0,0,.55), transparent 55%);
+}
+/* Scenes + texts keep their original stacking (texts already z-index:2);
+   vignette below text, above background grid. */
+[data-theme="light"] #wcl-overlay {
+  background: radial-gradient(circle at 50% 30%, #eef2ff 0%, #f8fafc 58%, #dbe4f0 100%);
+  box-shadow: inset 0 1px 0 #fff;
+}
+[data-theme="light"] #wcl-overlay::before {
+  background-image:
+    linear-gradient(rgba(99,102,241,.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,.13) 1px, transparent 1px);
+}
+[data-theme="light"] #wcl-overlay::after {
+  background:
+    radial-gradient(700px 320px at 50% -60px, rgba(99,102,241,.16), transparent 65%),
+    radial-gradient(120% 90% at 50% 115%, rgba(15,23,42,.12), transparent 55%);
+}
+[data-theme="light"] .wcl-msg {
+  background: linear-gradient(135deg, #1e1b4b 20%, #4f46e5 60%, #0e7490);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+[data-theme="light"] .wcl-sub { color: #475569; }
+[data-theme="light"] .wcl-bar { background: rgba(15,23,42,.1); box-shadow: inset 0 1px 3px rgba(15,23,42,.15); }
+.wcl-msg { filter: drop-shadow(0 2px 16px rgba(129,140,248,.35)); }
+[data-theme="light"] .wcl-msg { filter: none; }
+.wcl-bar { box-shadow: inset 0 1px 4px rgba(0,0,0,.5), 0 0 0 1px rgba(129,140,248,.18); }
+.wcl-bar i { position: relative; overflow: hidden; }
+.wcl-bar i::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: wclBarSheen 1.6s ease-in-out infinite;
+}
+@keyframes wclBarSheen { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
+/* Determinate progress (optional inline use, no JS change): .wcl-dbar > i width set inline */
+.wcl-dbar { position: relative; z-index: 2; width: min(320px, 70vw); height: 8px; border-radius: 999px; background: rgba(255,255,255,.09); overflow: hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,.5), 0 0 0 1px rgba(129,140,248,.18); }
+[data-theme="light"] .wcl-dbar { background: rgba(15,23,42,.1); }
+.wcl-dbar i { display: block; height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #4f46e5, #a855f7, #06b6d4); box-shadow: 0 0 12px rgba(99,102,241,.9), inset 0 1px 0 rgba(255,255,255,.45); transition: width .4s ease; }
+/* Skeleton shimmer for loading content (apply to placeholder blocks) */
+.wcl-sk { position: relative; overflow: hidden; background: rgba(148,163,184,.16); border-radius: 8px; min-height: 14px; }
+.wcl-sk::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 25%, rgba(255,255,255,.28) 50%, transparent 75%); transform: translateX(-100%); animation: wclSkShimmer 1.6s ease-in-out infinite; }
+[data-theme="light"] .wcl-sk { background: rgba(15,23,42,.08); }
+[data-theme="light"] .wcl-sk::after { background: linear-gradient(100deg, transparent 25%, rgba(255,255,255,.85) 50%, transparent 75%); }
+@keyframes wclSkShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  #wcl-overlay::before, #wcl-overlay::after,
+  .wcl-hb, .wcl-hb *, .wcl-mail, .wcl-mail *, .wcl-rocket, .wcl-rocket *,
+  .wcl-lock, .wcl-lock *, .wcl-save, .wcl-save *, .wcl-radar, .wcl-radar *,
+  .wcl-db, .wcl-db *, .wcl-gallery, .wcl-gallery *, .wcl-back, .wcl-back *,
+  .wcl-mini-house, .wcl-mini-house *, .wcl-bar i, .wcl-bar i::after,
+  .wcl-dbar i, .wcl-sk, .wcl-sk::after, .wcl-bblocks i, .wcl-sub::after {
+    animation: none !important;
+  }
+  .wcl-sub::after { content: '...' !important; }
+}

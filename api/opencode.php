@@ -367,7 +367,7 @@ if ($action === 'edit_snippet') {
             'success' => false, 'engine' => 'opencode-snippet-failed',
             'error' => 'OpenCode AI snippet edit failed.',
             'errors' => array_slice($errors, 0, 6),
-            'fallback' => 'puter-then-smart-style',
+            'fallback' => 'server-refine',
         ], JSON_UNESCAPED_UNICODE);
     }
     exit;

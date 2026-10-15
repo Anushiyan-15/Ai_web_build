@@ -1,0 +1,143 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "bus-test-co",
+    "order_id": "PREVIEW-0bfbba81",
+    "business": {
+        "name": "Bus Test Co",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "textarea",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "trips",
+            "name": "Trips",
+            "singular": "Trip",
+            "icon": "🚌",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "date",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "reviews",
+            "name": "Reviews",
+            "singular": "Review",
+            "icon": "⭐",
+            "fields": [
+                {
+                    "name": "reviewer",
+                    "label": "Reviewer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "stars",
+                    "label": "Stars",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "inquiries",
+            "label": "Inquiries",
+            "icon": "✉️",
+            "entity": "inquiries"
+        },
+        {
+            "id": "trips",
+            "label": "Trips",
+            "icon": "🚌",
+            "entity": "trips"
+        },
+        {
+            "id": "bookings",
+            "label": "Bookings",
+            "icon": "🎫",
+            "entity": "bookings"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-12T12:44:03+01:00"
+}

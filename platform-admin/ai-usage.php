@@ -82,7 +82,7 @@ render_sidebar('ai_usage');
     <div class="card" style="border-left:4px solid #f59e0b;">
       <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Est. AI Infrastructure Spend</div>
       <div style="font-size:1.8rem;font-weight:800;color:#f59e0b;margin-top:6px;">$<?= number_format($stats['total_cost_usd'], 4) ?></div>
-      <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">Total Google/Puter API cost</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">Total Gemini / OpenCode API cost</div>
     </div>
     <div class="card" style="border-left:4px solid #06b6d4;">
       <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Active Primary Model</div>
@@ -99,20 +99,16 @@ render_sidebar('ai_usage');
       <h3 style="font-size:0.95rem;font-weight:800;color:#fff;margin-bottom:12px;">📊 AI Provider Rates Reference</h3>
       <div style="font-size:0.8rem;color:var(--muted);line-height:1.7;">
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <span style="color:#fff;font-weight:600;">Google Gemini 2.0 Flash</span>
-          <span style="color:#10b981;font-weight:700;">$0.10 / 1,000,000 Tokens</span>
+          <span style="color:#fff;font-weight:600;">Gemini 3.5 Flash-Lite (backend)</span>
+          <span style="color:#10b981;font-weight:700;">Primary generation + admin code</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <span style="color:#fff;font-weight:600;">DeepSeek V3 (via Puter.js)</span>
-          <span style="color:#22d3ee;font-weight:700;">Included / Free Developer Tier</span>
+          <span style="color:#fff;font-weight:600;">Space Bunny (OpenCode free lane)</span>
+          <span style="color:#22d3ee;font-weight:700;">Landing-page generation</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <span style="color:#fff;font-weight:600;">GPT-4o Mini (via Puter.js)</span>
-          <span style="color:#a5b4fc;font-weight:700;">$0.15 / 1,000,000 Tokens</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0;">
-          <span style="color:#fff;font-weight:600;">Claude 3.5 Sonnet (via Puter.js)</span>
-          <span style="color:#f59e0b;font-weight:700;">$3.00 / 1,000,000 Tokens</span>
+          <span style="color:#fff;font-weight:600;">Server templates</span>
+          <span style="color:#a5b4fc;font-weight:700;">Final fallback (offline-safe)</span>
         </div>
       </div>
     </div>

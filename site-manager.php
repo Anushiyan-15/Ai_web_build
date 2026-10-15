@@ -84,6 +84,45 @@ if ($action === 'get_order') {
     exit;
 }
 
+// ─── Change published admin login (owner only, hash-only, never plaintext) ──
+if ($action === 'change_creds' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($input)) $input = $_POST;
+    $oid = smClean($input['order_id'] ?? '');
+    $order = loadOrder($oid);
+    if (!$order) { echo json_encode(['success' => false, 'error' => 'Order not found']); exit; }
+    $owner = smOwnerEmail($order);
+    if ($owner && $owner !== $smCustomerEmail) smDeny('Access denied for this project.');
+    if (($order['gen_mode'] ?? 'static') === 'static') { echo json_encode(['success' => false, 'error' => 'This site has no admin login (static site).']); exit; }
+    $slug = (string)($order['slug'] ?? '');
+    if (!preg_match('/^[a-z0-9][a-z0-9\-]{1,60}$/', $slug)) { echo json_encode(['success' => false, 'error' => 'Invalid site slug']); exit; }
+    $newUser = strtolower(trim((string)($input['new_username'] ?? '')));
+    $newPass = (string)($input['new_password'] ?? '');
+    if ($newUser === '' && $newPass === '') { echo json_encode(['success' => false, 'error' => 'Enter a new username and/or a new password']); exit; }
+    if ($newUser !== '' && !preg_match('/^[a-z][a-z0-9_]{3,19}$/', $newUser)) { echo json_encode(['success' => false, 'error' => 'Username: 4–20 characters, must start with a letter']); exit; }
+    if ($newPass !== '' && strlen($newPass) < 8) { echo json_encode(['success' => false, 'error' => 'Password must be at least 8 characters']); exit; }
+    $authFile = publishedDir() . '/' . $slug . '/admin/.auth.json';
+    if (!is_file($authFile)) { echo json_encode(['success' => false, 'error' => 'Admin login is not installed for this site']); exit; }
+    $auth = json_decode(@file_get_contents($authFile), true);
+    if (!is_array($auth)) $auth = [];
+    if ($newUser !== '') $auth['username'] = $newUser;
+    if ($newPass !== '') $auth['hash'] = password_hash($newPass, PASSWORD_DEFAULT);
+    unset($auth['password_plain']);
+    $auth['updated_at'] = date('Y-m-d H:i:s');
+    $h = @fopen($authFile, 'c+');
+    if (!$h || !flock($h, LOCK_EX)) { echo json_encode(['success' => false, 'error' => 'Could not write credentials — try again']); exit; }
+    ftruncate($h, 0); rewind($h);
+    fwrite($h, json_encode($auth, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    fflush($h); flock($h, LOCK_UN); fclose($h);
+    if ($newUser !== '') $order['admin_username'] = $newUser;
+    if ($newPass !== '') $order['admin_password_hash'] = $auth['hash'];
+    unset($order['admin_password_plain']);
+    saveOrder($order);
+    echo json_encode(['success' => true, 'admin_username' => $order['admin_username'] ?? $newUser]);
+    exit;
+}
+
 if ($action === 'get_notifications') {
     header('Content-Type: application/json');
     $oid = smClean($_GET['order_id'] ?? '');
@@ -115,8 +154,15 @@ if ($action === 'add_feature' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode($raw, true) ?: [];
     $oid  = smClean($data['order_id'] ?? '');
     $req  = strip_tags(trim($data['feature_requirements'] ?? ''));
-    $newFiles    = $data['new_files'] ?? [];
-    $newEntities = $data['new_entities'] ?? [];
+    // AI may return {files, entities, sql} or {new_files, new_entities}.
+    $newFiles    = $data['new_files'] ?? $data['files'] ?? [];
+    $newEntities = $data['new_entities'] ?? $data['entities'] ?? [];
+    if (!empty($data['sql'])) {
+        // SQL is never executed: this project is PHP + JSON only.
+        error_log('[site-manager add_feature] ignored returned SQL for ' . $oid);
+    }
+    if (!is_array($newFiles)) $newFiles = [];
+    if (!is_array($newEntities)) $newEntities = [];
 
     if (!$oid || empty($newFiles)) {
         echo json_encode(['success' => false, 'error' => 'Missing order_id or files']); exit;
@@ -139,33 +185,118 @@ if ($action === 'add_feature' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'error' => 'Admin directory not found for this site.']); exit;
     }
 
+    require_once __DIR__ . '/includes/PublishedAdminKit.php';
+
+    // 1. Validate + normalize new entity definitions (any AI shape).
+    $validEntities = function_exists('pak_normalize_entities')
+        ? pak_normalize_entities(array_values($newEntities)) : [];
+    if (!empty($newEntities) && empty($validEntities)) {
+        $errors[] = 'New entity definitions were invalid and were skipped (files still installed).';
+    }
+
+    // 2. Write new files with validated paths (block traversal + auth files).
     foreach ($newFiles as $relPath => $content) {
-        $relPath = str_replace(['..', '\\'], '', $relPath);
-        $relPath = ltrim($relPath, '/');
-        if ($relPath === '') continue;
-        $fullPath = $adminDir . '/' . $relPath;
+        $safe = function_exists('pak_safe_relpath')
+            ? pak_safe_relpath((string)$relPath)
+            : (strpos((string)$relPath, '..') === false ? ltrim(str_replace('\\', '/', (string)$relPath), '/') : null);
+        if ($safe === null || $safe === '') { $errors[] = (string)$relPath . ' (blocked unsafe path)'; continue; }
+        if (!is_string($content)) { $errors[] = $safe . ' (invalid content)'; continue; }
+        $fullPath = $adminDir . '/' . $safe;
         $dir = dirname($fullPath);
         if (!is_dir($dir)) @mkdir($dir, 0755, true);
-        if (file_put_contents($fullPath, $content) !== false) {
+        if (@file_put_contents($fullPath, $content, LOCK_EX) !== false) {
             $filesAdded++;
         } else {
-            $errors[] = $relPath;
+            $errors[] = $safe . ' (write failed)';
         }
     }
 
     // Merge into order admin_files
     if (!isset($order['admin_files']) || !is_array($order['admin_files'])) $order['admin_files'] = [];
-    foreach ($newFiles as $k => $v) $order['admin_files'][$k] = $v;
-
-    // Merge new entities
-    if (!isset($order['admin_entities']) || !is_array($order['admin_entities'])) $order['admin_entities'] = [];
-    foreach ($newEntities as $ent) {
-        // Only add if not already there
-        $exists = false;
-        foreach ($order['admin_entities'] as $existing) {
-            if (($existing['id'] ?? '') === ($ent['id'] ?? '')) { $exists = true; break; }
+    foreach ($newFiles as $k => $v) {
+        if (is_string($k) && is_string($v) && strpos($k, '..') === false && basename($k) !== '.auth.json') {
+            $order['admin_files'][$k] = $v;
         }
-        if (!$exists) $order['admin_entities'][] = $ent;
+    }
+
+    // 3. Merge new entities into the manifest without duplicates (by id).
+    $entitiesAdded = [];
+    if (!isset($order['admin_entities']) || !is_array($order['admin_entities'])) $order['admin_entities'] = [];
+    $haveIds = [];
+    foreach ($order['admin_entities'] as $existing) {
+        if (!is_array($existing)) continue;
+        $eid = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string)($existing['id'] ?? $existing['key'] ?? $existing['name'] ?? '')));
+        if ($eid !== '') $haveIds[trim($eid, '_')] = true;
+    }
+    foreach ($validEntities as $ent) {
+        if (!isset($haveIds[$ent['id']])) {
+            $order['admin_entities'][] = $ent;
+            $haveIds[$ent['id']] = true;
+            $entitiesAdded[] = $ent['id'];
+        }
+    }
+
+    // 4. Update admin/manifest.json entities (preserve everything else).
+    if (!empty($entitiesAdded)) {
+        $mf = $adminDir . '/manifest.json';
+        if (is_file($mf)) {
+            $m = json_decode(@file_get_contents($mf), true);
+            if (is_array($m)) {
+                if (!isset($m['entities']) || !is_array($m['entities'])) $m['entities'] = [];
+                $mIds = [];
+                foreach ($m['entities'] as $me) {
+                    if (is_array($me) && !empty($me['id'])) $mIds[(string)$me['id']] = true;
+                }
+                foreach ($validEntities as $ent) {
+                    if (!isset($mIds[$ent['id']])) {
+                        $m['entities'][] = ['id' => $ent['id'], 'name' => $ent['name'],
+                            'singular' => $ent['singular'], 'icon' => $ent['icon'], 'fields' => $ent['fields']];
+                    }
+                }
+                $m['updated_at'] = date('c');
+                @file_put_contents($mf, json_encode($m, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+            }
+        }
+    }
+
+    // 5. Full backend wiring for new entities: JSON data files (preserve
+    // existing), per-entity CRUD pages, shared helpers, form map.
+    $pagesGenerated = [];
+    if (!empty($entitiesAdded) && function_exists('pak_install')) {
+        try {
+            $pakRes = pak_install($adminDir, $order);
+            foreach ((array)($pakRes['written'] ?? []) as $w) {
+                if (substr($w, -4) === '.php' && in_array(basename($w, '.php'), $entitiesAdded, true)) {
+                    $pagesGenerated[] = $w;
+                }
+            }
+            foreach ((array)($pakRes['errors'] ?? []) as $e) $errors[] = $e;
+        } catch (Throwable $e) {
+            $errors[] = 'Entity page generation failed: ' . substr($e->getMessage(), 0, 160);
+            error_log('[site-manager add_feature pak] ' . $e->getMessage());
+        }
+    }
+
+    // 6. Refresh the root layout.php + manage.php entity nav payloads so the
+    // new sections appear in the sidebar/tabs (generated files carry no user
+    // data, so refreshing them is safe).
+    if (!empty($entitiesAdded) && function_exists('pak_normalize_entities')) {
+        try {
+            $allEnts = pak_normalize_entities((array)$order['admin_entities']);
+            $payload = json_encode($allEnts, JSON_UNESCAPED_UNICODE);
+            $embed = str_replace(['\\', "'"], ['\\\\', "\\'"], $payload);
+            foreach (['layout.php', 'manage.php'] as $genFile) {
+                $gf = $adminDir . '/' . $genFile;
+                if (!is_file($gf)) continue;
+                $gc = @file_get_contents($gf);
+                if (!is_string($gc) || $gc === '') continue;
+                $gc2 = preg_replace(
+                    "/json_decode\\('.*?', true\\) \\?: \\[\\]/s",
+                    "json_decode('" . $embed . "', true) ?: []",
+                    $gc, 1);
+                if (is_string($gc2) && $gc2 !== $gc) @file_put_contents($gf, $gc2, LOCK_EX);
+            }
+        } catch (Throwable $e) { error_log('[site-manager nav refresh] ' . $e->getMessage()); }
     }
 
     // Log the feature addition
@@ -173,6 +304,8 @@ if ($action === 'add_feature' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $order['feature_additions'][] = [
         'requirements' => $req,
         'files_added'  => $filesAdded,
+        'entities_added' => $entitiesAdded,
+        'pages_generated' => $pagesGenerated,
         'added_at'     => date('Y-m-d H:i:s'),
     ];
 
@@ -181,8 +314,12 @@ if ($action === 'add_feature' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode([
         'success'     => true,
         'files_added' => $filesAdded,
+        'entities_added' => $entitiesAdded,
+        'pages_generated' => $pagesGenerated,
         'errors'      => $errors,
-        'note'        => "✅ $filesAdded new file(s) installed in your admin panel! Go to your admin panel to see the new section.",
+        'note'        => "✅ $filesAdded new file(s) installed in your admin panel!"
+            . (!empty($entitiesAdded) ? ' New section(s): ' . implode(', ', $entitiesAdded) . ' — form submissions now flow to storage and appear in the admin.' : '')
+            . ' Go to your admin panel to see the new section.',
         'admin_url'   => $order['admin_url'],
     ]);
     exit;
@@ -205,6 +342,7 @@ if (!$smCustomerEmail && $orderId) { $ownerDenied = true; $order = null; $notFou
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Website Manager — <?= defined('SITE_NAME') ? SITE_NAME : 'WebCraft AI' ?></title>
+<?php require_once __DIR__ . '/includes/theme-head.php'; ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
@@ -357,9 +495,27 @@ a{text-decoration:none;color:inherit}
 <div class="topbar">
   <div class="brand"><div class="logo">✦</div><?= defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'WebCraft AI' ?></div>
   <div class="topbar-actions">
+    <select id="smThemeSelect" aria-label="Appearance mode" style="height:34px;border-radius:8px;border:1.5px solid var(--wc-border,#283347);background:var(--wc-surface,#0b0f17);color:var(--wc-text,#cbd5e1);font-family:inherit;font-size:.76rem;font-weight:700;padding:0 .5rem;cursor:pointer">
+      <option value="dark">🌙 Dark</option>
+      <option value="light">☀️ Light</option>
+      <option value="custom">🎨 Custom</option>
+    </select>
+    <a href="<?= defined('SITE_URL') ? SITE_URL : '' ?>/settings.php" class="tb-btn" title="Appearance settings">⚙️</a>
     <a href="<?= defined('SITE_URL') ? SITE_URL : '' ?>/builder.php" class="tb-btn">🏠 Back to Builder</a>
   </div>
 </div>
+<script>
+(function(){
+  var s = document.getElementById('smThemeSelect');
+  if (!s) return;
+  try {
+    var m = (window.WCTheme ? WCTheme.getMode() : null) || document.documentElement.getAttribute('data-theme') || 'dark';
+    if (m === 'dark' || m === 'light' || m === 'custom') s.value = m;
+  } catch (e) {}
+  s.addEventListener('change', function(){ if (window.WCTheme) WCTheme.setMode(s.value); });
+  document.addEventListener('wc:theme-change', function(e){ try { if (e.detail.mode) s.value = e.detail.mode; } catch (e2) {} });
+})();
+</script>
 
 <?php if ($notFound): ?>
 <!-- Not Found / Access Denied -->
@@ -477,6 +633,24 @@ a{text-decoration:none;color:inherit}
           🔐 Open Admin Panel →
         </a>
       </div>
+      <div style="margin-top:1.25rem;border-top:1px dashed #1e293b;padding-top:1rem;">
+        <div style="font-size:.85rem;font-weight:800;color:#fff;margin-bottom:.5rem;">🔄 Change username / password</div>
+        <p style="font-size:.76rem;color:#94a3b8;margin-bottom:.7rem;">Pick a new admin login for your live site. Leave a field empty to keep it unchanged.</p>
+        <div style="display:grid;gap:.55rem;">
+          <input id="cc-user" type="text" placeholder="New username (optional)" autocomplete="off"
+            style="padding:.55rem .8rem;border:1.5px solid #283347;border-radius:9px;background:#0b0f17;color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
+          <input id="cc-pass" type="password" placeholder="New password (min 8 chars, optional)" autocomplete="new-password"
+            style="padding:.55rem .8rem;border:1.5px solid #283347;border-radius:9px;background:#0b0f17;color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
+          <input id="cc-pass2" type="password" placeholder="Repeat new password" autocomplete="new-password"
+            style="padding:.55rem .8rem;border:1.5px solid #283347;border-radius:9px;background:#0b0f17;color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost" onclick="toggleCcPass(this)" style="font-size:.78rem;padding:.5rem .9rem">👁️ Show</button>
+            <button type="button" class="btn btn-ghost" onclick="genCcPass()" style="font-size:.78rem;padding:.5rem .9rem">🎲 Generate strong password</button>
+            <button type="button" class="btn btn-primary" onclick="changeCreds()" id="btn-cc-save" style="font-size:.82rem;padding:.55rem 1.1rem">💾 Save login</button>
+          </div>
+          <div id="cc-msg" style="font-size:.78rem;font-weight:600;min-height:1.2em;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -580,8 +754,7 @@ a{text-decoration:none;color:inherit}
 
 <div class="toast" id="toast"></div>
 
-<script src="https://js.puter.com/v2/"></script>
-<script src="<?= defined('SITE_URL') ? SITE_URL : '' ?>/assets/js/puter-service.js"></script>
+<!-- Admin generation uses the AI mix backend (api/admin-generate.php) -->
 <script src="<?= defined('SITE_URL') ? SITE_URL : '' ?>/assets/js/loader-3d.js"></script>
 <script src="<?= defined('SITE_URL') ? SITE_URL : '' ?>/assets/js/ai-admin-generator.js"></script>
 <script>
@@ -705,6 +878,63 @@ function populateUI(o) {
     document.getElementById('suspended-banner').style.display = 'flex';
     document.getElementById('tab-ai-adder').disabled = true;
     document.getElementById('tab-ai-adder').title = 'Reactivate your site to use this feature';
+  }
+}
+
+/* ════ CHANGE ADMIN LOGIN ════ */
+function toggleCcPass(btn) {
+  const p1 = document.getElementById('cc-pass'), p2 = document.getElementById('cc-pass2');
+  const show = p1 && p1.type === 'password';
+  if (p1) p1.type = show ? 'text' : 'password';
+  if (p2) p2.type = show ? 'text' : 'password';
+  if (btn) btn.textContent = show ? '🙈 Hide' : '👁️ Show';
+}
+function genCcPass() {
+  const words = ['Tiger', 'Ocean', 'Eagle', 'Maple', 'Comet', 'Lotus', 'River', 'Falcon'];
+  const pw = words[Math.floor(Math.random() * words.length)] + (1000 + Math.floor(Math.random() * 9000)) + '@';
+  const p1 = document.getElementById('cc-pass'), p2 = document.getElementById('cc-pass2');
+  if (p1) p1.type = 'text';
+  if (p2) p2.type = 'text';
+  if (p1) p1.value = pw;
+  if (p2) p2.value = pw;
+  const m = document.getElementById('cc-msg');
+  if (m) { m.style.color = '#6ee7b7'; m.textContent = 'Strong password generated — press Save login.'; }
+}
+async function changeCreds() {
+  const u = (document.getElementById('cc-user').value || '').trim().toLowerCase();
+  const p1 = document.getElementById('cc-pass').value || '';
+  const p2 = document.getElementById('cc-pass2').value || '';
+  const m = document.getElementById('cc-msg');
+  const say = (t, ok) => { if (m) { m.style.color = ok ? '#6ee7b7' : '#fca5a5'; m.textContent = t; } };
+  if (!u && !p1) { say('Enter a new username and/or a new password first.'); return; }
+  if (u && !/^[a-z][a-z0-9_]{3,19}$/.test(u)) { say('Username: 4–20 characters, must start with a letter.'); return; }
+  if (p1 && p1.length < 8) { say('Password must be at least 8 characters.'); return; }
+  if (p1 && p1 !== p2) { say('Passwords do not match — re-enter.'); return; }
+  const btn = document.getElementById('btn-cc-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    const r = await fetch(`${SITE_URL}/site-manager.php?action=change_creds`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: ORDER_ID, new_username: u, new_password: p1 })
+    });
+    const j = await r.json();
+    if (j && j.success) {
+      if (j.admin_username) {
+        document.getElementById('inf-username').textContent = j.admin_username;
+        if (orderData) orderData.admin_username = j.admin_username;
+      }
+      document.getElementById('cc-user').value = '';
+      document.getElementById('cc-pass').value = '';
+      document.getElementById('cc-pass2').value = '';
+      say('✓ Login updated — use the new details at your next admin sign-in.', true);
+      showToast('✓ Admin login updated');
+    } else {
+      say('⚠️ ' + ((j && j.error) || 'Could not update login.'));
+    }
+  } catch (e) {
+    say('⚠️ Network error — try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save login'; }
   }
 }
 

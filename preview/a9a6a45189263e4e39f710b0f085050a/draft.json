@@ -1,0 +1,274 @@
+{
+    "token": "a9a6a45189263e4e39f710b0f085050a",
+    "bizName": "City Express Travels",
+    "slug": "city-express-travels",
+    "entities": [
+        {
+            "id": "trips",
+            "name": "Trips",
+            "singular": "Trip",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "departure",
+                    "label": "Departure",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "total_seats",
+                    "label": "Total Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "trip_id",
+                    "label": "Trip Id",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passenger",
+                    "label": "Passenger",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "payment_status",
+                    "label": "Payment Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "ref",
+                    "label": "Ref",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "qr",
+                    "label": "Qr",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "booking_id",
+                    "label": "Booking Id",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passenger_name",
+                    "label": "Passenger Name",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "qr_code",
+                    "label": "Qr Code",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "amount",
+                    "label": "Amount",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "payments",
+            "name": "Payments",
+            "singular": "Payment",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "booking_ref",
+                    "label": "Booking Ref",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "method",
+                    "label": "Method",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "amount",
+                    "label": "Amount",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "buses",
+            "name": "Bus",
+            "singular": "Bus",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "capacity",
+                    "label": "Capacity",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "schedule",
+                    "label": "Schedule",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "seat",
+            "name": "Seat",
+            "singular": "Seat",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "seat_number",
+                    "label": "Seat Number",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "tickets",
+            "name": "QR Ticket",
+            "singular": "QR Ticket",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "ticket_id",
+                    "label": "Ticket Id",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "qr_code",
+                    "label": "Qr Code",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "validity",
+                    "label": "Validity",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "contactEmail": "hello@zenithstudio.com",
+    "genMode": "database",
+    "createdAt": "2026-10-14T12:34:22+01:00",
+    "updatedAt": "2026-10-14T12:34:22+01:00",
+    "htmlHash": "4ba7466d20be8272bb0a695d9b7d38a2",
+    "sharing": {
+        "enabled": true,
+        "expiresAt": 1793187262
+    }
+}

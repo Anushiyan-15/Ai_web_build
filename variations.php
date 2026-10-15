@@ -24,6 +24,7 @@ $siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Choose Your Variation — WebCraft AI</title>
+<?php require_once __DIR__ . '/includes/theme-head.php'; ?>
 <link rel="stylesheet" href="<?= htmlspecialchars($siteUrl) ?>/assets/css/loader-3d.css">
 <script src="<?= htmlspecialchars($siteUrl) ?>/assets/js/loader-3d.js"></script>
 <style>
@@ -129,8 +130,26 @@ $siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 
 <div class="var-topbar">
   <div class="var-brand">✦ WebCraft <b>Variations</b></div>
-  <a class="var-back" href="<?= htmlspecialchars($siteUrl) ?>/builder.php?wizard=1" onclick="return (window.varBackToBuilder ? varBackToBuilder(this) : true)">← Back to Builder</a>
+  <select id="varThemeSelect" aria-label="Appearance mode" style="margin-left:auto;height:36px;border-radius:10px;border:1px solid var(--wc-border,#334155);background:var(--wc-surface,#0b0f17);color:var(--wc-text,#cbd5e1);font-family:inherit;font-size:.76rem;font-weight:700;padding:0 .55rem;cursor:pointer">
+    <option value="dark">🌙 Dark</option>
+    <option value="light">☀️ Light</option>
+    <option value="custom">🎨 Custom</option>
+  </select>
+  <a class="var-back" style="margin-left:0" href="<?= htmlspecialchars($siteUrl) ?>/settings.php" title="Appearance settings">⚙️</a>
+  <a class="var-back" style="margin-left:0" href="<?= htmlspecialchars($siteUrl) ?>/builder.php?wizard=1&step=1" onclick="return (window.varBackToBuilder ? varBackToBuilder(this) : true)">← Back to Builder</a>
 </div>
+<script>
+(function(){
+  var s = document.getElementById('varThemeSelect');
+  if (!s) return;
+  try {
+    var m = (window.WCTheme ? WCTheme.getMode() : null) || document.documentElement.getAttribute('data-theme') || 'dark';
+    if (m === 'dark' || m === 'light' || m === 'custom') s.value = m;
+  } catch (e) {}
+  s.addEventListener('change', function(){ if (window.WCTheme) WCTheme.setMode(s.value); });
+  document.addEventListener('wc:theme-change', function(e){ try { if (e.detail.mode) s.value = e.detail.mode; } catch (e2) {} });
+})();
+</script>
 
 <div class="var-head">
   <div class="var-badge">✦ 3 Style Variations</div>
@@ -139,13 +158,14 @@ $siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 </div>
 
 <div id="var-flash"></div>
+<div id="var-verify" style="display:none;max-width:1200px;margin:1.25rem auto 0;padding:0.8rem 1.2rem;background:rgba(30,27,75,0.5);border:1px solid rgba(99,102,241,0.45);color:#c7d2fe;border-radius:12px;font-size:0.82rem;"></div>
 <div class="var-grid" id="var-grid"></div>
 
 <div id="var-empty">
   <div class="big">🎨</div>
   <h2>No variations yet</h2>
   <p style="color:#94a3b8;margin:0.5rem 0 1.5rem;">Generate your website first — your 3 style variations will appear here.</p>
-  <a class="var-back" style="margin:0;" href="<?= htmlspecialchars($siteUrl) ?>/builder.php?wizard=1" onclick="return (window.varBackToBuilder ? varBackToBuilder(this) : true)">Open Builder →</a>
+  <a class="var-back" style="margin:0;" href="<?= htmlspecialchars($siteUrl) ?>/builder.php?wizard=1&step=1" onclick="return (window.varBackToBuilder ? varBackToBuilder(this) : true)">Open Builder →</a>
 </div>
 
 <!-- Back-to-Builder 3D transition loader (shows instantly on Back click) -->
@@ -205,15 +225,17 @@ window.__SITE_URL__ = <?= json_encode($siteUrl) ?>;
     if (!h) return h;
     var haveNav = h.indexOf('wc-nav-fix') !== -1;
     var haveCount = h.indexOf('wc-count-fix') !== -1;
+    var haveBlob = h.indexOf('wc-blob-guard') !== -1;
     var needGuard = h.indexOf('wcl-reveal-guard') === -1
       && /\.(reveal|will-reveal|fade-up|fade-in-up|reveal-up|scroll-reveal|js-reveal|anim-up|reveal-item|fade-in)\b[^{]*\{[^}]*opacity\s*:\s*0/i.test(h);
-    if (haveNav && haveCount && !needGuard) return h;
+    if (haveNav && haveCount && haveBlob && !needGuard) return h;
     var bundle = '';
     if (!haveNav) {
       bundle += '<style data-wc-nav-fix-css>html{scroll-behavior:smooth!important}section[id],div[id],footer[id],header[id],main[id],article[id]{scroll-margin-top:88px!important}</style>';
-      bundle += '<script data-wc-nav-fix>(function(){document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;var href=a.getAttribute("href")||"";if(href.length<2)return;var id=href.slice(1).split("?")[0].split("#")[0];try{id=decodeURIComponent(id)}catch(_){}id=(id||"").trim();if(!id)return;var t=document.getElementById(id);if(!t)return;e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(_){try{t.scrollIntoView()}catch(__){}}try{history.replaceState(null,"","#"+id)}catch(__){}var d=document.getElementById("mobile-drawer");if(d)d.classList.remove("open")},true)})();<\/script>';
+      bundle += '<script data-wc-nav-fix>(function(){document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;var href0=a.getAttribute("href")||"";if(href0==="#"||href0===""){e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();return;}var href=href0;if(href.length<2)return;var id=href.slice(1).split("?")[0].split("#")[0];try{id=decodeURIComponent(id)}catch(_){}id=(id||"").trim();if(!id)return;var t=document.getElementById(id);if(!t)return;e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(_){try{t.scrollIntoView()}catch(__){}}try{history.replaceState(null,"","#"+id)}catch(__){}var d=document.getElementById("mobile-drawer");if(d)d.classList.remove("open")},true)})();<\/script>';
     }
     if (!haveCount) bundle += WC_COUNT_FIX_JS;
+    if (!haveBlob) bundle += '<script data-wc-blob-guard>document.addEventListener("submit",function(e){var f=e.target&&e.target.closest?e.target.closest("form"):null;if(!f)return;var a="";try{a=String(f.action||"")}catch(_){}var t="";try{t=String(f.getAttribute("target")||"").toLowerCase()}catch(_){}var s="";try{s=String((e.submitter&&e.submitter.getAttribute("formtarget"))||"").toLowerCase()}catch(_){}if(t==="_blank"){try{f.removeAttribute("target")}catch(_){}}if(s==="_blank"){try{e.submitter.removeAttribute("formtarget")}catch(_){}}if(a.slice(0,5).toLowerCase()==="blob:"||t==="_blank"||s==="_blank"){e.preventDefault()}},true);<\/script>';
     if (needGuard) bundle += WC_REVEAL_GUARD_JS;
     // NOTE: function replacers — the bundle contains '$' (currency guard),
     // which a string replacer would misread as a $pattern.
@@ -241,6 +263,22 @@ window.__SITE_URL__ = <?= json_encode($siteUrl) ?>;
         sessionStorage.removeItem('wc_flash');
         var f = document.getElementById('var-flash');
         f.textContent = m; f.style.display = 'block';
+      }
+      // Post-generation verification report (from builder session, read-only).
+      var raw = localStorage.getItem(SESSION_KEY);
+      var rep = raw ? (JSON.parse(raw).verifyReport || null) : null;
+      if (rep && rep.summary) {
+        var box = document.getElementById('var-verify');
+        var esc = function (t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+        var row = function (r, col) { return '<div style="font-size:0.76rem;color:' + col + ';">• <strong>' + esc(r.t) + '</strong> — ' + esc(r.d) + '</div>'; };
+        var h = '<strong>🔍 Build verification — passed ' + rep.summary.passed + ', failed ' + rep.summary.failed
+          + ', untested ' + rep.summary.untested + ', needs-config ' + rep.summary.missing_config + '</strong>';
+        h += (rep.failed || []).map(function (r) { return row(r, '#fca5a5'); }).join('');
+        h += (rep.missing_config || []).map(function (r) { return row(r, '#fcd34d'); }).join('');
+        h += '<details style="margin-top:0.3rem;"><summary style="cursor:pointer;font-size:0.74rem;color:#94a3b8;">Passed (' + rep.summary.passed + ') + untested details</summary>'
+          + (rep.passed || []).map(function (r) { return row(r, '#6ee7b7'); }).join('')
+          + (rep.untested || []).map(function (r) { return row(r, '#94a3b8'); }).join('') + '</details>';
+        box.innerHTML = h; box.style.display = 'block';
       }
     } catch (e) {}
   }
@@ -313,12 +351,30 @@ window.__SITE_URL__ = <?= json_encode($siteUrl) ?>;
   window.varFullPreview = function (i) { fullPreview(i, window.__VAR_LIST__ || []); };
 
   function render(list, bizName) {
-    document.getElementById('var-title').textContent = '3 Style Concepts for ' + (bizName || 'Your Website');
+    // Idempotent: same list re-rendered twice must not duplicate cards.
+    try {
+      var key = list.length + ':' + String((list[0] && list[0].html) || '').length + ':' +
+        String((list[0] && list[0].html) || '').replace(/\s+/g, '').slice(0, 64);
+      if (window.__VAR_RENDERED_KEY__ === key && document.getElementById('var-grid').children.length === list.length) return;
+      window.__VAR_RENDERED_KEY__ = key;
+    } catch (e) {}
+    var n = list.length;
+    document.getElementById('var-title').textContent = (n === 1 ? 'Your Flagship Design for ' : n + ' Style Concepts for ') + (bizName || 'Your Website');
+    var badge = document.querySelector('.var-badge');
+    if (badge) badge.textContent = n === 1 ? '✦ Flagship Application (large project)' : '✦ ' + n + ' Style Variations';
+    var sub = document.getElementById('var-sub');
+    if (sub) sub.textContent = n === 1
+      ? 'Complete application per your business spec — landing + pages + backend + admin.'
+      : 'All ' + n + ' use your exact content and design direction — only the layout differs.';
     var grid = document.getElementById('var-grid');
     grid.innerHTML = '';
     window.__VAR_LIST__ = list;
     list.forEach(function (c, i) {
-      var isAI = c.meta && (c.meta.engine === 'opencode' || c.meta.engine === 'gemini' || c.meta.engine === 'opencode-quick');
+      // ★ Any engine except the server-template fallback is real AI output
+      // (opencode/opencode-quick/gemini/spacebunny/...). Allowlists go stale
+      // whenever a new AI lane ships — hence blocklist, not allowlist.
+      var eng = c.meta && c.meta.engine;
+      var isAI = !!eng && eng !== 'template' && eng !== 'server-template';
       var modelShort = isAI ? esc(String((c.meta && c.meta.model) || 'AI').split('/').pop()) : '';
       var enginePill = isAI
         ? '<span class="pill ai">✦ AI · ' + modelShort + '</span>'
@@ -338,7 +394,6 @@ window.__SITE_URL__ = <?= json_encode($siteUrl) ?>;
         (hasSubs ? '<div class="var-sub">✦ 3 LAYOUT VARIANTS INSIDE</div>' : '') +
         '<div class="var-actions">' +
         '<button class="var-btn" onclick="varFullPreview(' + i + ')">👁 Preview</button>' +
-        '<button class="var-btn" onclick="varOpenLayouts(' + i + ')">✦ Layouts</button>' +
         '<button class="var-btn go" onclick="varSelectAndEdit(' + i + ')">Select &amp; Edit →</button>' +
         '</div></div>';
       grid.appendChild(card);

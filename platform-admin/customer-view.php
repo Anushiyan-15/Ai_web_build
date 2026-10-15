@@ -144,7 +144,7 @@ render_sidebar('customers');
             ['Email',       $order['admin_email']    ?? '—'],
             ['Account',     $acctLabel],
             ['Username',    $order['admin_username'] ?? '—'],
-            ['Password',    $order['admin_password_plain'] ?? '—'],
+            ['Password',    '— (hashed; owner signs in with configured credentials)'],
             ['Site Name',   $order['site_name']      ?? '—'],
             ['Slug',        '/' . ($order['slug']    ?? '—')],
             ['Package',     ucfirst($order['package'] ?? '—')],

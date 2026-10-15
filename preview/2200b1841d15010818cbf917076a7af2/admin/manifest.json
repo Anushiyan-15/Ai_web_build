@@ -1,0 +1,273 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "global-travel",
+    "order_id": "PREVIEW-2200b184",
+    "business": {
+        "name": "global travel",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "trips",
+            "name": "Trips",
+            "singular": "Trip",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "departure",
+                    "label": "Departure",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "total_seats",
+                    "label": "Total Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "trip_id",
+                    "label": "Trip Id",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passenger",
+                    "label": "Passenger",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "payment_status",
+                    "label": "Payment Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "ref",
+                    "label": "Ref",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "qr",
+                    "label": "Qr",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "bookingid",
+                    "label": "Bookingid",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "userid",
+                    "label": "Userid",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "busid",
+                    "label": "Busid",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "traveldate",
+                    "label": "Traveldate",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passengercount",
+                    "label": "Passengercount",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "totalamount",
+                    "label": "Totalamount",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "payments",
+            "name": "Payments",
+            "singular": "Payment",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "booking_ref",
+                    "label": "Booking Ref",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "method",
+                    "label": "Method",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "amount",
+                    "label": "Amount",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "user",
+            "name": "User",
+            "singular": "User",
+            "icon": "📁",
+            "fields": [
+                {
+                    "name": "userid",
+                    "label": "Userid",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "trips",
+            "label": "Trips",
+            "icon": "📁",
+            "entity": "trips"
+        },
+        {
+            "id": "bookings",
+            "label": "Bookings",
+            "icon": "📁",
+            "entity": "bookings"
+        },
+        {
+            "id": "payments",
+            "label": "Payments",
+            "icon": "📁",
+            "entity": "payments"
+        },
+        {
+            "id": "bus",
+            "label": "Bus",
+            "icon": "📁",
+            "entity": "buses"
+        },
+        {
+            "id": "booking",
+            "label": "Booking",
+            "icon": "📁",
+            "entity": "bookings"
+        },
+        {
+            "id": "user",
+            "label": "User",
+            "icon": "📁",
+            "entity": "user"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-14T10:28:44+01:00"
+}

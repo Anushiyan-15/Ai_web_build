@@ -953,8 +953,8 @@ body.builder-focus .resume-banner { top: 12px; }
 .magic-header-actions { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
 .magic-icon-btn { width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent; color: #64748b; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; font-family: inherit; line-height: 1; }
 .magic-icon-btn:hover { background: #1a2338; color: #fff; }
-.puter-model-row { display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.85rem; background: #080c14; border-bottom: 1px solid #162032; font-size: 0.7rem; gap: 0.5rem; flex-shrink: 0; }
-.puter-model-select { background: #111726; border: 1px solid #283347; color: #e2e8f0; border-radius: 6px; font-size: 0.7rem; padding: 0.2rem 0.45rem; font-family: inherit; outline: none; }
+.ai-model-row { display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.85rem; background: #080c14; border-bottom: 1px solid #162032; font-size: 0.7rem; gap: 0.5rem; flex-shrink: 0; }
+.ai-model-dropdown { background: #111726; border: 1px solid #283347; color: #e2e8f0; border-radius: 6px; font-size: 0.7rem; padding: 0.2rem 0.45rem; font-family: inherit; outline: none; }
 .magic-chat-log { flex: 1; overflow-y: auto; padding: 1rem 0.9rem 1.1rem; display: flex; flex-direction: column; gap: 0.9rem; scroll-behavior: smooth; background: radial-gradient(120% 60% at 50% 0%, rgba(79,70,229,0.06), transparent 60%); }
 .magic-chat-log::-webkit-scrollbar { width: 6px; }
 .magic-chat-log::-webkit-scrollbar-thumb { background: #243049; border-radius: 999px; }
@@ -1106,6 +1106,7 @@ body.builder-focus .resume-banner { top: 12px; }
       <span class="gen-hud-badge">✦ DEEP ANALYSIS · 3 VARIATIONS</span>
       <span class="gen-clock" id="gen-clock" title="Elapsed generation time"><span class="gc-face"><i class="gc-h"></i><i class="gc-m"></i><i class="gc-s"></i><b class="gc-pin"></b></span></span>
       <span class="gen-hud-mono" id="gen-hud-time">0.0s</span>
+      <span class="gen-hud-mono" id="gen-hud-eta" title="Estimated time remaining" style="color:#6ee7b7;">~90s left</span>
     </div>
   </div>
 
@@ -1158,6 +1159,26 @@ body.builder-focus .resume-banner { top: 12px; }
   <!-- Main Content & Progress -->
   <div class="gen-overlay-content">
     <div class="gen-overlay-title">✦ AI-FlowCraft Neural Design Engine</div>
+
+    <!-- Robot AI assistant (theme-aware, honors current Dark/Light/Custom) -->
+    <div class="wc-robot" aria-hidden="true">
+      <div class="wc-robot-bot"><span style="display:flex;flex-direction:column;align-items:center;line-height:1"><span>🤖</span><span class="wc-robot-eyes"><i></i><i></i></span></span></div>
+      <div class="wc-robot-meta">
+        <div class="wc-robot-name">Crafty <span style="font-size:.64rem;font-weight:700;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.5);color:#34d399;padding:.1rem .5rem;border-radius:999px">AI ASSISTANT</span></div>
+        <div class="wc-robot-status"><span class="live">● LIVE</span> · analyzing your brief &amp; building</div>
+      </div>
+    </div>
+
+    <!-- Honest 7-stage generation rail (driven by real onProgress events) -->
+    <div class="wc-stages" id="wc-stages" aria-label="Generation stages">
+      <span class="wc-stage" data-wc="0"><span class="n">1</span>Analyzing requirements</span>
+      <span class="wc-stage" data-wc="1"><span class="n">2</span>Business type</span>
+      <span class="wc-stage" data-wc="2"><span class="n">3</span>Planning structure</span>
+      <span class="wc-stage" data-wc="3"><span class="n">4</span>Designing layout</span>
+      <span class="wc-stage" data-wc="4"><span class="n">5</span>Generating components</span>
+      <span class="wc-stage" data-wc="5"><span class="n">6</span>Connecting functionality</span>
+      <span class="wc-stage" data-wc="6"><span class="n">7</span>Finalizing website</span>
+    </div>
     
     <!-- Live Requirements Analysis Pill Bar -->
     <div class="gen-analysis-brief" id="gen-analysis-brief" style="display:flex; flex-wrap:wrap; justify-content:center; gap:0.45rem; margin:0.35rem 0 0.85rem; width:min(540px, 92vw);">
@@ -1183,6 +1204,8 @@ body.builder-focus .resume-banner { top: 12px; }
     <div class="gen-overlay-track">
       <div class="gen-overlay-fill" id="gen-overlay-fill"></div>
     </div>
+    <div id="gen-eta-line" style="font-family:'Fira Code',monospace;font-size:0.72rem;font-weight:700;color:#6ee7b7;margin-bottom:0.6rem;min-height:1.1em;">⏳ Estimated ~90s · MAX tokens · building full project…</div>
+    <div class="wc-err" id="wc-gen-err" role="alert"></div>
 
     <!-- AI insight ticker: single-line, always visible even in compact mode -->
     <div class="gen-ai-ticker" id="gen-ai-ticker" aria-live="polite"><span class="tk-orb"></span><span class="tk-tx" id="gen-ai-ticker-tx">AI analyzing business DNA…</span><span class="tk-conf" id="gen-ai-ticker-conf">…</span></div>
@@ -1293,6 +1316,39 @@ body.builder-focus .resume-banner { top: 12px; }
     <div class="wizard-body">
       <!-- STEP 1 -->
       <div class="wizard-step active" id="step1">
+        <!-- ★ AI Business Brief: natural-language description → Understand my
+             business → Steps 1–3 auto-configured (industry, design hints,
+             sections). Everything stays editable; nothing invented. -->
+        <div class="w-group" style="background:#0d1424;border:1.5px solid rgba(99,102,241,0.4);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.1rem;">
+          <label class="w-label" for="biz_brief">🧠 AI Business Brief <span style="font-weight:400;color:#94a3b8;">(describe your business in your own words)</span></label>
+          <textarea class="w-textarea" id="biz_brief" rows="3" placeholder="e.g. City Express — daily bus service from Chennai to Bangalore with online seat booking, QR tickets and counter payment"></textarea>
+          <div style="display:flex;gap:.6rem;align-items:center;margin-top:.6rem;flex-wrap:wrap;">
+            <button type="button" class="wbtn wbtn-primary" id="btn-understand-biz" onclick="understandMyBusiness()" style="font-size:.82rem;padding:.55rem 1.1rem;">✨ Understand my business</button>
+            <button type="button" class="wbtn wbtn-ghost" id="btn-prompt-helper" onclick="openPromptGenerator()" title="Unga vaarthaila sollunga — atha sariyaana prompt ah maathi tharum" style="font-size:.82rem;padding:.55rem 1.1rem;">💡 Prompt Helper</button>
+            <button type="button" class="wbtn wbtn-ghost" id="btn-brandkit-open" onclick="try{window.openBrandKit&&window.openBrandKit()}catch(e){}" style="font-size:.82rem;padding:.55rem 1.1rem;">🎨 Brand Kit</button>
+            <span id="biz-brief-result" style="font-size:.78rem;color:#94a3b8;"></span>
+          </div>
+        </div>
+        <script>
+        /* Single-brief guard (inline, cache-proof): the canonical #biz_brief
+           box above is the ONLY brief UI. If a stale cached script injects a
+           second launcher, remove it — on load and on late DOM inserts. */
+        (function () {
+          function killDup() {
+            try {
+              if (document.getElementById('biz_brief')) {
+                document.querySelectorAll('#wc-brief-launcher').forEach(function (n) { n.remove(); });
+              }
+            } catch (e) {}
+          }
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', killDup);
+          else killDup();
+          setTimeout(killDup, 1500);
+          try {
+            new MutationObserver(killDup).observe(document.documentElement, { childList: true, subtree: true });
+          } catch (e) {}
+        })();
+        </script>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.1rem; flex-wrap:wrap; gap:0.6rem; background:#0e1320; padding:0.65rem 0.9rem; border-radius:10px; border:1px solid #1e293b;">
           <div>
             <div class="wiz-section-label" style="margin-bottom:0; font-size:0.78rem;"><?= ui_t('b_step1') ?></div>
@@ -1304,6 +1360,9 @@ body.builder-focus .resume-banner { top: 12px; }
             </button>
             <button type="button" class="btn btn-ghost btn-sm" onclick="fillDemoData('agency')" style="background:#1e1b4b; border:1px solid #6366f1; color:#c7d2fe; font-size:0.75rem; font-weight:700; padding:0.4rem 0.8rem; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem;" title="Fill with sample agency business data">
               🎯 Agency Demo
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="fillDemoData('bus')" style="background:#082f49; border:1px solid #0284c7; color:#e0f2fe; font-size:0.75rem; font-weight:700; padding:0.4rem 0.8rem; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem;" title="Fill with bus booking demo — seat booking + QR ticket + backend connected">
+              🚌 Bus Demo
             </button>
             <div class="dropdown" style="position:relative; display:inline-block;">
               <button type="button" class="btn btn-ghost btn-sm" onclick="toggleDemoPresetsMenu(event)" style="background:#111827; border:1px solid #374151; color:#cbd5e1; font-size:0.75rem; font-weight:700; padding:0.4rem 0.65rem; border-radius:8px; cursor:pointer;" title="More demo presets">
@@ -1325,6 +1384,9 @@ body.builder-focus .resume-banner { top: 12px; }
                 <button type="button" onclick="fillDemoData('gym')" style="width:100%; text-align:left; background:transparent; border:none; padding:0.5rem 0.85rem; color:#e2e8f0; font-size:0.75rem; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:0.4rem;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
                   🏋️ Fitness Gym
                 </button>
+                <button type="button" onclick="fillDemoData('bus')" style="width:100%; text-align:left; background:transparent; border:none; padding:0.5rem 0.85rem; color:#e2e8f0; font-size:0.75rem; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:0.4rem;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+                  🚌 Bus Booking
+                </button>
               </div>
             </div>
             <button type="button" class="btn btn-ghost btn-sm" onclick="clearWizardForm()" style="background:#111827; border:1px solid #374151; color:#9ca3af; font-size:0.75rem; font-weight:600; padding:0.4rem 0.65rem; border-radius:8px; cursor:pointer;" title="Clear all fields">
@@ -1340,7 +1402,7 @@ body.builder-focus .resume-banner { top: 12px; }
           <div class="w-group">
             <label class="w-label" for="biz_type"><?= ui_t('b_biz_type') ?> <span class="req">*</span></label>
             <select class="w-select" id="biz_type">
-              <?php $inds = ['Creative & Digital Agency','Restaurant, Cafe & Bar','Tech Startup & SaaS','Professional Services & Legal','Healthcare & Wellness Clinic','Real Estate & Architecture','Fitness Center & Personal Trainer','E-Commerce & Retail','Consultant / Advisor','Coach (Life / Business)','Therapist / Counselor','Tradesperson (Plumber / Electrician / Handyman)','Cleaning Service','Tutor / Trainer','Personal Portfolio & Creator','School / College / Education','Other']; ?>
+              <?php $inds = ['Creative & Digital Agency','Restaurant, Cafe & Bar','Tech Startup & SaaS','Professional Services & Legal','Healthcare & Wellness Clinic','Real Estate & Architecture','Fitness Center & Personal Trainer','E-Commerce & Retail','Consultant / Advisor','Coach (Life / Business)','Therapist / Counselor','Tradesperson (Plumber / Electrician / Handyman)','Cleaning Service','Tutor / Trainer','Personal Portfolio & Creator','School / College / Education','Bus, Transport & Travel','Salon & Beauty','Hotel & Hospitality','Travel & Tours','Events & Entertainment','Rental & Hire','Automotive & Repairs','Other']; ?>
               <?php foreach ($inds as $ii => $iv): ?>
                 <option value="<?= htmlspecialchars($iv) ?>"><?= ui_t('b_ind' . $ii) ?></option>
               <?php endforeach; ?>
@@ -1434,6 +1496,19 @@ body.builder-focus .resume-banner { top: 12px; }
             <label class="wcheck"><input type="checkbox" name="sections[]" value="shop"><span><?= ui_t('b_sec_shop') ?></span></label>
             <label class="wcheck"><input type="checkbox" name="sections[]" value="contact" checked><span><?= ui_t('b_sec_contact') ?></span></label>
             <label class="wcheck"><input type="checkbox" name="sections[]" value="footer" checked><span><?= ui_t('b_sec_footer') ?></span></label>
+            <label class="wcheck"><input type="checkbox" name="sections[]" value="gallery" id="sec-gallery" onchange="toggleGallerySubject()"><span><?= ui_t('b_sec_gallery') ?></span></label>
+          </div>
+          <div id="gallery-subject-row" style="display:none;margin-top:.6rem;background:#0d1424;border:1.5px dashed rgba(99,102,241,0.45);border-radius:10px;padding:.7rem .85rem;">
+            <label class="w-label" for="gallery_subject" style="font-size:.78rem;">What should the gallery show? <span class="req">*</span></label>
+            <input class="w-input" type="text" id="gallery_subject" placeholder="e.g. photos of our buses and fleet" style="margin-top:.35rem;">
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem;">
+              <button type="button" class="admin-preset-btn" onclick="setGallerySubject('photos of our buses and fleet')">🚌 Buses &amp; fleet</button>
+              <button type="button" class="admin-preset-btn" onclick="setGallerySubject('photos of our food dishes and restaurant')">🍽️ Food &amp; dishes</button>
+              <button type="button" class="admin-preset-btn" onclick="setGallerySubject('photos of our hotel rooms and property')">🏨 Rooms &amp; property</button>
+              <button type="button" class="admin-preset-btn" onclick="setGallerySubject('photos of our products')">🛍️ Products</button>
+              <button type="button" class="admin-preset-btn" onclick="setGallerySubject('photos of our events and recent work')">🎉 Events &amp; work</button>
+              <button type="button" class="admin-preset-btn" onclick="setGallerySubject('photos of our team at work')">👥 Team</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1505,18 +1580,41 @@ body.builder-focus .resume-banner { top: 12px; }
   </div>
 </div>
 
-<!-- ═══ DESIGNS SCREEN ═══ -->
-<div id="designs-screen">
-  <div class="designs-header">
-    <div class="designs-badge">✦ 3 Style Variations</div>
-    <h1 id="designs-title">Choose Your Style Variation</h1>
-    <p id="designs-sub">All 3 use your exact content and design direction — only the layout differs.</p>
-    <div style="display:flex;gap:0.6rem;justify-content:center;margin-top:0.9rem;flex-wrap:wrap;">
-      <button class="wbtn wbtn-ghost" onclick="backToWizard()" style="font-size:0.82rem;padding:0.5rem 1.1rem;border-radius:10px;">← Back</button>
-      <button class="wbtn wbtn-ghost" onclick="goToVariations()" style="font-size:0.82rem;padding:0.5rem 1.1rem;border-radius:10px;">Open Variations Page ↗</button>
+<!-- ═══ PROMPT HELPER MODAL — unga vaarthaila sollunga, sariyaana prompt ah maathi tharum.
+     Tamil / Tanglish / English OK. Offline-safe: ellaam browser la nadakkum. -->
+<div class="modal-overlay" id="promptgen-modal">
+  <div class="modal-box" style="max-width:620px;height:auto;max-height:90vh;overflow-y:auto;">
+    <div class="modal-bar">
+      <div style="font-weight:800;color:#fff;font-size:1rem;">💡 Prompt Helper</div>
+      <button type="button" class="wbtn wbtn-ghost" onclick="closePromptGenerator()">✕ Close</button>
+    </div>
+    <div style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:.8rem;">
+      <p style="font-size:.84rem;color:#94a3b8;line-height:1.55;">Unga business pathi <strong style="color:#c7d2fe">unga vaarthaila</strong> ezhuthunga (Tamil, Tanglish, English — ethuvaanalum seri). AI atha sariyaana business prompt ah maathi, <strong style="color:#c7d2fe">Understand box la podum</strong> — aprom Understand click panna AI wizard ah fill pannum.</p>
+      <textarea class="w-textarea" id="promptgen-input" rows="4" placeholder="e.g. enakk oru bus service iruku, Chennai to Bangalore daily trips, seat booking um QR ticket um venum"></textarea>
+      <div style="display:flex;gap:.45rem;flex-wrap:wrap;">
+        <button type="button" class="admin-preset-btn" onclick="document.getElementById('promptgen-input').value='enakk oru bus service iruku Chennai to Bangalore daily, seat booking QR ticket counter payment venum';">🚌 Bus example</button>
+        <button type="button" class="admin-preset-btn" onclick="document.getElementById('promptgen-input').value='My business is a small bakery in Jaffna. We sell cakes and buns. Target: families and students. Modern warm site with WhatsApp contact.';">🍰 Shop example</button>
+        <button type="button" class="admin-preset-btn" onclick="document.getElementById('promptgen-input').value='enakku oru beauty salon iruku, haircut facial bridal service, appointment booking venum, premium look';">💅 Salon example</button>
+      </div>
+      <button type="button" class="wbtn wbtn-primary" onclick="makePromptFromWords()" style="align-self:flex-start;">✨ Make my prompt</button>
+      <label class="w-label" for="promptgen-output">Ready prompt (check panni Use pannunga)</label>
+      <textarea class="w-textarea" id="promptgen-output" rows="4" readonly placeholder="Inga ready prompt varum…"></textarea>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button type="button" class="wbtn wbtn-ghost" onclick="useGeneratedPrompt(false)">📋 Use this prompt</button>
+        <button type="button" class="wbtn wbtn-generate" onclick="useGeneratedPrompt(true)" style="font-size:.85rem;padding:.65rem 1.2rem;">🚀 Use &amp; Understand</button>
+      </div>
     </div>
   </div>
-  <div class="designs-grid" id="designs-grid"></div>
+</div>
+
+<!-- ═══ DESIGNS SCREEN ═══ -->
+<div id="designs-screen" style="display:none !important;" aria-hidden="true">
+  <!-- DEPRECATED: concepts picker lives ONLY on variations.php now.
+       Direct flow: wizard → generate → variations.php (no in-builder step).
+       Kept as hidden stub so legacy getElementById('designs-screen') calls stay null-safe. -->
+  <div class="designs-grid" id="designs-grid" style="display:none;"></div>
+  <div id="designs-title" style="display:none;"></div>
+  <div id="designs-sub" style="display:none;"></div>
 </div>
 
 <!-- ═══ SUB-DESIGN PICKER SCREEN ═══ -->
@@ -1584,8 +1682,52 @@ body.builder-focus .resume-banner { top: 12px; }
           style="flex:1;min-width:180px;max-width:520px;background:#050810;border:1px solid #1e293b;border-radius:7px;padding:.3rem .75rem;color:#67e8f9;font-family:monospace;font-size:.73rem;outline:none;cursor:text;">
         <button onclick="copyAdminUrlBar()" id="copy-admin-url-btn" style="padding:.3rem .75rem;background:#1e3a5f;border:1px solid #1e4a6f;border-radius:7px;color:#93c5fd;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#x1F4CB; Copy URL</button>
         <a id="admin-url-open-btn" href="#" target="_blank" style="padding:.3rem .75rem;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:7px;color:#fff;font-size:.72rem;font-weight:700;text-decoration:none;white-space:nowrap;">&#x2197; Open Admin Login</a>
+        <button onclick="previewOpenSite()" id="btn-preview-site" style="display:none;padding:.3rem .75rem;background:#065f46;border:1px solid #10b981;border-radius:7px;color:#a7f3d0;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#x1F9EA; Live test site</button>
+        <button onclick="previewOpenTab()" id="btn-preview-open" style="display:none;padding:.3rem .75rem;background:#065f46;border:1px solid #10b981;border-radius:7px;color:#a7f3d0;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#x2197; Preview Website</button>
+        <button onclick="openPreviewChecklist()" id="btn-preview-checklist" style="display:none;padding:.3rem .75rem;background:#1e1b4b;border:1px solid #6366f1;border-radius:7px;color:#c7d2fe;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">✅ Checklist</button>
+        <button onclick="previewRebuild()" id="btn-preview-rebuild" style="display:none;padding:.3rem .75rem;background:#1e3a5f;border:1px solid #1e4a6f;border-radius:7px;color:#93c5fd;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#x21BB; Rebuild</button>
+        <button onclick="previewResetPass()" id="btn-preview-pass" style="display:none;padding:.3rem .75rem;background:#1e3a5f;border:1px solid #1e4a6f;border-radius:7px;color:#93c5fd;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#x1F511; Password</button>
+        <button onclick="openCredsModal()" id="btn-creds" title="View / generate the admin username & password used at publish" style="padding:.3rem .75rem;background:#1e1b4b;border:1px solid #6366f1;border-radius:7px;color:#c7d2fe;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#x1F511; Credentials</button>
+        <span id="admin-creds-hint" style="display:none;font-size:.7rem;color:#6ee7b7;font-weight:600;"></span>
+        <span id="preview-readiness" style="display:none;font-size:.7rem;font-weight:800;"></span>
         <span style="font-size:.7rem;color:#475569;font-weight:600;">Login, then edit your site freely</span>
       </div>
+<!-- ═══ WORKSPACE CREDENTIALS MODAL — admin username/password used at publish.
+     Always visible here (unlike the one-time publish display). Changing it
+     later is possible anytime in Website Manager. -->
+<div id="creds-modal" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeCredsModal()">
+  <div style="background:#111622;border:1.5px solid #283347;border-radius:18px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;background:#0d121c;border-bottom:1px solid #1e293b;">
+      <strong style="color:#fff;font-size:.95rem;">🔑 Website Admin Login</strong>
+      <button onclick="closeCredsModal()" style="background:none;border:none;color:#64748b;font-size:1.3rem;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;">
+      <p style="font-size:.78rem;color:#94a3b8;line-height:1.55;margin:0;">This login is created at <strong style="color:#c7d2fe">publish</strong>. You can change it later anytime in <strong style="color:#c7d2fe">Website Manager</strong>.</p>
+      <div>
+        <label style="display:block;font-size:.72rem;font-weight:700;color:#cbd5e1;margin-bottom:.3rem;">Admin Username</label>
+        <div style="display:flex;gap:.45rem;">
+          <input id="creds-user" type="text" autocomplete="off" placeholder="e.g. site_admin"
+            style="flex:1;min-width:0;padding:.55rem .8rem;border:1.5px solid #283347;border-radius:9px;background:#0b0f17;color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
+          <button onclick="copyCredField('creds-user',this)" style="padding:.55rem .8rem;border-radius:9px;border:1.5px solid #334155;background:#0b0f17;color:#cbd5e1;font-weight:700;cursor:pointer;font-size:.78rem;">Copy</button>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:.72rem;font-weight:700;color:#cbd5e1;margin-bottom:.3rem;">Admin Password</label>
+        <div style="display:flex;gap:.45rem;">
+          <input id="creds-pass" type="password" autocomplete="new-password" placeholder="Min 8 characters"
+            style="flex:1;min-width:0;padding:.55rem .8rem;border:1.5px solid #283347;border-radius:9px;background:#0b0f17;color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
+          <button onclick="toggleCredPassField(this)" title="Show/Hide" style="padding:.55rem .7rem;border-radius:9px;border:1.5px solid #334155;background:#0b0f17;color:#cbd5e1;font-weight:700;cursor:pointer;font-size:.78rem;">👁️</button>
+          <button onclick="copyCredField('creds-pass',this)" style="padding:.55rem .8rem;border-radius:9px;border:1.5px solid #334155;background:#0b0f17;color:#cbd5e1;font-weight:700;cursor:pointer;font-size:.78rem;">Copy</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button onclick="wcGenCredPass()" style="padding:.55rem 1rem;border-radius:9px;border:1.5px solid #6366f1;background:#1e1b4b;color:#c7d2fe;font-weight:700;cursor:pointer;font-size:.8rem;font-family:inherit;">🎲 Generate strong password</button>
+        <button onclick="saveCredsModal()" style="padding:.55rem 1.2rem;border-radius:9px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;cursor:pointer;font-size:.82rem;font-family:inherit;">✓ Save</button>
+      </div>
+      <div id="creds-msg" style="font-size:.78rem;font-weight:600;min-height:1.2em;"></div>
+    </div>
+  </div>
+</div>
       <div class="preview-container" id="preview-container">
         <iframe id="live-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation-by-user-activation allow-modals allow-popups allow-downloads"></iframe>
         <div class="pv-frame-spin" id="live-frame-spin" style="display:none;"><div class="wcl-mini-house"><div class="walls"></div><div class="roof"></div><div class="door"></div></div></div>
@@ -1615,10 +1757,10 @@ body.builder-focus .resume-banner { top: 12px; }
     </div>
   </div>
 
-  <div class="puter-model-row">
+  <div class="ai-model-row">
     <div style="display:flex; align-items:center; gap:0.4rem; width:100%;">
       <span style="color:#818cf8; font-weight:700; flex-shrink:0;" title="AI model for chat edits">✦ Model:</span>
-      <select class="puter-model-select" id="ai-model-select" onchange="changeAiModel(this.value)" style="flex:1; min-width:0;">
+      <select class="ai-model-dropdown" id="ai-model-select" onchange="changeAiModel(this.value)" style="flex:1; min-width:0;">
         <option value="gemini-3.5-flash-lite" selected>✦ Gemini Flash Lite (Fast · Default)</option>
         <option value="gemini-2.5-flash">✦ Gemini 2.5 Flash</option>
         <option value="gemini-2.5-pro">✦ Gemini 2.5 Pro (Deep Reasoning)</option>
@@ -1628,10 +1770,10 @@ body.builder-focus .resume-banner { top: 12px; }
     </div>
   </div>
 
-  <div class="puter-model-row">
+  <div class="ai-model-row">
     <div style="display:flex; align-items:center; gap:0.4rem; width:100%;">
       <span style="color:#10b981; font-weight:700;" title="AI edits apply to this website">🎯 Editing:</span>
-      <select class="puter-model-select" id="ai-target-select" onchange="setAiTargetVariation(this.value)" style="flex:1; min-width:0;">
+      <select class="ai-model-dropdown" id="ai-target-select" onchange="setAiTargetVariation(this.value)" style="flex:1; min-width:0;">
         <option value="0">Variation 1</option>
       </select>
     </div>
@@ -1720,28 +1862,35 @@ body.builder-focus .resume-banner { top: 12px; }
         <button type="button" class="wbtn wbtn-ghost" onclick="closeGenerateModal()">✕ Close</button>
       </div>
     </div>
-    <div class="mode-grid">
-      <button class="gen-mode-card selected" data-mode="static" onclick="pickGenerateMode('static', this)">
-        <span class="gm-badge">Simplest</span>
-        <span class="gm-icon">📄</span>
-        <h3>Static</h3>
-        <p>HTML / CSS / JS only.<br>No backend, no admin, no DB.</p>
-        <div class="gm-foot">▸ 3 style variations</div>
-      </button>
-      <button class="gen-mode-card" data-mode="admin" onclick="pickGenerateMode('admin', this)">
-        <span class="gm-badge">With CMS</span>
-        <span class="gm-icon">🛠️</span>
-        <h3>Admin</h3>
-        <p>Site + AI-written admin panel.<br>JSON storage — no database.</p>
-        <div class="gm-foot">▸ 3 style variations</div>
-      </button>
-      <button class="gen-mode-card" data-mode="database" onclick="pickGenerateMode('database', this)">
-        <span class="gm-badge">Full Stack</span>
-        <span class="gm-icon">🗄️</span>
-        <h3>Admin + Database</h3>
-        <p>Site + AI admin + MySQL.<br>Full CRUD, session auth.</p>
-        <div class="gm-foot">▸ 3 style variations</div>
-      </button>
+    <div class="mode-grid" id="biz-auto-panel">
+      <div class="gen-mode-card selected" data-mode="auto" style="grid-column:1/-1;cursor:default;text-align:left;">
+        <span class="gm-badge">Auto · Business-aware</span>
+        <span class="gm-icon">🧠</span>
+        <h3 id="biz-auto-title">Analyzing your business…</h3>
+        <p id="biz-auto-desc">We detect pages, features, admin needs and database automatically. No technical choice needed.</p>
+        <div class="gm-foot" id="biz-auto-foot">▸ 3 design variations · Gemini gemini-3.5-flash-lite</div>
+      </div>
+    </div>
+    <div id="biz-spec-box" style="margin:0 1.5rem 1rem;padding:0.9rem 1rem;background:#0b0f17;border:1px solid #1e293b;border-radius:10px;font-size:0.8rem;color:#94a3b8;line-height:1.6;">Analyzing…</div>
+
+    <!-- ═══ BLUEPRINT: interview + review + approve (additive) ═══ -->
+    <div id="bp-section" style="margin:0 1.5rem 1rem;padding:1rem 1.1rem;background:#0d1424;border:1.5px solid rgba(99,102,241,0.4);border-radius:12px;">
+      <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.7rem;">
+        <div style="font-weight:800;color:#fff;font-size:0.92rem;">📋 Business Blueprint</div>
+        <div style="font-size:0.72rem;color:#94a3b8;">Review before generation — the approved spec drives every step.</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:0.3rem;">
+          <button type="button" id="bp-mode-quick" class="admin-preset-btn" onclick="bpSetMode('quick')">Quick</button>
+          <button type="button" id="bp-mode-full" class="admin-preset-btn" onclick="bpSetMode('full')">Detailed</button>
+        </div>
+      </div>
+      <div id="bp-interview" style="margin-bottom:0.8rem;"></div>
+      <div id="bp-complete" style="margin-bottom:0.8rem;"></div>
+      <div id="bp-review" style="font-size:0.8rem;color:#cbd5e1;line-height:1.6;"></div>
+      <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.8rem;flex-wrap:wrap;">
+        <button type="button" class="wbtn wbtn-primary" id="bp-approve-btn" onclick="bpApprove()" style="font-size:0.82rem;">✓ Approve blueprint</button>
+        <span id="bp-status" style="font-size:0.76rem;color:#94a3b8;"></span>
+      </div>
     </div>
 
     <!-- ═══ ADMIN REQUIREMENTS (only shown when admin/database picked) ═══ -->
@@ -1776,6 +1925,8 @@ Be specific about fields you need!"></textarea>
           <button type="button" class="admin-preset-btn" onclick="fillAdminPreset('gym')">💪 Gym</button>
           <button type="button" class="admin-preset-btn" onclick="fillAdminPreset('shop')">🛒 Shop</button>
           <button type="button" class="admin-preset-btn" onclick="fillAdminPreset('realestate')">🏠 Real Estate</button>
+          <button type="button" class="admin-preset-btn" onclick="fillAdminPreset('bus')">🚌 Bus Booking</button>
+          <button type="button" class="admin-preset-btn" id="btn-admin-autofill" onclick="autoFillAdminFromBusiness()" title="Detect your business type and fill this automatically">✨ Auto-fill from my business</button>
         </div>
       </div>
 
@@ -1969,6 +2120,8 @@ Be specific about fields you need!"></textarea>
 
 <script src="<?= SITE_URL ?>/assets/js/ai-flowcraft.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/opencode-service.js"></script>
+<script src="<?= SITE_URL ?>/assets/js/biz-intelligence.js"></script>
+<script src="<?= SITE_URL ?>/assets/js/generation-router.js"></script>
 <!-- Loader3D JS comes from includes/nav.php (guarded against double-include) -->
 <script>
 window.__CUSTOMER__ = <?= json_encode($customerUser ?: null) ?>;
@@ -2028,7 +2181,13 @@ Manage customers (name, phone, email, address)
 Manage categories (name, description)`,
   realestate: `Manage properties (title, type Apartment/Villa/Plot/Commercial, price, location, area sqft, description, photo)
 Manage inquiries (name, phone, property, message)
-Manage agents (name, phone, email, specialization)`
+Manage agents (name, phone, email, specialization)`,
+  bus: `Manage buses (plate no, capacity, seat layout, status active/maintenance)
+Manage routes (origin, destination, distance km, base fare)
+Manage trips (route, date, departure, fare, total seats)
+Manage bookings (trip, seats, passenger, phone, status held/awaiting_payment/confirmed/cancelled)
+Manage payments (booking ref, method counter/online, amount, status pending/completed/refunded)
+Collect customer enquiries (name, phone, message)`
 };
 
 window.__PRELOADED_PROJECT__ = <?= json_encode($preloadedProject) ?>;
@@ -2133,20 +2292,26 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   } catch (e) {}
   // ★ variations.php handoff params (?wizard=1 → wizard screen only;
-  // ?layouts=N → restore session then auto-open the 3 layouts of concept N)
+  // ?layouts=N → restore session then auto-open the 3 layouts of concept N;
+  // ?step=1 → force back to FIRST stage, never stuck mid-wizard)
   let wizardOnly = false;
   let layoutsQs = -1;
+  let forceStep = 0;
   try {
     const qs2 = new URLSearchParams(window.location.search);
     if (qs2.get('wizard') === '1') wizardOnly = true;
     const ql = parseInt(qs2.get('layouts') || '-1', 10);
     if (!isNaN(ql) && ql >= 0 && ql <= 2) layoutsQs = ql;
+    const st = parseInt(qs2.get('step') || '0', 10);
+    if (!isNaN(st) && st >= 1 && st <= 4) forceStep = st;
   } catch (e) {}
   if (wizardOnly) {
     setTimeout(hideResumeLoader, 400);
     await refreshAccountUI();
+    if (forceStep >= 1) { try { currentWizStep = forceStep; } catch (e) {} }
     updateWizDisplay();
     try { updateGenerateButton(); } catch (e) {}
+    try { if (forceStep >= 1) saveSessionNow(); } catch (e) {}
     return;
   }
   if (resumeQs) {
@@ -2184,7 +2349,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       description: 'Loaded project ' + (p.order_id || p.slug),
       badge: 'Active Project',
       html: p.html,
-      adminHtml: preWantsAdmin ? buildInteractiveAdminPreview(p.biz_name) : null,
+      adminHtml: null,
       history: []
     }];
     generatedConcepts = generatedDesigns;
@@ -2337,6 +2502,12 @@ function collectWizardSnapshot() {
     biz_x:            document.getElementById('biz_x')?.value.trim() || '',
     biz_youtube:      document.getElementById('biz_youtube')?.value.trim() || '',
     admin_requirements: document.getElementById('admin_requirements')?.value.trim() || '',
+    biz_brief: document.getElementById('biz_brief')?.value.trim() || '',
+    gallery_subject: (() => {
+      const on = document.getElementById('sec-gallery')?.checked;
+      const v = document.getElementById('gallery_subject')?.value.trim() || '';
+      return on ? v : '';
+    })(),
     taste: (typeof collectTastePrefs === 'function' ? collectTastePrefs() : { vibe: 'auto', variance: 0, motion: 0, density: 0 }),
     sections
   };
@@ -2396,18 +2567,50 @@ function saveSessionNow() {
     if (document.getElementById('builder-screen')?.style.display === 'flex') stage = 'builder';
     else if (document.getElementById('designs-screen')?.style.display === 'block') stage = 'designs';
 
+    // ★ Preserve publish linkage: once publish.php records slug/adminUrl for
+    // this project, autosaves must carry it forward (Studio resolves the
+    // REAL per-project admin from it instead of a mock preview).
+    let keepPublished = null;
+    let keepPreview = null;
+    try {
+      const prev = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (prev && prev.published && prev.published.adminUrl) keepPublished = prev.published;
+      if (prev && prev.preview && prev.preview.id && prev.preview.adminUrl) keepPreview = prev.preview;
+    } catch (e) {}
+
     const payload = {
       version: 3,
       savedAt: Date.now(),
       stage,
       wizard: collectWizardSnapshot(),
       selectedGenMode,
+      bizSpec: (typeof window.__bizSpec !== 'undefined' ? window.__bizSpec : (__bizSpec || null)),
+      routeMeta: (typeof window.__routeMeta !== 'undefined' ? window.__routeMeta : null),
+      // Blueprint interview progress + approved canonical spec (additive;
+      // never stores credentials — interview never asks for passwords).
+      blueprint: (typeof window.__blueprint !== 'undefined' && window.__blueprint.spec) ? {
+        mode: window.__blueprint.mode, answers: window.__blueprint.answers,
+        skipped: window.__blueprint.skipped, approved: !!window.__blueprint.approved,
+        spec: window.__blueprint.spec,
+        architecture: window.__blueprint.architecture || null,
+        completeness: window.__blueprint.completeness || null,
+      } : null,
+      // Post-generation verification report (additive).
+      verifyReport: (typeof window.__verifyReport !== 'undefined' ? window.__verifyReport : null),
+      // ★ Admin credentials typed in the generate modal travel to publish,
+      // which pre-fills them (same convention as the stored SMTP password).
+      // Publish still validates + allows editing before creating the login.
+      adminUsername: ((document.getElementById('admin_custom_user')?.value || '').trim().toLowerCase()
+        || (window.__pendingAdminCreds?.user || '')),
+      adminPassword: (document.getElementById('admin_custom_pass')?.value || (window.__pendingAdminCreds?.pass || '')),
       currentWizStep,
       bizName: document.getElementById('biz_name')?.value.trim() || 'Website',
       concepts: slimConceptsForSave(generatedConcepts, generatedDesigns),
       designs: generatedDesigns,
       activeDesignIndex,
-      currentViewMode
+      currentViewMode,
+      published: keepPublished,
+      preview: keepPreview
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
     __lastSessionSeen = payload.savedAt;
@@ -2483,6 +2686,14 @@ function tryRestoreSession() {
     set('biz_x', w.biz_x);
     set('biz_youtube', w.biz_youtube);
     set('admin_requirements', w.admin_requirements);
+    set('gallery_subject', w.gallery_subject);
+    try {
+      const gcb = document.getElementById('sec-gallery');
+      const grow = document.getElementById('gallery-subject-row');
+      const on = Array.isArray(w.sections) && w.sections.includes('gallery');
+      if (gcb) gcb.checked = on;
+      if (grow) grow.style.display = on ? '' : 'none';
+    } catch (e) {}
 
     if (w.design_style) {
       const r = document.querySelector(`input[name="design_style"][value="${w.design_style}"]`);
@@ -2512,6 +2723,23 @@ function tryRestoreSession() {
 
   if (saved.selectedGenMode) selectedGenMode = saved.selectedGenMode;
   if (saved.currentWizStep)  currentWizStep  = saved.currentWizStep;
+  // Restore blueprint interview progress + approved spec (additive).
+  try {
+    if (saved.blueprint && saved.blueprint.spec) {
+      window.__blueprint = {
+        mode: saved.blueprint.mode || 'quick',
+        answers: saved.blueprint.answers || {},
+        skipped: saved.blueprint.skipped || {},
+        spec: saved.blueprint.spec,
+        questions: [], completeness: saved.blueprint.completeness || null,
+        architecture: saved.blueprint.architecture || null,
+        approved: !!saved.blueprint.approved,
+      };
+      bpNormalize(saved.blueprint.spec);
+    }
+    if (saved.verifyReport) window.__verifyReport = saved.verifyReport;
+    if (saved.routeMeta) window.__routeMeta = saved.routeMeta;
+  } catch (e) {}
 
   if (!hasConcepts && !hasDesigns) {
     updateWizDisplay();
@@ -2531,8 +2759,10 @@ function tryRestoreSession() {
   }
 
   if (hasConcepts) {
-    display3Designs(generatedConcepts, saved.bizName || 'Your Website');
-    showResumeBanner('Resumed — 3 variations ready to preview');
+    // ★ Direct flow: concepts picker lives ONLY on variations.php.
+    // No in-builder intermediate screen — go straight there.
+    try { saveSessionNow(); } catch (e) {}
+    window.location.href = ((typeof SITE_URL !== 'undefined' && SITE_URL) ? SITE_URL : '') + '/variations.php';
     return true;
   }
 
@@ -2571,12 +2801,7 @@ function restoreIntoWorkspace() {
     if (openBtn)    { openBtn.href = targetUrl; openBtn.style.opacity = ''; openBtn.style.pointerEvents = ''; }
     if (addFnBtn)   { addFnBtn.style.display = ''; }
 
-    if (pub && pub.adminUrl) {
-      const f = document.getElementById('live-iframe');
-      if (f) { f.src = pub.adminUrl; f.removeAttribute('srcdoc'); }
-    } else {
-      updateLiveIframe(buildInteractiveAdminPreview(bizName));
-    }
+    loadWorkspaceAdmin();
   } else {
     currentHtml = c.html;
     updateLiveIframe(currentHtml);
@@ -2686,6 +2911,15 @@ const DEMO_PRESETS = {
     services: '1-on-1 Personal Training, HIIT Sessions, Custom Nutrition Coaching, Strength Zone',
     style: 'bold',
     color: 'green'
+  },
+  bus: {
+    name: 'City Express Travels',
+    type: 'Bus, Transport & Travel',
+    tagline: 'Daily bus service from Chennai to Bangalore with online seat booking, QR tickets and counter payment.',
+    audience: 'Daily commuters, office goers, students and weekend travellers on the Chennai-Bangalore route.',
+    services: 'Daily Chennai-Bangalore trips, Online seat booking with 15-min hold, QR ticket at boarding, Counter + online payment, Easy cancellation',
+    style: 'modern',
+    color: 'blue'
   }
 };
 
@@ -2709,6 +2943,22 @@ function fillDemoData(presetKey = 'agency') {
     if (c) c.checked = true;
   }
 
+  // ★ Bus demo = booking business: frontend booking form + backend admin stay
+  // connected. Shop section OFF (trips are catalog, not cart), contact ON,
+  // and bus admin preset pre-filled so generate builds bookings + QR ticket.
+  if (presetKey === 'bus') {
+    try {
+      const shopCb = document.querySelector('input[name="sections[]"][value="shop"]');
+      if (shopCb) shopCb.checked = false;
+      const contactCb = document.querySelector('input[name="sections[]"][value="contact"]');
+      if (contactCb) contactCb.checked = true;
+      const ar = document.getElementById('admin_requirements');
+      if (ar && !String(ar.value || '').trim() && typeof ADMIN_PRESETS !== 'undefined' && ADMIN_PRESETS.bus) {
+        ar.value = ADMIN_PRESETS.bus;
+      }
+    } catch (e) {}
+  }
+
   const menu = document.getElementById('demo-presets-menu');
   if (menu) menu.style.display = 'none';
 
@@ -2725,6 +2975,16 @@ function clearWizardForm() {
   set('biz_services');
   set('biz_products');
   set('biz_reviews');
+  set('biz_brief');
+  set('gallery_subject');
+  try {
+    const gcb = document.getElementById('sec-gallery');
+    if (gcb) gcb.checked = false;
+    const grow = document.getElementById('gallery-subject-row');
+    if (grow) grow.style.display = 'none';
+  } catch (e) {}
+  const out = document.getElementById('biz-brief-result');
+  if (out) out.textContent = '';
   const bizInp = document.getElementById('biz_name');
   if (bizInp) bizInp.focus();
   const menu = document.getElementById('demo-presets-menu');
@@ -2791,7 +3051,7 @@ function updateGenerateButton() {
 }
 
 /* ══════════════════════════════════════════════════
-   PUTER AUTH (Preserved for AI Editing / Co-Pilot)
+   ACCOUNT UI (local session — no third-party auth)
 ═════════════════════════════════════════════════ */
 async function refreshAccountUI() {
   const av = document.getElementById('account-avatar');
@@ -2848,6 +3108,291 @@ function closeStepByStepGuide() {
 /* ══════════════════════════════════════════════════
    GENERATE MODAL
 ═════════════════════════════════════════════════ */
+let __bizSpec = null;
+async function refreshBizSpec() {
+  const box = document.getElementById('biz-spec-box');
+  const title = document.getElementById('biz-auto-title');
+  const desc = document.getElementById('biz-auto-desc');
+  try {
+    if (box) box.textContent = 'Analyzing business…';
+    const data = collectWizardSnapshot();
+    // Universal Intelligence Engine (canonical spec) with legacy fallback
+    let j = null;
+    try {
+      const r = await fetch((typeof SITE_URL !== 'undefined' && SITE_URL ? SITE_URL : '') + '/api/biz-intelligence.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'analyze', data })
+      });
+      j = await r.json();
+    } catch (e) { j = null; }
+    if (!j || !j.success) {
+      const r2 = await fetch((typeof SITE_URL !== 'undefined' && SITE_URL ? SITE_URL : '') + '/api/business.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'analyze', data })
+      });
+      const j2 = await r2.json();
+      if (j2 && j2.success) {
+        // Wrap legacy shape into compat spec
+        j = { success: true, spec: { profile: { business_name: data.biz_name, domain: j2.spec.business_type }, capabilities: [], compat: j2.spec, uncertainty: { unresolved: j2.spec.follow_up || [] } }, summary: j2.summary };
+      }
+    }
+    if (j && j.success && j.spec) {
+      __bizSpec = j.spec;
+      const compat = j.spec.compat || j.spec;
+      selectedGenMode = compat.gen_mode || 'static';
+      window.__bizSpec = __bizSpec;
+      window.__bizCanonical = j.spec;
+      // Complexity + routing preview (same decide path as generation)
+      try {
+        const rr = await fetch((typeof SITE_URL !== 'undefined' && SITE_URL ? SITE_URL : '') + '/api/generate-route.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'assess', spec: j.spec })
+        });
+        const rj = await rr.json();
+        if (rj && rj.success && rj.route) {
+          window.__routePreview = rj.route;
+          const foot = document.getElementById('biz-auto-foot');
+          if (foot) foot.textContent = '▸ ' + rj.route.complexity + ' project · ' + rj.route.variations + ' variation(s) · ' + rj.route.primary + '-first';
+        }
+      } catch (e) {}
+      try { saveSessionNow(); } catch (e) {}
+      const dom = (j.spec.profile || {}).domain || compat.business_type || 'business';
+      if (title) title.textContent = 'Detected: ' + dom;
+      if (desc) desc.textContent = 'Capabilities: ' + ((j.spec.capabilities || []).join(', ') || 'landing + contact');
+      if (box) {
+        const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+        const unres = ((j.spec.uncertainty || {}).unresolved || []).join(' ');
+        box.innerHTML = '<strong style="color:#a5b4fc;">' + esc(j.summary || '') + '</strong>'
+          + (unres ? '<br>Needs decision: ' + esc(unres) : '');
+      }
+      updateAdminReqSection();
+      return __bizSpec;
+    }
+  } catch (e) { console.warn('[biz] analyze failed', e?.message); }
+  if (box) box.textContent = 'Auto plan unavailable — will generate a complete site with safe defaults.';
+  return null;
+}
+/* ══════════════════════════════════════════════════
+   BLUEPRINT: adaptive interview + review + approve (additive).
+   Approved canonical spec is the single source of truth; legacy
+   __bizSpec is normalized from it so all existing consumers work.
+   ═════════════════════════════════════════════════ */
+window.__blueprint = window.__blueprint || { mode: 'quick', answers: {}, skipped: {}, spec: null, questions: [], completeness: null, architecture: null, approved: false };
+function bpEsc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+// ★ Single-quote JS string for inline onclick="..." attributes.
+// JSON.stringify emits double quotes which would terminate the HTML attribute
+// early (onclick="bpAnswer("key","v")" → dead buttons). bpQ('a\'b') → 'a\'b'.
+// Double quotes become \x22 so even hostile ids can't break the attribute.
+function bpQ(s) { return "'" + String(s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\x22') + "'"; }
+function bpSetMode(m) {
+  window.__blueprint.mode = (m === 'full') ? 'full' : 'quick';
+  try { saveSessionNow(); } catch (e) {}
+  bpRender();
+}
+function bpNormalize(spec) {
+  // Legacy consumers read top-level gen_mode/needs_admin/etc.
+  const compat = (spec && spec.compat) || {};
+  const flat = Object.assign({}, compat, { canonical: spec });
+  __bizSpec = flat;
+  window.__bizSpec = flat;
+  window.__bizCanonical = spec;
+  return flat;
+}
+async function bpPost(action, extra) {
+  const data = collectWizardSnapshot();
+  const bp = window.__blueprint;
+  const r = await fetch((typeof SITE_URL !== 'undefined' && SITE_URL ? SITE_URL : '') + '/api/biz-intelligence.php', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ action, data, description: '', answers: bp.answers, skipped: bp.skipped }, extra || {}))
+  });
+  return r.json();
+}
+async function refreshBlueprint() {
+  const bp = window.__blueprint;
+  const box = document.getElementById('bp-review');
+  if (box) box.innerHTML = '<span style="color:#94a3b8;">Building blueprint…</span>';
+  try {
+    const j = await bpPost('blueprint', {});
+    if (j && j.success && j.spec) {
+      bp.spec = j.spec;
+      bp.questions = j.questions || [];
+      bp.completeness = j.completeness || null;
+      bp.architecture = j.architecture || null;
+      bp.approved = false;
+      bpNormalize(j.spec);
+      try { saveSessionNow(); } catch (e) {}
+      bpRender();
+      return true;
+    }
+  } catch (e) { console.warn('[blueprint]', e?.message); }
+  if (box) box.innerHTML = '<span style="color:#94a3b8;">Blueprint unavailable — legacy auto analysis still applies.</span>';
+  return false;
+}
+async function bpAnswer(key, val, btn) {
+  window.__blueprint.answers[key] = val;
+  // ★ Instant select feedback — no typing needed; option click IS the answer.
+  try {
+    if (btn && btn.parentElement) {
+      btn.parentElement.querySelectorAll('button').forEach(b => { b.style.borderColor = ''; b.style.background = ''; });
+      btn.style.borderColor = '#10b981'; btn.style.background = 'rgba(16,185,129,0.15)';
+    }
+  } catch (e) {}
+  await bpRebuild('Answer saved.');
+}
+async function bpCustom(key) {
+  const el = document.getElementById('bp-custom-' + key);
+  const v = (el?.value || '').trim();
+  if (!v) { showToast('Type a custom answer first (or Skip)'); return; }
+  await bpAnswer(key, v);
+}
+async function bpSkip(key) {
+  window.__blueprint.skipped[key] = true;
+  await bpRebuild('Skipped — assumption labeled.');
+}
+async function bpRebuild(note) {
+  try {
+    // ★ Single round-trip: the 'answer' action already returns the rebuilt
+    // spec + questions + completeness + architecture. A second 'blueprint'
+    // call was redundant and doubled the failure surface (stale UI on error).
+    const j = await bpPost('answer', {});
+    if (j && j.success && j.spec) {
+      const bp = window.__blueprint;
+      bp.spec = j.spec; bp.questions = j.questions || [];
+      bp.completeness = j.completeness || null; bp.architecture = j.architecture || null;
+      bp.approved = false;
+      bpNormalize(j.spec);
+      try { saveSessionNow(); } catch (e) {}
+      bpRender();
+      if (note) showToast(note);
+    } else showToast('Could not save answer: ' + (((j && j.error) || (j && (j.issues || []).join('; ')) || 'unknown')));
+  } catch (e) { showToast('Could not update blueprint — retry (' + (e && e.message ? e.message : 'network') + ')'); }
+}
+async function bpVerdict(id, verdict, btn) {
+  let text = null, order = null;
+  if (verdict === 'edited') {
+    // ★ Prefill with the current description so Edit is one tap, not retyping.
+    let cur = '';
+    try {
+      const r = (window.__blueprint.spec.requirements || []).find(x => x.id === id);
+      if (r) cur = r.description || '';
+    } catch (e) {}
+    text = prompt('Edit this requirement:', cur);
+    if (text === null) return;
+    if (!text.trim()) { showToast('Empty edit ignored'); return; }
+  }
+  if (btn) { try { btn.disabled = true; } catch (e) {} }
+  try {
+    const r = await fetch((typeof SITE_URL !== 'undefined' && SITE_URL ? SITE_URL : '') + '/api/biz-intelligence.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verdict', spec: window.__blueprint.spec, id, verdict, text, order })
+    });
+    const j = await r.json();
+    if (j && j.success && j.spec) {
+      window.__blueprint.spec = j.spec;
+      window.__blueprint.approved = false;
+      bpNormalize(j.spec);
+      try { saveSessionNow(); } catch (e) {}
+      bpRender();
+      showToast('Requirement ' + verdict);
+    } else showToast('Verdict rejected: ' + ((j && j.error) || 'unknown'));
+  } catch (e) { showToast('Verdict failed — retry (' + (e && e.message ? e.message : 'network') + ')'); }
+  finally { if (btn) { try { btn.disabled = false; } catch (e) {} } }
+}
+// ★ Explicit global exposure so dynamically-rendered onclick handlers always resolve.
+try { window.bpAnswer = bpAnswer; window.bpCustom = bpCustom; window.bpSkip = bpSkip; window.bpVerdict = bpVerdict; window.bpRebuild = bpRebuild; window.bpApprove = bpApprove; window.bpSetMode = bpSetMode; } catch (e) {}
+function bpApprove() {
+  const bp = window.__blueprint;
+  if (!bp.spec) { showToast('Blueprint still building — wait a moment'); return; }
+  const blocking = (bp.completeness && bp.completeness.blocking) || [];
+  if (blocking.length) { showToast('⚠️ Resolve first: ' + blocking[0]); return; }
+  bp.approved = true;
+  try { saveSessionNow(); } catch (e) {}
+  bpRender();
+  showToast('✓ Blueprint approved — generation will follow it exactly');
+}
+function bpClassBadge(c) {
+  const m = { confirmed: ['✓ confirmed', '#10b981'], recommended: ['☆ recommended', '#f59e0b'], inferred: ['◌ inferred', '#818cf8'], needs_confirmation: ['? needs confirmation', '#f43f5e'], future: ['○ future', '#64748b'] };
+  const x = m[c] || m.inferred;
+  return '<span style="font-size:0.66rem;font-weight:800;color:' + x[1] + ';border:1px solid ' + x[1] + ';border-radius:999px;padding:0.08rem 0.45rem;white-space:nowrap;">' + x[0] + '</span>';
+}
+function bpRender() {
+  const bp = window.__blueprint;
+  const qBox = document.getElementById('bp-interview');
+  const cBox = document.getElementById('bp-complete');
+  const rBox = document.getElementById('bp-review');
+  const st = document.getElementById('bp-status');
+  if (!qBox || !rBox) return;
+  // Interview questions
+  if (bp.questions && bp.questions.length) {
+    qBox.innerHTML = '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin-bottom:0.4rem;">❓ Quick questions (' + bp.questions.length + ')</div>' + bp.questions.map(q => {
+      const opts = (q.options || []).map(o => '<button type="button" class="admin-preset-btn" onclick="bpAnswer(' + bpQ(q.key) + ',' + bpQ(o.v) + ',this)">' + bpEsc(o.label) + '</button>').join('');
+      return '<div style="background:#0b0f17;border:1px solid #1e293b;border-radius:10px;padding:0.6rem 0.75rem;margin-bottom:0.45rem;">'
+        + '<div style="font-size:0.8rem;color:#fff;font-weight:700;">' + bpEsc(q.q) + (q.critical ? ' <span style="color:#f43f5e;font-size:0.68rem;">REQUIRED</span>' : '') + (q.gate ? ' <span style="color:#f59e0b;font-size:0.68rem;">CONFIRM</span>' : '') + '</div>'
+        + '<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem;">' + opts + '</div>'
+        + '<div style="display:flex;gap:0.35rem;margin-top:0.4rem;"><input id="bp-custom-' + bpEsc(q.key) + '" class="w-input" style="font-size:0.78rem;padding:0.4rem 0.6rem;" placeholder="Custom answer… (optional — tapping an option above is enough)">'
+        + '<button type="button" class="admin-preset-btn" onclick="bpCustom(' + bpQ(q.key) + ')">Send</button>'
+        + (q.skippable === false ? '' : '<button type="button" class="admin-preset-btn" onclick="bpSkip(' + bpQ(q.key) + ')">Skip</button>') + '</div></div>';
+    }).join('');
+  } else {
+    qBox.innerHTML = '<div style="font-size:0.78rem;color:#34d399;">✓ No open questions — interview complete.</div>';
+  }
+  // Completeness (real score from actual checks)
+  if (bp.completeness) {
+    const c = bp.completeness;
+    const bar = '<div style="height:7px;background:#1e293b;border-radius:99px;overflow:hidden;margin:0.3rem 0 0.45rem;"><div style="height:100%;width:' + c.score + '%;background:linear-gradient(90deg,#6366f1,#10b981);"></div></div>';
+    const rows = (c.checks || []).map(k => '<div style="font-size:0.74rem;color:' + (k.pass ? '#6ee7b7' : (k.critical ? '#fca5a5' : '#fcd34d')) + ';">' + (k.pass ? '✓' : '○') + ' ' + bpEsc(k.label) + ' <span style="color:#64748b;">— ' + bpEsc(k.detail) + '</span></div>').join('');
+    cBox.innerHTML = '<div style="font-weight:800;color:#fff;font-size:0.82rem;">Completeness: ' + c.score + '% (from ' + (c.checks || []).length + ' checks)</div>' + bar
+      + (c.blocking && c.blocking.length ? '<div style="font-size:0.76rem;color:#fca5a5;font-weight:700;">⛔ ' + bpEsc(c.blocking.join(' · ')) + '</div>' : '<div style="font-size:0.76rem;color:#6ee7b7;">✓ Safe to generate (assumptions documented).</div>')
+      + '<details style="margin-top:0.3rem;"><summary style="cursor:pointer;font-size:0.74rem;color:#94a3b8;">Check details</summary>' + rows + '</details>';
+  } else cBox.innerHTML = '';
+  // Review
+  const s = bp.spec;
+  if (!s) { rBox.innerHTML = ''; }
+  else {
+    const full = bp.mode === 'full';
+    const reqs = [...(s.requirements || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const must = reqs.filter(r => r.priority === 'must' && r.approval !== 'rejected');
+    const rest = reqs.filter(r => r.priority !== 'must' && r.approval !== 'rejected');
+    const rej = reqs.filter(r => r.approval === 'rejected');
+    const reqRow = (r) => '<div style="background:#0b0f17;border:1px solid #1e293b;border-radius:8px;padding:0.45rem 0.6rem;margin-bottom:0.35rem;">'
+      + '<div style="font-size:0.78rem;color:#e2e8f0;">' + bpEsc(r.description) + '</div>'
+      + '<div style="display:flex;gap:0.35rem;align-items:center;margin-top:0.3rem;flex-wrap:wrap;">' + bpClassBadge(r.class)
+      + '<span style="font-size:0.66rem;color:#64748b;">conf ' + Number(r.confidence ?? 0).toFixed(2) + (r.reason ? ' · ' + bpEsc(r.reason).slice(0, 90) : '') + '</span>'
+      + '<span style="flex:1"></span>'
+      + '<button type="button" class="admin-preset-btn" style="font-size:0.66rem;padding:0.15rem 0.5rem;" onclick="bpVerdict(' + bpQ(r.id) + ',' + bpQ('accepted') + ',this)">Accept</button>'
+      + '<button type="button" class="admin-preset-btn" style="font-size:0.66rem;padding:0.15rem 0.5rem;" onclick="bpVerdict(' + bpQ(r.id) + ',' + bpQ('edited') + ',this)">Edit</button>'
+      + '<button type="button" class="admin-preset-btn" style="font-size:0.66rem;padding:0.15rem 0.5rem;" onclick="bpVerdict(' + bpQ(r.id) + ',' + bpQ('rejected') + ',this)">Reject</button></div></div>';
+    const p = s.profile || {};
+    let h = '<div style="font-weight:800;color:#fff;">' + bpEsc(p.business_name || 'Business') + ' <span style="color:#818cf8;font-weight:600;">· ' + bpEsc(p.domain || '') + '</span></div>';
+    h += '<div style="font-size:0.76rem;color:#94a3b8;margin-bottom:0.5rem;">' + bpEsc(p.description || '').slice(0, 220) + '</div>';
+    h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.5rem 0 0.3rem;">Must-have (' + must.length + ')</div>' + (must.map(reqRow).join('') || '<div style="font-size:0.76rem;color:#64748b;">None</div>');
+    if (full || rest.length) h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.5rem 0 0.3rem;">Recommended &amp; optional (' + rest.length + ')</div>' + (rest.map(reqRow).join('') || '');
+    if (rej.length) h += '<details style="margin-top:0.3rem;"><summary style="cursor:pointer;font-size:0.74rem;color:#64748b;">Rejected (' + rej.length + ') — kept for audit</summary>' + rej.map(r => '<div style="font-size:0.74rem;color:#64748b;">✕ ' + bpEsc(r.description) + '</div>').join('') + '</details>';
+    const wfs = (s.workflows || []).map(w => '<div style="font-size:0.76rem;color:#cbd5e1;">▸ <strong>' + bpEsc(w.name || w.key) + '</strong>: ' + bpEsc((w.steps || []).join(' → ')).slice(0, 160) + '</div>').join('');
+    h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Workflows</div>' + (wfs || '<div style="font-size:0.76rem;color:#64748b;">—</div>');
+    const mods = ((s.compat || {}).admin_modules || []).map(m => '<span class="admin-preset-btn" style="cursor:default;">' + bpEsc(m) + '</span>').join('');
+    h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Admin modules</div><div style="display:flex;gap:0.35rem;flex-wrap:wrap;">' + (mods || '<span style="font-size:0.76rem;color:#64748b;">None needed</span>') + '</div>';
+    h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Data model</div><div style="font-size:0.76rem;color:#94a3b8;">' + (s.entities || []).map(e => bpEsc((e.label || e.name) + ' (' + (e.fields || []).length + ' fields)')).join(' · ') + '</div>';
+    const wz = collectWizardSnapshot();
+    h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Design</div><div style="font-size:0.76rem;color:#94a3b8;">' + bpEsc((wz.design_style || 'modern') + ' · ' + (wz.color_palette || 'purple') + (wz.biz_logo ? ' · logo supplied ✓' : ' · no logo (text brand, placeholders marked)')) + '</div>';
+    const un = s.uncertainty || {};
+    const asm = (un.assumptions || []).concat((un.unresolved || []).map(u => 'Unresolved: ' + u));
+    if (asm.length) h += '<div style="font-weight:800;color:#fcd34d;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Assumptions &amp; open items</div>' + asm.map(a => '<div style="font-size:0.74rem;color:#fcd34d;">• ' + bpEsc(a) + '</div>').join('');
+    if (full) {
+      h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Actors &amp; access</div><div style="font-size:0.74rem;color:#94a3b8;">' + (s.actors || []).map(a => { const o = (a && typeof a === 'object') ? a : null; const acts = (o && Array.isArray(o.actions)) ? o.actions.join(', ') : ''; return bpEsc((o ? (o.role || '') : String(a ?? '')) + (acts ? ': ' + acts : '')); }).join('<br>') + '</div>';
+      h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Backend</div><div style="font-size:0.74rem;color:#94a3b8;">APIs: ' + ((s.backend || {}).apis || []).length + ' · tables: ' + ((s.backend || {}).tables || []).length + ' · transactions: ' + (((s.backend || {}).transactions || []).join('; ') || '—') + '</div>';
+      h += '<div style="font-weight:800;color:#fff;font-size:0.82rem;margin:0.6rem 0 0.3rem;">Capabilities</div><div style="font-size:0.74rem;color:#94a3b8;">' + bpEsc((s.capabilities || []).join(', ')) + '</div>';
+    }
+    if (bp.architecture) h += '<div style="margin-top:0.6rem;padding:0.6rem 0.75rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.35);border-radius:10px;font-size:0.78rem;color:#a7f3d0;"><strong>Recommended: ' + bpEsc(bp.architecture.mode) + '</strong> — ' + bpEsc(bp.architecture.why) + '</div>';
+    rBox.innerHTML = h;
+  }
+  if (st) st.textContent = bp.approved ? '✓ Approved — generation follows this spec' : (bp.spec ? 'Review, answer questions, then approve' : '');
+  const ab = document.getElementById('bp-approve-btn');
+  if (ab) ab.style.opacity = bp.approved ? '0.6' : '1';
+  const qm = document.getElementById('bp-mode-quick'), fm = document.getElementById('bp-mode-full');
+  if (qm) qm.style.borderColor = bp.mode === 'quick' ? '#10b981' : '';
+  if (fm) fm.style.borderColor = bp.mode === 'full' ? '#10b981' : '';
+}
 function openGenerateModal() {
   if (!window.__CUSTOMER__ || !window.__CUSTOMER__.email) {
     showToast('Please sign in / create account first');
@@ -2856,10 +3401,9 @@ function openGenerateModal() {
   }
   const acc = document.getElementById('gen-modal-account');
   if (acc) acc.textContent = '';
-  document.querySelectorAll('#generate-modal .gen-mode-card').forEach(c => c.classList.toggle('selected', c.dataset.mode === selectedGenMode));
-  document.getElementById('gen-modal-mode-label').textContent = labelFor(selectedGenMode);
-  updateAdminReqSection();
   document.getElementById('generate-modal').classList.add('active');
+  refreshBizSpec();
+  refreshBlueprint();
 }
 function closeGenerateModal() { document.getElementById('generate-modal').classList.remove('active'); }
 function pickGenerateMode(mode, btn) {
@@ -2871,7 +3415,8 @@ function pickGenerateMode(mode, btn) {
 function updateAdminReqSection() {
   const s = document.getElementById('admin-req-section');
   if (!s) return;
-  const needsAdmin = selectedGenMode !== 'static';
+  // Auto mode: admin block only when spec says backend needed; credentials auto-suggested.
+  const needsAdmin = __bizSpec ? !!__bizSpec.needs_admin : (selectedGenMode !== 'static');
   s.classList.toggle('active', needsAdmin);
   if (needsAdmin) suggestWizardCreds();
 }
@@ -2896,18 +3441,33 @@ function fillWizardDemoCreds() {
   if (p) p.value = 'Demo@1234';
   showToast('Demo credentials filled — change them if you like.');
 }
+/* ★ Admin password show/hide (eye toggle wired in the credentials block). */
+function togglePassVisibility(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  if (btn) btn.textContent = show ? '🙈' : '👁️';
+  try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) {} }
+}
+try { window.togglePassVisibility = togglePassVisibility; } catch (e) {}
 function labelFor(mode) { return { static: 'Static', admin: 'Admin Panel + PHP', database: 'Admin + PHP + MySQL' }[mode] || mode; }
 function confirmGenerate() {
+  // Blueprint gate: an existing unapproved blueprint must be approved first;
+  // blocking gaps always stop generation. Legacy path (no blueprint) proceeds.
+  const bp = window.__blueprint;
+  if (bp && bp.spec) {
+    const blocking = (bp.completeness && bp.completeness.blocking) || [];
+    if (blocking.length) { showToast('⛔ ' + blocking[0]); return; }
+    if (!bp.approved) { showToast('📋 Approve the blueprint first (review above)'); return; }
+  }
+  const bpspec = (bp && bp.approved && bp.spec) ? bp.spec : null;
+  const mode = bpspec ? (((bpspec.compat || {}).gen_mode) || selectedGenMode)
+    : ((__bizSpec && __bizSpec.gen_mode) ? __bizSpec.gen_mode : selectedGenMode);
+  selectedGenMode = mode;
   let adminUser = '', adminPass = '';
-  if (selectedGenMode !== 'static') {
-    const req = document.getElementById('admin_requirements')?.value.trim() || '';
-    if (req.length < 20) {
-      showToast('⚠️ Please describe what your admin panel should manage');
-      document.getElementById('admin_requirements')?.focus();
-      return;
-    }
-    // Admin login credentials — asked ONCE here, reused for the admin page
-    // (publish step reuses these automatically, no re-entry needed).
+  if (mode !== 'static') {
+    suggestWizardCreds();
     adminUser = (document.getElementById('admin_custom_user')?.value || '').trim().toLowerCase();
     adminPass = document.getElementById('admin_custom_pass')?.value || '';
     if (!/^[a-z][a-z0-9_]{3,19}$/.test(adminUser)) {
@@ -2927,6 +3487,346 @@ function confirmGenerate() {
   generateWithMode(selectedGenMode);
 }
 
+/* ★ AI Business Brief → Understand my business: analyzes the natural-language
+   brief (+ Step-1 fields) via the universal analyzer and auto-configures
+   Steps 1–3. Only fills what the customer hasn't set; never invents names,
+   prices or credentials. Everything stays editable. */
+const BIZ_BRIEF_INDUSTRY = { bus: 'Bus, Transport & Travel', ecommerce: 'E-Commerce & Retail', restaurant: 'Restaurant, Cafe & Bar',
+  clinic: 'Healthcare & Wellness Clinic', realestate: 'Real Estate & Architecture', salon: 'Salon & Beauty',
+  hotel: 'Hotel & Hospitality', travel: 'Travel & Tours', events: 'Events & Entertainment',
+  rental: 'Rental & Hire', automotive: 'Automotive & Repairs',
+  education: 'School / College / Education', portfolio: 'Personal Portfolio & Creator',
+  agency: 'Creative & Digital Agency', professional: 'Professional Services & Legal' };
+const BIZ_BRIEF_STYLE = { bus: ['trust', 'blue'], clinic: ['trust', 'blue'], restaurant: ['playful', 'red'],
+  salon: ['premium', 'purple'], education: ['editorial', 'green'], ecommerce: ['premium', 'purple'],
+  realestate: ['editorial', 'slate'], travel: ['editorial', 'blue'], events: ['bold', 'purple'],
+  hotel: ['premium', 'slate'], rental: ['trust', 'blue'], automotive: ['bold', 'slate'] };
+/* ★ Pending store: Understand prepares, Apply writes.
+   Wizard is NEVER auto-touched — only applyUnderstoodBusiness() writes. */
+window.__PendingBizApply = null;
+function renderPendingApplyUI(html) {
+  const out = document.getElementById('biz-brief-result');
+  if (!out) return;
+  out.innerHTML = html;
+}
+function escBizHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+async function understandMyBusiness() {
+  const briefEl = document.getElementById('biz_brief');
+  const out = document.getElementById('biz-brief-result');
+  const btn = document.getElementById('btn-understand-biz');
+  const brief = (briefEl?.value || '').trim();
+  if (brief.length < 10) { showToast('⚠️ Describe your business in a line or two first'); briefEl?.focus(); return; }
+  const say = (m) => { if (out) out.textContent = m; };
+  const orig = btn ? btn.textContent : '';
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Understanding…'; }
+    // ★ Step 0 — parse only (no wizard write yet): customer's own words
+    // staged as pending, so the form never auto-changes.
+    const parts = parseBriefToFields(brief);
+    say('Analyzing business type… wizard not changed yet.');
+    let snap = {};
+    try { snap = (typeof collectWizardSnapshot === 'function') ? collectWizardSnapshot() : {}; } catch (e) {}
+    const res = await fetch(SITE_URL + '/api/business-analyzer.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'analyze', slug: 'preview', input: {
+        biz_name: snap.biz_name || '', biz_type: snap.biz_type || '', description: brief,
+        services: snap.biz_services || '', products: snap.biz_products || '',
+        audience: snap.biz_audience || '' } })
+    });
+    const j = await res.json();
+    if (!j || !j.success || !j.manifest) throw new Error('empty');
+    const m = j.manifest, cat = (m.business || {}).category || 'generic';
+    // Stage everything — wizard writes happen ONLY in applyUnderstoodBusiness().
+    window.__PendingBizApply = { parts, brief, m, cat };
+    const mods = (m.admin_modules || []).map(x => x.label || x).filter(Boolean);
+    const transactional = ['bus', 'ecommerce', 'restaurant', 'hotel', 'salon', 'clinic', 'realestate', 'education', 'travel', 'events', 'rental', 'automotive', 'subscription'].indexOf(cat) >= 0;
+    const adminVerdict = (transactional && Array.isArray(m.entities) && m.entities.length)
+      ? 'Admin: YES (' + mods.slice(0, 6).join(', ') + ')'
+      : 'Admin: not needed — static site is enough';
+    const would = [];
+    if (parts.biz_name) would.push('name');
+    if (parts.tagline) would.push('tagline');
+    if (parts.audience) would.push('audience');
+    if (parts.services) would.push('services');
+    if (BIZ_BRIEF_INDUSTRY[cat]) would.push('industry');
+    if (BIZ_BRIEF_STYLE[cat]) would.push('style');
+    if (transactional) would.push('contact section');
+    if ((cat === 'ecommerce') || (cat === 'generic' && /shop|store|product|sell|buy|retail/i.test(brief))) would.push('shop section');
+    if (transactional && Array.isArray(m.entities) && m.entities.length) would.push('admin requirements');
+    const label = ((m.business || {}).label || cat);
+    const follow = (m.follow_up || [])[0] || '';
+    renderPendingApplyUI('<span style="color:#c7d2fe;">Detected: ' + escBizHtml(label)
+      + ' · ready to apply: ' + escBizHtml(would.join(', ') || 'review')
+      + ' · ' + escBizHtml(adminVerdict)
+      + (follow ? ' · Q: ' + escBizHtml(follow) : '') + '</span> '
+      + '<button type="button" class="wbtn wbtn-primary" id="btn-apply-biz" onclick="applyUnderstoodBusiness()" style="font-size:.8rem;padding:.45rem 1rem;margin-left:.5rem;">Apply to Builder ✓</button>');
+    showToast('✨ Business understood — click Apply to Builder ✓ to update wizard');
+  } catch (e) {
+    const why = (e && e.message) ? String(e.message).slice(0, 90) : 'network';
+    // Offline fallback: stage Step 0 parse so Apply still fills from words.
+    try { window.__PendingBizApply = { parts: parseBriefToFields(brief), brief, m: null, cat: 'generic', offlineWhy: why }; } catch (e2) {}
+    renderPendingApplyUI('<span style="color:#fbbf24;">Wizard filled from your words (ready) — analysis retry (' + escBizHtml(why) + '). Click to apply Step 0 fields:</span> '
+      + '<button type="button" class="wbtn wbtn-primary" id="btn-apply-biz" onclick="applyUnderstoodBusiness()" style="font-size:.8rem;padding:.45rem 1rem;margin-left:.5rem;">Apply to Builder ✓</button>');
+    showToast('⚠️ Analysis retry pannunga (' + why + ') — Apply click panna parsed fields update aagum');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
+}
+/* ★ Apply step: ONLY place that writes Understand results into the wizard.
+   Fill ONLY empty fields — customer text always wins, nothing invented
+   beyond what the brief itself contains. */
+function applyUnderstoodBusiness() {
+  const p = window.__PendingBizApply;
+  if (!p) { showToast('⚠️ Muthalla Understand click pannunga'); return; }
+  const out = document.getElementById('biz-brief-result');
+  const say = (m) => { if (out) out.textContent = m; };
+  let touched = [];
+  const fillEmpty = (id, v, tag) => {
+    const el = document.getElementById(id);
+    const val = String(v || '').trim();
+    if (el && val && !String(el.value || '').trim()) { el.value = val; touched.push(tag || id); }
+  };
+  const parts = p.parts || {};
+  const brief = p.brief || '';
+  // ★ Step 0 — ALWAYS fills (no network needed): parse the customer's own
+  // words straight into the wizard, so the form never "stays as is".
+  if (parts.biz_name) fillEmpty('biz_name', parts.biz_name, 'name');
+  if (parts.tagline) fillEmpty('biz_tagline', parts.tagline, 'tagline');
+  if (parts.audience) fillEmpty('biz_audience', parts.audience, 'audience');
+  if (parts.services) fillEmpty('biz_services', parts.services, 'services');
+  const m = p.m;
+  if (!m) {
+    try { if (typeof saveSessionNow === 'function') saveSessionNow(); } catch (e) {}
+    say('Wizard filled from your words' + (touched.length ? ': ' + touched.join(', ') : '')
+      + '. Type analysis failed (' + (p.offlineWhy || 'network') + ') — industry/style check panni continue pannunga.');
+    showToast('⚠️ Wizard filled' + (touched.length ? ': ' + touched.join(', ') : '') + ' · analysis retry pannunga (' + (p.offlineWhy || 'network') + ')');
+    window.__PendingBizApply = null;
+    return;
+  }
+  const cat = p.cat || 'generic';
+  // Step 1 — industry: ALWAYS set from analysis (Apply click =
+  // explicit consent). A stale/manual value (e.g. Coach for a bus
+  // business) would otherwise poison generation.
+  const typeSel = document.getElementById('biz_type');
+  const wantInd = BIZ_BRIEF_INDUSTRY[cat] || '';
+  if (typeSel && wantInd) {
+    const curInd = (typeSel.options[typeSel.selectedIndex]?.value || '');
+    if (curInd !== wantInd) {
+      for (let i = 0; i < typeSel.options.length; i++) {
+        if (typeSel.options[i].value === wantInd) { typeSel.selectedIndex = i; touched.push('industry'); break; }
+      }
+    }
+  }
+  // Step 2 — suggested vibe + palette (editable afterwards).
+  const st = BIZ_BRIEF_STYLE[cat];
+  if (st) {
+    const curVibe = document.querySelector('input[name="taste_vibe"]:checked')?.value || 'auto';
+    const vibe = document.querySelector('input[name="taste_vibe"][value="' + st[0] + '"]');
+    if (vibe && curVibe === 'auto') { vibe.checked = true; touched.push('style'); }
+    const pal = document.querySelector('input[name="color_palette"][value="' + st[1] + '"]');
+    if (pal) { pal.checked = true; if (touched.indexOf('style') < 0) touched.push('style'); }
+    try { if (typeof updateTasteRead === 'function') updateTasteRead(); } catch (e) {}
+  }
+  // Step 3 — sections: shop ONLY for real goods sellers (ecommerce winner
+  // or an uncertain/generic brief with explicit shop cues). NEVER for
+  // booking-style businesses: their briefs always mention fares/prices,
+  // and their "products" are trips/routes (catalog, not cart).
+  // Never unchecks the customer's own boxes.
+  const needShop = (cat === 'ecommerce')
+    || (cat === 'generic' && /shop|store|product|sell|buy|retail/i.test(brief));
+  const transactional = ['bus', 'ecommerce', 'restaurant', 'hotel', 'salon', 'clinic', 'realestate', 'education', 'travel', 'events', 'rental', 'automotive', 'subscription'].indexOf(cat) >= 0;
+  if (needShop) {
+    const cb = document.querySelector('input[name="sections[]"][value="shop"]');
+    if (cb && !cb.checked) { cb.checked = true; touched.push('shop section'); }
+  }
+  if (transactional) {
+    const cb = document.querySelector('input[name="sections[]"][value="contact"]');
+    if (cb && !cb.checked) { cb.checked = true; touched.push('contact section'); }
+  }
+  try { if (typeof saveSessionNow === 'function') saveSessionNow(); } catch (e) {}
+  // ★ Admin analysis: does THIS business need an admin page? If yes, which
+  // functions? Pre-fill the Generate-modal admin requirements (only when
+  // empty) from the manifest's real entities — customer edits afterwards.
+  const mods = (m.admin_modules || []).map(x => x.label || x).filter(Boolean);
+  const adminBox = document.getElementById('admin_requirements');
+  let adminVerdict = '';
+  if (transactional && Array.isArray(m.entities) && m.entities.length) {
+    adminVerdict = 'Admin: YES (' + mods.slice(0, 6).join(', ') + ')';
+    if (adminBox && !String(adminBox.value || '').trim()) {
+      const lines = m.entities
+        .filter(e => e && e.id !== 'inquiries')
+        .map(e => '- Manage ' + String(e.name || e.id).toLowerCase() +
+          ' (' + (e.fields || []).map(f => (f && f.label) || f.name || '').filter(Boolean).join(', ') + ')');
+      lines.push('- Collect customer enquiries (name, phone, message)');
+      adminBox.value = lines.join('\n');
+      touched.push('admin requirements');
+    }
+  } else {
+    adminVerdict = 'Admin: not needed — static site is enough';
+  }
+  const follow = (m.follow_up || [])[0] || '';
+  // ★ Still-missing guidance: tell exactly what the brief lacked so the
+  // wizard never looks "untouched" without explanation.
+  const stillMissing = [];
+  if (!document.getElementById('biz_name')?.value.trim()) stillMissing.push('Business Name (brief la peyar illa — type pannunga)');
+  if (!document.getElementById('biz_services')?.value.trim()) stillMissing.push('Services (offerings ah oru line ezhuthunga)');
+  if (!document.getElementById('biz_audience')?.value.trim()) stillMissing.push('Audience');
+  say('Detected: ' + ((m.business || {}).label || cat)
+    + (touched.length ? ' · wizard filled: ' + touched.join(', ') : '')
+    + ' · ' + adminVerdict
+    + (stillMissing.length ? ' · Still needed: ' + stillMissing.join(' | ') : ' · Wizard full ✓')
+    + (follow ? ' · Q: ' + follow : ''));
+  showToast('✨ Business understood' + (touched.length ? ' — set: ' + touched.join(', ') : ' — review Steps 1–3') + ' · ' + adminVerdict);
+  try { if (typeof saveSessionNow === 'function') saveSessionNow(); } catch (e2) {}
+  window.__PendingBizApply = null;
+}
+
+/* ★ Brief field parser: pulls name / tagline / audience / services out of the
+   customer's own words (Tamil / Tanglish / English). Deterministic,
+   offline-safe — only fills EMPTY wizard fields, never overwrites. */
+function parseBriefToFields(brief) {
+  const t = String(brief || '').trim();
+  const out = { biz_name: '', tagline: '', audience: '', services: '' };
+  if (!t) return out;
+  let m = t.match(/^([^—–\n.]{2,50}?)\s*[—–-]\s+([^.]{4,160})/);
+  if (m) {
+    out.biz_name = m[1].trim();
+    out.tagline = m[2].trim().replace(/\s+/g, ' ');
+  } else if ((m = t.match(/(?:my business is|business is|enakku|enakku oru|enakk oru)\s+(?:a|an|oru)?\s*([^.,]{2,60})/i))) {
+    const guess = m[1].trim();
+    // Reject verb-phrases the Tanglish patterns catch ("... iruku/venum"):
+    // a real name is short and never contains those verbs.
+    if (!/^(small|a small|my|our|oru)\b/i.test(guess) && guess.length <= 50
+        && !/\b(iruku|irukku|venum|irukkirathu)\b/i.test(guess) && guess.split(/\s+/).length <= 4) {
+      out.biz_name = guess.charAt(0).toUpperCase() + guess.slice(1);
+    }
+  }
+  if (/^(my business|my company|our business|a small|small|oru business)$/i.test(out.biz_name)) out.biz_name = '';
+  if ((m = t.match(/target\s*:\s*([^.]{3,120})/i))) out.audience = m[1].trim();
+  else if ((m = t.match(/for\s+([a-z][^.]{3,80})\s*$/i))) out.audience = m[1].trim();
+  if ((m = t.match(/(?:we offer|offer|we provide|provide|we sell|sell|services?(?:\s*(?:include|are|:))?|venum|iruku|allow(?:\s+\w+){1,4}\s+to|includ(?:e|ing))\s*[:,]?\s+([^.]{4,220})/i))) {
+    out.services = m[1].trim()
+      .replace(/^(iruku|irukku|venum|irukkirathu)[,\s]+/i, '')
+      .replace(/\s+and\s+/gi, ', ').replace(/,+/g, ',').replace(/\s+/g, ' ');
+  }
+  if (!out.tagline) {
+    const first = t.split(/[.]\s*/)[0] || '';
+    if (first.length > 20 && first.length <= 160 && !/^my business is\s*$/i.test(first)) out.tagline = first.trim();
+  }
+  // Strip markdown the customer pasted (**bold**, __ul__) — wizard fields
+  // must hold clean text, not markup.
+  ['biz_name', 'tagline', 'audience', 'services'].forEach(k => {
+    if (out[k]) out[k] = out[k].replace(/(\*\*|__)/g, '').replace(/\s+/g, ' ').trim();
+  });
+  return out;
+}
+
+/* ★ Prompt Helper: unga vaarthaila irunthu sariyaana business prompt.
+   Opens popup → customer talks freely → "Make my prompt" structures it →
+   "Use" copies to Understand box → AI understands + fills wizard. */
+function openPromptGenerator() {
+  const mo = document.getElementById('promptgen-modal');
+  if (mo) mo.classList.add('active');
+  setTimeout(() => document.getElementById('promptgen-input')?.focus(), 100);
+}
+function closePromptGenerator() {
+  const mo = document.getElementById('promptgen-modal');
+  if (mo) mo.classList.remove('active');
+}
+function promptTypeHint(t) {
+  const s = String(t || '').toLowerCase();
+  const map = [
+    [/bus|seat booking|ticket|trip|transport|travels/i, 'bus service'],
+    [/shop|sell|cake|bakery|store|product/i, 'shop'],
+    [/food|restaurant|biriyani|meals|hotel.*food|catering/i, 'restaurant'],
+    [/hotel|room|stay|lodge/i, 'hotel'],
+    [/salon|haircut|facial|bridal|beauty/i, 'salon'],
+    [/clinic|doctor|dental|patient|hospital/i, 'clinic'],
+    [/school|course|tuition|class|training|academy/i, 'school'],
+    [/tuition|tutor/i, 'tuition centre'],
+    [/gym|fitness|yoga|workout/i, 'fitness studio'],
+    [/real estate|property|plot|house sale/i, 'real estate business'],
+    [/event|wedding|photograph/i, 'event service'],
+    [/repair|plumb|electric/i, 'service business'],
+  ];
+  for (const [re, label] of map) { if (re.test(s)) return label; }
+  return 'local business';
+}
+function buildPromptFromWords(raw) {
+  const t = String(raw || '').trim().replace(/\s+/g, ' ');
+  if (t.length < 5) return '';
+  const parts = parseBriefToFields(t);
+  const sens = [];
+  const typeHint = promptTypeHint(t);
+  if (parts.biz_name) sens.push(parts.biz_name + ' — ' + typeHint + '.');
+  else {
+    const m = t.match(/^(.{10,120}?)(?:\.|$)/);
+    sens.push((m ? m[1].trim() : t.slice(0, 120)) + (/[.]$/.test(m ? m[1] : '') ? '' : '.'));
+  }
+  if (parts.services) {
+    const offerTxt = parts.services.replace(/[.]+$/, '');
+    // Skip when sentence-1 already says it (Tanglish one-liners) — no repeat.
+    if (sens[0].toLowerCase().indexOf(offerTxt.slice(0, 28).toLowerCase()) === -1) sens.push('We offer ' + offerTxt + '.');
+  }
+  else {
+    const m = t.match(/(?:offer|provide|sell|services?|venum|iruku)\s*[:,]?\s+([^.]{4,160})/i);
+    if (m) sens.push('We offer ' + m[1].trim().replace(/^(iruku|irukku|venum|irukkirathu)[,\s]+/i, '').replace(/[.]+$/, '') + '.');
+  }
+  if (parts.audience) sens.push('Target: ' + parts.audience.replace(/[.]+$/, '') + '.');
+  let style = '';
+  if (/premium|luxur|elegant/i.test(t)) style = 'Premium elegant site';
+  else if (/modern/i.test(t)) style = 'Modern clean site';
+  else if (/energetic|bold|vibrant/i.test(t)) style = 'Modern energetic site';
+  else style = 'Modern trusted site';
+  let contact = '';
+  if (/whatsapp/i.test(t)) contact = 'with WhatsApp contact';
+  else if (/phone|call|mobile/i.test(t)) contact = 'with phone contact';
+  else contact = 'with contact form';
+  sens.push(style + ' ' + contact + '.');
+  return sens.join(' ').replace(/\s+/g, ' ').trim();
+}
+function makePromptFromWords() {
+  const inp = document.getElementById('promptgen-input');
+  const out = document.getElementById('promptgen-output');
+  const raw = (inp?.value || '').trim();
+  if (raw.length < 5) { showToast('⚠️ Konjam detail ah ezhuthunga (oru 1-2 line)'); inp?.focus(); return; }
+  const made = buildPromptFromWords(raw);
+  if (out) out.value = made;
+  showToast(made ? '✨ Prompt ready — check panni Use pannunga' : '⚠️ Konjam kooda ezhuthunga');
+}
+function useGeneratedPrompt(andUnderstand) {
+  const out = document.getElementById('promptgen-output');
+  const made = (out?.value || '').trim();
+  if (!made) { showToast('⚠️ Muthalla "Make my prompt" click pannunga'); return; }
+  const brief = document.getElementById('biz_brief');
+  if (brief) brief.value = made;
+  try { if (typeof saveSessionNow === 'function') saveSessionNow(); } catch (e) {}
+  closePromptGenerator();
+  if (andUnderstand) understandMyBusiness();
+  else { showToast('📋 Prompt copied — ippa Understand click pannunga'); document.getElementById('biz_brief')?.focus(); }
+}
+
+/* ★ Gallery opt-in: landing page-ku gallery section venuma? Tick panna
+    enna gallery-nu kekum — answer generation prompt-ku pogum. */
+function toggleGallerySubject() {
+  const cb = document.getElementById('sec-gallery');
+  const row = document.getElementById('gallery-subject-row');
+  if (row) row.style.display = (cb && cb.checked) ? '' : 'none';
+  if (cb && cb.checked) {
+    const inp = document.getElementById('gallery_subject');
+    setTimeout(() => { try { inp && inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
+  }
+  try { if (typeof saveSessionNow === 'function') saveSessionNow(); } catch (e) {}
+}
+function setGallerySubject(t) {
+  const inp = document.getElementById('gallery_subject');
+  if (inp) inp.value = t;
+  try { if (typeof saveSessionNow === 'function') saveSessionNow(); } catch (e) {}
+}
+try { window.toggleGallerySubject = toggleGallerySubject; window.setGallerySubject = setGallerySubject; } catch (e) {}
+
 function fillAdminPreset(key) {
   const t = document.getElementById('admin_requirements');
   if (t && ADMIN_PRESETS[key]) {
@@ -2934,6 +3834,48 @@ function fillAdminPreset(key) {
     t.focus();
     saveSessionNow();
     showToast('✓ Preset loaded — edit as needed');
+  }
+}
+
+// ★ Auto-fill admin requirements from the ACTUAL business (universal
+// analyzer). One click before publish: detects category from Step-1 inputs
+// and writes one "- Manage X (fields…)" line per needed module.
+async function autoFillAdminFromBusiness() {
+  const t = document.getElementById('admin_requirements');
+  const btn = document.getElementById('btn-admin-autofill');
+  if (!t) return;
+  let snap = {};
+  try { snap = (typeof collectWizardSnapshot === 'function') ? collectWizardSnapshot() : {}; } catch (e) {}
+  const orig = btn ? btn.textContent : '';
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Detecting…'; }
+    const res = await fetch(SITE_URL + '/api/business-analyzer.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'analyze', slug: 'preview', input: {
+        biz_name: snap.biz_name || snap.business_name || '',
+        biz_type: snap.biz_type || '',
+        description: snap.biz_tagline || snap.tagline || '',
+        services: snap.biz_services || snap.services || '',
+        products: snap.biz_products || snap.products || '',
+        audience: snap.biz_audience || snap.audience || ''
+      }})
+    });
+    const j = await res.json();
+    const m = j && j.manifest;
+    if (!m || !Array.isArray(m.entities) || !m.entities.length) throw new Error('empty');
+    const lines = m.entities
+      .filter(e => e && e.id !== 'inquiries')
+      .map(e => '- Manage ' + String(e.name || e.id).toLowerCase() +
+        ' (' + (e.fields || []).map(f => (f && f.label) || f.name || '').filter(Boolean).join(', ') + ')');
+    lines.push('- Collect customer enquiries (name, phone, message)');
+    t.value = lines.join('\n');
+    try { saveSessionNow(); } catch (e) {}
+    showToast('✨ Detected: ' + (m.business ? m.business.label : 'business') + ' — edit as needed');
+    t.focus();
+  } catch (e) {
+    showToast('⚠️ Auto-detect failed — pick a preset below');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
   }
 }
 
@@ -3047,7 +3989,29 @@ let _typeTimer = null;
 let _logIdx = 0;
 let _lastLogMsg = '';
 let _startTime = 0;
+let _estTotal = 90; // typical MAX-budget run (s); refined live from progress
 let _currentPct = 0;
+/* ETA: blend baseline 90s with progress-projected total so the
+   countdown stays honest on fast (cached) and slow (MAX tokens) runs. */
+function updateEtaLine() {
+  const etaEl = document.getElementById('gen-hud-eta');
+  const etaLine = document.getElementById('gen-eta-line');
+  if (!etaEl && !etaLine) return;
+  const elapsed = (Date.now() - _startTime) / 1000;
+  const p = Math.max(0, Math.min(99, _currentPct || 0));
+  let remain = Math.max(0, _estTotal - elapsed);
+  if (p > 8) {
+    const projected = elapsed / (p / 100);
+    if (isFinite(projected) && projected > 0 && projected < 600) {
+      remain = Math.max(0, Math.min(projected - elapsed, 300));
+      _estTotal = Math.min(300, Math.max(30, projected * 0.3 + _estTotal * 0.7));
+    }
+  }
+  const r = Math.ceil(remain);
+  const txt = r <= 2 ? 'almost done…' : ('~' + r + 's left');
+  if (etaEl) etaEl.textContent = txt;
+  if (etaLine) etaLine.textContent = '⏳ ' + elapsed.toFixed(0) + 's elapsed · ' + txt + ' · MAX tokens · building full project…';
+}
 /* Live analysis feed — AI narrates its work while generating (built per-business) */
 let GEN_ANALYZE_STEPS = [
   { ic: '🔍', tx: 'Reading business DNA' },
@@ -3245,14 +4209,20 @@ function showGenOverlay(dataOrName) {
 
   // Start HUD stopwatch + creative clock ring (fills over ~150s)
   _startTime = Date.now();
+  _estTotal = 90; // typical MAX-budget 3-variation run (s)
   const clockEl = document.getElementById('gen-clock');
   if (timeEl) timeEl.textContent = '0.0s';
+  const etaEl0 = document.getElementById('gen-hud-eta');
+  if (etaEl0) etaEl0.textContent = '~90s left';
+  const etaLine0 = document.getElementById('gen-eta-line');
+  if (etaLine0) etaLine0.textContent = '⏳ Estimated ~90s · MAX tokens · building full project…';
   if (clockEl) clockEl.style.setProperty('--p', '0');
   clearInterval(_hudTimerInterval);
   _hudTimerInterval = setInterval(() => {
     const elapsed = (Date.now() - _startTime) / 1000;
     if (timeEl) timeEl.textContent = elapsed.toFixed(1) + 's';
     if (clockEl) clockEl.style.setProperty('--p', String(Math.min(100, (elapsed / 150) * 100)));
+    try { updateEtaLine(); } catch (e) {}
   }, 100);
 
   // Start live analysis feed — contextual AI plan built from the real brief
@@ -3320,6 +4290,12 @@ function showGenOverlay(dataOrName) {
 
   // Stone-sculpt loop removed — the home-build scene is pure CSS now.
 
+  // Honest-progress reset: 7-stage rail + creep timer + error cleared.
+  _wcRealDone = false;
+  try { wcPaintStages(5); } catch (e) {}
+  try { var eb = document.getElementById('wc-gen-err'); if (eb) eb.classList.remove('show'); } catch (e2) {}
+  try { var fl = document.getElementById('gen-overlay-fill'); if (fl) fl.style.background = ''; } catch (e3) {}
+  try { wcStartHonestCreep(); } catch (e4) {}
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
@@ -3341,6 +4317,43 @@ function paintWire(n) {
   if (cap) cap.textContent = n >= 3 ? '✓ Website assembled!' : (n > 0 ? `Assembling sections… ${Math.min(n, 3)}/3 live` : 'Assembling sections…');
 }
 
+/* ── Honest 7-stage rail: maps real pct → 7 required stages ── */
+var WC_STAGES = ['Analyzing business requirements', 'Understanding the business type', 'Planning the website structure', 'Designing the website layout', 'Generating website components', 'Connecting required functionality', 'Finalizing the generated website'];
+function wcPaintStages(pct) {
+  var idx = pct < 10 ? 0 : pct < 24 ? 1 : pct < 38 ? 2 : pct < 55 ? 3 : pct < 72 ? 4 : pct < 90 ? 5 : 6;
+  // Illustrative creep never claims completion: cap at stage 6 until success.
+  if (pct < 100 && idx > 5 && !_wcRealDone) idx = 5;
+  document.querySelectorAll('#wc-stages .wc-stage').forEach(function (el) {
+    var s = parseInt(el.getAttribute('data-wc'), 10);
+    el.classList.toggle('done', s < idx);
+    el.classList.toggle('active', s === idx);
+  });
+  var nowT = document.getElementById('gen-now-text');
+  var nowI = document.getElementById('gen-now-ic');
+  if (nowT) nowT.textContent = WC_STAGES[idx];
+  if (nowI) nowI.textContent = ['🔍', '🏢', '🗺️', '🎨', '🧩', '🔌', '✨'][idx] || '🤖';
+}
+var _wcRealDone = false;
+var _wcCreepTimer = null;
+function wcStartHonestCreep() {
+  // Illustrative only: creeps toward 85% max, never 100% before real success.
+  clearInterval(_wcCreepTimer);
+  _wcCreepTimer = setInterval(function () {
+    try {
+      if (_wcRealDone) { clearInterval(_wcCreepTimer); return; }
+      if (typeof _currentPct !== 'number') return;
+      if (_currentPct < 85) {
+        _currentPct = Math.min(85, _currentPct + 1);
+        var fill = document.getElementById('gen-overlay-fill');
+        var pctNum = document.getElementById('gen-pct-num');
+        if (fill) fill.style.width = _currentPct + '%';
+        if (pctNum) pctNum.textContent = String(_currentPct);
+        wcPaintStages(_currentPct);
+      }
+    } catch (e) {}
+  }, 2500);
+}
+
 function updateGenOverlay(stage, message, pct, meta) {
   const fill = document.getElementById('gen-overlay-fill');
   const text = document.getElementById('gen-overlay-text');
@@ -3354,10 +4367,14 @@ function updateGenOverlay(stage, message, pct, meta) {
   if (message) addGenLog('⚡', String(message).slice(0, 90));
 
   if (typeof pct === 'number') {
+    // Honest cap: real events drive progress; illustrative creep capped at 85%.
+    // 100% is only set on actual success in hideGenOverlay(true).
+    if (!_wcRealDone && pct >= 100) pct = 90;
     _currentPct = Math.max(_currentPct, pct);
     if (fill) fill.style.width = _currentPct + '%';
     if (pctNum) pctNum.textContent = String(_currentPct);
     if (_currentPct >= _lastPop + 5) { _lastPop = _currentPct; popPct(); }
+    try { wcPaintStages(_currentPct); } catch (e) {}
     // Build step checklist: 0 analyze · 1-3 variations · 4 finalize
     const stageIdx = _currentPct < 15 ? 0 : _currentPct < 40 ? 1 : _currentPct < 62 ? 2 : _currentPct < 84 ? 3 : 4;
     document.querySelectorAll('#gen-steps .gen-step').forEach(el => {
@@ -3372,6 +4389,7 @@ function updateGenOverlay(stage, message, pct, meta) {
       if (_currentPct >= 32) setPillState('gpill-style', 'locked');
       if (_currentPct >= 80) setPillState('gpill-mode', 'locked');
     } catch (e) {}
+    try { updateEtaLine(); } catch (e) {}
   }
 
   // Light up wireframe sections as variations go live
@@ -3388,17 +4406,24 @@ function updateGenOverlay(stage, message, pct, meta) {
   }
 }
 
-function hideGenOverlay(success) {
+function hideGenOverlay(success, errMsg) {
   clearInterval(_tipInterval);
   clearInterval(_hudTimerInterval);
   clearInterval(_logInterval);
   clearInterval(_typeTimer);
+  try { clearInterval(_wcCreepTimer); } catch (e) {}
+  window.__generating = false;
   const fill = document.getElementById('gen-overlay-fill');
   const pctNum = document.getElementById('gen-pct-num');
   const overlay = document.getElementById('gen-overlay');
   const text = document.getElementById('gen-overlay-text');
+  const errBox = document.getElementById('wc-gen-err');
 
   if (success) {
+    _wcRealDone = true;
+    try { wcPaintStages(100); } catch (e) {}
+    document.querySelectorAll('#wc-stages .wc-stage').forEach(function (el) { el.classList.add('done'); el.classList.remove('active'); });
+    if (errBox) errBox.classList.remove('show');
     paintWire(3);
     try { ['gpill-biz', 'gpill-aud', 'gpill-style', 'gpill-mode'].forEach(id => setPillState(id, 'locked')); } catch (e) {}
     try { addGenInsight('🎉', 'Analysis complete — <b>3 bespoke sites</b> ready', 99); } catch (e) {}
@@ -3420,31 +4445,104 @@ function hideGenOverlay(success) {
     if (pctNum) pctNum.textContent = '100';
     popPct();
     if (text) text.textContent = '✓ 3 variations successfully synthesized!';
+    try {
+      const doneEta = document.getElementById('gen-hud-eta');
+      if (doneEta) doneEta.textContent = 'done ✓';
+      const doneLine = document.getElementById('gen-eta-line');
+      if (doneLine) {
+        const el = ((Date.now() - _startTime) / 1000).toFixed(0);
+        doneLine.textContent = '✓ Done in ' + el + 's · MAX tokens · 3 full projects ready…';
+      }
+    } catch (e) {}
     setTimeout(() => { overlay.classList.remove('active'); document.body.style.overflow = ''; }, 650);
   } else {
     if (fill) { fill.style.background = 'linear-gradient(90deg,#ef4444,#dc2626)'; fill.style.width = '100%'; }
-    setTimeout(() => { overlay.classList.remove('active'); document.body.style.overflow = ''; }, 1100);
+    if (text) text.textContent = '⚠️ Generation failed — nothing was lost. Retry when ready.';
+    if (errBox) {
+      errBox.innerHTML = '⚠️ <span></span> <button type="button" onclick="hideGenOverlayRetry()">Retry generation</button> <button type="button" onclick="hideGenOverlayDismiss()" style="background:transparent;color:var(--wc-overlay-text);border-color:var(--wc-border)">Close</button>';
+      errBox.querySelector('span').textContent = (errMsg || 'The AI service returned an error.') + ' Your inputs are preserved.';
+      errBox.classList.add('show');
+    }
+    // Keep modal visible with theme-consistent error state (existing retry = button above + wizard button).
+    document.body.style.overflow = '';
+    try { clearInterval(_wcCreepTimer); } catch (e) {}
+    return;
   }
 }
+function hideGenOverlayRetry() {
+  var b = document.getElementById('wc-gen-err');
+  if (b) b.classList.remove('show');
+  var o = document.getElementById('gen-overlay');
+  if (o) o.classList.remove('active');
+  document.body.style.overflow = '';
+  try { generateWithMode(selectedGenMode || 'static'); } catch (e) {}
+}
+function hideGenOverlayDismiss() {
+  var b = document.getElementById('wc-gen-err');
+  if (b) b.classList.remove('show');
+  var o = document.getElementById('gen-overlay');
+  if (o) o.classList.remove('active');
+  document.body.style.overflow = '';
+}
+try { window.hideGenOverlayRetry = hideGenOverlayRetry; window.hideGenOverlayDismiss = hideGenOverlayDismiss; } catch (e) {}
 
 async function generateWithMode(mode) {
+  // Prevent accidental duplicate requests; preserve cancel via overlay close.
+  if (window.__generating) { showToast('⏳ Generation already running…'); return; }
+  window.__generating = true;
   if (!window.__CUSTOMER__ || !window.__CUSTOMER__.email) {
+    window.__generating = false;
     showToast('Please sign in / create account first');
     setTimeout(() => { window.location.href = SITE_URL + '/customer-portal.php?view=signup'; }, 900);
     return;
   }
-  if (!window.AIFlowCraft) { showToast('⚠️ Generator not loaded'); return; }
+  if (!window.AIFlowCraft) { window.__generating = false; showToast('⚠️ Generator not loaded'); return; }
   selectedGenMode = mode;
   const data = collectWizardSnapshot();
   if (!data.biz_name || !data.biz_tagline) { showToast('⚠️ Complete Step 1 first'); return; }
-
-  // ★ Shop auto-detect: product list / shop checkbox / shop-type business.
-  // Prefill admin requirements with the shop preset so admin/database modes
-  // manage products + orders out of the box.
+  // Universal builder: attach auto business spec (source of truth for generation).
+  // Approved blueprint (canonical) wins; legacy __bizSpec otherwise.
   try {
-    const isShop = (data.biz_products && data.biz_products.trim())
-      || (data.sections || []).includes('shop')
-      || /shop|store|product|retail|e-?commerce|boutique|mart|trading|enterprise|fashion|jewelry|grocery|bakery|furniture|electronics|pharma/i.test(data.biz_type || '');
+    const approved = (window.__blueprint && window.__blueprint.approved && window.__blueprint.spec) ? window.__blueprint.spec : null;
+    if (approved) {
+      data.blueprint_spec = approved;
+      data.gen_mode = ((approved.compat || {}).gen_mode) || mode;
+      selectedGenMode = data.gen_mode;
+      bpNormalize(approved);
+    } else if (typeof __bizSpec !== 'undefined' && __bizSpec) {
+      data.biz_spec = __bizSpec;
+      data.gen_mode = __bizSpec.gen_mode || mode;
+      selectedGenMode = data.gen_mode;
+    } else if (window.__bizSpec) {
+      data.biz_spec = window.__bizSpec;
+      data.gen_mode = window.__bizSpec.gen_mode || mode;
+      selectedGenMode = data.gen_mode;
+    }
+  } catch (e) {}
+
+  // ★ Shop auto-detect: explicit shop section, shop-type industry, or product
+  // list on a NON-booking business. Booking-style industries (bus, hotel,
+  // salon, …) keep products as catalog (trips/rooms/menu) — never a cart.
+  try {
+    const bType = data.biz_type || '';
+    const bookingType = /bus|transport|coach|fleet|travel|tour|hotel|restaurant|salon|clinic|school|rental|booking|appointment/i.test(bType);
+    const explicitShop = (data.sections || []).includes('shop');
+    const shopType = /shop|store|product|retail|e-?commerce|boutique|mart|trading|enterprise|fashion|jewelry|grocery|bakery|furniture|electronics|pharma/i.test(bType);
+    const isShop = explicitShop || shopType || ((data.biz_products && data.biz_products.trim()) && !bookingType);
+    // ★ Booking-type fallback: bus/transport gets the BUS admin preset
+    // (buses + routes + trips + bookings + payments) so frontend booking
+    // connects to backend admin. Never the shop preset for bus.
+    try {
+      const isBusType = /bus|transport|coach|fleet/i.test(bType);
+      if (isBusType && mode !== 'static') {
+        const arB = document.getElementById('admin_requirements');
+        if (arB && !arB.value.trim() && typeof ADMIN_PRESETS !== 'undefined' && ADMIN_PRESETS.bus) {
+          arB.value = ADMIN_PRESETS.bus;
+          data.admin_requirements = ADMIN_PRESETS.bus;
+          showToast('🚌 Bus booking detected — admin preset applied (trips + bookings + QR tickets)');
+        }
+      }
+    } catch (e) {}
     if (isShop && mode !== 'static') {
       const ar = document.getElementById('admin_requirements');
       if (ar && !ar.value.trim() && typeof ADMIN_PRESETS !== 'undefined' && ADMIN_PRESETS.shop) {
@@ -3468,8 +4566,10 @@ async function generateWithMode(mode) {
   document.getElementById('wiz-prev').disabled = true;
 
   try {
-    // ★ Fixed AI split: variations 1-2 → Gemini, variation 3 → OpenCode.
-    // No picker. Missing/failed slots → server templates fill in (never empty).
+    // ★ Routed generation: complexity decides flow + provider order.
+    // Small/medium → 3 via Gemini → Space Bunny → templates.
+    // Large → 1 via Space Bunny → Gemini → templates.
+    // Sequential only (never simultaneous); same validated spec throughout.
     const prog = (p) => {
       const pct = p.pct || (p.stage === 'connecting' ? 15 : (p.stage === 'done' ? 100 : 50));
       updateGenOverlay(p.stage, p.message, pct, p);
@@ -3478,9 +4578,30 @@ async function generateWithMode(mode) {
     let engineNote = '';
     let aiErr = '';
     let ocTokens = 0;
+    let routeMeta = null;
     const tokStr = () => ocTokens > 0 ? ` · ~${(ocTokens / 1000).toFixed(1)}k tokens` : '';
     try {
-      if (window.OpenCodeAI?.generateConcepts) {
+      if (window.GenerationRouter?.generateRouted) {
+        const approved = (window.__blueprint && window.__blueprint.approved && window.__blueprint.spec) ? window.__blueprint.spec : null;
+        const routed = await window.GenerationRouter.generateRouted(data, mode, Object.assign({ onProgress: prog }, approved ? { spec: approved } : {}));
+        ocTokens = routed.designs.reduce((a, d) => a, 0) || 0;
+        concepts = routed.designs;
+        routeMeta = { route: routed.route, history: routed.history, flow: (routed.meta || {}).flow || '' };
+        try {
+          window.__bizSpec = routed.spec || window.__bizSpec || null;
+          __bizSpec = window.__bizSpec;
+          if (routed.spec && routed.spec.compat && routed.spec.compat.gen_mode) {
+            selectedGenMode = routed.spec.compat.gen_mode;
+            data.gen_mode = selectedGenMode;
+          }
+        } catch (e) {}
+        const provs = (routed.history || []).map(h => h.event).join(',');
+        if ((routed.route || {}).variations === 1) {
+          engineNote = provs.includes('bunny-ok') ? 'Space Bunny flagship (1/1)' : (provs.includes('gemini-ok') ? 'Gemini flagship (1/1)' : 'Template flagship (1/1)');
+        } else {
+          engineNote = 'Routed 3 [' + ((routed.history || []).filter(h => /-ok$/.test(h.event)).map(h => h.event.replace('-ok', '')).join('+') || 'ai') + ']';
+        }
+      } else if (window.OpenCodeAI?.generateConcepts) {
         const oc = await window.OpenCodeAI.generateConcepts(data, mode, { onProgress: prog });
         ocTokens = oc.tokens || 0;
         if (oc.designs.length === 3) {
@@ -3504,12 +4625,13 @@ async function generateWithMode(mode) {
       }
     } catch (e) {
       aiErr = String(e?.message || e).slice(0, 220);
-      console.warn('[generate] OpenCode lane failed, using templates:', e?.message);
+      console.warn('[generate] Routed lane failed, using templates:', e?.message);
     }
     if (!concepts) {
       concepts = await window.AIFlowCraft.generateConcepts(data, mode, { onProgress: prog });
       engineNote = 'templates';
     }
+    try { window.__routeMeta = routeMeta; } catch (e) {}
 
     // Sanitize each generated design to strip any PHP leaks or markdown after </html>
     // Admin preview ONLY for admin/database modes — static gets NO admin panel at all.
@@ -3517,14 +4639,14 @@ async function generateWithMode(mode) {
     generatedConcepts = concepts.map(c => ({
       ...c,
       html: sanitizeHtmlOutput(c.html),
-      adminHtml: wantAdmin ? buildInteractiveAdminPreview(data.biz_name) : null
+      adminHtml: null
     }));
 
     generatedDesigns = generatedConcepts.map(c => ({
       name: c.name, description: c.description, badge: c.badge, html: c.html,
       engine: (c.meta && c.meta.engine) || 'template',
       model: (c.meta && c.meta.model) || '',
-      adminHtml: wantAdmin ? buildInteractiveAdminPreview(data.biz_name) : null,
+      adminHtml: null,
       phpBackend: c.phpBackend || null,
       sqlSchema: c.sqlSchema || null, history: []
     }));
@@ -3532,18 +4654,69 @@ async function generateWithMode(mode) {
     activeDesignIndex = 0;
     currentHtml = generatedDesigns[0]?.html || '';
 
+    // Structural compliance vs the approved spec (additive, deterministic):
+    // missing required sections injected, bare forms wired to data-wc-form.
+    // Existing markup never rewritten; every fix listed honestly.
+    let complyFixes = [];
+    try {
+      const approved0 = (window.__blueprint && window.__blueprint.approved && window.__blueprint.spec) ? window.__blueprint.spec : null;
+      const vspec0 = approved0 || ((window.__bizCanonical && window.__bizCanonical.schema === 'biz-spec/1') ? window.__bizCanonical : null);
+      if (vspec0) {
+        updateGenOverlay('verifying', '✓ Ensuring spec compliance (sections + forms)…', 95, {});
+        const cr = await fetch((typeof SITE_URL !== 'undefined' && SITE_URL ? SITE_URL : '') + '/api/biz-intelligence.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'comply', spec: vspec0,
+            htmls: generatedDesigns.map(d => (d.html || '').slice(0, 200000)) })
+        });
+        const cj = await cr.json().catch(() => null);
+        if (cj && cj.success && Array.isArray(cj.htmls) && cj.htmls.length === generatedDesigns.length) {
+          generatedDesigns.forEach((d, i) => { if (cj.htmls[i]) d.html = cj.htmls[i]; });
+          generatedConcepts.forEach((c, i) => { if (cj.htmls[i]) c.html = cj.htmls[i]; });
+          currentHtml = generatedDesigns[0]?.html || currentHtml;
+          complyFixes = cj.fixes || [];
+          if (complyFixes.length) showToast('✓ Auto-fixed ' + complyFixes.length + ' compliance gap(s): ' + complyFixes.slice(0, 2).join('; '));
+        }
+      }
+    } catch (e) { console.warn('[comply]', e?.message); }
+
+    // Post-generation verification vs the approved spec (bounded, read-only).
+    try {
+      const approved = (window.__blueprint && window.__blueprint.approved && window.__blueprint.spec) ? window.__blueprint.spec : null;
+      const vspec = approved || ((window.__bizCanonical && window.__bizCanonical.schema === 'biz-spec/1') ? window.__bizCanonical : null);
+      if (vspec) {
+        updateGenOverlay('verifying', '✓ Verifying build against approved blueprint…', 97, {});
+        const vr = await fetch((typeof SITE_URL !== 'undefined' && SITE_URL ? SITE_URL : '') + '/api/biz-intelligence.php', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'verify', spec: vspec,
+            htmls: generatedDesigns.map(d => (d.html || '').slice(0, 200000)) })
+        });
+        const vj = await vr.json().catch(() => null);
+        if (vj && vj.success && vj.report) {
+          window.__verifyReport = vj.report;
+          const fs = (vj.report.summary.failed || 0);
+          if (fs > 0) showToast('⚠️ Verification: ' + fs + ' check(s) need attention — see Variations page');
+        }
+      }
+    } catch (e) { console.warn('[verify]', e?.message); }
+
     saveSessionNow();
     hideGenOverlay(true);
     // Variations live on their own URL now (variations.php) — redirect there.
+    // Large projects carry 1 flagship; small/medium carry 3.
+    const nVars = (concepts || []).length;
+    const fixNote = (typeof complyFixes !== 'undefined' && complyFixes.length) ? ' · auto-fixed ' + complyFixes.length + ' gap(s)' : '';
     try { sessionStorage.setItem('wc_flash', (engineNote === 'templates' && aiErr
       ? 'Templates (AI failed: ' + aiErr + ')' + tokStr()
-      : '3 style variations ready! [' + engineNote + ']' + tokStr())); } catch (e) {}
+      : nVars === 1
+        ? 'Flagship design ready! [' + engineNote + ']' + tokStr() + fixNote
+        : nVars + ' style variations ready! [' + engineNote + ']' + tokStr() + fixNote)); } catch (e) {}
     window.location.href = ((typeof SITE_URL !== 'undefined' && SITE_URL) ? SITE_URL : '') + '/variations.php';
   } catch (err) {
     console.error(err);
-    hideGenOverlay(false);
+    hideGenOverlay(false, err && err.message ? err.message : '');
     showToast('Failed: ' + err.message);
   } finally {
+    window.__generating = false;
     document.getElementById('wiz-generate-btn').disabled = false;
     document.getElementById('wiz-next').disabled = false;
     document.getElementById('wiz-prev').disabled = (currentWizStep === 1);
@@ -3553,460 +4726,459 @@ async function generateWithMode(mode) {
 
 
 /* ══════════════════════════════════════════════════
-   DISPLAY 3 DESIGNS
-═════════════════════════════════════════════════ */
+   DISPLAY 3 DESIGNS — DEPRECATED shim (direct flow)
+   Concepts picker lives ONLY on variations.php now.
+   After generate we go straight there — no in-builder
+   intermediate screen. Kept as a redirect for old callers.
+   ═════════════════════════════════════════════════ */
 function display3Designs(concepts, bizName) {
-  document.getElementById('wizard-screen').style.display = 'none';
-  document.getElementById('designs-screen').style.display = 'block';
-  document.getElementById('subdesign-screen').style.display = 'none';
-  document.getElementById('builder-screen').style.display = 'none';
-  document.getElementById('designs-title').textContent = `3 Style Concepts for ${bizName}`;
-  document.getElementById('designs-sub').textContent = selectedGenMode === 'static'
-    ? 'Each concept has 3 premium layout variants — choose a style, then refine your layout.'
-    : 'Each concept includes an AI admin panel. Pick a style concept, then choose your layout.';
-  const grid = document.getElementById('designs-grid');
-  grid.innerHTML = '';
-  concepts.forEach((c, i) => {
-    const card = document.createElement('div');
-    card.className = 'design-card';
-    const hasSubdesigns = c.subdesigns && c.subdesigns.length > 0;
-    const isAI = c.meta && (c.meta.engine === 'opencode' || c.meta.engine === 'gemini');
-    const aiModelShort = isAI ? String(c.meta.model || 'OpenCode AI').split('/').pop() : '';
-    const engineBadge = isAI
-      ? `<div style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.68rem;font-weight:800;letter-spacing:0.04em;color:#6ee7b7;background:rgba(6,78,59,0.35);border:1px solid rgba(16,185,129,0.5);padding:0.22rem 0.6rem;border-radius:999px;margin-bottom:0.6rem;">✦ AI-GENERATED · ${escapeHtml(aiModelShort)}</div>`
-      : `<div style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.68rem;font-weight:800;letter-spacing:0.04em;color:#fcd34d;background:rgba(120,53,15,0.35);border:1px solid rgba(245,158,11,0.5);padding:0.22rem 0.6rem;border-radius:999px;margin-bottom:0.6rem;">📄 TEMPLATE · server engine</div>`;
-    const tasteBadge = (isAI && c.meta && c.meta.tasteAudit && typeof c.meta.tasteAudit.score === 'number')
-      ? `<div style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.68rem;font-weight:800;letter-spacing:0.04em;color:#c4b5fd;background:rgba(76,29,149,0.35);border:1px solid rgba(139,92,246,0.5);padding:0.22rem 0.6rem;border-radius:999px;margin-bottom:0.6rem;margin-left:0.35rem;">✦ TASTE ${c.meta.tasteAudit.score}</div>`
-      : '';
-    card.innerHTML = `
-      <div class="design-badge-top">${escapeHtml(c.badge || `Variation ${i+1}`)}</div>
-      <div class="design-number-badge">${i + 1}</div>
-      <div class="design-preview-box"><div class="pv-spin"><div class="wcl-mini-house"><div class="walls"></div><div class="roof"></div><div class="door"></div></div></div><iframe class="design-preview-iframe" id="d${i}-iframe" onload="try{this.previousElementSibling.remove();}catch(e){}"></iframe></div>
-      <div class="design-content">
-        <h3>${escapeHtml(c.name)}</h3>
-        ${engineBadge}${tasteBadge}
-        <p>${escapeHtml(c.description)}</p>
-        ${hasSubdesigns ? `<div style="font-size:0.72rem;color:#818cf8;font-weight:700;margin-bottom:0.6rem;letter-spacing:0.05em;">✦ 3 LAYOUT VARIANTS INSIDE</div>` : ''}
-        <div class="design-actions">
-          <button class="btn-preview-modal" onclick="openFullscreenModal(${i})">👁️ Full Preview</button>
-          <button class="btn-choose-design" onclick="selectDesignAndEdit(${i})">Select &amp; Edit →</button>
-        </div>
-      </div>`;
-    grid.appendChild(card);
-    setTimeout(() => { const f = document.getElementById(`d${i}-iframe`); if (f) f.srcdoc = sanitizeHtmlOutput(withWorkspaceNavFix(c.html)); }, 40);
-  });
-  /* ★ Normal view shows AI output too: preload the workspace with Concept 1
-     (same mapping as Select & Edit). The picker stays in charge — user can
-     still open any card's Full Preview or Select & Edit another variation. */
-  if (!generatedDesigns.length && concepts.length) {
-    generatedDesigns = concepts.map(x => ({
-      name: x.name, description: x.description, badge: x.badge, html: x.html,
-      adminHtml: x.adminHtml || null, phpBackend: x.phpBackend || null,
-      sqlSchema: x.sqlSchema || null, history: []
-    }));
-    activeDesignIndex = 0;
-    currentHtml = generatedDesigns[0].html || '';
-    try { updateLiveIframe(currentHtml); } catch (e) {}
-    [0, 1, 2].forEach(i => document.getElementById(`tab-d${i}`)?.classList.toggle('active', i === 0));
-    try { updateUndoBtn(); } catch (e) {}
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  saveSessionNow();
+  try { saveSessionNow(); } catch (e) {}
+  window.location.href = ((typeof SITE_URL !== 'undefined' && SITE_URL) ? SITE_URL : '') + '/variations.php';
 }
 
 /* ══════════════════════════════════════════════════
    ADMIN PANEL STABILIZER & INTERACTIVE PREVIEW
 ═════════════════════════════════════════════════ */
-function buildInteractiveAdminPreview(bizName) {
-  bizName = bizName || document.getElementById('biz_name')?.value || 'My Website';
-  const slug = bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'site';
-  const safeName = bizName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const targetUrl = `${SITE_URL}/published/${slug}/admin/login.php`;
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${safeName} &mdash; Admin Panel</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#060911;color:#e2e8f0;min-height:100vh}
-
-/* ══ LOGIN SCREEN (Initial View) ══ */
-#view-login {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 2rem 1.5rem; background: radial-gradient(circle at 50% 30%, #151c38 0%, #060911 75%);
+/* ══════════════════════════════════════════════════
+   PRE-PUBLISH DEV ENVIRONMENT (api/preview-env.php)
+   BEFORE PUBLISH = fully functional preview: real PHP admin + real JSON.
+   There is no mock admin anywhere: failures show an honest error + retry,
+   never fake records or disabled buttons.
+   ══════════════════════════════════════════════════ */
+function getPreviewSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    const sess = raw ? JSON.parse(raw) : null;
+    return (sess && sess.preview) || null;
+  } catch (e) { return null; }
 }
-.login-card {
-  width: 100%; max-width: 440px; background: #0c1220; border: 1px solid #1e293b;
-  border-radius: 20px; padding: 2.25rem 2rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6);
-  position: relative; overflow: hidden;
+function setPreviewSession(patch) {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    const sess = raw ? JSON.parse(raw) : {};
+    sess.preview = Object.assign({}, sess.preview || {}, patch || {});
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
+  } catch (e) {}
 }
-.login-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, #6366f1, #a855f7, #06b6d4);
+function getSessionCreds() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+    return { user: s.adminUsername || '', pass: s.adminPassword || '' };
+  } catch (e) { return { user: '', pass: '' }; }
 }
-.login-brand { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; }
-.login-logo { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #6366f1, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 8px 20px rgba(99,102,241,0.4); }
-.login-title { font-size: 1.25rem; font-weight: 800; color: #fff; line-height: 1.2; }
-.login-sub { font-size: 0.78rem; color: #64748b; font-weight: 600; }
-.login-heading { font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; }
-.login-desc { font-size: 0.82rem; color: #94a3b8; margin-bottom: 1.5rem; line-height: 1.5; }
-.login-path-banner {
-  background: #060913; border: 1px solid #1e3a5f; border-radius: 10px; padding: 0.65rem 0.85rem;
-  margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.25rem;
+function previewHash(html) {
+  let h = 5381;
+  const s = String(html || '');
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return h.toString(16);
 }
-.login-path-lbl { font-size: 0.68rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.04em; }
-.login-path-val { font-family: 'Fira Code', monospace; font-size: 0.72rem; color: #67e8f9; word-break: break-all; }
-.field { margin-bottom: 1.15rem; }
-.field label { display: block; font-size: 0.75rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.03em; }
-.inp { width: 100%; padding: 0.75rem 0.95rem; border: 1.5px solid #1e293b; border-radius: 10px; background: #060a14; color: #fff; font-family: inherit; font-size: 0.88rem; transition: 0.2s; }
-.inp:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.25); }
-.btn-login {
-  width: 100%; padding: 0.85rem; border-radius: 11px; border: none;
-  background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;
-  font-weight: 800; font-size: 0.92rem; cursor: pointer; transition: all 0.2s;
-  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-  box-shadow: 0 8px 24px rgba(99,102,241,0.4); margin-top: 0.5rem;
+let __previewBusy = false;
+async function ensurePreviewEnv(opts) {
+  opts = opts || {};
+  const quiet = !!opts.quiet;
+  const c = (typeof generatedDesigns !== 'undefined') ? generatedDesigns[activeDesignIndex] : null;
+  const html = (c && c.html) || (typeof currentHtml !== 'undefined' ? currentHtml : '') || '';
+  if (!html || html.length < 100) { if (!quiet) showToast('Generate a design first'); return null; }
+  let snap = {};
+  try { snap = (typeof collectWizardSnapshot === 'function') ? collectWizardSnapshot() : {}; } catch (e) {}
+  const canon = (typeof window.__bizCanonical !== 'undefined' && window.__bizCanonical) || {};
+  const hash = previewHash(html);
+  const prev = getPreviewSession();
+  if (!opts.force && prev && prev.id && prev.htmlHash === hash && prev.adminUrl) return prev;
+  if (__previewBusy) return (prev && prev.id) ? prev : null;
+  __previewBusy = true;
+  try {
+    if (!quiet) showToast('⚙️ Building your live preview backend…');
+    const sess = getPreviewSession() || {};
+    const creds = getSessionCreds();
+    const bizName = (document.getElementById('biz_name') && document.getElementById('biz_name').value) || snap.biz_name || 'My Website';
+    const body = {
+      action: 'provision',
+      draftToken: sess.id || undefined,
+      html: html,
+      bizName: bizName,
+      slug: String(bizName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'site',
+      entities: Array.isArray(canon.entities) && canon.entities.length ? canon.entities : undefined,
+      bizSpec: (typeof window.__bizSpec !== 'undefined' ? window.__bizSpec : null),
+      adminUser: ((document.getElementById('admin_custom_user') && document.getElementById('admin_custom_user').value) || '').trim().toLowerCase() || creds.user || '',
+      adminPass: (document.getElementById('admin_custom_pass') && document.getElementById('admin_custom_pass').value) || creds.pass || '',
+      contactEmail: snap.biz_email || '',
+      genMode: (typeof selectedGenMode !== 'undefined' ? selectedGenMode : 'admin')
+    };
+    const res = await fetch(SITE_URL + '/api/preview-env.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const j = await res.json();
+    if (!(j && j.success && j.env)) throw new Error((j && j.error) || 'provision failed');
+    const env = Object.assign({}, j.env, { htmlHash: hash });
+    setPreviewSession(env);
+    try { if (typeof saveSessionNow === 'function') saveSessionNow(); } catch (e) {}
+    if (j.env.adminPassOnce) {
+      showToast('🔑 Preview admin password (shown once — copied): ' + j.env.adminPassOnce, 9000);
+      try { if (navigator.clipboard) navigator.clipboard.writeText(j.env.adminPassOnce); } catch (e) {}
+    } else if (!quiet) {
+      showToast('✅ Live preview backend ready — forms + admin fully functional');
+    }
+    return env;
+  } catch (e) {
+    console.warn('[preview-env]', e);
+    if (!quiet) showToast('⚠️ Preview backend unavailable — ' + (e.message || 'network error') + '. Retry.', 6000);
+    return null;
+  } finally { __previewBusy = false; }
 }
-.btn-login:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(99,102,241,0.6); }
-
-/* ══ DASHBOARD SCREEN (After Login) ══ */
-#view-dashboard { display: none; min-height: 100vh; }
-.dash-layout { display: flex; min-height: 100vh; }
-.sidebar { width: 260px; background: #0b0f19; border-right: 1px solid #1e293b; padding: 1.25rem 1rem; flex-shrink: 0; display: flex; flex-direction: column; }
-.brand { display: flex; align-items: center; gap: 0.75rem; padding: 0 0.25rem 1.25rem; border-bottom: 1px solid #1e293b; margin-bottom: 1rem; }
-.brand .logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-.nav-btn {
-  display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem; border-radius: 10px;
-  color: #94a3b8; background: none; border: none; width: 100%; font-family: inherit; font-size: 0.86rem;
-  font-weight: 600; cursor: pointer; text-align: left; margin-bottom: 0.35rem; transition: 0.2s;
+function paintPreviewBar(env, isPreview) {
+  const adminBar   = document.getElementById('admin-url-bar');
+  const urlDisplay = document.getElementById('admin-url-display');
+  const openBtn    = document.getElementById('admin-url-open-btn');
+  const addFnBtn   = document.getElementById('btn-add-function');
+  const rebuildBtn = document.getElementById('btn-preview-rebuild');
+  const liveBtn    = document.getElementById('btn-preview-site');
+  const openBtn2   = document.getElementById('btn-preview-open');
+  const listBtn    = document.getElementById('btn-preview-checklist');
+  const passBtn    = document.getElementById('btn-preview-pass');
+  const credHint   = document.getElementById('admin-creds-hint');
+  const readyBadge = document.getElementById('preview-readiness');
+  if (adminBar) adminBar.style.display = 'flex';
+  if (urlDisplay) urlDisplay.value = env.adminUrl;
+  if (openBtn) { openBtn.href = env.adminUrl; openBtn.style.opacity = ''; openBtn.style.pointerEvents = ''; }
+  if (addFnBtn) addFnBtn.style.display = '';
+  const showPrevTools = !!isPreview;
+  if (rebuildBtn) rebuildBtn.style.display = showPrevTools ? '' : 'none';
+  if (liveBtn) liveBtn.style.display = showPrevTools ? '' : 'none';
+  if (openBtn2) openBtn2.style.display = showPrevTools ? '' : 'none';
+  if (listBtn) listBtn.style.display = showPrevTools ? '' : 'none';
+  if (passBtn) passBtn.style.display = showPrevTools ? '' : 'none';
+  if (credHint) {
+    credHint.style.display = showPrevTools ? '' : 'none';
+    if (showPrevTools) credHint.textContent = '🧪 Preview login: ' + (env.adminUser || 'admin') + ' · data is test-only (production stays separate)';
+  }
+  if (readyBadge && showPrevTools) {
+    readyBadge.style.display = '';
+    readyBadge.textContent = '⏳ Checking…';
+    refreshPreviewReadiness();
+  } else if (readyBadge) { readyBadge.style.display = 'none'; }
 }
-.nav-btn:hover { background: #111827; color: #fff; }
-.nav-btn.active { background: #1e1b4b; color: #a5b4fc; font-weight: 800; border-left: 3px solid #6366f1; }
-.nav-btn-highlight { background: rgba(99,102,241,0.12); color: #c7d2fe; border: 1px dashed rgba(99,102,241,0.4); }
-.nav-btn-highlight:hover { background: rgba(99,102,241,0.25); color: #fff; }
-.main { flex: 1; padding: 2rem 2.5rem; overflow-y: auto; max-width: 1300px; }
-.card { background: #0f1523; border: 1px solid #1e293b; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
-.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-@media (max-width: 900px) { .grid4 { grid-template-columns: repeat(2, 1fr); } }
-.stat { background: #070b14; border: 1px solid #1e293b; border-radius: 12px; padding: 1.1rem; }
-.stat .lbl { font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
-.stat .val { font-size: 1.6rem; font-weight: 900; color: #fff; margin: 0.3rem 0; }
-.btn-action { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.65rem 1.2rem; border-radius: 9px; font-weight: 700; font-size: 0.84rem; cursor: pointer; border: none; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; }
-.btn-action-green { background: linear-gradient(135deg,#10b981,#059669); }
-table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; }
-th, td { padding: 0.75rem 0.85rem; text-align: left; border-bottom: 1px solid #1e293b; font-size: 0.84rem; }
-th { color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 0.72rem; }
-.preset-tag { padding: 0.35rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 999px; font-size: 0.76rem; font-weight: 700; color: #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; margin: 0.25rem 0.25rem 0.25rem 0; }
-.preset-tag:hover { border-color: #6366f1; color: #fff; background: #1e1b4b; }
-</style>
-</head>
-<body>
-
-<!-- ══════════════════════════════════════════════════
-     SCREEN 1: OFFICIAL ADMIN LOGIN PAGE
-══════════════════════════════════════════════════ -->
-<div id="view-login">
-  <div class="login-card">
-    <div class="login-brand">
-      <div class="login-logo">🔐</div>
-      <div>
-        <div class="login-title">${safeName}</div>
-        <div class="login-sub">Customer CMS Administration</div>
-      </div>
-    </div>
-
-    <div class="login-heading">Admin Panel Login</div>
-    <div class="login-desc">Enter your credentials below to access the management dashboard.</div>
-
-    <div class="login-path-banner">
-      <span class="login-path-lbl">📍 Published Admin URL Path</span>
-      <span class="login-path-val">${targetUrl}</span>
-    </div>
-
-    <form onsubmit="doLogin(event)">
-      <div class="field">
-        <label>Username</label>
-        <input class="inp" type="text" id="inp-user" value="admin" required>
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input class="inp" type="password" id="inp-pass" value="WebCraft@2026!" required>
-      </div>
-      <button type="submit" class="btn-login">
-        <span>🚀 Sign In to Dashboard</span>
-      </button>
-    </form>
-
-    <div style="margin-top:1.25rem;text-align:center;">
-      <span style="font-size:0.73rem;color:#64748b;">⚡ Click "Sign In" to preview the active admin dashboard</span>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════
-     SCREEN 2: LOGGED-IN ADMIN DASHBOARD
-══════════════════════════════════════════════════ -->
-<div id="view-dashboard">
-  <div class="dash-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">⚡</div>
-        <div style="min-width:0">
-          <div style="font-weight:800;font-size:0.92rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeName}</div>
-          <div style="font-size:0.7rem;color:#10b981;font-weight:700">● Logged In (Admin)</div>
-        </div>
-      </div>
-
-      <nav style="flex:1">
-        <button class="nav-btn active" id="btn-tab-dash" onclick="tab('dash')">📊 Dashboard</button>
-        <button class="nav-btn" id="btn-tab-content" onclick="tab('content')">📝 Edit Content</button>
-        <button class="nav-btn" id="btn-tab-data" onclick="tab('data')">📋 Manage Data</button>
-        <!-- CRITICAL: ADD FUNCTIONS / AI FEATURE BUILDER (Rule 18.5) -->
-        <button class="nav-btn nav-btn-highlight" id="btn-tab-features" onclick="tab('features')">🤖 Add Functions (AI)</button>
-        <button class="nav-btn" id="btn-tab-settings" onclick="tab('settings')">⚙️ Settings &amp; Password</button>
-      </nav>
-
-      <div style="padding-top:1.25rem;border-top:1px solid #1e293b">
-        <button onclick="doLogout()" class="nav-btn" style="color:#ef4444">🚪 Sign Out</button>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main">
-      <!-- 1. Dashboard Tab -->
-      <div id="sec-dash">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
-          <div>
-            <h1 style="font-size:1.6rem;font-weight:900;color:#fff;">Administration Dashboard 👋</h1>
-            <p style="color:#64748b;font-size:0.85rem;">Live management control center for ${safeName}.</p>
-          </div>
-          <button class="btn-action btn-action-green" onclick="tab('features')">➕ Add New Function</button>
-        </div>
-
-        <div class="grid4">
-          <div class="stat"><div class="lbl">Website Status</div><div class="val" style="color:#10b981">Active 🟢</div><div style="font-size:0.75rem;color:#64748b">Hosted &amp; Online</div></div>
-          <div class="stat"><div class="lbl">Active Functions</div><div class="val" style="color:#818cf8" id="stat-fn-count">4</div><div style="font-size:0.75rem;color:#64748b">CMS Modules Ready</div></div>
-          <div class="stat"><div class="lbl">Content Sections</div><div class="val">6</div><div style="font-size:0.75rem;color:#64748b">Editable Fields</div></div>
-          <div class="stat"><div class="lbl">Admin Security</div><div class="val" style="color:#f59e0b">SSL 🔒</div><div style="font-size:0.75rem;color:#64748b">Bcrypt Protected</div></div>
-        </div>
-
-        <div class="card">
-          <h3 style="color:#fff;font-size:1rem;margin-bottom:0.5rem">⚡ How Your Admin Panel Works</h3>
-          <p style="color:#94a3b8;font-size:0.84rem;line-height:1.6;margin-bottom:1rem;">
-            When published, your administration panel is automatically installed at: <code style="color:#38bdf8">${targetUrl}</code>.
-            You can manage live site content, view records, add new features anytime with AI, and change your password.
-          </p>
-          <div style="display:flex;gap:0.75rem;">
-            <button class="btn-action" onclick="tab('features')">🤖 Open AI Feature Builder</button>
-            <button class="btn-action" style="background:#1e293b;" onclick="tab('content')">📝 Edit Live Content</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. AI Feature / Function Requirement Builder (Rule 18.5) -->
-      <div id="sec-features" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
-          <div>
-            <div style="display:inline-block;padding:0.25rem 0.75rem;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);border-radius:999px;font-size:0.72rem;font-weight:800;color:#c7d2fe;margin-bottom:0.4rem;">
-              ✦ RULE 18.5: ADMIN EDIT MODE ACTIVE
-            </div>
-            <h1 style="font-size:1.6rem;font-weight:900;color:#fff;">Create Business Process / Add Functions 🤖</h1>
-            <p style="color:#94a3b8;font-size:0.84rem;">Describe what business functions you want to add to your admin panel. The AI writes and installs the complete backend module automatically.</p>
-          </div>
-        </div>
-
-        <div class="card" style="border-color:rgba(99,102,241,0.35);background:linear-gradient(135deg,rgba(99,102,241,0.06),rgba(15,23,42,0.8));">
-          <label style="display:block;font-size:0.8rem;font-weight:700;color:#cbd5e1;margin-bottom:0.5rem;">Quick Presets (Click to Load):</label>
-          <div style="margin-bottom:1rem;">
-            <span class="preset-tag" onclick="usePreset('Add an Appointment Booking system with Customer Name, Phone, Email, Service Type, Booking Date, Time Slot, and Status.')">📅 Appointment Booking</span>
-            <span class="preset-tag" onclick="usePreset('Add an Employee / Team section with Full Name, Role / Position, Phone, Bio, and Photo upload.')">👥 Staff / Team Management</span>
-            <span class="preset-tag" onclick="usePreset('Add a Customer Reviews &amp; Testimonials module with Client Name, Company, Rating (1-5 stars), Comment, and Status.')">⭐ Reviews &amp; Ratings</span>
-            <span class="preset-tag" onclick="usePreset('Add a Blog &amp; News Publishing section with Article Title, Featured Image, Category, Content Body, and Publish Date.')">📰 Blog / News Articles</span>
-          </div>
-
-          <div class="field">
-            <label>Function Requirements / Process Description</label>
-            <textarea id="feature-req-input" rows="3" class="inp" style="resize:vertical;" placeholder="Describe what you want to add... e.g. Add a Booking system with Date, Time, Service, Customer Name, and Email"></textarea>
-          </div>
-
-          <button class="btn-action btn-action-green" onclick="simulateAddFeature()">
-            <span>✨ Generate &amp; Install Function with AI</span>
-          </button>
-        </div>
-
-        <div class="card">
-          <h3 style="color:#fff;font-size:1rem;margin-bottom:0.75rem;">📦 Active Business Functions &amp; Modules</h3>
-          <table id="features-table">
-            <thead><tr><th>Function Name</th><th>Type</th><th>Storage</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>
-              <tr><td><strong>Content Management</strong></td><td>Core CMS</td><td>JSON Storage</td><td><span style="color:#10b981;font-weight:800;">● Active</span></td><td><button style="background:none;border:none;color:#818cf8;cursor:pointer;font-weight:700" onclick="tab('content')">Edit</button></td></tr>
-              <tr><td><strong>Data Record Manager</strong></td><td>Entities CRUD</td><td>JSON Storage</td><td><span style="color:#10b981;font-weight:800;">● Active</span></td><td><button style="background:none;border:none;color:#818cf8;cursor:pointer;font-weight:700" onclick="tab('data')">Edit</button></td></tr>
-              <tr><td><strong>Customer Password &amp; Auth</strong></td><td>Security</td><td>Bcrypt Hash</td><td><span style="color:#10b981;font-weight:800;">● Active</span></td><td><button style="background:none;border:none;color:#818cf8;cursor:pointer;font-weight:700" onclick="tab('settings')">Edit</button></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- 3. Edit Content Tab -->
-      <div id="sec-content" style="display:none">
-        <h1 style="font-size:1.6rem;font-weight:900;color:#fff;margin-bottom:0.3rem">Website Content Editor 📝</h1>
-        <p style="color:#64748b;font-size:0.85rem;margin-bottom:1.5rem">Updates saved here sync directly to your public website.</p>
-        <div class="card">
-          <div class="field"><label>Business Name</label><input type="text" class="inp" value="${safeName}"></div>
-          <div class="field"><label>Tagline / Mission</label><input type="text" class="inp" value="Quality &amp; Excellence Delivered"></div>
-          <div class="field"><label>Contact Phone</label><input type="text" class="inp" value="+1 (555) 019-2834"></div>
-          <div class="field"><label>Contact Email</label><input type="email" class="inp" value="contact@${slug}.com"></div>
-          <button class="btn-action">💾 Save Content Changes</button>
-        </div>
-      </div>
-
-      <!-- 4. Manage Data Tab -->
-      <div id="sec-data" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
-          <div>
-            <h1 style="font-size:1.6rem;font-weight:900;color:#fff">Manage Records 📋</h1>
-            <p style="color:#64748b;font-size:0.85rem;">Dynamic CRUD data tables for your business items.</p>
-          </div>
-          <button class="btn-action btn-action-green">➕ Add New Item</button>
-        </div>
-        <div class="card">
-          <table>
-            <thead><tr><th>Title</th><th>Category</th><th>Price / Value</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>
-              <tr><td>Standard Package</td><td>Services</td><td>$99.00</td><td><span style="color:#10b981;font-weight:700">Published</span></td><td><button style="background:none;border:none;color:#818cf8;cursor:pointer">✏️ Edit</button></td></tr>
-              <tr><td>Premium Consultation</td><td>Consulting</td><td>$150.00</td><td><span style="color:#10b981;font-weight:700">Published</span></td><td><button style="background:none;border:none;color:#818cf8;cursor:pointer">✏️ Edit</button></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- 5. Settings Tab -->
-      <div id="sec-settings" style="display:none">
-        <h1 style="font-size:1.6rem;font-weight:900;color:#fff;margin-bottom:0.3rem">Settings &amp; Password ⚙️</h1>
-        <p style="color:#64748b;font-size:0.85rem;margin-bottom:1.5rem">Manage your admin login credentials and security.</p>
-        <div class="card" style="max-width:540px">
-          <div class="field"><label>Current Password</label><input type="password" class="inp" value="WebCraft@2026!"></div>
-          <div class="field"><label>New Password</label><input type="password" class="inp" placeholder="Enter new password"></div>
-          <div class="field"><label>Confirm New Password</label><input type="password" class="inp" placeholder="Confirm new password"></div>
-          <button class="btn-action">Update Password</button>
-        </div>
-      </div>
-    </main>
-  </div>
-</div>
-
-<script>
-function doLogin(e) {
-  if (e) e.preventDefault();
-  document.getElementById('view-login').style.display = 'none';
-  document.getElementById('view-dashboard').style.display = 'block';
-  tab('dash');
+function paintAdminBarProvisioning() {
+  const adminBar   = document.getElementById('admin-url-bar');
+  const urlDisplay = document.getElementById('admin-url-display');
+  if (adminBar) adminBar.style.display = 'flex';
+  if (urlDisplay) urlDisplay.value = '⚙️ Provisioning live preview admin…';
 }
-
-function doLogout() {
-  document.getElementById('view-dashboard').style.display = 'none';
-  document.getElementById('view-login').style.display = 'flex';
+function previewBarFailed() {
+  const urlDisplay = document.getElementById('admin-url-display');
+  if (urlDisplay) urlDisplay.value = '⚠️ Preview backend unavailable — click the 🔐 Admin Panel tab to retry';
 }
-
-function tab(id) {
-  ['dash','features','content','data','settings'].forEach(t => {
-    const el = document.getElementById('sec-' + t);
-    const btn = document.getElementById('btn-tab-' + t);
-    if (el) el.style.display = (t === id) ? 'block' : 'none';
-    if (btn) btn.classList.toggle('active', t === id);
+/* Shared workspace admin loader: published login when available,
+   otherwise the real pre-publish preview admin. Never a mock. */
+function loadWorkspaceAdmin() {
+  const pub = getPublishedSession();
+  if (pub && pub.adminUrl) {
+    paintPreviewBar({ adminUrl: pub.adminUrl }, false);
+    const f = document.getElementById('live-iframe');
+    if (f) { f.src = pub.adminUrl; f.removeAttribute('srcdoc'); }
+    return;
+  }
+  paintAdminBarProvisioning();
+  ensurePreviewEnv().then(env => {
+    if (!env) { previewBarFailed(); return; }
+    paintPreviewBar(env, true);
+    if (currentViewMode !== 'admin') return;
+    const f = document.getElementById('live-iframe');
+    if (f) { f.removeAttribute('srcdoc'); f.src = env.adminUrl; }
   });
 }
-
-function usePreset(text) {
-  const t = document.getElementById('feature-req-input');
-  if (t) { t.value = text; t.focus(); }
+function previewOpenSite() {
+  const f = document.getElementById('live-iframe');
+  ensurePreviewEnv().then(env => {
+    if (!env) return;
+    if (currentViewMode !== 'site' && currentViewMode !== 'admin') return;
+    if (f) { f.removeAttribute('srcdoc'); f.src = env.siteUrl; }
+    showToast('🧪 Live preview site loaded — forms hit the real backend');
+  });
 }
-
-function simulateAddFeature() {
-  const req = document.getElementById('feature-req-input')?.value.trim();
-  if (!req) { alert('Please enter feature requirements or choose a preset.'); return; }
-  const tbody = document.querySelector('#features-table tbody');
-  if (tbody) {
-    const title = req.split(' ')[1] || 'Custom Feature';
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td><strong>' + title + ' System</strong></td><td>AI Module</td><td>JSON Storage</td><td><span style=\"color:#10b981;font-weight:800;\">● Active</span></td><td><span style=\"color:#a5b4fc;font-size:0.75rem\">Installed</span></td>';
-    tbody.appendChild(tr);
+/* Customer preview in a separate tab: the full site on a real URL. */
+function previewOpenTab() {
+  ensurePreviewEnv().then(env => {
+    if (!env) return;
+    window.open(env.siteUrl, '_blank');
+  });
+}
+function previewRebuild() {
+  ensurePreviewEnv({ force: true }).then(env => {
+    if (!env) return;
+    paintPreviewBar(env, true);
+    const f = document.getElementById('live-iframe');
+    if (f) {
+      f.removeAttribute('srcdoc');
+      f.src = (currentViewMode === 'admin') ? env.adminUrl : env.siteUrl;
+    }
+    refreshPreviewReadiness();
+  });
+}
+/* ═══ WORKSPACE CREDENTIALS — view/generate the admin login used at publish.
+   Always available here (unlike the one-time publish display). Post-publish
+   changes happen in Website Manager. */
+function workspaceCreds() {
+  let u = '', p = '';
+  try {
+    u = (document.getElementById('admin_custom_user')?.value || '').trim().toLowerCase();
+    p = document.getElementById('admin_custom_pass')?.value || '';
+    if (!u && window.__pendingAdminCreds?.user) u = window.__pendingAdminCreds.user;
+    if (!p && window.__pendingAdminCreds?.pass) p = window.__pendingAdminCreds.pass;
+    if (!u || !p) {
+      const s = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+      if (!u && s.adminUsername) u = s.adminUsername;
+      if (!p && s.adminPassword) p = s.adminPassword;
+    }
+    if (!u) {
+      const biz = (document.getElementById('biz_name')?.value || 'site').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 12) || 'site';
+      u = (biz + '_admin').slice(0, 20);
+    }
+  } catch (e) {}
+  return { user: u, pass: p };
+}
+function openCredsModal() {
+  const c = workspaceCreds();
+  const u = document.getElementById('creds-user'), p = document.getElementById('creds-pass');
+  if (u) u.value = c.user || '';
+  if (p) { p.value = c.pass || ''; p.type = 'password'; }
+  const m = document.getElementById('creds-msg'); if (m) m.textContent = '';
+  const mo = document.getElementById('creds-modal'); if (mo) mo.style.display = 'flex';
+}
+function closeCredsModal() { const mo = document.getElementById('creds-modal'); if (mo) mo.style.display = 'none'; }
+function toggleCredPassField(btn) {
+  const p = document.getElementById('creds-pass'); if (!p) return;
+  const show = p.type === 'password'; p.type = show ? 'text' : 'password';
+  if (btn) btn.textContent = show ? '🙈' : '👁️';
+}
+function copyCredField(id) {
+  const el = document.getElementById(id); if (!el || !el.value) { showToast('Nothing to copy yet'); return; }
+  try { if (navigator.clipboard) navigator.clipboard.writeText(el.value); } catch (e) {}
+  showToast('Copied ✓');
+}
+function wcGenCredPass() {
+  const words = ['Tiger', 'Ocean', 'Eagle', 'Maple', 'Comet', 'Lotus', 'River', 'Falcon'];
+  const pw = words[Math.floor(Math.random() * words.length)] + (1000 + Math.floor(Math.random() * 9000)) + '@';
+  const p = document.getElementById('creds-pass'); if (p) { p.type = 'text'; p.value = pw; }
+  const m = document.getElementById('creds-msg'); if (m) { m.style.color = '#6ee7b7'; m.textContent = 'Strong password generated — press Save.'; }
+}
+function saveCredsModal() {
+  const uEl = document.getElementById('creds-user'), pEl = document.getElementById('creds-pass');
+  const u = (uEl?.value || '').trim().toLowerCase();
+  const p = pEl?.value || '';
+  const m = document.getElementById('creds-msg');
+  const say = (t, ok) => { if (m) { m.style.color = ok ? '#6ee7b7' : '#fca5a5'; m.textContent = t; } };
+  if (!/^[a-z][a-z0-9_]{3,19}$/.test(u)) { say('Username: 4–20 characters, must start with a letter.'); return; }
+  if (p.length < 8) { say('Password must be at least 8 characters.'); return; }
+  try {
+    const wu = document.getElementById('admin_custom_user'); if (wu) wu.value = u;
+    const wp = document.getElementById('admin_custom_pass'); if (wp) wp.value = p;
+    window.__pendingAdminCreds = { user: u, pass: p };
+    if (typeof saveSessionNow === 'function') saveSessionNow();
+  } catch (e) {}
+  say('✓ Saved — this login will be created at publish.', true);
+  showToast('✓ Admin login saved');
+  setTimeout(closeCredsModal, 700);
+}
+async function previewResetPass() {  const prev = getPreviewSession();
+  if (!prev || !prev.id) { showToast('Build the preview first'); return; }
+  try {
+    const res = await fetch(SITE_URL + '/api/preview-env.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset_creds', draftId: prev.id })
+    });
+    const j = await res.json();
+    if (!(j && j.success)) throw new Error((j && j.error) || 'reset failed');
+    showToast('🔑 New preview password (shown once — copied): ' + j.adminPassOnce, 9000);
+    try { if (navigator.clipboard) navigator.clipboard.writeText(j.adminPassOnce); } catch (e) {}
+  } catch (e) { showToast('⚠️ ' + (e.message || 'reset failed'), 5000); }
+}
+async function refreshPreviewReadiness() {
+  const badge = document.getElementById('preview-readiness');
+  const prev = getPreviewSession();
+  if (!prev || !prev.id) return;
+  try {
+    const res = await fetch(SITE_URL + '/api/preview-env.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'readiness', draftId: prev.id })
+    });
+    const j = await res.json();
+    if (badge) {
+      if (j && j.success && j.ready) {
+        const n = (j.checks || []).length;
+        badge.textContent = '✅ Ready to publish (' + n + '/' + n + ' checks)';
+        badge.style.color = '#34d399';
+      } else if (j && j.success) {
+        const bad = (j.checks || []).filter(c => c.critical && !c.pass);
+        badge.textContent = '⚠️ ' + bad.length + ' check(s) need attention — see console';
+        badge.style.color = '#fbbf24';
+        console.warn('[preview readiness]', j.checks);
+      } else if (badge) { badge.textContent = ''; }
+    }
+  } catch (e) { if (badge) badge.textContent = ''; }
+}
+/* Pre-publish checklist modal: share URL + controls + real check results.
+   Fix → Retest → Publish. Nothing here auto-passes. */
+function openPreviewChecklist() {
+  let m = document.getElementById('preview-checklist-modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'preview-checklist-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);padding:1rem;';
+    m.innerHTML = '<div style="background:#111622;border:1px solid #283347;border-radius:18px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;padding:1.5rem;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">'
+      + '<h2 style="color:#fff;font-size:1.1rem;margin:0;">Pre-publish checklist</h2>'
+      + '<button onclick="closePreviewChecklist()" style="background:none;border:none;color:#94a3b8;font-size:1.3rem;cursor:pointer;">x</button></div>'
+      + '<div id="pcl-share" style="margin-bottom:1rem;"></div>'
+      + '<div id="pcl-checks"><p style="color:#94a3b8;font-size:.85rem;">Loading checks…</p></div>'
+      + '<div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap;">'
+      + '<button onclick="refreshChecklistModal()" style="padding:.6rem 1.1rem;border-radius:9px;border:1.5px solid #334155;background:#0b0f17;color:#cbd5e1;font-weight:700;cursor:pointer;">Re-run tests</button>'
+      + '<button onclick="closePreviewChecklist()" style="padding:.6rem 1.1rem;border-radius:9px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:700;cursor:pointer;">Done</button>'
+      + '</div>'
+      + '<p style="color:#64748b;font-size:.75rem;margin-top:.8rem;line-height:1.5;">Fix any failing item in the preview, then Re-run tests. Publishing with failing critical checks shows a warning first — it never reports ready falsely.</p>'
+      + '</div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', (e) => { if (e.target === m) closePreviewChecklist(); });
   }
-  const countEl = document.getElementById('stat-fn-count');
-  if (countEl) countEl.textContent = parseInt(countEl.textContent || '4', 10) + 1;
-  alert('✨ New feature module built & installed into admin panel!');
-  document.getElementById('feature-req-input').value = '';
+  m.style.display = 'flex';
+  refreshChecklistModal();
 }
-<\/script>
-</body>
-</html>`;
+function closePreviewChecklist() {
+  const m = document.getElementById('preview-checklist-modal');
+  if (m) m.style.display = 'none';
+}
+function pclEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+async function refreshChecklistModal() {
+  const box = document.getElementById('pcl-checks');
+  const shareBox = document.getElementById('pcl-share');
+  const prev = (typeof getPreviewSession === 'function') ? getPreviewSession() : null;
+  if (!prev || !prev.id) {
+    if (box) box.innerHTML = '<p style="color:#fbbf24;font-size:.85rem;">No preview built yet — open the Admin Panel or Frontend Site tab first.</p>';
+    if (shareBox) shareBox.innerHTML = '';
+    return;
+  }
+  if (box) box.innerHTML = '<p style="color:#94a3b8;font-size:.85rem;">Running checks…</p>';
+  try {
+    const ri = await fetch(SITE_URL + '/api/preview-env.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'readiness', draftId: prev.id }) }).then(r => r.json());
+    if (shareBox) {
+      const siteUrl = (prev.siteUrl || '');
+      shareBox.innerHTML = '<div style="background:#0b0f17;border:1px solid #1e293b;border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem;">'
+        + '<div style="font-size:.75rem;font-weight:800;color:#a5b4fc;margin-bottom:.4rem;">CUSTOMER SHARE LINK (no builder login needed)</div>'
+        + '<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">'
+        + '<input readonly value="' + pclEsc(siteUrl) + '" onclick="this.select()" style="flex:1;min-width:200px;background:#050810;border:1px solid #1e293b;border-radius:8px;padding:.45rem .7rem;color:#67e8f9;font-family:monospace;font-size:.75rem;">'
+        + '<button onclick="pclCopyShare()" style="padding:.45rem .9rem;border-radius:8px;border:1.5px solid #334155;background:#0b0f17;color:#cbd5e1;font-weight:700;cursor:pointer;font-size:.78rem;">Copy</button>'
+        + '<button onclick="pclShare(14)" style="padding:.45rem .9rem;border-radius:8px;border:none;background:#065f46;color:#a7f3d0;font-weight:700;cursor:pointer;font-size:.78rem;">Extend 14d</button>'
+        + '<button onclick="pclRevoke()" style="padding:.45rem .9rem;border-radius:8px;border:1px solid #7f1d1d;background:transparent;color:#fca5a5;font-weight:700;cursor:pointer;font-size:.78rem;">Revoke</button>'
+        + '</div>'
+        + '<div style="font-size:.72rem;color:#64748b;margin-top:.35rem;">Anyone with the link can browse + test the preview site. Admin still needs its password. Revoking shows visitors a “revoked” page; data is kept.</div>'
+        + '</div>';
+    }
+    if (!ri || !ri.success) { if (box) box.innerHTML = '<p style="color:#f87171;">Readiness service error.</p>'; return; }
+    const rows = (ri.checks || []).map(c => {
+      const ok = !!c.pass;
+      const dot = ok ? '#10b981' : ((c.critical) ? '#ef4444' : '#f59e0b');
+      const tag = ok ? 'PASS' : (c.critical ? 'FAIL' : 'WARN');
+      return '<div style="display:flex;gap:.6rem;align-items:flex-start;padding:.5rem 0;border-bottom:1px dashed #1e293b;font-size:.83rem;">'
+        + '<span style="color:' + dot + ';font-weight:800;min-width:44px;">' + tag + '</span>'
+        + '<div><strong style="color:#fff;">' + pclEsc(c.label || c.key) + '</strong>'
+        + (c.detail ? '<div style="color:#94a3b8;font-size:.76rem;">' + pclEsc(c.detail) + '</div>' : '')
+        + '</div></div>';
+    }).join('');
+    const untested = '<div style="font-size:.76rem;color:#64748b;margin-top:.6rem;">Untested by this checklist: AI provider lanes, real email delivery, payment gateways (counter-payment flow is testable; online gateways need production keys).</div>';
+    const head = ri.ready
+      ? '<div style="background:rgba(16,185,129,.12);border:1px solid #10b981;color:#34d399;padding:.7rem 1rem;border-radius:10px;font-weight:800;margin-bottom:.8rem;">Ready to publish — all critical checks pass</div>'
+      : '<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;color:#fca5a5;padding:.7rem 1rem;border-radius:10px;font-weight:800;margin-bottom:.8rem;">Not ready — fix failing items, then Re-run tests</div>';
+    if (box) box.innerHTML = head + rows + untested;
+    const badge = document.getElementById('preview-readiness');
+    if (badge) {
+      const n = (ri.checks || []).length;
+      const bad = (ri.checks || []).filter(c => c.critical && !c.pass).length;
+      badge.textContent = bad ? ('⚠ ' + bad + ' check(s) failing') : ('Ready to publish (' + n + '/' + n + ')');
+      badge.style.color = bad ? '#fbbf24' : '#34d399';
+    }
+  } catch (e) { if (box) box.innerHTML = '<p style="color:#f87171;">Network error loading checks.</p>'; }
+}
+function pclCopyShare() {
+  const prev = (typeof getPreviewSession === 'function') ? getPreviewSession() : null;
+  if (prev && prev.siteUrl) {
+    try { navigator.clipboard.writeText(prev.siteUrl).catch(() => {}); } catch (e) {}
+    showToast('Share link copied — expires automatically, revocable anytime');
+  }
+}
+async function pclShare(days) {
+  const prev = (typeof getPreviewSession === 'function') ? getPreviewSession() : null;
+  if (!prev || !prev.id) return;
+  try {
+    const res = await fetch(SITE_URL + '/api/preview-env.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'share', draftId: prev.id, days: days || 14 }) });
+    const j = await res.json();
+    if (j && j.success) { showToast('Share link live until ' + (j.expiresAt || '').slice(0, 10)); refreshChecklistModal(); }
+    else showToast('⚠ ' + ((j && j.error) || 'share failed'));
+  } catch (e) { showToast('⚠ Network error'); }
+}
+async function pclRevoke() {
+  const prev = (typeof getPreviewSession === 'function') ? getPreviewSession() : null;
+  if (!prev || !prev.id) return;
+  if (!confirm('Revoke the customer share link? Visitors will see “revoked”. Your data stays intact and you can re-share anytime.')) return;
+  try {
+    const res = await fetch(SITE_URL + '/api/preview-env.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'revoke', draftId: prev.id }) });
+    const j = await res.json();
+    if (j && j.success) { showToast('Share link revoked'); refreshChecklistModal(); try { await refreshPreviewReadiness(); } catch (e) {} }
+    else showToast('⚠ ' + ((j && j.error) || 'revoke failed'));
+  } catch (e) { showToast('⚠ Network error'); }
+}
+/* Pre-publish AI feature flow: generate with the AI mix, install into the
+   PREVIEW env, test immediately — publishing later carries it over. */
+async function previewAddFeatureFlow(presetReq) {
+  if (!window.AIAdminGenerator || typeof window.AIAdminGenerator.generate !== 'function') {
+    showToast('AI engine not loaded yet — try again in a moment', 4000);
+    return;
+  }
+  const req = (typeof presetReq === 'string' && presetReq.trim().length >= 10)
+    ? presetReq.trim()
+    : prompt('Describe the feature to add and test BEFORE publishing (e.g. "Add a Reviews section with reviewer name, star rating and comment"):');
+  if (req === null || req === undefined) return;
+  if (!req || req.trim().length < 10) { showToast('Please describe the feature in more detail'); return; }
+  const env = await ensurePreviewEnv();
+  if (!env) return;
+  let snap = {};
+  try { snap = (typeof collectWizardSnapshot === 'function') ? collectWizardSnapshot() : {}; } catch (e) {}
+  showToast('🤖 AI is building your feature… (30–60s)');
+  try {
+    const result = await window.AIAdminGenerator.generate({
+      bizName: (document.getElementById('biz_name') && document.getElementById('biz_name').value) || snap.biz_name || 'Website',
+      bizType: snap.biz_type || 'business',
+      userRequirements: req.trim(),
+      genMode: 'admin'
+    }, (p) => { if (p && p.message) showToast('🤖 ' + p.message); });
+    if (!result || !result.files) throw new Error('AI did not return valid file structure');
+    const res = await fetch(SITE_URL + '/api/preview-env.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'add_feature', draftId: env.id,
+        requirements: req.trim(), new_files: result.files, new_entities: result.entities || [] })
+    });
+    const j = await res.json();
+    if (!j.success) throw new Error(j.error || 'Installation failed');
+    const added = (j.entities_added && j.entities_added.length) ? ' + ' + j.entities_added.join(', ') : '';
+    showToast('✅ Installed in PREVIEW (' + j.files_added + ' files' + added + ') — test it now, then publish', 7000);
+    const f = document.getElementById('live-iframe');
+    if (f && currentViewMode === 'admin') { f.removeAttribute('srcdoc'); f.src = env.adminUrl; }
+    try { await refreshPreviewReadiness(); } catch (e) {}
+  } catch (err) {
+    console.warn(err);
+    showToast('❌ ' + (err.message || err), 6000);
+  }
 }
 
-function stabilizeAdminHtml(html) {
-  const bizName = document.getElementById('biz_name')?.value || 'My Website';
-  const pub = getPublishedSession();
-  if (!pub || !pub.adminUrl || !html || 
-      html.includes('<' + String.fromCharCode(63) + 'php') || 
-      !html.includes('<html') ||
-      /php\s*not\s*detect/i.test(html) ||
-      html.includes('action=bootstrap') ||
-      html.includes('offline') ||
-      html.includes('ZS_STORAGE')
-  ) {
-    return buildInteractiveAdminPreview(bizName);
-  }
-  const stabilizer = `
-<style id="__wc_admin_stabilizer__">
-html, body {
-  height: auto !important;
-  min-height: 100% !important;
-  overflow-x: hidden !important;
-  overscroll-behavior: contain !important;
-  scroll-behavior: auto !important;
-}
-body { position: relative !important; }
-[style*="position:fixed"], [style*="position: fixed"],
-[style*="position:sticky"], [style*="position: sticky"] {
-  position: absolute !important;
-}
-aside, .sidebar, [class*="sidebar"], nav[class*="side"] {
-  position: absolute !important;
-}
-*, *::before, *::after {
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.001ms !important;
-  scroll-behavior: auto !important;
-}
-[data-anim], [data-anim-trigger] {
-  animation: none !important;
-  transform: none !important;
-  opacity: 1 !important;
-  filter: none !important;
-}
-canvas, iframe { max-width: 100%; }
-</style>
-`;
-  if (/<head[^>]*>/i.test(html)) {
-    return html.replace(/<head([^>]*)>/i, `<head$1>${stabilizer}`);
-  }
-  return stabilizer + html;
-}
-
-/* ══════════════════════════════════════════════════
-   FULLSCREEN MODAL
-═════════════════════════════════════════════════ */
 function openFullscreenModal(index) {
   modalViewingIndex = index; modalViewMode = 'site';
   const c = generatedConcepts[index];
   if (!c) return;
   document.getElementById('modal-title').textContent = c.name;
   const tabs = document.getElementById('modal-view-tabs');
-  const hasAdmin = selectedGenMode !== 'static' && c.adminHtml;
+  const hasAdmin = selectedGenMode !== 'static';
   tabs.style.display = hasAdmin ? 'flex' : 'none';
   document.getElementById('m-vtab-site').classList.add('active');
   document.getElementById('m-vtab-admin').classList.remove('active');
@@ -4022,22 +5194,41 @@ function switchModalView(view) {
   document.getElementById('m-vtab-site').classList.toggle('active', view === 'site');
   document.getElementById('m-vtab-admin').classList.toggle('active', view === 'admin');
   __armSpin('modal-frame-spin', 'modal');
-  document.getElementById('modal-iframe').srcdoc = view === 'admin'
-    ? stabilizeAdminHtml(c.adminHtml || '<p style="padding:2rem;font-family:sans-serif;">No admin panel yet — will be generated during publish.</p>')
-    : withWorkspaceNavFix(c.html);
+  const mf = document.getElementById('modal-iframe');
+  if (view === 'admin') {
+    const pub = getPublishedSession();
+    if (pub && pub.adminUrl) { mf.removeAttribute('srcdoc'); mf.src = pub.adminUrl; }
+    else {
+      mf.srcdoc = '<p style="padding:2rem;font-family:sans-serif;">Provisioning live preview admin…</p>';
+      ensurePreviewEnv().then(env => {
+        if (!env) { mf.srcdoc = '<p style="padding:2rem;font-family:sans-serif;">Preview backend unavailable — close and retry.</p>'; return; }
+        if (modalViewMode !== 'admin') return;
+        mf.removeAttribute('srcdoc'); mf.src = env.adminUrl;
+      });
+    }
+  } else {
+    mf.srcdoc = withWorkspaceNavFix(c.html);
+  }
 }
 function closeFullscreenModal() { document.getElementById('fullscreen-modal').classList.remove('active'); }
 function selectFromModal() { closeFullscreenModal(); selectDesignAndEdit(modalViewingIndex); }
 function openAdminPreview(index) {
   const c = generatedConcepts[index];
-  if (!c || !c.adminHtml) { showToast('Admin panel will be AI-generated at publish time'); return; }
+  if (!c) return;
+  if (selectedGenMode === 'static') { showToast('Static websites have no admin panel'); return; }
   modalViewingIndex = index; modalViewMode = 'admin';
   document.getElementById('modal-title').textContent = `${c.name} — Admin Panel`;
   document.getElementById('modal-view-tabs').style.display = 'flex';
   document.getElementById('m-vtab-site').classList.remove('active');
   document.getElementById('m-vtab-admin').classList.add('active');
   __armSpin('modal-frame-spin', 'modal');
-  document.getElementById('modal-iframe').srcdoc = stabilizeAdminHtml(c.adminHtml);
+  const mf2 = document.getElementById('modal-iframe');
+  mf2.srcdoc = '<p style="padding:2rem;font-family:sans-serif;">Provisioning live preview admin…</p>';
+  ensurePreviewEnv().then(env => {
+    if (!env) { mf2.srcdoc = '<p style="padding:2rem;font-family:sans-serif;">Preview backend unavailable — close and retry.</p>'; return; }
+    if (modalViewMode !== 'admin') return;
+    mf2.removeAttribute('srcdoc'); mf2.src = env.adminUrl;
+  });
   setModalDevice('desktop');
   document.getElementById('fullscreen-modal').classList.add('active');
 }
@@ -4316,9 +5507,24 @@ function backToDesignsFromSub() {
   goToVariations();
 }
 function updateViewTabsVisibility() {
-  const c = generatedDesigns[activeDesignIndex];
-  const hasAdmin = selectedGenMode !== 'static' && c?.adminHtml;
-  document.getElementById('view-tabs').classList.toggle('show', !!hasAdmin);
+  // Admin tab is always available in admin/database mode: the real
+  // generated preview is fetched on click (delay OK), published URL after.
+  const show = selectedGenMode !== 'static';
+  document.getElementById('view-tabs').classList.toggle('show', !!show);
+  try { syncDesignTabs(); } catch (e) {}
+}
+/* Variation tabs mirror the ACTUAL designs array (flagship = 1 design):
+   unused tabs hide so dead/duplicated variation buttons never show. */
+function syncDesignTabs() {
+  const n = (typeof generatedDesigns !== 'undefined' && Array.isArray(generatedDesigns)) ? generatedDesigns.length : 0;
+  for (let i = 0; i < 3; i++) {
+    const b = document.getElementById('tab-d' + i);
+    if (!b) continue;
+    b.style.display = (n === 0 || i < n) ? '' : 'none';
+  }
+  if (typeof activeDesignIndex === 'number' && activeDesignIndex >= n && n > 0) {
+    try { switchActiveDesign(0); } catch (e) {}
+  }
 }
 function getPublishedSession() {
   try {
@@ -4328,11 +5534,20 @@ function getPublishedSession() {
   } catch (e) { return null; }
 }
 
+/* ══════════════════════════════════════════════════
+   PRE-PUBLISH DEV ADMIN (api/preview-env.php)
+   Click Admin Panel → provision/refresh the real preview workspace
+   (real PHP admin + real JSON) → load its login page in the frame.
+   No mock admin anywhere.
+   ══════════════════════════════════════════════════ */
+/* Admin-tab entry provisions the real pre-publish preview env (module above). */
+async function loadRealAdminPreview(bizName) { loadWorkspaceAdmin(); }
+
 function switchWorkspaceView(view) {
   const c = generatedDesigns[activeDesignIndex];
   if (!c) return;
-  // Static mode has no admin panel — block it even if forced
-  if (view === 'admin' && (selectedGenMode === 'static' || !c.adminHtml)) {
+  // Static mode has no admin panel — block it even if forced.
+  if (view === 'admin' && selectedGenMode === 'static') {
     showToast('Static websites have no admin panel — pick Admin or Database mode to get one.');
     return;
   }
@@ -4341,37 +5556,57 @@ function switchWorkspaceView(view) {
   document.getElementById('vtab-admin').classList.toggle('active', view === 'admin');
   document.getElementById('current-view-label').textContent = view === 'admin' ? '🔐 Admin Panel' : '🌐 Frontend Site';
 
-  const adminBar   = document.getElementById('admin-url-bar');
-  const urlDisplay = document.getElementById('admin-url-display');
-  const openBtn    = document.getElementById('admin-url-open-btn');
-  const addFnBtn   = document.getElementById('btn-add-function');
-
   if (view === 'admin') {
+    // Published → production login. Draft → REAL pre-publish preview admin.
+    // There is no mock admin: failures show an honest error, never fake UI.
     const pub = getPublishedSession();
-    const bizName = document.getElementById('biz_name')?.value || 'My Website';
-    const slug = bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'site';
-    const targetUrl = (pub && pub.adminUrl) ? pub.adminUrl : `${SITE_URL}/published/${slug}/admin/login.php`;
-
-    if (adminBar)   { adminBar.style.display = 'flex'; }
-    if (urlDisplay) { urlDisplay.value = targetUrl; }
-    if (openBtn)    { openBtn.href = targetUrl; openBtn.style.opacity = ''; openBtn.style.pointerEvents = ''; }
-    if (addFnBtn)   { addFnBtn.style.display = ''; }
-
     if (pub && pub.adminUrl) {
-      // Load real admin login page
+      const bizName = document.getElementById('biz_name')?.value || 'My Website';
+      const slug = bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'site';
+      let targetUrl = `${SITE_URL}/published/${slug}/admin/login.php`;
+      // Link the REAL login only when it belongs to this site — never an
+      // arbitrary stored URL.
+      if (typeof pub.adminUrl === 'string') {
+        const expectedBase = `${SITE_URL}/published/${slug}/`;
+        if (pub.adminUrl === targetUrl || pub.adminUrl.indexOf(expectedBase) === 0) {
+          targetUrl = pub.adminUrl;
+        }
+      }
+      paintPreviewBar({ adminUrl: targetUrl }, false);
       const f = document.getElementById('live-iframe');
-      if (f) { f.src = pub.adminUrl; f.removeAttribute('srcdoc'); }
+      if (f) { f.src = targetUrl; f.removeAttribute('srcdoc'); }
     } else {
-      // Load official interactive Login Page & Dashboard preview
-      updateLiveIframe(buildInteractiveAdminPreview(bizName));
+      loadWorkspaceAdmin();
     }
   } else {
     // Switched back to Site view — hide admin bar + Add Function btn
-    if (adminBar) { adminBar.style.display = 'none'; }
-    if (addFnBtn) { addFnBtn.style.display = 'none'; }
+    const adminBar = document.getElementById('admin-url-bar');
+    const addFnBtn = document.getElementById('btn-add-function');
+    if (adminBar) adminBar.style.display = 'none';
+    if (addFnBtn) addFnBtn.style.display = 'none';
+    const prev = getPreviewSession();
+    const h = previewHash((c && c.html) || currentHtml);
     const f = document.getElementById('live-iframe');
-    if (f) { f.removeAttribute('src'); }
-    updateLiveIframe(c.html);
+    if (prev && prev.id && prev.siteUrl && prev.htmlHash === h) {
+      // Live preview backend is in sync — real URL, real PHP forms.
+      if (f) { f.removeAttribute('srcdoc'); f.src = prev.siteUrl; }
+    } else {
+      if (f) { f.removeAttribute('src'); }
+      updateLiveIframe(c.html);
+      // Background sync so forms become live without another click.
+      setTimeout(() => {
+        try {
+          if (currentViewMode !== 'site') return;
+          ensurePreviewEnv().then(env => {
+            if (!env || currentViewMode !== 'site') return;
+            const cc = generatedDesigns[activeDesignIndex];
+            if (previewHash((cc && cc.html) || currentHtml) !== env.htmlHash) return;
+            const ff = document.getElementById('live-iframe');
+            if (ff) { ff.removeAttribute('srcdoc'); ff.src = env.siteUrl; showToast('🧪 Live preview backend ready — forms fully functional'); }
+          });
+        } catch (e) {}
+      }, 800);
+    }
   }
   saveSessionNow();
 }
@@ -4392,25 +5627,9 @@ function openAddFunctionManager() {
   if (pub && pub.orderId) {
     window.open(SITE_URL + '/site-manager.php?order_id=' + encodeURIComponent(pub.orderId) + '#ai-adder', '_blank');
   } else {
-    try {
-      if (currentViewMode !== 'admin') {
-        switchWorkspaceView('admin');
-      }
-      const f = document.getElementById('live-iframe');
-      if (f && f.contentWindow) {
-        const doc = f.contentDocument || f.contentWindow.document;
-        const loginView = doc.getElementById('view-login');
-        if (loginView && loginView.style.display !== 'none') {
-          if (typeof f.contentWindow.doLogin === 'function') f.contentWindow.doLogin();
-        }
-        if (typeof f.contentWindow.tab === 'function') {
-          f.contentWindow.tab('features');
-          showToast('🤖 Opened AI Feature & Requirement Builder');
-          return;
-        }
-      }
-    } catch(e) {}
-    openGenerateModal();
+    if (selectedGenMode === 'static') { showToast('Static websites have no admin panel — pick Admin or Database mode to get one.'); return; }
+    if (currentViewMode !== 'admin') switchWorkspaceView('admin');
+    previewAddFeatureFlow();
   }
 }
 
@@ -4469,19 +5688,22 @@ const WC_COUNT_FIX_JS = '<script data-wc-count-fix>(function(){if(window.__wcCou
        to unhide — if that script throws, sections show ~1s then blank.
        Guard re-adds the visible class after 2.2s (skips fixed/nav). */
 const WC_REVEAL_GUARD_JS = '<script data-wcl-reveal-guard>setTimeout(function(){try{var P=[["reveal","in"],["will-reveal","visible"],["fade-up","visible"],["fade-in-up","visible"],["reveal-up","visible"],["scroll-reveal","visible"],["js-reveal","visible"],["anim-up","visible"],["reveal-item","visible"],["fade-in","visible"]];var css="";try{var ss=document.querySelectorAll("style");for(var k=0;k<ss.length;k++){css+=" "+(ss[k].textContent||"")}}catch(e){}P.forEach(function(p){var H=p[0],V=p[1];var rx=new RegExp("\\."+H+"\\b[^{]*\\{[^}]*opacity\\s*:\\s*0","i");if(!rx.test(css))return;try{document.querySelectorAll("."+H+":not(."+V+")").forEach(function(el){try{if(el.closest&&el.closest("nav"))return;var cs=null;try{cs=window.getComputedStyle(el)}catch(e){}if(cs&&cs.position==="fixed")return;el.classList.add(V)}catch(e){}})}catch(e){}})}catch(e){}},2200);<\/script>';
+const WC_BLOB_GUARD_JS = '<script data-wc-blob-guard>document.addEventListener("submit",function(e){var f=e.target&&e.target.closest?e.target.closest("form"):null;if(!f)return;var a="";try{a=String(f.action||"")}catch(_){}var t="";try{t=String(f.getAttribute("target")||"").toLowerCase()}catch(_){}var s="";try{s=String((e.submitter&&e.submitter.getAttribute("formtarget"))||"").toLowerCase()}catch(_){}if(t==="_blank"){try{f.removeAttribute("target")}catch(_){}}if(s==="_blank"){try{e.submitter.removeAttribute("formtarget")}catch(_){}}if(a.slice(0,5).toLowerCase()==="blob:"||t==="_blank"||s==="_blank"){e.preventDefault()}},true);<\/script>';
 function withWorkspaceNavFix(html) {
   if (!html) return html;
   const haveNav = html.indexOf('wc-nav-fix') !== -1;
   const haveCount = html.indexOf('wc-count-fix') !== -1;
+  const haveBlob = html.indexOf('wc-blob-guard') !== -1;
   const needGuard = html.indexOf('wcl-reveal-guard') === -1
     && /\.(reveal|will-reveal|fade-up|fade-in-up|reveal-up|scroll-reveal|js-reveal|anim-up|reveal-item|fade-in)\b[^{]*\{[^}]*opacity\s*:\s*0/i.test(html);
-  if (haveNav && haveCount && !needGuard) return html;
+  if (haveNav && haveCount && haveBlob && !needGuard) return html;
   let bundle = '';
   if (!haveNav) {
     bundle += '<style data-wc-nav-fix-css>html{scroll-behavior:smooth!important}section[id],div[id],footer[id],header[id],main[id],article[id]{scroll-margin-top:88px!important}</style>';
-    bundle += '<script data-wc-nav-fix>(function(){document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;var href=a.getAttribute("href")||"";if(href.length<2)return;var id=href.slice(1).split("?")[0].split("#")[0];try{id=decodeURIComponent(id)}catch(_){}id=(id||"").trim();if(!id)return;var t=document.getElementById(id);if(!t)return;e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(_){try{t.scrollIntoView()}catch(__){}}try{history.replaceState(null,"","#"+id)}catch(__){}var d=document.getElementById("mobile-drawer");if(d)d.classList.remove("open")},true)})();<\/script>';
+    bundle += '<script data-wc-nav-fix>(function(){document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;var href0=a.getAttribute("href")||"";if(href0==="#"||href0===""){e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();return;}var href=href0;if(href.length<2)return;var id=href.slice(1).split("?")[0].split("#")[0];try{id=decodeURIComponent(id)}catch(_){}id=(id||"").trim();if(!id)return;var t=document.getElementById(id);if(!t)return;e.preventDefault();try{e.stopImmediatePropagation()}catch(_){}e.stopPropagation();try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(_){try{t.scrollIntoView()}catch(__){}}try{history.replaceState(null,"","#"+id)}catch(__){}var d=document.getElementById("mobile-drawer");if(d)d.classList.remove("open")},true)})();<\/script>';
   }
   if (!haveCount) bundle += WC_COUNT_FIX_JS;
+  if (!haveBlob) bundle += WC_BLOB_GUARD_JS;
   if (needGuard) bundle += WC_REVEAL_GUARD_JS;
   // NOTE: function replacers — the bundle contains '$' (currency guard),
   // which a string replacer would misread as a $pattern. Function returns
@@ -4495,8 +5717,16 @@ function updateLiveIframe(html) { const f = document.getElementById('live-iframe
 function refreshLivePreview() {
   const c = generatedDesigns[activeDesignIndex];
   if (!c) return;
-  if (currentViewMode === 'admin') updateLiveIframe(stabilizeAdminHtml(c.adminHtml || ''));
-  else updateLiveIframe(currentHtml);
+  if (currentViewMode === 'admin') { loadWorkspaceAdmin(); }
+  else {
+    const prev = getPreviewSession();
+    const cc = generatedDesigns[activeDesignIndex];
+    const h = previewHash((cc && cc.html) || currentHtml);
+    if (prev && prev.id && prev.siteUrl && prev.htmlHash === h) {
+      const f = document.getElementById('live-iframe');
+      if (f) { f.removeAttribute('srcdoc'); f.src = prev.siteUrl; }
+    } else updateLiveIframe(currentHtml);
+  }
   showToast('Preview refreshed');
 }
 function setDevice(device) {
@@ -4581,8 +5811,25 @@ function toggleEditMode() {
   }
 }
 function openInNewTab() {
-  const c = generatedDesigns[activeDesignIndex];
-  const html = currentViewMode === 'admin' ? stabilizeAdminHtml(c?.adminHtml || '') : withWorkspaceNavFix(currentHtml);
+  if (currentViewMode === 'admin') {
+    // Real admin URL only — never a mock/blob admin page.
+    const pub = getPublishedSession();
+    if (pub && pub.adminUrl) { window.open(pub.adminUrl, '_blank'); return; }
+    const prevA = (typeof getPreviewSession === 'function') ? getPreviewSession() : null;
+    if (prevA && prevA.adminUrl) { window.open(prevA.adminUrl, '_blank'); return; }
+    showToast('Open the Admin Panel tab first — it builds your live preview admin');
+    return;
+  }
+  // Prefer the real preview URL (separate tab, real backend) when in sync.
+  try {
+    const prev = (typeof getPreviewSession === 'function') ? getPreviewSession() : null;
+    const h = (typeof previewHash === 'function') ? previewHash(currentHtml) : '';
+    if (prev && prev.id && prev.siteUrl && prev.htmlHash === h) {
+      window.open(prev.siteUrl, '_blank');
+      return;
+    }
+  } catch (e) {}
+  const html = withWorkspaceNavFix(currentHtml);
   window.open(URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })), '_blank');
 }
 
@@ -4872,6 +6119,14 @@ async function executeRefine() {
   input.value = '';
   const btn = document.getElementById('btn-refine');
   btn.disabled = true; btn.innerHTML = '⏳';
+  // Admin refinements build REAL backend features in the preview env —
+  // there is no mock admin HTML to patch anymore.
+  if (isAdmin) {
+    btn.disabled = false; btn.innerHTML = '➤';
+    document.getElementById('ai-typing-indicator')?.remove();
+    previewAddFeatureFlow(query);
+    return;
+  }
 
   const log = document.getElementById('ai-chat-log');
   let typing = document.createElement('div');
@@ -4890,20 +6145,14 @@ async function executeRefine() {
     document.getElementById('ai-typing-indicator')?.remove();
     appendGeminiChatMessage(formatMarkdown(res.conversation) + (res.isEdit && res.updatedHtml ? aiChatPreviewBtn() : ''));
     if (res.isEdit && res.updatedHtml) {
-      if (isAdmin) {
-        c.adminHtml = res.updatedHtml;
-        updateLiveIframe(stabilizeAdminHtml(c.adminHtml));
-        showToast('✨ Admin panel updated!');
-      } else {
-        pushHistory(activeDesignIndex, snapHtml);
-        let n = res.updatedHtml;
-        if (n.includes('<html') || n.includes('<!DOCTYPE')) currentHtml = n;
-        else currentHtml = currentHtml.replace('</body>', `${n}\n</body>`);
-        c.html = currentHtml;
-        updateLiveIframe(currentHtml);
-        updateUndoBtn();
-        showToast('✨ Site updated! [' + (res.engine || 'AI') + (res.tasteAudit && typeof res.tasteAudit.score === 'number' ? ' · Taste ' + res.tasteAudit.score : '') + ']');
-      }
+      pushHistory(activeDesignIndex, snapHtml);
+      let n = res.updatedHtml;
+      if (n.includes('<html') || n.includes('<!DOCTYPE')) currentHtml = n;
+      else currentHtml = currentHtml.replace('</body>', `${n}\n</body>`);
+      c.html = currentHtml;
+      updateLiveIframe(currentHtml);
+      updateUndoBtn();
+      showToast('✨ Site updated! [' + (res.engine || 'AI') + (res.tasteAudit && typeof res.tasteAudit.score === 'number' ? ' · Taste ' + res.tasteAudit.score : '') + ']');
       saveSessionNow();
       const pb = document.getElementById('preview-container');
       if (pb) { pb.style.transition = 'box-shadow .3s ease'; pb.style.boxShadow = '0 0 35px rgba(99,102,241,.65)'; setTimeout(() => pb.style.boxShadow = '', 1200); }
@@ -4932,10 +6181,13 @@ function openStudioInNewTab() {
   // Scoped SESSION_KEY alone is invisible to Studio, so mirror the data.
   try {
     const bizName = document.getElementById('biz_name')?.value?.trim() || 'Website';
+    const pub = getPublishedSession();
     const bridge = {
       bizName,
       activeDesignIndex,
       ownerEmail: ((window.__CUSTOMER__ && window.__CUSTOMER__.email) || 'guest').toLowerCase(),
+      // ★ Carry publish linkage so Studio opens the REAL per-project admin.
+      published: (pub && pub.adminUrl) ? pub : null,
       designs: (generatedDesigns || []).map(d => ({
         name: d.name || 'Concept',
         description: d.description || '',
@@ -4946,9 +6198,11 @@ function openStudioInNewTab() {
     };
     localStorage.setItem('webcraft_saved_project', JSON.stringify(bridge));
     // Also keep per-concept quick key (studio falls back to it)
+    const pubBridge = getPublishedSession();
     localStorage.setItem('webcraft_studio_bridge', JSON.stringify({
       savedAt: Date.now(), bizName, activeDesignIndex,
-      html: c.html || '', adminHtml: c.adminHtml || null
+      html: c.html || '', adminHtml: c.adminHtml || null,
+      published: (pubBridge && pubBridge.adminUrl) ? pubBridge : null
     }));
   } catch (e) { console.warn('[studio bridge]', e); }
   window.open(SITE_URL + '/studio.php?concept=' + activeDesignIndex, '_blank');
@@ -5044,6 +6298,28 @@ async function saveAndProceedToPayment() {
   }
 
   if (btn) { btn.disabled = false; btn.textContent = '🚀 Save & Publish'; }
+  // Pre-publish gate: warn on failed critical checks (never auto-pass).
+  // The owner can fix + retest in the preview, or publish anyway.
+  try {
+    const prevGate = (typeof getPreviewSession === 'function') ? getPreviewSession() : null;
+    if (prevGate && prevGate.id) {
+      try { if (window.Loader3D) Loader3D.text('Checking preview readiness…'); } catch (e) {}
+      const rr = await fetch(SITE_URL + '/api/preview-env.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'readiness', draftId: prevGate.id })
+      });
+      const rj = await rr.json();
+      if (rj && rj.success && !rj.ready) {
+        const bad = (rj.checks || []).filter(c => c.critical && !c.pass)
+          .map(c => '• ' + (c.label || c.key) + (c.detail ? ' — ' + c.detail : '')).join('\n');
+        try { if (window.Loader3D) Loader3D.hide(); } catch (e) {}
+        if (!confirm('Pre-publish checks are FAILING:\n' + bad + '\n\nPublish anyway? (Tip: fix + re-test in the preview first.)')) {
+          showToast('Publish paused — fix the checks, then retry');
+          return;
+        }
+      }
+    }
+  } catch (e) { console.warn('[readiness gate]', e); }
   try { if (window.Loader3D) Loader3D.text('✓ Ready! Opening publish…'); } catch (e) {}
 
   setTimeout(() => {
@@ -5092,11 +6368,28 @@ function showToast(text, ms, type) {
   toastTimeout = setTimeout(() => t.classList.remove('show'), ms);
 }
 </script>
+<script>
+/* Cache-heal guard (own block, survives main-script parse failure):
+   if the main builder script didn't evaluate (stale cached copy),
+   force one fresh reload so buttons work. Loop-guarded. */
+(function () {
+  try {
+    if (typeof understandMyBusiness === 'undefined' || typeof showGenOverlay === 'undefined') {
+      var k = 'wc_cache_healed_v2';
+      try {
+        if (!sessionStorage.getItem(k)) { sessionStorage.setItem(k, '1'); window.location.reload(); }
+      } catch (e) { window.location.reload(); }
+    } else {
+      try { sessionStorage.removeItem('wc_cache_healed_v2'); } catch (e) {}
+    }
+  } catch (e) {}
+})();
+</script>
 
 <!-- ★ WebCraft AI Suite — additive UX upgrades (brief, brand kit, health, versions, dashboard, publish gate). Reuses existing systems. -->
-<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/wc-ai-suite.css">
-<script src="<?= SITE_URL ?>/assets/js/wc-ai-suite.js"></script>
-<script src="<?= SITE_URL ?>/assets/js/wc-builder-suite.js"></script>
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/wc-ai-suite.css?v=<?= @filemtime(__DIR__ . '/assets/css/wc-ai-suite.css') ?: 1 ?>">
+<script src="<?= SITE_URL ?>/assets/js/wc-ai-suite.js?v=<?= @filemtime(__DIR__ . '/assets/js/wc-ai-suite.js') ?: 1 ?>"></script>
+<script src="<?= SITE_URL ?>/assets/js/wc-builder-suite.js?v=<?= @filemtime(__DIR__ . '/assets/js/wc-builder-suite.js') ?: 1 ?>"></script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 </body>

@@ -11,7 +11,7 @@
 //    3. State verified → code exchanged for access token (server-to-server)
 //       → userinfo fetched → local account found-or-created → session login.
 //
-//  Credentials come from config/social.php (or env, see social.example.php).
+//  Credentials come from config/social.php (or matching env vars).
 //  When a provider is NOT configured, login URL builders return null and
 //  the portal shows a setup notice instead of calling the provider.
 // ═══════════════════════════════════════════════════════════════

@@ -1,0 +1,112 @@
+/* ═══════════════════════════════════════════════════════════════
+   WebCraft AI — Premium 3D Visual Layer (SAFE MODE, visual-only)
+   Rules:
+   - No change to layout: NO position / transform / perspective /
+     z-index / display / overflow / width / height / margin / padding
+     on ANY existing component. Only paint (shadow, border-color,
+     glow filter) + opt-in utilities (.wc-skeleton, .wcl-dbar, .wcl-sk).
+   - Buttons (.btn*, .wbtn*, .hdr-btn, .tb-btn, .nav-link.cta,
+     .theme-btn) are 100% untouched — appudiyae irukum.
+   - No entrance / hover movement animations on existing components.
+   - No function / logic / data change anywhere.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 0. TOKENS (theme-adaptive, paint only) ─────────────────── */
+[data-theme] {
+  --wc-3d-glow: color-mix(in srgb, var(--wc-accent) 30%, transparent);
+  --wc-3d-glow-soft: color-mix(in srgb, var(--wc-accent) 14%, transparent);
+}
+[data-theme="light"] {
+  --wc-3d-glow: color-mix(in srgb, var(--wc-accent) 20%, transparent);
+  --wc-3d-glow-soft: color-mix(in srgb, var(--wc-accent) 9%, transparent);
+}
+
+/* ── 1. ELEVATION: paint-only depth for cards / panels ────────
+   (builder + portal + manager + studio + landing).
+   Shadow + top-edge light only. No movement, no animation. */
+[data-theme] .wizard-card, [data-theme] .card,
+[data-theme] .project-card, [data-theme] .stat-card,
+[data-theme] .login-card, [data-theme] .var-card,
+[data-theme] .gen-block, [data-theme] .taste-block,
+[data-theme] .guide-step, [data-theme] .notif-item,
+[data-theme] .set-card, [data-theme] .progress-wrap,
+[data-theme] .ctx-panel, [data-theme] .friendly-card,
+[data-theme] .canva-drawer,
+[data-theme] .feature-card, [data-theme] .example-card,
+[data-theme] .testi-card, [data-theme] .browser-mock,
+[data-theme] .step-icon, [data-theme] .cta-section {
+  border-top-color: color-mix(in srgb, var(--wc-border) 55%, #fff 12%);
+}
+[data-theme="light"] .wizard-card, [data-theme="light"] .card,
+[data-theme="light"] .project-card, [data-theme="light"] .stat-card,
+[data-theme="light"] .login-card, [data-theme="light"] .feature-card,
+[data-theme="light"] .example-card, [data-theme="light"] .testi-card {
+  border-top-color: #ffffff;
+}
+
+/* ── 2. PROGRESS GLOW (paint only, no motion on structure) ──── */
+[data-theme] .progress-fill, [data-theme] .pw-fill,
+[data-theme] .gen-overlay-fill, [data-theme] .wcl-dbar i {
+  box-shadow: 0 0 14px var(--wc-3d-glow-soft);
+}
+
+/* ── 3. LOADER TEXT DEPTH (filter only, layout-safe) ─────────── */
+[data-theme] .gen-overlay-title, [data-theme] .wcl-msg {
+  filter: drop-shadow(0 2px 16px var(--wc-3d-glow-soft));
+}
+[data-theme="light"] .gen-overlay-title, [data-theme="light"] .wcl-msg {
+  filter: none;
+}
+
+/* ── 4. SKELETON + SHIMMER UTILITIES (opt-in classes only) ────
+   New classes — existing markup-a onnum seiyathu. */
+[data-theme] .wc-skeleton {
+  position: relative; overflow: hidden; isolation: isolate;
+  background: color-mix(in srgb, var(--wc-surface-2) 78%, var(--wc-border) 22%);
+  border: 1px solid var(--wc-border);
+  border-radius: 10px;
+  min-height: 14px;
+}
+[data-theme] .wc-skeleton::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 25%, color-mix(in srgb, #fff 26%, transparent) 50%, transparent 75%);
+  opacity: .5;
+  transform: translateX(-100%);
+  animation: wcShimmer 1.6s ease-in-out infinite;
+}
+[data-theme="light"] .wc-skeleton::after { opacity: .8; }
+@keyframes wcShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+[data-theme] .wc-skeleton-line { height: 12px; border-radius: 6px; }
+[data-theme] .wc-skeleton-block { min-height: 84px; border-radius: var(--wc-radius); }
+
+/* ── 5. TYPOGRAPHY BALANCE (wrapping only, no layout shift) ─── */
+[data-theme] h1, [data-theme] h2, [data-theme] h3 {
+  text-wrap: balance;
+}
+[data-theme] .lead, [data-theme] .w-hint, [data-theme] .progress-msg {
+  text-wrap: pretty;
+}
+
+/* ── 6. FOCUS VISIBILITY (accessibility, paint only) ─────────── */
+[data-theme] :focus-visible {
+  outline: 2px solid var(--wc-accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* ── 7. REDUCED MOTION: zero animation ──────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme] .wc-skeleton::after {
+    animation: none;
+  }
+}
+
+/* ── 8. HIGH-CONTRAST SAFETY ────────────────────────────────── */
+@media (prefers-contrast: more) {
+  [data-theme] .gen-overlay-title, [data-theme] .wcl-msg {
+    filter: none;
+  }
+}

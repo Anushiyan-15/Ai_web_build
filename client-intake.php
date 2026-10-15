@@ -111,15 +111,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         file_put_contents($filename, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-        // --- Option B: Send notification email (uncomment + configure) ---
-        // $to      = 'hello@youragency.com';
-        // $subject = 'New Client Intake: ' . $formData['company_name'];
-        // $body    = print_r($payload, true);
-        // $headers = 'From: noreply@youragency.com';
-        // mail($to, $subject, $body, $headers);
+        // ── Auto-Generate Dynamic Website & Admin Panel ──
+        $autoSite = null;
+        try {
+            require_once __DIR__ . '/includes/AutoSiteGenerator.php';
+            $autoSite = AutoSiteGenerator::generate($formData);
+        } catch (\Throwable $e) {
+            error_log('[AutoSiteGenerator intake error] ' . $e->getMessage());
+        }
 
         $submitted  = true;
-        $successMsg = "Thank you, {$formData['client_name']}! Your intake questionnaire has been received. We'll review it and be in touch within 1–2 business days.";
+        $successMsg = $autoSite
+            ? "Congratulations, {$formData['client_name']}! Your dynamic website and admin portal have been automatically created and deployed."
+            : "Thank you, {$formData['client_name']}! Your intake questionnaire has been received. We'll review it and be in touch within 1–2 business days.";
     }
 }
 
@@ -153,6 +157,18 @@ function hasErr(string $key): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Client Intake Questionnaire | Website Project Discovery</title>
+<?php require_once __DIR__ . '/includes/theme-head.php'; ?>
+<script>
+/* Legacy bootstrap superseded by theme-head (wc_theme_mode aware); kept as no-op fallback. */
+(function(){
+  try {
+    if (document.documentElement.getAttribute('data-theme')) return;
+    var saved = localStorage.getItem('wc_theme');
+    var dark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  } catch(e) {}
+})();
+</script>
 <style>
 /* ──────────────────────────────────────────────
    RESET & VARIABLES
@@ -183,15 +199,49 @@ function hasErr(string $key): string {
   --shadow-lg:    0 12px 40px rgba(0,0,0,.12);
   --font:         'Inter', system-ui, -apple-system, sans-serif;
   --transition:   .18s ease;
+
+  --page-bg:      linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
+  --card-bg:      #ffffff;
+  --card-border:  var(--neutral-200);
+  --input-bg:     var(--neutral-50);
+  --input-border: var(--neutral-300);
+  --text-main:    var(--neutral-800);
+  --text-label:   var(--neutral-700);
+  --strip-bg:     linear-gradient(135deg, var(--primary-light), #f0fdf4);
+}
+
+[data-theme="dark"] {
+  --neutral-50:   #161b22;
+  --neutral-100:  #1f242c;
+  --neutral-200:  #30363d;
+  --neutral-300:  #3d444d;
+  --neutral-400:  #656d76;
+  --neutral-500:  #8b949e;
+  --neutral-600:  #9198a1;
+  --neutral-700:  #cdd9e5;
+  --neutral-800:  #e6edf3;
+  --neutral-900:  #f0f6fc;
+  --primary-light:rgba(79,70,229,.2);
+
+  --page-bg:      linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1520 100%);
+  --card-bg:      #161b22;
+  --card-border:  #30363d;
+  --input-bg:     #0d1117;
+  --input-border: #30363d;
+  --text-main:    #e6edf3;
+  --text-label:   #f0f6fc;
+  --strip-bg:     linear-gradient(135deg, rgba(79,70,229,.18), rgba(16,185,129,.1));
+  --shadow-lg:    0 12px 40px rgba(0,0,0,.5);
 }
 
 html { scroll-behavior: smooth; }
 body {
   font-family: var(--font);
-  background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
+  background: var(--page-bg);
   min-height: 100vh;
-  color: var(--neutral-800);
+  color: var(--text-main);
   line-height: 1.6;
+  transition: background .25s, color .25s;
 }
 
 /* ──────────────────────────────────────────────
@@ -265,7 +315,8 @@ body {
    PROGRESS BAR
 ────────────────────────────────────────────── */
 .progress-wrap {
-  background: #fff;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.25rem 1.5rem;
@@ -273,6 +324,7 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+  transition: background .25s, border-color .25s;
 }
 .progress-label {
   font-size: .8rem;
@@ -312,19 +364,21 @@ body {
    FORM CARD
 ────────────────────────────────────────────── */
 .form-card {
-  background: #fff;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  transition: background .25s, border-color .25s;
 }
 
 /* ──────────────────────────────────────────────
    CONTACT STRIP
 ────────────────────────────────────────────── */
 .contact-strip {
-  background: linear-gradient(135deg, var(--primary-light), #f0fdf4);
+  background: var(--strip-bg);
   padding: 2rem;
-  border-bottom: 1px solid var(--neutral-200);
+  border-bottom: 1px solid var(--card-border);
 }
 .contact-strip h2 {
   font-size: 1.1rem;
@@ -373,7 +427,7 @@ body {
 .section-title h2 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--neutral-900);
+  color: var(--text-label);
   margin-bottom: .2rem;
 }
 .section-title p {
@@ -396,7 +450,7 @@ label {
   display: block;
   font-size: .855rem;
   font-weight: 600;
-  color: var(--neutral-700);
+  color: var(--text-label);
   margin-bottom: .4rem;
 }
 label .req {
@@ -419,12 +473,12 @@ select,
 textarea {
   width: 100%;
   padding: .7rem 1rem;
-  border: 1.5px solid var(--neutral-300);
+  border: 1.5px solid var(--input-border);
   border-radius: var(--radius);
   font-family: var(--font);
   font-size: .92rem;
-  color: var(--neutral-800);
-  background: var(--neutral-50);
+  color: var(--text-main);
+  background: var(--input-bg);
   transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
   appearance: none;
   -webkit-appearance: none;
@@ -432,8 +486,8 @@ textarea {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--primary);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 3px rgba(79,70,229,.18);
 }
 input:hover:not(:focus), select:hover:not(:focus), textarea:hover:not(:focus) {
   border-color: var(--neutral-400);
@@ -750,11 +804,15 @@ select {
      HEADER
 ════════════════════════════════════════════ -->
 <header class="site-header">
+  <div style="position:absolute;top:1rem;right:1.25rem;display:flex;align-items:center;gap:.6rem;z-index:10;">
+    <a href="index.php" style="color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:.35rem .75rem;border-radius:8px;">← Home</a>
+    <button type="button" id="intakeThemeToggle" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Toggle theme">🌙</button>
+  </div>
   <div class="logo">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
     </svg>
-    Your Agency
+    WebCraft AI
   </div>
   <div class="header-badge">
     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
@@ -765,6 +823,36 @@ select {
   <h1>Website Project Discovery</h1>
   <p>Help us understand your vision so we can build something extraordinary together.</p>
 </header>
+<script>
+(function(){
+  var btn = document.getElementById('intakeThemeToggle');
+  if (!btn) return;
+  function update() {
+    var m = (window.WCTheme ? WCTheme.getMode() : null) || document.documentElement.getAttribute('data-theme') || 'dark';
+    if (m === 'custom') { btn.textContent = '🎨'; return; }
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = isDark ? '☀️' : '🌙';
+  }
+  update();
+  document.addEventListener('wc:theme-change', update);
+  btn.addEventListener('click', function(){
+    if (window.WCTheme) {
+      var cur = document.documentElement.getAttribute('data-theme');
+      WCTheme.setMode(cur === 'light' ? 'dark' : 'light');
+    } else {
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('wc_theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('wc_theme', 'dark');
+      }
+    }
+    update();
+  });
+})();
+</script>
 
 <!-- ═══════════════════════════════════════════
      MAIN
@@ -775,31 +863,90 @@ select {
 <!-- ─── SUCCESS ─── -->
 <div class="form-card">
   <div class="success-screen">
-    <div class="success-icon">
+    <div class="success-icon" style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 8px 24px rgba(16,185,129,0.35);">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
       </svg>
     </div>
-    <h2>Questionnaire Submitted!</h2>
-    <p><?= htmlspecialchars($successMsg) ?></p>
+    <h2 style="font-size:1.85rem;font-weight:800;color:var(--text-main);margin-bottom:.5rem;">
+      <?= !empty($autoSite) ? '🎉 Dynamic Website & Admin Panel Ready!' : 'Questionnaire Submitted!' ?>
+    </h2>
+    <p style="color:var(--neutral-500);font-size:1rem;max-width:580px;margin:0 auto 1.5rem;">
+      <?= htmlspecialchars($successMsg) ?>
+    </p>
+
+    <?php if (!empty($autoSite)): ?>
+    <!-- ── Launchpad ── -->
+    <div style="background:var(--input-bg);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:680px;margin:0 auto 2rem;text-align:left;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:18px;">
+        <div>
+          <span style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-500);font-weight:700;">Business Model</span>
+          <div style="font-size:1.15rem;font-weight:700;color:var(--text-main);">
+            <?= htmlspecialchars($autoSite['site_name']) ?>
+            <span style="font-size:.8rem;background:rgba(79,70,229,0.15);color:var(--primary);padding:3px 10px;border-radius:999px;margin-left:8px;font-weight:600;">
+              <?= htmlspecialchars($autoSite['category_label']) ?>
+            </span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:.75rem;color:var(--neutral-500);">Backend Engine</span>
+          <div style="font-size:.85rem;color:#10b981;font-weight:600;display:flex;align-items:center;gap:5px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#10b981;"></span> Dual Node.js + PHP
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <a href="<?= htmlspecialchars($autoSite['live_url']) ?>" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--primary),#4338ca);color:#fff;padding:12px 18px;border-radius:10px;font-weight:700;font-size:.9rem;text-decoration:none;box-shadow:0 4px 12px rgba(79,70,229,0.3);text-align:center;">
+          🌐 View Live Website →
+        </a>
+        <a href="<?= htmlspecialchars($autoSite['admin_url']) ?>" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1e293b;color:#f8fafc;border:1px solid #334155;padding:12px 18px;border-radius:10px;font-weight:700;font-size:.9rem;text-decoration:none;text-align:center;">
+          🔐 Open Admin Panel →
+        </a>
+      </div>
+
+      <!-- Admin Credentials Box -->
+      <div style="background:rgba(0,0,0,0.25);border:1px dashed var(--border);border-radius:10px;padding:14px 16px;">
+        <div style="font-size:.78rem;font-weight:700;color:var(--neutral-400);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">
+          🔑 Staff Admin Login Credentials
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.88rem;">
+          <div>
+            <span style="color:var(--neutral-500);font-size:.8rem;">Username:</span>
+            <code style="display:block;background:var(--card-bg);padding:6px 10px;border-radius:6px;color:var(--text-main);font-weight:700;margin-top:2px;">
+              <?= htmlspecialchars($autoSite['admin_username']) ?>
+            </code>
+          </div>
+          <div>
+            <span style="color:var(--neutral-500);font-size:.8rem;">Password:</span>
+            <code style="display:block;background:var(--card-bg);padding:6px 10px;border-radius:6px;color:var(--text-main);font-weight:700;margin-top:2px;">
+              <?= htmlspecialchars($autoSite['admin_password']) ?>
+            </code>
+          </div>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <div class="success-steps">
       <div class="success-step">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
-        <span>We review your answers</span>
+        <span>Instant Deployment</span>
       </div>
       <div class="success-step">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
         </svg>
-        <span>Discovery call scheduled</span>
+        <span>Live Booking Engine</span>
       </div>
       <div class="success-step">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <span>Proposal delivered</span>
+        <span>Full CMS Control</span>
       </div>
     </div>
   </div>

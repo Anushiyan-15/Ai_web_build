@@ -1,0 +1,14 @@
+{
+  "name": "webcraft-node-api",
+  "version": "1.0.0",
+  "description": "WebCraft business-operations backend (Node.js, zero dependencies). JSON files are the database; same records the PHP backend and published admin dashboards manage.",
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node ../tests/test-node-api.js"
+  },
+  "dependencies": {},
+  "license": "UNLICENSED",
+  "private": true
+}
