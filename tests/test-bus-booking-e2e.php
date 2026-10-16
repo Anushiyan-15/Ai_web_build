@@ -5,6 +5,7 @@
 // → retrieve → admin manages → seats protected → rejections → admin change
 // reflected → persistence. Plus runtime search/catalog wiring checks.
 if (session_status() === PHP_SESSION_NONE) session_start();
+if (!defined('STORAGE_DIR')) define('STORAGE_DIR', sys_get_temp_dir() . '/webbbuilder-bus-booking-e2e-' . getmypid());
 require_once __DIR__ . '/../includes/BusinessOps.php';
 require_once __DIR__ . '/../includes/BusinessRuntime.php';
 require_once __DIR__ . '/../includes/BusinessAnalyzer.php';
@@ -55,8 +56,12 @@ $b = $D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'buses',
 ok($b['http'] === 200, '1: bus registered');
 $t = $D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'trips',
     'record' => ['route' => 'Chennai-Bangalore', 'date' => $DATE, 'departure' => '21:30', 'price' => 850, 'total_seats' => 40]]);
-ok($t['http'] === 200, '1: schedule created');
+ok($t['http'] === 200 && strpos($t['body']['data']['id'] ?? '', 'TRIP-') === 0, '1: schedule created with an automatic trip ID');
 $tripId = $t['body']['data']['id'];
+$allTrips = $D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'trips']);
+$allTripIds = array_column($allTrips['body']['data'] ?? [], 'id');
+ok($allTrips['http'] === 200 && in_array($tripId, $allTripIds, true),
+    '1c: newly added schedules are available without requiring a route/date filter');
 $_SESSION = [];
 
 // Public availability exposes only capacity and reserved seat labels.
@@ -94,6 +99,8 @@ $c = $D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
 ok($c['http'] === 200 && strpos($c['body']['data']['ref'] ?? '', 'BK-') === 0, '5: booking confirmed with BK- ref');
 $ref = $c['body']['data']['ref'];
 $bid = $c['body']['data']['id'];
+ok(strpos($bid, 'BKG-') === 0 && ($c['body']['data']['status'] ?? '') === 'pending'
+    && (float)($c['body']['data']['amount'] ?? 0) === 850.0, '5b: booking has an automatic ID, pending status and server-derived fare');
 $all = bops_load($SLUG, 'bookings');
 $real = false; foreach ($all as $row) { if (($row['ref'] ?? '') === $ref) $real = true; }
 ok($real, '6: ticket ref corresponds to a real stored booking');
@@ -105,41 +112,93 @@ ok($hOwn['http'] === 200, '6b: own seats held first');
 $holdRef = $hOwn['body']['data']['ref'] ?? '';
 $cOwn = $D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
     'record' => ['trip_id' => $tripId, 'seats' => ['B1', 'B2'], 'passenger' => 'Hold Converter',
-        'phone' => '0772223333', 'hold_ref' => $holdRef]]);
+        'phone' => '0772223333', 'email' => 'holdconverter@example.com', 'hold_ref' => $holdRef]]);
 ok($cOwn['http'] === 200 && strpos($cOwn['body']['data']['ref'] ?? '', 'BK-') === 0, '6b: own hold converts to ticket (no self-conflict)');
 $leftover = false;
 foreach (bops_load($SLUG, 'bookings') as $row) { if (($row['ref'] ?? '') === $holdRef) $leftover = true; }
 ok(!$leftover, '6b: consumed hold row removed (no stray held rows)');
 
+// 6c. A customer can choose a payment method using the ticket's contact
+// details; this records a request, never a completed payment.
+$wrongPaymentOwner = $D(['action' => 'payment_intent', 'slug' => $SLUG, 'entity' => 'bookings',
+    'ref' => $ref, 'method' => 'counter', 'email' => 'stranger@example.com']);
+ok($wrongPaymentOwner['http'] === 403, '6c: payment intent rejects a mismatched customer identity');
+$counterIntent = $D(['action' => 'payment_intent', 'slug' => $SLUG, 'entity' => 'bookings',
+    'ref' => $ref, 'method' => 'counter', 'email' => 'e2erider@example.com']);
+ok($counterIntent['http'] === 200
+    && ($counterIntent['body']['data']['payment_method'] ?? '') === 'counter'
+    && ($counterIntent['body']['data']['payment_request_status'] ?? '') === 'pending'
+    && ($counterIntent['body']['data']['payment_status'] ?? '') === 'unpaid',
+    '6c: counter choice reaches the backend without falsely marking the booking paid');
+$onlineIntent = $D(['action' => 'payment_intent', 'slug' => $SLUG, 'entity' => 'bookings',
+    'ref' => $ref, 'method' => 'online', 'phone' => '+94 77 111 2222']);
+ok($onlineIntent['http'] === 200
+    && ($onlineIntent['body']['data']['payment_method'] ?? '') === 'online'
+    && ($onlineIntent['body']['data']['payment_status'] ?? '') === 'unpaid',
+    '6c: online payment selection records a follow-up request without pretending to charge');
+
 // 7. Customer retrieves own booking (and only own).
+$_SESSION['customer_user'] = ['email' => 'e2erider@example.com'];
 $mine = $D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'bookings', 'email' => 'e2erider@example.com']);
 ok(count($mine['body']['data']) === 1 && ($mine['body']['data'][0]['ref'] ?? '') === $ref, '7: customer ticket lookup works');
-// Payment pending (no gateway configured) — never fake-paid.
-ok(($mine['body']['data'][0]['payment_status'] ?? '') === 'unpaid', '7b: booking honestly unpaid until verified pay');
-$p = $D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'counter', 'amount' => 850]);
-ok($p['http'] === 200 && ($p['body']['data']['payment_status'] ?? '') === 'paid', '7c: verified counter pay recorded');
+ok(($mine['body']['data'][0]['payment_status'] ?? '') === 'unpaid', '7b: booking remains unpaid until the operator records payment');
+$_SESSION = [];
+ok($D(['action' => 'payment_quote', 'slug' => $SLUG, 'entity' => 'bookings', 'ref' => $ref])['http'] === 403
+    && $D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'cash'])['http'] === 403,
+    '7c: customer cannot quote or record an admin payment');
 
 // 8. Admin finds + manages the same booking.
 $_SESSION['admin_auth'] = true;
 $al = $D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'bookings']);
 $seen = false; foreach ($al['body']['data'] as $row) { if (($row['ref'] ?? '') === $ref) $seen = true; }
 ok($seen, '8: booking immediately visible to admin');
-$u = $D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'patch' => ['status' => 'confirmed']]);
-ok($u['http'] === 200, '8b: admin confirm applies');
+$quote = $D(['action' => 'payment_quote', 'slug' => $SLUG, 'entity' => 'bookings', 'ref' => $ref]);
+ok($quote['http'] === 200 && (float)($quote['body']['data']['amount'] ?? 0) === 850.0
+    && ($quote['body']['data']['status'] ?? '') === 'pending', '8a: admin fare lookup uses the stored trip price');
+ok($D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'card'])['http'] === 400,
+    '8a2: payment cannot be recorded before approval');
+$u = $D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'patch' => ['status' => 'approved']]);
+ok($u['http'] === 200 && ($u['body']['data']['approved_at'] ?? '') !== ''
+    && ($u['body']['data']['notification_status'] ?? '') === 'queued',
+    '8b: admin approval persists timestamp and queues customer email');
+$p = $D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'card', 'amount' => 1]);
+ok($p['http'] === 200 && ($p['body']['data']['payment_status'] ?? '') === 'paid'
+    && ($p['body']['data']['payment_request_status'] ?? '') === 'completed'
+    && (float)($p['body']['payment']['amount'] ?? 0) === 850.0
+    && ($p['body']['payment']['method'] ?? '') === 'card'
+    && strpos($p['body']['payment']['payment_id'] ?? '', 'PAY-') === 0
+    && ($p['body']['payment']['received_at'] ?? '') !== '',
+    '8c: admin-recorded card payment ignores client amount and stores ID, amount and timestamp');
+$paymentRows = bops_load($SLUG, 'payments');
+ok(count($paymentRows) === 1 && ($paymentRows[0]['booking_ref'] ?? '') === $ref,
+    '8d: payment is persisted in the admin payment ledger');
+
+$rejected = $D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
+    'record' => ['trip_id' => $tripId, 'seats' => ['C1'], 'passenger' => 'Rejected Rider',
+        'phone' => '0773334444', 'email' => 'rejected@example.com']]);
+$rejectUpdate = $D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings',
+    'id' => $rejected['body']['data']['id'] ?? '', 'patch' => ['status' => 'rejected']]);
+$rejectedAvailability = $D(['action' => 'availability', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => $tripId]);
+ok($rejectUpdate['http'] === 200 && ($rejectUpdate['body']['data']['notification_status'] ?? '') === 'queued'
+    && !in_array('C1', $rejectedAvailability['body']['data']['reserved_seats'] ?? [], true),
+    '8e: rejection queues an email and releases the seats');
+ok($D(['action' => 'payment_quote', 'slug' => $SLUG, 'entity' => 'bookings', 'ref' => $rejected['body']['data']['ref']])['http'] === 400,
+    '8f: rejected bookings cannot be paid');
 $_SESSION = [];
 
 // 9. Booked seats protected from other customers.
 $h2 = $D(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => $tripId, 'seats' => ['A3']]);
 ok($h2['http'] === 400, '9: held/booked seat rejected for others');
 $c2 = $D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
-    'record' => ['trip_id' => $tripId, 'seats' => ['A3'], 'passenger' => 'Other', 'phone' => '0770000000']]);
+    'record' => ['trip_id' => $tripId, 'seats' => ['A3'], 'passenger' => 'Other',
+        'phone' => '0770000000', 'email' => 'other@example.invalid']]);
 ok($c2['http'] === 400, '9b: double-book rejected');
 
 // 10. Invalid / duplicate / unauthorized rejected.
 ok($D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
     'record' => ['trip_id' => $tripId, 'email' => 'x@y.zz']])['http'] === 400, '10: seatless rejected');
-ok($D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'counter', 'amount' => 850])['http'] === 400, '10b: duplicate pay rejected');
-ok($D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'patch' => ['status' => 'confirmed']])['http'] === 403, '10c: non-admin update rejected');
+ok($D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'cash'])['http'] === 403, '10b: customer cannot record a duplicate payment');
+ok($D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'patch' => ['status' => 'approved']])['http'] === 403, '10c: non-admin update rejected');
 ok($D(['action' => 'cancel', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'email' => 'stranger@example.com'])['http'] === 403, '10d: stranger cancel rejected');
 
 // 11. Admin schedule change reflected in customer search.
@@ -168,8 +227,38 @@ ok(strpos($widget, 'data-wc-form="booking"') !== false
 ok(strpos($widget, 'data-wc-live-bus-booking') !== false
     && strpos($widget, "window.WCBiz.hold('bookings'") !== false
     && strpos($widget, "api('availability'") !== false
-    && strpos($widget, "api('pay',{entity:'bookings'") !== false,
-    'UI: reusable bus flow uses the shared backend for live availability, seat holds and payment');
+    && strpos($widget, 'data-wc-account-link') !== false
+    && strpos($widget, "data-wc-booking-dashboard") !== false
+    && strpos($widget, 'href="customer.php"') !== false
+    && strpos($widget, 'data-wc-pay="counter"') !== false
+    && strpos($widget, "window.WCBiz.pay(lastBooking.ref,method") !== false
+    && strpos($widget, "api('pay',{entity:'bookings'") === false
+    && strpos($widget, 'bus-portal.php') === false,
+    'UI: bus flow sends customer payment choices to the backend and exposes customer booking history');
+$runtime = (string)file_get_contents(__DIR__ . '/../includes/BusinessRuntime.php');
+ok(strpos($runtime, "button[data-pay],button[data-payment-method]") !== false
+    && strpos($runtime, "api('payment_intent'") !== false
+    && strpos($runtime, 'window.__WC_LAST_BOOKING__=j.data') !== false,
+    'UI: generated payment buttons use the confirmed booking and backend payment-intent action');
+$customerPortal = (string)file_get_contents(__DIR__ . '/../includes/templates/bus-customer-portal.php');
+ok(strpos($customerPortal, "'bus_customer_'") !== false
+    && strpos($customerPortal, 'password_hash($password, PASSWORD_DEFAULT)') !== false
+    && strpos($customerPortal, 'password_verify($password') !== false
+    && strpos($customerPortal, "bops_dispatch(['action' => 'list', 'entity' => 'bookings', 'slug' => \$slug])") !== false
+    && strpos($customerPortal, 'customer_accounts.json') !== false
+    && strpos($customerPortal, '$requestVerification($email)') !== false
+    && strpos($customerPortal, 'verify_register') !== false
+    && strpos($customerPortal, 'email_verified_at') !== false
+    && strpos($customerPortal, "unset(\$_SESSION['admin_auth'])") !== false,
+    'UI: generated customer accounts verify email, hash passwords, and use site-scoped backend history');
+$autoGeneratorSource = (string)file_get_contents(__DIR__ . '/../includes/AutoSiteGenerator.php');
+$publishSource = (string)file_get_contents(__DIR__ . '/../publish.php');
+$compatPortal = (string)file_get_contents(__DIR__ . '/../bus-portal.php');
+ok(strpos($autoGeneratorSource, "templates/bus-customer-portal.php") !== false
+    && strpos($publishSource, "includes/templates/bus-customer-portal.php") !== false
+    && strpos($compatPortal, '/published/') !== false
+    && strpos($compatPortal, "'/customer-portal.php'") === false,
+    'UI: generated sites receive their portal and legacy links stay site-local');
 $publishSpec = business_spec_analyze(['biz_name' => 'City Express',
     'biz_type' => 'Bus Booking', 'biz_services' => 'Daily bus routes, seats and booking']);
 $publishPage = business_runtime_inject('<html><body><h1>City Express</h1></body></html>', $publishSpec, $SLUG);
@@ -189,6 +278,11 @@ ok(strpos($widget, 'trip_101') === false && strpos($widget, 'value="04A"') === f
 $rt = business_runtime_js([], $SLUG);
 ok(strpos($rt, 'data-wc-search') !== false && strpos($rt, 'data-wc-catalog') !== false, 'RT: catalog + search wiring in runtime');
 ok(strpos($rt, "if(f.hasAttribute('data-wc-search'))return") !== false, 'RT: search forms never create records');
+$busWidget = bus_booking_widget_html($SLUG);
+ok(strpos($busWidget, "loadTrips('','')") !== false
+    && strpos($busWidget, 'route:route||\'\'') !== false
+    && strpos($busWidget, 'date:date||\'\'') !== false,
+    'RT: bus storefront loads live trips on page open and supports optional filters');
 $searchHtml = '<html><body><form data-wc-search="trips" data-wc-target="#r"><input name="route"><button>Go</button></form><div id="r" data-wc-results></div><div data-wc-catalog="trips"></div></body></html>';
 $rep = mfa_scan(['entities' => [['id' => 'trips']], 'functions' => []], $searchHtml, $SLUG);
 $hasFormMissing = false;
@@ -242,5 +336,6 @@ rmdir_r(bops_root() . '/collections/' . $LEGACY_SLUG);
 rmdir_r(bops_root() . '/sites/' . $LEGACY_SLUG);
 rmdir_r(dirname(__DIR__) . '/published/' . $LEGACY_SLUG);
 $_SESSION = [];
+rmdir_r(STORAGE_DIR);
 echo $fail === 0 ? "\nALL BUS-BOOKING-E2E TESTS PASSED\n" : "\n$fail FAILED\n";
 exit($fail === 0 ? 0 : 1);

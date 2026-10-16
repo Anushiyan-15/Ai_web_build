@@ -1,58 +1,84 @@
 <?php
-// tests/test-booking-flow.php — bus booking acceptance (file-backend level)
+// tests/test-booking-flow.php — bus booking acceptance against BusinessOps.
 // run: php tests/test-booking-flow.php
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!defined('STORAGE_DIR')) define('STORAGE_DIR', sys_get_temp_dir() . '/webbbuilder-booking-flow-' . getmypid());
+if (!defined('SITE_URL')) define('SITE_URL', '');
+require_once __DIR__ . '/../includes/BusinessOps.php';
+
 $fail = 0;
-function ok($c,$m){global $fail;echo ($c?"PASS":"FAIL").": $m\n";if(!$c)$fail++;}
-
-// Simulate storage collections directly (same logic as api/business-ops.php)
-$slug = 'test-bus-' . substr(md5(uniqid()),0,6);
-$dir = __DIR__ . '/../storage/collections/' . $slug;
-@mkdir($dir, 0755, true);
-function rows($dir,$e){$f="$dir/$e.json";return is_file($f)?(json_decode(file_get_contents($f),true)?:[]):[];}
-function save($dir,$e,$r){file_put_contents("$dir/$e.json",json_encode(array_values($r),JSON_PRETTY_PRINT),LOCK_EX);}
-
-// 1. Create trip
-$trips=[['id'=>'t1','route'=>'Chennai-Bangalore','date'=>'2026-10-20','total_seats'=>40,'created_at'=>date('c')]];
-save($dir,'trips',$trips);
-ok(count(rows($dir,'trips'))===1,'trip created');
-
-// 2. Hold seats A1,A2
-$hold=['id'=>'h1','trip_id'=>'t1','seats'=>['A1','A2'],'status'=>'held','created_at'=>date('c')];
-$b=[...rows($dir,'bookings'),$hold];save($dir,'bookings',$b);
-ok(true,'seats held');
-
-// 3. Double-book same seat must be rejected (logic mirror)
-$conflict=false;
-foreach(rows($dir,'bookings') as $r){
-  if(($r['trip_id']??'')==='t1'&&in_array($r['status']??'', ['held','awaiting_payment','confirmed'],true)){
-    if(in_array('A1',(array)($r['seats']??[]),true)){$conflict=true;break;}
-  }
+function ok($condition, $message) {
+    global $fail;
+    echo ($condition ? 'PASS' : 'FAIL') . ': ' . $message . "\n";
+    if (!$condition) $fail++;
 }
-ok($conflict===true,'duplicate seat detected (would reject)');
+function removeTree($path) {
+    if (!is_dir($path)) return;
+    foreach (scandir($path) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $child = $path . DIRECTORY_SEPARATOR . $file;
+        is_dir($child) ? removeTree($child) : @unlink($child);
+    }
+    @rmdir($path);
+}
 
-// 4. Confirm booking with ref + QR marker
-$book=['id'=>'b1','trip_id'=>'t1','seats'=>['B1'],'passenger'=>'Test','phone'=>'999','status'=>'awaiting_payment','payment_status'=>'unpaid','ref'=>'BK-TEST123','created_at'=>date('c')];
-$b=[...rows($dir,'bookings'),$book];save($dir,'bookings',$b);
-ok(!empty($book['ref']),'booking ref issued');
+$slug = 'test-bus-' . bin2hex(random_bytes(4));
+$dispatch = static fn(array $request): array => bops_dispatch($request);
+$_SESSION = ['admin_auth' => true];
+$trip = $dispatch(['action' => 'create', 'slug' => $slug, 'entity' => 'trips',
+    'record' => ['route' => 'Chennai-Bangalore', 'date' => '2026-10-20',
+        'departure' => '09:30', 'price' => 850, 'total_seats' => 40]]);
+$tripId = (string)($trip['body']['data']['id'] ?? '');
+ok($trip['http'] === 200 && strpos($tripId, 'TRIP-') === 0, 'trip receives an automatic ID');
+$_SESSION = [];
 
-// 5. Pay at counter -> confirmed+paid, no duplicate
-foreach($b as &$r){if(($r['ref']??'')==='BK-TEST123'){$r['payment_status']='paid';$r['status']='confirmed';}}
-save($dir,'bookings',$b);
-$paid=array_values(array_filter(rows($dir,'bookings'),fn($r)=>($r['ref']??'')==='BK-TEST123'))[0];
-ok($paid['status']==='confirmed'&&$paid['payment_status']==='paid','counter payment confirms booking');
+$hold = $dispatch(['action' => 'hold', 'slug' => $slug, 'entity' => 'bookings',
+    'trip_id' => $tripId, 'seats' => ['A1', 'A2']]);
+ok($hold['http'] === 200 && ($hold['body']['data']['status'] ?? '') === 'held', 'seats are held during checkout');
+$conflict = $dispatch(['action' => 'hold', 'slug' => $slug, 'entity' => 'bookings',
+    'trip_id' => $tripId, 'seats' => ['A1']]);
+ok($conflict['http'] === 400, 'a seat held by another checkout is unavailable');
 
-// 6. Cancel releases capacity, refund_pending when paid
-foreach($b as &$r){if(($r['ref']??'')==='BK-TEST123'){$r['status']='cancelled';if(($r['payment_status']??'')==='paid')$r['payment_status']='refund_pending';}}
-save($dir,'bookings',$b);
-$c=array_values(array_filter(rows($dir,'bookings'),fn($r)=>($r['ref']??'')==='BK-TEST123'))[0];
-ok($c['status']==='cancelled','cancel updates status');
-ok($c['payment_status']==='refund_pending','paid cancel -> refund_pending');
+$booking = $dispatch(['action' => 'create', 'slug' => $slug, 'entity' => 'bookings',
+    'record' => ['trip_id' => $tripId, 'seats' => ['A1', 'A2'], 'hold_ref' => $hold['body']['data']['ref'],
+        'passenger' => 'Test Rider', 'phone' => '0771112222', 'email' => 'rider@example.invalid']]);
+$ref = (string)($booking['body']['data']['ref'] ?? '');
+$bookingId = (string)($booking['body']['data']['id'] ?? '');
+ok($booking['http'] === 200 && strpos($bookingId, 'BKG-') === 0 && strpos($ref, 'BK-') === 0
+    && ($booking['body']['data']['status'] ?? '') === 'pending'
+    && (float)($booking['body']['data']['amount'] ?? 0) === 1700.0,
+    'ticket request creates a pending booking with server-calculated fare');
+ok(count(array_filter(bops_load($slug, 'bookings'), static fn($row) => ($row['status'] ?? '') === 'held')) === 0,
+    'booking consumes its checkout hold');
 
-// 7. Cancelled cannot be paid again (policy)
-$reject = in_array(($c['status']??''),['cancelled','expired'],true);
-ok($reject===true,'cancelled booking rejects further payment');
+$_SESSION['admin_auth'] = true;
+$prematurePayment = $dispatch(['action' => 'pay', 'slug' => $slug, 'ref' => $ref, 'method' => 'cash']);
+ok($prematurePayment['http'] === 400, 'operator cannot record payment before approval');
+$approved = $dispatch(['action' => 'update', 'slug' => $slug, 'entity' => 'bookings',
+    'id' => $bookingId, 'patch' => ['status' => 'approved']]);
+ok($approved['http'] === 200 && ($approved['body']['data']['notification_status'] ?? '') === 'queued',
+    'approval queues a customer email and records the new status');
+$payment = $dispatch(['action' => 'pay', 'slug' => $slug, 'ref' => $ref, 'method' => 'cash', 'amount' => 1]);
+ok($payment['http'] === 200 && ($payment['body']['data']['status'] ?? '') === 'approved'
+    && ($payment['body']['data']['payment_status'] ?? '') === 'paid'
+    && (float)($payment['body']['payment']['amount'] ?? 0) === 1700.0
+    && strpos($payment['body']['payment']['payment_id'] ?? '', 'PAY-') === 0
+    && !empty($payment['body']['payment']['received_at']),
+    'operator records the received cash using server fare, generated payment ID and timestamp');
+ok(count(bops_load($slug, 'payments')) === 1, 'payment is saved in the payments collection');
+$duplicatePayment = $dispatch(['action' => 'pay', 'slug' => $slug, 'ref' => $ref, 'method' => 'cash']);
+ok($duplicatePayment['http'] === 400, 'duplicate payment is rejected');
 
-// cleanup
-array_map('unlink', glob("$dir/*.json"));@rmdir($dir);
-echo $fail===0?"\nALL BOOKING TESTS PASSED\n":"\n$fail FAILED\n";
-exit($fail===0?0:1);
+$_SESSION = [];
+$cancel = $dispatch(['action' => 'cancel', 'slug' => $slug, 'entity' => 'bookings',
+    'id' => $bookingId, 'email' => 'rider@example.invalid']);
+ok($cancel['http'] === 200 && ($cancel['body']['data']['status'] ?? '') === 'cancelled'
+    && ($cancel['body']['data']['payment_status'] ?? '') === 'refund_pending',
+    'cancelling a paid booking releases capacity and flags refund review');
+
+removeTree(bops_root() . '/collections/' . $slug);
+removeTree(bops_root() . '/sites/' . $slug);
+removeTree(STORAGE_DIR);
+$_SESSION = [];
+echo $fail === 0 ? "\nALL BOOKING TESTS PASSED\n" : "\n$fail FAILED\n";
+exit($fail === 0 ? 0 : 1);

@@ -293,6 +293,30 @@ class AdminPanelGenerator {
                 $p = self::parseField($f);
                 if ($p !== null) $fields[] = $p;
             }
+            $fieldNames = array_map(static fn($field) => strtolower((string)($field['name'] ?? '')), $fields);
+            $isBusBookings = $id === 'bookings'
+                && in_array('trip_id', $fieldNames, true)
+                && in_array('seats', $fieldNames, true);
+            if ($isBusBookings) {
+                $busFields = [
+                    ['name' => 'passenger', 'label' => 'Passenger', 'type' => 'text', 'required' => true],
+                    ['name' => 'phone', 'label' => 'Phone', 'type' => 'tel', 'required' => true],
+                    ['name' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => true],
+                    ['name' => 'status', 'label' => 'Approval status', 'type' => 'select', 'required' => false,
+                        'options' => ['pending', 'approved', 'rejected', 'cancelled']],
+                    ['name' => 'payment_status', 'label' => 'Payment status', 'type' => 'text', 'required' => false],
+                    ['name' => 'amount', 'label' => 'Fare total', 'type' => 'number', 'required' => false],
+                ];
+                foreach ($busFields as $busField) {
+                    $existing = array_search($busField['name'], $fieldNames, true);
+                    if ($existing === false) {
+                        $fields[] = $busField;
+                        $fieldNames[] = $busField['name'];
+                    } elseif ($busField['name'] === 'status') {
+                        $fields[$existing] = $busField;
+                    }
+                }
+            }
             if (empty($fields)) {
                 $fields = [
                     ['name' => 'title', 'label' => 'Title', 'type' => 'text', 'required' => true],
@@ -1033,6 +1057,11 @@ if (\$__extra > 0) {
 \$__sysKeys = ['id' => true, 'created_at' => true, 'updated_at' => true, 'idempotency_key' => true];
 \$__fieldNames = [];
 foreach (\$activeEntity['fields'] ?? [] as \$__ff) { \$__fieldNames[(string)(\$__ff['name'] ?? '')] = true; }
+\$__isBusBookingManager = \$activeEntityId === 'bookings'
+    && isset(\$__fieldNames['trip_id']) && isset(\$__fieldNames['seats']);
+\$__isBusPaymentLedger = \$activeEntityId === 'payments'
+    && isset(\$__fieldNames['payment_id']) && isset(\$__fieldNames['booking_ref']);
+\$__isBusLifecycleEntity = \$__isBusBookingManager || \$__isBusPaymentLedger;
 \$__extraCols = [];
 foreach (\$records as \$__rr) {
     if (!is_array(\$__rr)) continue;
@@ -1084,7 +1113,10 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
     admin_require_csrf();
     \$action = \$_POST['action'] ?? '';
 
-    if (\$action === 'save_item') {
+    if (\$__isBusLifecycleEntity) {
+        http_response_code(403);
+        exit('Bus booking and payment records can only be changed through their lifecycle actions.');
+    } elseif (\$action === 'save_item') {
         \$id = trim(\$_POST['item_id'] ?? '');
         \$isEdit = !empty(\$id);
         // Server-side validation mirrors the form: required fields + select
@@ -1114,7 +1146,10 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Edit preserves keys the form does not render (ref, payment, seats,
         // ...); only known fields are overwritten. Nothing is ever dropped.
-        \$base = ['id' => \$isEdit ? \$id : (string)time()];
+        \$newId = (\$activeEntityId === 'trips')
+            ? 'TRIP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)))
+            : (string)time();
+        \$base = ['id' => \$isEdit ? \$id : \$newId];
         if (\$isEdit) {
             foreach (\$records as \$__er) {
                 if (is_array(\$__er) && (string)(\$__er['id'] ?? '') === \$id) { \$base = \$__er; break; }
@@ -1124,6 +1159,10 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
         \$item = \$base;
         foreach (\$activeEntity['fields'] ?? [] as \$f) {
             \$fname = \$f['name'];
+            if (\$__isBusBookingManager && in_array(\$fname, ['status', 'payment_status', 'payment_id', 'amount'], true)) {
+                \$item[\$fname] = \$base[\$fname] ?? (\$fname === 'status' ? 'pending' : '');
+                continue;
+            }
             \$item[\$fname] = trim(\$_POST[\$fname] ?? '');
         }
 
@@ -1143,7 +1182,7 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (\$action === 'delete_item') {
+    elseif (\$action === 'delete_item') {
         \$delId = trim(\$_POST['item_id'] ?? '');
         \$records = array_values(array_filter(\$records, fn(\$r) => (\$r['id'] ?? '') !== \$delId));
         file_put_contents(\$dataFile, json_encode(\$records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
@@ -1159,9 +1198,9 @@ renderAdminHeader('manage', 'Manage Data');
     <h1 class="page-title">📋 Data &amp; Record Manager</h1>
     <p style="color:#64748b;font-size:.88rem;margin-top:.3rem">Add, edit, or remove live data items for your website.</p>
   </div>
-  <button class="btn btn-primary" onclick="openAddModal()">
+  <?php if (!\$__isBusLifecycleEntity): ?><button class="btn btn-primary" onclick="openAddModal()">
     <span>➕</span> Add New <?= htmlspecialchars(\$activeEntity['singular'] ?? 'Item') ?>
-  </button>
+  </button><?php endif; ?>
 </div>
 
 <?php if (\$msg): ?>
@@ -1184,13 +1223,38 @@ renderAdminHeader('manage', 'Manage Data');
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
     <h2 style="font-size:1.1rem;font-weight:800;color:#fff"><?= htmlspecialchars(\$activeEntity['name'] ?? 'Records') ?> (<?= count(\$records) ?>)</h2>
-    <input type="text" id="filterInp" placeholder="Search records..." class="inp" style="max-width:260px;padding:.5rem .85rem;font-size:.82rem" oninput="filterTable()">
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:flex-end">
+      <input type="text" id="filterInp" placeholder="Search records..." class="inp" style="max-width:260px;padding:.5rem .85rem;font-size:.82rem" oninput="filterTable()">
+      <button type="button" class="btn btn-ghost" onclick="downloadDataReport()">Download report</button>
+    </div>
   </div>
+
+  <?php if (\$__isBusBookingManager): ?>
+    <section style="border:1px solid #263244;border-radius:12px;padding:1rem;margin:0 0 1.25rem;background:#0b111d">
+      <h3 style="margin:0 0 .35rem;color:#fff;font-size:1rem">Record a received payment</h3>
+      <p style="margin:0 0 .85rem;color:#94a3b8;font-size:.82rem">Enter the ticket reference to load its fare. Choose the method only after receiving the payment.</p>
+      <form id="wc-payment-form" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+        <label style="display:grid;gap:.35rem;min-width:210px;flex:1;color:#cbd5e1;font-size:.78rem;font-weight:700">
+          Ticket reference
+          <input class="inp" id="wc-payment-ref" required maxlength="50" placeholder="BK-XXXXXXXX">
+        </label>
+        <button class="btn btn-ghost" id="wc-payment-lookup" type="button">Load fare</button>
+        <label style="display:grid;gap:.35rem;min-width:150px;color:#cbd5e1;font-size:.78rem;font-weight:700">
+          Method
+          <select class="inp" id="wc-payment-method" required>
+            <option value="">Select method</option><option value="card">Card received</option><option value="cash">Cash received</option>
+          </select>
+        </label>
+        <button class="btn btn-primary" id="wc-payment-submit" type="submit" disabled>Save payment</button>
+      </form>
+      <p id="wc-payment-quote" aria-live="polite" style="margin:.75rem 0 0;color:#94a3b8;font-size:.85rem">No ticket loaded.</p>
+    </section>
+  <?php endif; ?>
 
   <?php if (empty(\$records)): ?>
     <div style="text-align:center;padding:3rem 1rem;color:#64748b">
       <div style="font-size:2rem;margin-bottom:.5rem">📂</div>
-      <p>No records found yet. Click <strong>+ Add New</strong> above to create your first entry.</p>
+      <p><?= \$__isBusPaymentLedger ? 'No received payments have been recorded yet.' : (\$__isBusBookingManager ? 'Customer bookings will appear here after they submit a ticket request.' : 'No records found yet. Click <strong>+ Add New</strong> above to create your first entry.') ?></p>
     </div>
   <?php else: ?>
     <div style="overflow-x:auto">
@@ -1217,14 +1281,20 @@ renderAdminHeader('manage', 'Manage Data');
                 <td><?= \$__cell(\$row[\$__ec] ?? null) ?></td>
               <?php endforeach; ?>
               <td style="text-align:right;white-space:nowrap">
-                <button type="button" class="btn btn-ghost" style="padding:.35rem .75rem;font-size:.78rem;margin-right:.4rem"
+                <?php if (\$__isBusBookingManager && in_array((string)(\$row['status'] ?? 'pending'), ['pending', 'approved'], true)): ?>
+                  <?php if ((\$row['status'] ?? 'pending') === 'pending'): ?>
+                    <button type="button" class="btn btn-primary" style="padding:.35rem .6rem;font-size:.76rem;margin-right:.25rem" onclick='wcBookingStatus(<?= json_encode((string)(\$row['id'] ?? '')) ?>,"approved")'>Approve</button>
+                    <button type="button" class="btn btn-danger" style="padding:.35rem .6rem;font-size:.76rem;margin-right:.25rem" onclick='wcBookingStatus(<?= json_encode((string)(\$row['id'] ?? '')) ?>,"rejected")'>Reject</button>
+                  <?php endif; ?>
+                <?php endif; ?>
+                <?php if (!\$__isBusLifecycleEntity): ?><button type="button" class="btn btn-ghost" style="padding:.35rem .75rem;font-size:.78rem;margin-right:.4rem"
                         onclick='openEditModal(<?= json_encode(\$row) ?>)'>✏️ Edit</button>
                 <form method="POST" style="display:inline" onsubmit="return confirm('Delete this record?');">
                   <?= admin_csrf_field() ?>
                   <input type="hidden" name="action" value="delete_item">
                   <input type="hidden" name="item_id" value="<?= htmlspecialchars(\$row['id'] ?? '') ?>">
                   <button type="submit" class="btn btn-danger" style="padding:.35rem .75rem;font-size:.78rem">🗑️</button>
-                </form>
+                </form><?php endif; ?>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -1234,6 +1304,7 @@ renderAdminHeader('manage', 'Manage Data');
   <?php endif; ?>
 </div>
 
+<?php if (!\$__isBusLifecycleEntity): ?>
 <!-- Add / Edit Modal -->
 <div id="itemModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem">
   <div style="background:#111622;border:1.5px solid #283347;border-radius:20px;max-width:540px;width:100%;padding:2rem;box-shadow:0 25px 60px rgba(0,0,0,.6)">
@@ -1248,6 +1319,7 @@ renderAdminHeader('manage', 'Manage Data');
       <input type="hidden" name="item_id" id="modal_item_id" value="">
 
       <?php foreach (\$activeEntity['fields'] ?? [] as \$f):
+        if (\$__isBusBookingManager && in_array((string)(\$f['name'] ?? ''), ['status', 'payment_status', 'payment_id', 'amount'], true)) continue;
         \$fname = \$f['name'];
         \$ftype = \$f['type'] ?? 'text';
         \$freq = !empty(\$f['required']);
@@ -1285,8 +1357,99 @@ renderAdminHeader('manage', 'Manage Data');
     </form>
   </div>
 </div>
+<?php endif; ?>
 
 <script>
+const WC_ADMIN_CSRF = <?= json_encode(admin_csrf_token()) ?>;
+const WC_ADMIN_SLUG = <?= json_encode(\$__slug) ?>;
+const WC_ADMIN_RECORDS = <?= json_encode(\$records, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+function wcOps(payload) {
+  return fetch('../../../api/business-ops.php', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json', 'X-Admin-CSRF': WC_ADMIN_CSRF},
+    body: JSON.stringify(Object.assign({slug: WC_ADMIN_SLUG}, payload))
+  }).then(async function(response) {
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || 'Request failed.');
+    return data;
+  });
+}
+function wcBookingStatus(id, status) {
+  if (!confirm('Set this booking to ' + status + '?')) return;
+  wcOps({action:'update', entity:'bookings', id:id, patch:{status:status}})
+    .then(function(data) {
+      const notice = data.notification || {};
+      const mail = notice.status === 'queued' ? 'Customer status notification queued.'
+        : (notice.error || 'No valid customer email; status was saved without an email.');
+      alert('Booking ' + status + '. ' + mail);
+      location.reload();
+    })
+    .catch(function(error) { alert('Could not update booking: ' + error.message); });
+}
+function downloadDataReport() {
+  const rows = Array.isArray(WC_ADMIN_RECORDS) ? WC_ADMIN_RECORDS : [];
+  if (!rows.length) { alert('There are no records to export.'); return; }
+  const columns = Array.from(new Set(rows.reduce(function(keys, row) {
+    return keys.concat(Object.keys(row || {}));
+  }, [])));
+  const cell = function(value) {
+    if (Array.isArray(value) || (value && typeof value === 'object')) value = JSON.stringify(value);
+    return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"';
+  };
+  const csv = [columns.map(cell).join(','), ...rows.map(function(row) {
+    return columns.map(function(key) { return cell(row[key]); }).join(',');
+  })].join('\r\n');
+  const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8'}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = WC_ADMIN_SLUG + '-<?= htmlspecialchars(\$activeEntityId, ENT_QUOTES) ?>-' + new Date().toISOString().slice(0,10) + '.csv';
+  link.click();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+<?php if (\$__isBusBookingManager): ?>
+let wcPaymentQuote = null;
+document.getElementById('wc-payment-lookup').addEventListener('click', function() {
+  const ref = document.getElementById('wc-payment-ref').value.trim().toUpperCase();
+  const out = document.getElementById('wc-payment-quote');
+  wcPaymentQuote = null;
+  document.getElementById('wc-payment-submit').disabled = true;
+  if (!ref) { out.textContent = 'Enter a ticket reference first.'; return; }
+  out.textContent = 'Loading fare…';
+  wcOps({action:'payment_quote', entity:'bookings', ref:ref})
+    .then(function(result) {
+      wcPaymentQuote = result.data;
+      out.textContent = result.data.ref + ' · ' + (result.data.passenger || 'Customer') + ' · '
+        + result.data.currency + ' ' + Number(result.data.amount).toFixed(2)
+        + ' · booking ' + result.data.status;
+      document.getElementById('wc-payment-submit').disabled = result.data.status !== 'approved';
+      if (result.data.status !== 'approved') out.textContent += ' · Approve the booking before recording payment.';
+    })
+    .catch(function(error) { out.textContent = error.message; });
+});
+document.getElementById('wc-payment-form').addEventListener('submit', function(event) {
+  event.preventDefault();
+  if (!wcPaymentQuote) { alert('Load the ticket fare before saving payment.'); return; }
+  const method = document.getElementById('wc-payment-method').value;
+  const submit = document.getElementById('wc-payment-submit');
+  submit.disabled = true;
+  wcOps({action:'pay', entity:'bookings', ref:wcPaymentQuote.ref, method:method})
+    .then(function(result) {
+      const payment = result.payment || {};
+      document.getElementById('wc-payment-quote').textContent = 'Payment saved: '
+        + (payment.payment_id || payment.id) + ' · ' + payment.currency + ' '
+        + Number(payment.amount).toFixed(2) + ' · ' + method + ' · ' + payment.received_at;
+      wcPaymentQuote = null;
+      document.getElementById('wc-payment-form').reset();
+      setTimeout(function() { location.reload(); }, 1200);
+    })
+    .catch(function(error) {
+      document.getElementById('wc-payment-quote').textContent = error.message;
+      submit.disabled = false;
+    });
+});
+<?php endif; ?>
+
 function openAddModal() {
   document.getElementById('modalTitle').textContent = '➕ Add New ' + <?= json_encode(\$activeEntity['singular'] ?? 'Item') ?>;
   document.getElementById('modal_item_id').value = '';

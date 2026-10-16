@@ -31,19 +31,20 @@ ok($http === 200, 'server answers business-ops API');
 
 require_once __DIR__ . '/../includes/AdminPanelGenerator.php';
 require_once __DIR__ . '/../includes/BusinessRuntime.php';
+require_once __DIR__ . '/../includes/BusinessOps.php';
 $SLUG = 'e2ebus';
 $ROOT = dirname(__DIR__);
 $siteDir = $ROOT . '/published/' . $SLUG;
 $adminDir = $siteDir . '/admin';
 rmdir_r($siteDir); rmdir_r($ROOT . '/storage/collections/' . $SLUG);
 
-function http($method, $url, $data = null, $jar = null, $isJson = true) {
+function http($method, $url, $data = null, $jar = null, $isJson = true, $headers = []) {
     $ch = curl_init($url);
     $opts = [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5];
     if ($jar) { $opts[CURLOPT_COOKIEJAR] = $jar; $opts[CURLOPT_COOKIEFILE] = $jar; }
     if ($method === 'POST') {
         $opts[CURLOPT_POST] = true;
-        if ($isJson) { $opts[CURLOPT_HTTPHEADER] = ['Content-Type: application/json']; $opts[CURLOPT_POSTFIELDS] = json_encode($data); }
+        if ($isJson) { $opts[CURLOPT_HTTPHEADER] = array_merge(['Content-Type: application/json'], $headers); $opts[CURLOPT_POSTFIELDS] = json_encode($data); }
         else $opts[CURLOPT_POSTFIELDS] = $data;
     }
     curl_setopt_array($ch, $opts);
@@ -52,9 +53,10 @@ function http($method, $url, $data = null, $jar = null, $isJson = true) {
     curl_close($ch);
     return [$code, $body];
 }
-function api($action, $payload, $jar = null) {
+function api($action, $payload, $jar = null, $csrf = '') {
     global $BASE;
-    [$code, $body] = http('POST', $BASE . '/api/business-ops.php', array_merge(['action' => $action], $payload), $jar);
+    $headers = $csrf !== '' ? ['X-Admin-CSRF: ' . $csrf] : [];
+    [$code, $body] = http('POST', $BASE . '/api/business-ops.php', array_merge(['action' => $action], $payload), $jar, true, $headers);
     return [$code, json_decode((string)$body, true) ?: ['_raw' => substr((string)$body, 0, 200)]];
 }
 
@@ -70,11 +72,18 @@ try {
         'admin_entities' => $entities, 'admin_seed_empty' => true]);
     ok(true, 'admin installed with bus modules');
 } catch (Throwable $e) { ok(false, 'admin install (' . $e->getMessage() . ')'); }
+$_SESSION['admin_auth'] = true;
+$seedTrip = bops_dispatch(['action' => 'create', 'slug' => $SLUG, 'entity' => 'trips',
+    'record' => ['route' => 'E2E Route', 'date' => '2026-12-01', 'departure' => '10:00',
+        'price' => 850, 'total_seats' => 40]]);
+$tripId = $seedTrip['body']['data']['id'] ?? '';
+$_SESSION = [];
+ok(($seedTrip['http'] ?? 500) === 200 && strpos($tripId, 'TRIP-') === 0, 'live schedule created with an automatic trip ID');
 
 // ── 2. Frontend page: generated-like HTML + runtime + contact receiver ──
 $page = '<!DOCTYPE html><html lang="en"><head><meta name="viewport" content="width=device-width"><title>E2E Bus Co</title></head>'
     . '<body><header id="hero"><h1>E2E Bus Co</h1><nav><a href="#book">Book</a><a href="#contact">Contact</a></nav></header>'
-    . '<main><section id="book"><form data-wc-form="booking" data-wc-thanks="Booked!"><input name="trip_id" value="E2E-1"><input name="seats" value="A1"><input name="email" type="email" required><button>Book</button></form>'
+    . '<main><section id="book"><form data-wc-form="booking" data-wc-thanks="Booked!"><input name="trip_id" value="' . htmlspecialchars($tripId, ENT_QUOTES) . '"><input name="seats" value="A1"><input name="email" type="email" required><button>Book</button></form>'
     . '<div data-wc-history="bookings"></div></section>'
     . '<section id="contact"><form><input name="name" required><input type="email" name="email" required><textarea name="message" required></textarea><button>Send</button></form></section></main>'
     . '<footer id="contact2"></footer></body></html>';
@@ -91,7 +100,8 @@ ok($c0 === 200 && strpos($b0, 'data-wc-form="booking"') !== false, 'frontend pag
 $jarC = tempnam(sys_get_temp_dir(), 'e2ec') . '.txt';
 [$hc, $jc] = api('create', ['slug' => $SLUG, 'entity' => 'bookings',
     'idempotency_key' => 'e2e-k1',
-    'record' => ['trip_id' => 'E2E-1', 'seats' => ['A1'], 'email' => 'rider@e2e.local', 'name' => 'Rider']], $jarC);
+    'record' => ['trip_id' => $tripId, 'seats' => ['A1'], 'phone' => '0771112222',
+        'email' => 'rider@example.invalid', 'passenger' => 'Rider']], $jarC);
 ok($hc === 200 && ($jc['success'] ?? false) && strpos(($jc['data']['ref'] ?? ''), 'BK-') === 0, 'customer booking accepted with BK- ref');
 $bid = $jc['data']['id'] ?? '';
 $coll = json_decode(@file_get_contents($ROOT . '/storage/collections/' . $SLUG . '/bookings.json') ?: '[]', true) ?: [];
@@ -121,7 +131,9 @@ ok(stripos((string)$bo, 'Welcome,') !== false || stripos((string)$bo, 'Dashboard
 
 // ── 6. Admin dashboard shows REAL details + functions ──
 [$mc, $mb] = http('GET', $BASE . '/published/' . $SLUG . '/admin/manage.php?entity=bookings', null, $jarA);
-ok($mc === 200 && stripos($mb, 'Rider') !== false && stripos($mb, 'rider@e2e.local') !== false, 'manage shows the real customer booking');
+ok($mc === 200 && stripos($mb, 'Rider') !== false && stripos($mb, '0771112222') !== false, 'manage shows the real customer booking');
+preg_match('/const WC_ADMIN_CSRF = ("(?:\\\\.|[^"])*");/', $mb, $csrfMatch);
+$adminCsrf = isset($csrfMatch[1]) ? (string)json_decode($csrfMatch[1], true) : '';
 ok(stripos($mb, 'Trips') !== false, 'manage tabs carry bus modules (no generic dashboard)');
 [$ic, $ib] = http('GET', $BASE . '/published/' . $SLUG . '/admin/index.php', null, $jarA);
 ok($ic === 200 && stripos($ib, 'Stored Records') !== false, 'dashboard shows computed record stats');
@@ -129,10 +141,11 @@ ok($ic === 200 && stripos($ib, 'Stored Records') !== false, 'dashboard shows com
 ok($gc === 200 && stripos($gb, 'visitor@e2e.local') !== false, 'inbox page shows the contact message');
 
 // ── 7. Admin update → customer history over HTTP (same session bridge) ──
-[$uc, $uj] = api('update', ['slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'patch' => ['status' => 'confirmed']], $jarA);
-ok($uc === 200 && ($uj['data']['status'] ?? '') === 'confirmed', 'admin status update via API session');
+[$uc, $uj] = api('update', ['slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'patch' => ['status' => 'approved']], $jarA, $adminCsrf);
+ok($uc === 200 && ($uj['data']['status'] ?? '') === 'approved'
+    && ($uj['data']['notification_status'] ?? '') === 'queued', 'admin approval persists and queues its status email');
 [$lc2, $lj2] = api('list', ['slug' => $SLUG, 'entity' => 'bookings', 'email' => 'rider@e2e.local'], $jarC);
-ok(count($lj2['data'] ?? []) === 1 && (($lj2['data'][0]['status'] ?? '')) === 'confirmed', 'customer history reflects admin change');
+ok(empty($lj2['data'] ?? []), 'anonymous email lookup cannot read customer booking history');
 
 // ── 8. Concurrency: 6 parallel holds, same trip+seat → exactly one wins ──
 $mh = curl_multi_init();
@@ -141,7 +154,7 @@ for ($i = 0; $i < 6; $i++) {
     $ch = curl_init($BASE . '/api/business-ops.php');
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 25, CURLOPT_POST => true,
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => 'RACE', 'seats' => ['Z9']])]);
+        CURLOPT_POSTFIELDS => json_encode(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => $tripId, 'seats' => ['A4']])]);
     curl_multi_add_handle($mh, $ch);
     $hs[] = $ch;
 }

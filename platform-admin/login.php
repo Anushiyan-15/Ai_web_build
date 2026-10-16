@@ -409,26 +409,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Authenticate &amp; Continue
       </button>
 
-      <!-- Quick Role Fill Bar -->
+      <!-- Quick Role Fill Bar (username only — passwords are never pre-filled) -->
       <div class="role-chips">
         <div class="role-chips-label">
           <span>⚡ Quick Fill by Role</span>
-          <span style="color:#6366f1;font-size:0.65rem;">Click to pre-fill</span>
+          <span style="color:#6366f1;font-size:0.65rem;">Click to pre-fill username</span>
         </div>
         <div class="chip-grid">
-          <button type="button" class="role-chip-btn" onclick="fillRole('superadmin', 'WebCraft@2026!')">
+          <button type="button" class="role-chip-btn" onclick="fillRole('superadmin')">
             <div class="role-chip-title" style="color:#a5b4fc">👑 Super Admin</div>
             <div class="role-chip-sub">Full access</div>
           </button>
-          <button type="button" class="role-chip-btn" onclick="fillRole('support_admin', 'Support@2026!')">
+          <button type="button" class="role-chip-btn" onclick="fillRole('support_admin')">
             <div class="role-chip-title" style="color:#6ee7b7">🎧 Support Admin</div>
             <div class="role-chip-sub">Tickets &amp; tenants</div>
           </button>
-          <button type="button" class="role-chip-btn" onclick="fillRole('billing_admin', 'Billing@2026!')">
+          <button type="button" class="role-chip-btn" onclick="fillRole('billing_admin')">
             <div class="role-chip-title" style="color:#fcd34d">💳 Billing Admin</div>
             <div class="role-chip-sub">Invoices &amp; overdue</div>
           </button>
-          <button type="button" class="role-chip-btn" onclick="fillRole('dev_admin', 'Developer@2026!')">
+          <button type="button" class="role-chip-btn" onclick="fillRole('dev_admin')">
             <div class="role-chip-title" style="color:#67e8f9">🛠️ Developer Admin</div>
             <div class="role-chip-sub">Rollback, SSL &amp; AI</div>
           </button>
@@ -453,10 +453,10 @@ function togglePw() {
   }
 }
 
-function fillRole(u, p) {
+function fillRole(u) {
   document.getElementById('usernameInput').value = u;
-  document.getElementById('pwInput').value = p;
-  document.getElementById('usernameInput').focus();
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwInput').focus();
 }
 
 // ★ 3D tilt on the auth card — mouse-driven, disabled for touch / reduced-motion.

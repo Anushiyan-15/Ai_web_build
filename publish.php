@@ -407,7 +407,45 @@ if (($_GET['action'] ?? '') === 'simulate_pay') {
     $order['status'] = 'paid';
     $order['paypal_capture_id'] = 'SIM-' . strtoupper(bin2hex(random_bytes(4)));
     saveOrder($order);
-    header('Location: ' . SITE_URL . '/publish.php?step=done&order_id=' . urlencode($oid));
+    header('Location: ' . SITE_URL . '/publish.php?action=domain_choice&order_id=' . urlencode($oid));
+    exit;
+}
+
+if (($_GET['action'] ?? '') === 'domain_choice') {
+    $oid = clean($_GET['order_id'] ?? '');
+    $order = loadOrder($oid);
+    if (!$order) { http_response_code(404); exit('Order not found'); }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $choice = strtolower(trim((string)($_POST['hosting_option'] ?? $_POST['option'] ?? 'subdomain')));
+        $custom = strtolower(trim((string)($_POST['custom_domain'] ?? '')));
+        $newDomain = strtolower(trim((string)($_POST['new_domain'] ?? '')));
+
+        $order['hosting_option'] = $choice;
+        $order['domain_choice'] = $choice;
+        $order['subdomain'] = $order['subdomain'] ?? ($order['slug'] ?? '');
+
+        if ($choice === 'existing' && $custom !== '') {
+            $order['custom_domain'] = $custom;
+            $order['domain_status'] = 'pending_dns';
+            $order['live_url'] = 'https://' . $custom . '/';
+        } elseif ($choice === 'new_domain' && $newDomain !== '') {
+            $order['custom_domain'] = $newDomain;
+            $order['domain_status'] = 'pending_registration';
+            $order['live_url'] = 'https://' . $newDomain . '/';
+        } else {
+            $order['custom_domain'] = $order['custom_domain'] ?? '';
+            $order['domain_status'] = 'subdomain';
+            $order['live_url'] = $order['live_url'] ?? (SITE_URL . '/published/' . ($order['slug'] ?? '') . '/');
+        }
+
+        saveOrder($order);
+        header('Location: ' . SITE_URL . '/publish.php?step=done&order_id=' . urlencode($oid));
+        exit;
+    }
+
+    $subdomainLabel = !empty($order['slug']) ? 'https://' . $order['slug'] . '.' . (defined('SUBDOMAIN_BASE') ? SUBDOMAIN_BASE : 'example.com') : 'WebCraft AI subdomain';
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Choose hosting & domain</title><style>body{font-family:sans-serif;background:#0a0d14;color:#e2e8f0;padding:40px;margin:0} .wrap{max-width:760px;margin:0 auto;background:#111827;border:1px solid #1f2937;border-radius:18px;padding:28px}.h{font-size:2rem;font-weight:800;margin:0 0 10px} .row{margin:18px 0}.label{display:block;margin-bottom:8px;color:#a5b4fc;font-weight:700}.input,select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #334155;background:#0b1120;color:#fff}.btn{display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:12px 18px;border-radius:10px;border:none;font-weight:800;cursor:pointer;text-decoration:none}</style></head><body><div class="wrap"><h1 class="h">Choose your hosting & domain</h1><p>Your order is paid. Pick one of the options below to finish publishing.</p><form method="post"><input type="hidden" name="order_id" value="' . htmlspecialchars($oid, ENT_QUOTES) . '"><div class="row"><label class="label">Hosting option</label><select name="hosting_option"><option value="subdomain">Use WebCraft AI subdomain</option><option value="existing">Connect my existing custom domain</option><option value="new_domain">Buy a new domain through WebCraft AI</option></select></div><div class="row"><label class="label">Existing custom domain</label><input class="input" type="text" name="custom_domain" placeholder="example.com"></div><div class="row"><label class="label">New domain (if buying through WebCraft AI)</label><input class="input" type="text" name="new_domain" placeholder="mycompany.com"></div><div class="row"><button class="btn" type="submit">Continue to publish</button></div></form><p style="color:#94a3b8;">Fallback: <strong>' . htmlspecialchars($subdomainLabel, ENT_QUOTES) . '</strong></p></div></body></html>';
     exit;
 }
 
@@ -548,6 +586,13 @@ if (($_GET['action'] ?? '') === 'do_publish') {
         $siteHtml = taste_apply_safety_net($siteHtml);
     }
     file_put_contents($targetDir . '/index.html', $siteHtml);
+    if (stripos($siteHtml, 'data-wc-live-bus-booking') !== false
+        && !copy(__DIR__ . '/includes/templates/bus-customer-portal.php', $targetDir . '/customer.php')) {
+        throw new RuntimeException('Unable to create the generated bus customer portal.');
+    }
+    if (stripos($siteHtml, 'data-wc-live-bus-booking') !== false) {
+        @copy(__DIR__ . '/includes/templates/bus-ticket-verify.php', $targetDir . '/verify.php');
+    }
 
     // 1b. Write contact.php — real PHPMailer receiver for the site's contact form
     // Owner Gmail SMTP first (tested step-by-step), platform queue as fallback.
@@ -759,6 +804,14 @@ if (($_GET['action'] ?? '') === 'do_publish') {
     // 5. Sync to database (MySQL / Supabase)
     require_once __DIR__ . '/includes/db.php';
     syncOrderToDatabase($order);
+    $ownerEmail = strtolower(trim((string)(($order['admin_email'] ?? '') ?: ($order['client_email'] ?? ''))));
+    if ($ownerEmail !== '') {
+        require_once __DIR__ . '/includes/StorageService.php';
+        $storageRefresh = StorageService::recalculateUsage($ownerEmail);
+        if (empty($storageRefresh['success'])) {
+            error_log('published project storage recalculation failed for ' . $ownerEmail . ': ' . ($storageRefresh['error'] ?? 'unknown error'));
+        }
+    }
 
     // 5b. Legacy orders (created before hash-only storage) may still carry a
     // plaintext password: provision the portal account once, then purge it.

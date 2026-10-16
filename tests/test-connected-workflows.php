@@ -4,6 +4,8 @@
 // workflows, business lifecycles, gap analysis, fallback honesty, security,
 // concurrency/idempotency, regression surface.
 if (session_status() === PHP_SESSION_NONE) session_start();
+if (!defined('STORAGE_DIR')) define('STORAGE_DIR', sys_get_temp_dir() . '/webbbuilder-connected-workflows-' . getmypid());
+if (!defined('SITE_URL')) define('SITE_URL', '');
 require_once __DIR__ . '/../includes/BusinessOps.php';
 require_once __DIR__ . '/../includes/BusinessRuntime.php';
 require_once __DIR__ . '/../includes/ShopHelper.php';
@@ -30,10 +32,21 @@ $pubAdmin = dirname(__DIR__) . '/published/' . $SLUG . '/admin';
 rmdir_r($collDir); rmdir_r(dirname($pubAdmin));
 $_SESSION = [];
 function D($a) { return bops_dispatch($a); }
+$_SESSION['admin_auth'] = true;
+foreach (['T1', 'CX100', 'E2E'] as $tripFixture) {
+    $seed = D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'trips',
+        'record' => ['id' => $tripFixture, 'route' => 'Test Route', 'date' => '2026-12-01',
+            'departure' => '10:00', 'price' => 1500, 'total_seats' => 40]]);
+    if (($seed['http'] ?? 500) !== 200) {
+        echo "FAIL: trip fixture $tripFixture could not be created\n";
+        $fail++;
+    }
+}
+$_SESSION = [];
 
 // ── Test A — frontend integration surface ──
 $rt = business_runtime_js(['capabilities' => ['booking']], $SLUG);
-ok(strpos($rt, '/api/business-ops.php') === false, 'A: no root-absolute API URL (subpath-safe)');
+ok(strpos($rt, 'OPS_API') !== false, 'A: PHP-backed bus API endpoint is explicitly resolved');
 ok(strpos($rt, "new URL('api/business-ops.php',document.baseURI)") !== false, 'A: relative endpoint via baseURI');
 ok(strpos($rt, 'data-wc-form') !== false && strpos($rt, "'bookings'") !== false, 'A: purpose-aware entities (booking→bookings)');
 ok(strpos($rt, 'idempotency_key') !== false, 'A: idempotent submits');
@@ -97,10 +110,14 @@ D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
 D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
     'record' => ['trip_id' => 'T1', 'seats' => ['A3'], 'email' => 'phone-owner@example.com', 'phone' => '0771234567']]);
 $la = D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'bookings', 'email' => 'a@example.com']);
-ok(count($la['body']['data']) === 1 && $la['body']['data'][0]['email'] === 'a@example.com', 'H: customer A sees only own booking');
+ok(empty($la['body']['data']), 'H: unauthenticated email cannot enumerate booking history');
+$_SESSION['customer_user'] = ['email' => 'a@example.com'];
+$la = D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'bookings', 'email' => 'b@example.com']);
+ok(count($la['body']['data']) === 1 && $la['body']['data'][0]['email'] === 'a@example.com', 'H: customer A sees only their authenticated booking');
+$_SESSION['customer_user'] = ['email' => 'phone-owner@example.com'];
 $lp = D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'bookings', 'phone' => '0771234567']);
 ok(count($lp['body']['data']) === 1 && $lp['body']['data'][0]['email'] === 'phone-owner@example.com',
-    'H: customer phone lookup matches records that also have email');
+    'H: authenticated customer history resolves the owner record');
 $_SESSION['customer_user'] = ['email' => 'a@example.com'];
 $sessionOwner = D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'bookings', 'phone' => '0771234567']);
 ok(count($sessionOwner['body']['data']) === 1 && $sessionOwner['body']['data'][0]['email'] === 'a@example.com',
@@ -120,27 +137,38 @@ foreach ($chk as $row) { if (($row['email'] ?? '') === 'not-an-email') $hasBad =
 ok(!$hasBad, 'H: invalid email rejected server-side');
 
 // ── Test I — conflicts / idempotency / duplicates ──
-$h1 = D(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => 'T9', 'seats' => ['B1', 'B2']]);
+$_SESSION['admin_auth'] = true;
+$t9 = D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'trips',
+    'record' => ['route' => 'Test Route', 'date' => '2026-12-01', 'departure' => '10:00', 'price' => 1500, 'total_seats' => 40]]);
+$tripId = $t9['body']['data']['id'] ?? '';
+$_SESSION = [];
+$h1 = D(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => $tripId, 'seats' => ['B1', 'B2']]);
 ok($h1['http'] === 200 && ($h1['body']['data']['status'] ?? '') === 'held', 'I: seat hold works');
-$h2 = D(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => 'T9', 'seats' => ['B2']]);
+$h2 = D(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => $tripId, 'seats' => ['B2']]);
 ok($h2['http'] === 400, 'I: conflicting hold rejected');
 $c1 = D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings', 'idempotency_key' => 'dup-key-1',
-    'record' => ['trip_id' => 'T9', 'seats' => ['C1'], 'email' => 'c@example.com']]);
+    'record' => ['trip_id' => $tripId, 'seats' => ['C1'], 'email' => 'c@example.com']]);
 $c2 = D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings', 'idempotency_key' => 'dup-key-1',
-    'record' => ['trip_id' => 'T9', 'seats' => ['C1'], 'email' => 'c@example.com']]);
+    'record' => ['trip_id' => $tripId, 'seats' => ['C1'], 'email' => 'c@example.com']]);
 ok($c1['http'] === 200 && ($c2['body']['deduped'] ?? false) && $c1['body']['data']['id'] === $c2['body']['data']['id'], 'I: duplicate submit deduped (one row)');
 $all = bops_load($SLUG, 'bookings');
 $n = 0; foreach ($all as $row) { if (($row['idempotency_key'] ?? '') === 'dup-key-1') $n++; }
 ok($n === 1, 'I: exactly one stored row for retried key');
 $ref = $c1['body']['data']['ref'];
-$p1 = D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'counter', 'amount' => 1500]);
-ok($p1['http'] === 200 && ($p1['body']['data']['status'] ?? '') === 'confirmed', 'I: counter pay confirms');
-$p2 = D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'counter', 'amount' => 1500]);
+$_SESSION['admin_auth'] = true;
+$approve = D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $c1['body']['data']['id'], 'patch' => ['status' => 'approved']]);
+$p1 = D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'cash', 'amount' => 1]);
+ok($t9['http'] === 200 && $approve['http'] === 200 && $p1['http'] === 200
+    && ($p1['body']['data']['status'] ?? '') === 'approved'
+    && ($p1['body']['data']['payment_status'] ?? '') === 'paid'
+    && (float)($p1['body']['payment']['amount'] ?? 0) === 1500.0,
+    'I: admin approves and records saved fare rather than a client amount');
+$p2 = D(['action' => 'pay', 'slug' => $SLUG, 'ref' => $ref, 'method' => 'cash', 'amount' => 1500]);
 ok($p2['http'] === 400, 'I: duplicate payment rejected');
 $cx = D(['action' => 'cancel', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $c1['body']['data']['id'], 'email' => 'c@example.com']);
 ok($cx['http'] === 200 && ($cx['body']['data']['payment_status'] ?? '') === 'refund_pending', 'I: paid cancel → refund_pending');
 $_SESSION['admin_auth'] = true;
-$re2 = D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $c1['body']['data']['id'], 'patch' => ['status' => 'confirmed']]);
+$re2 = D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $c1['body']['data']['id'], 'patch' => ['status' => 'approved']]);
 ok($re2['http'] === 400, 'I: cancelled is terminal (no reactivation)');
 $_SESSION = [];
 
@@ -162,21 +190,23 @@ ok($badOrd['http'] === 400, 'C: empty order rejected (no fake transactions)');
 
 // ── Test D — admin update reflects in customer view ──
 $_SESSION['admin_auth'] = true;
-$up2 = D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $cb['body']['data']['id'], 'patch' => ['status' => 'confirmed']]);
-ok($up2['http'] === 200, 'D: admin status update applies');
-$_SESSION = [];
+$up2 = D(['action' => 'update', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $cb['body']['data']['id'], 'patch' => ['status' => 'approved']]);
+ok($up2['http'] === 200, 'D: admin approval applies');
+$_SESSION = ['customer_user' => ['email' => 'rider@example.com']];
 $mine = D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'bookings', 'email' => 'rider@example.com']);
-ok(count($mine['body']['data']) === 1 && ($mine['body']['data'][0]['status'] ?? '') === 'confirmed', 'D: customer history shows admin change');
+ok(count($mine['body']['data']) === 1 && ($mine['body']['data'][0]['status'] ?? '') === 'approved', 'D: customer history shows admin change');
 $mm = json_decode(@file_get_contents($pubAdmin . '/data_bookings.json') ?: '[]', true) ?: [];
 $st = null; foreach ($mm as $m) { if (($m['id'] ?? '') === $cb['body']['data']['id']) $st = $m['status'] ?? null; }
-ok($st === 'confirmed', 'D: admin file converged with collections');
+ok($st === 'approved', 'D: admin file converged with collections');
+$_SESSION = ['customer_user' => ['email' => 'stranger@example.com']];
 $other = D(['action' => 'cancel', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $cb['body']['data']['id'], 'email' => 'stranger@example.com']);
 ok($other['http'] === 403, 'D: stranger cannot cancel another customer booking');
 
 // ── Test E — business lifecycles ──
 $bk = D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
     'record' => ['trip_id' => 'E2E', 'seats' => ['E1'], 'email' => 'e2e@example.com']]);
-ok($bk['http'] === 200 && ($bk['body']['data']['payment_status'] ?? '') === 'unpaid', 'E: booking starts awaiting_payment/unpaid');
+ok($bk['http'] === 200 && ($bk['body']['data']['status'] ?? '') === 'pending'
+    && ($bk['body']['data']['payment_status'] ?? '') === 'unpaid', 'E: booking starts pending and unpaid');
 $noseat = D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings', 'record' => ['trip_id' => 'E2E', 'email' => 'x@y.z']]);
 ok($noseat['http'] === 400, 'E: seatless booking rejected');
 
@@ -214,7 +244,7 @@ ok(strpos($gen, 'data_*.json') !== false, 'J: discovered live modules in tabs');
 ok(strpos($gen, '__secCount') !== false && strpos($gen, '__recTotal') !== false, 'J: dashboard counts computed from records');
 
 // cleanup test artifacts
-rmdir_r($collDir); rmdir_r(dirname($pubAdmin)); $_SESSION = [];
+rmdir_r($collDir); rmdir_r(dirname($pubAdmin)); rmdir_r(STORAGE_DIR); $_SESSION = [];
 ok(!is_dir($collDir) && !is_dir(dirname($pubAdmin)), 'cleanup: no test residue');
 
 echo $fail === 0 ? "\nALL CONNECTED-WORKFLOW TESTS PASSED\n" : "\n$fail FAILED\n";

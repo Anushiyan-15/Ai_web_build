@@ -12,6 +12,7 @@ ob_start(); // buffer CLI output so generated session code stays warning-free
 $ROOT = dirname(__DIR__);
 require_once $ROOT . '/includes/PublishedAdminKit.php';
 require_once $ROOT . '/includes/AdminPanelGenerator.php';
+require_once $ROOT . '/includes/BusinessOps.php';
 
 $PASS = 0; $FAIL = 0; $SKIP = 0;
 function t_ok(string $name, bool $cond, string $detail = '') {
@@ -62,6 +63,13 @@ $order = [
             ['name' => 'seats', 'label' => 'Seats', 'type' => 'number', 'required' => false],
             ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => false,
              'options' => ['pending', 'confirmed', 'cancelled']]]],
+        ['id' => 'trips', 'name' => 'Trips', 'icon' => '🚌',
+         'fields' => [
+            ['name' => 'route', 'label' => 'Route', 'type' => 'text', 'required' => true],
+            ['name' => 'date', 'label' => 'Date', 'type' => 'date', 'required' => true],
+            ['name' => 'departure', 'label' => 'Departure', 'type' => 'text', 'required' => true],
+            ['name' => 'price', 'label' => 'Fare', 'type' => 'number', 'required' => true],
+            ['name' => 'total_seats', 'label' => 'Total Seats', 'type' => 'number', 'required' => true]]],
     ],
 ];
 
@@ -118,6 +126,26 @@ t_ok('db_read sees 1 row', count(db_read('bookings')) === 1);
 t_ok('db rejects traversal entity', db_file('../x') === null && db_read('../x') === []);
 t_ok('db rejects unknown entity write', db_insert('nope_not_real_xyz', ['a' => 'b']) === null);
 t_ok('db_delete removes row', db_delete('bookings', $row['id']) === true && db_read('bookings') === []);
+$adminTrip = db_insert('trips', ['route' => 'Mirror City-Mirror Town', 'date' => '2031-06-15',
+    'departure' => '09:30', 'price' => 420, 'total_seats' => 36]);
+$adminTripId = is_array($adminTrip) ? (string)($adminTrip['id'] ?? '') : '';
+$publicTrips = bops_dispatch(['action' => 'list', 'slug' => $slug, 'entity' => 'trips',
+    'route' => 'Mirror City', 'date' => '2031-06-15']);
+t_ok('admin-created trip is visible to the public route/date search',
+    $adminTripId !== '' && ($publicTrips['http'] ?? 0) === 200
+    && in_array($adminTripId, array_column($publicTrips['body']['data'] ?? [], 'id'), true));
+$updatedAdminTrip = db_update('trips', $adminTripId,
+    ['route' => 'Updated City-Mirror Town']);
+$updatedPublicTrips = bops_dispatch(['action' => 'list', 'slug' => $slug, 'entity' => 'trips',
+    'route' => 'Updated City', 'date' => '2031-06-15']);
+t_ok('admin trip edits are reflected in customer search',
+    is_array($updatedAdminTrip) && in_array($adminTripId,
+        array_column($updatedPublicTrips['body']['data'] ?? [], 'id'), true));
+$deletedAdminTrip = db_delete('trips', $adminTripId);
+$deletedPublicTrips = bops_dispatch(['action' => 'list', 'slug' => $slug, 'entity' => 'trips']);
+t_ok('admin trip deletion removes it from customer search',
+    $deletedAdminTrip && !in_array($adminTripId,
+        array_column($deletedPublicTrips['body']['data'] ?? [], 'id'), true));
 
 echo "== 5. auth helpers (hash-only, csrf, throttle) ==\n";
 // Seed .auth.json the way publish does (hash only, never plaintext).
@@ -421,8 +449,53 @@ t_ok('protected id field skipped', (function () use ($merged) {
     return true;
 })());
 
+echo "== 11. bus lifecycle admin pages ==\n";
+$busSlug = '__pakbus_' . substr(bin2hex(random_bytes(4)), 0, 8);
+$busAdminDir = $ROOT . '/published/' . $busSlug . '/admin';
+@mkdir($busAdminDir, 0755, true);
+$busOrder = [
+    'order_id' => 'pak-bus-' . $busSlug, 'site_name' => 'Pak Bus Test', 'slug' => $busSlug,
+    'admin_username' => 'pakbusadmin', 'admin_email' => 'owner@example.invalid',
+    'admin_password_hash' => password_hash($TEST_PASS, PASSWORD_DEFAULT),
+    'admin_seed_empty' => true,
+    'admin_entities' => [
+        ['id' => 'bookings', 'name' => 'Bookings', 'fields' => [
+            ['name' => 'trip_id', 'type' => 'text'], ['name' => 'seats', 'type' => 'text'],
+            ['name' => 'passenger', 'type' => 'text'], ['name' => 'phone', 'type' => 'tel'],
+            ['name' => 'email', 'type' => 'email'], ['name' => 'status', 'type' => 'select',
+                'options' => ['pending', 'approved', 'rejected', 'cancelled']],
+            ['name' => 'payment_status', 'type' => 'text'], ['name' => 'amount', 'type' => 'number'],
+        ]],
+        ['id' => 'payments', 'name' => 'Payments', 'fields' => [
+            ['name' => 'payment_id', 'type' => 'text'], ['name' => 'booking_ref', 'type' => 'text'],
+            ['name' => 'method', 'type' => 'select', 'options' => ['card', 'cash']],
+            ['name' => 'amount', 'type' => 'number'], ['name' => 'status', 'type' => 'text'],
+            ['name' => 'received_at', 'type' => 'text'],
+        ]],
+    ],
+];
+$busInstall = pak_install($busAdminDir, $busOrder);
+$busPage = (string)@file_get_contents($busAdminDir . '/bookings.php');
+$paymentsPage = (string)@file_get_contents($busAdminDir . '/payments.php');
+t_ok('bus install succeeds', empty($busInstall['errors']));
+t_ok('booking admin exposes approval controls without generic CRUD',
+    strpos($busPage, 'setBusBookingStatus') !== false
+    && strpos($busPage, 'Record a received payment') !== false
+    && strpos($busPage, '$isBusLifecyclePage') !== false);
+t_ok('payment ledger includes received timestamp and lifecycle restrictions',
+    strpos($paymentsPage, 'received_at') !== false
+    && strpos($paymentsPage, '$isBusLifecyclePage') !== false);
+foreach (['bookings.php', 'payments.php'] as $busFile) {
+    $out = []; $code = 0;
+    exec(PHP_BINARY . ' -l ' . escapeshellarg($busAdminDir . '/' . $busFile) . ' 2>&1', $out, $code);
+    t_ok("bus admin php -l $busFile", $code === 0, implode(' ', $out));
+}
+rrmdir($ROOT . '/published/' . $busSlug);
+
 // Cleanup temp site.
 rrmdir($targetDir);
+rrmdir($ROOT . '/storage/collections/' . $slug);
+rrmdir($ROOT . '/storage/sites/' . $slug);
 
 ob_end_flush();
 echo "\nRESULT: $PASS passed, $FAIL failed, $SKIP skipped\n";

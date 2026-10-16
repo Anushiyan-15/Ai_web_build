@@ -325,7 +325,7 @@ function bops_sanitize_record(array $rec): array {
     return $rec;
 }
 function bops_active_status(string $st): bool {
-    return in_array($st, ['held', 'awaiting_payment', 'confirmed', 'pending'], true);
+    return in_array($st, ['held', 'awaiting_payment', 'confirmed', 'pending', 'approved'], true);
 }
 function bops_hold_live(array $r): bool {
     if (($r['status'] ?? '') !== 'held') return true;
@@ -359,16 +359,164 @@ function bops_trip_capacity(string $slug, string $tripId): ?int {
     }
     return null;
 }
+function bops_trip_by_id(string $slug, string $tripId): ?array {
+    foreach (bops_load($slug, 'trips') as $trip) {
+        if (is_array($trip) && (string)($trip['id'] ?? '') === $tripId) return $trip;
+    }
+    return null;
+}
+function bops_ensure_trip_for_booking(string $slug, array $booking): ?array {
+    $tripId = trim((string)($booking['trip_id'] ?? ''));
+    if ($tripId === '') return null;
+    $existing = bops_trip_by_id($slug, $tripId);
+    if ($existing) return $existing;
+
+    $route = trim((string)($booking['route'] ?? ''));
+    $origin = trim((string)($booking['origin'] ?? ''));
+    $destination = trim((string)($booking['destination'] ?? ''));
+    $price = is_numeric($booking['price'] ?? $booking['fare'] ?? null)
+        ? (float)($booking['price'] ?? $booking['fare']) : 850.0;
+    $capacity = is_numeric($booking['capacity'] ?? $booking['total_seats'] ?? $booking['seat_capacity'] ?? null)
+        ? (int)($booking['capacity'] ?? $booking['total_seats'] ?? $booking['seat_capacity']) : 40;
+    $trip = [
+        'id' => $tripId,
+        'route' => $route !== '' ? $route : ($origin !== '' || $destination !== '' ? trim($origin . ' → ' . $destination) : 'Demo Route'),
+        'origin' => $origin !== '' ? $origin : 'Demo Origin',
+        'destination' => $destination !== '' ? $destination : 'Demo Destination',
+        'date' => trim((string)($booking['trip_date'] ?? $booking['date'] ?? date('Y-m-d'))),
+        'departure' => trim((string)($booking['departure'] ?? '08:00')),
+        'price' => round($price, 2),
+        'total_seats' => max(1, $capacity),
+        'seat_capacity' => max(1, $capacity),
+        'created_at' => date('c'),
+        'updated_at' => date('c'),
+        'demo' => true,
+    ];
+
+    [$ok, $stored] = bops_transact($slug, 'trips', function ($rows) use ($trip) {
+        foreach ($rows as $r) {
+            if (is_array($r) && (string)($r['id'] ?? '') === (string)$trip['id']) return [$rows, $r];
+        }
+        $rows[] = $trip;
+        return [$rows, $trip];
+    });
+    if ($ok) {
+        bops_mirror_admin($slug, 'trips', $stored);
+        bops_sync_sites($slug, 'trips', (string)$trip['id'], $stored);
+        return $stored;
+    }
+    return bops_trip_by_id($slug, $tripId);
+}
+function bops_booking_amount(string $slug, array $booking): float {
+    if (isset($booking['amount']) && is_numeric($booking['amount'])) return round((float)$booking['amount'], 2);
+    $trip = bops_trip_by_id($slug, (string)($booking['trip_id'] ?? ''));
+    $fare = is_array($trip) && is_numeric($trip['price'] ?? $trip['fare'] ?? null)
+        ? (float)($trip['price'] ?? $trip['fare']) : 0.0;
+    return round($fare * max(1, count(bops_norm_seats($booking['seats'] ?? []))), 2);
+}
+function bops_queue_booking_status_email(string $slug, array $booking): array {
+    $email = strtolower(trim((string)($booking['email'] ?? '')));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return ['success' => false, 'status' => 'not_sent', 'error' => 'Booking has no valid customer email'];
+    }
+    require_once __DIR__ . '/MailQueue.php';
+    $status = strtolower((string)($booking['status'] ?? ''));
+    $approved = $status === 'approved';
+    $subject = $approved ? 'Your bus booking is approved' : 'Update on your bus booking';
+    $message = $approved
+        ? 'Your booking ' . (string)($booking['ref'] ?? '') . ' has been approved.'
+        : 'Your booking ' . (string)($booking['ref'] ?? '') . ' was rejected. Please contact the bus operator if you need help.';
+    $route = trim((string)($booking['route'] ?? ''));
+    if ($route !== '') $message .= ' Route: ' . $route . '.';
+    $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+    $html = '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#17212b">'
+        . '<h2>' . htmlspecialchars($subject, ENT_QUOTES, 'UTF-8') . '</h2><p>' . $safeMessage . '</p>'
+        . '<p>Booking reference: <strong>' . htmlspecialchars((string)($booking['ref'] ?? ''), ENT_QUOTES, 'UTF-8') . '</strong></p>'
+        . '</body></html>';
+    $queued = queueMail([
+        'to' => $email,
+        'subject' => $subject,
+        'html' => $html,
+        'text' => $message,
+        'kind' => 'bus_booking_status',
+    ]);
+    return !empty($queued['success'])
+        ? ['success' => true, 'status' => 'queued', 'queue_id' => $queued['id'] ?? '']
+        : ['success' => false, 'status' => 'failed', 'error' => (string)($queued['error'] ?? 'Mail queue failed')];
+}
 function bops_seat_fits_capacity(string $seat, int $capacity): bool {
-    if (!preg_match('/^([A-J])([1-4])$/', strtoupper($seat), $m)) return false;
+    $seat = strtoupper(trim($seat));
+    if (!preg_match('/^([A-Z])([1-4])$/', $seat, $m)) return false;
+    // Standard fleet is A–J × 1–4 (40 seats). Larger buses extend the row
+    // range so every configured seat stays addressable: rows needed =
+    // ceil(capacity / 4), capped at A–Z. Small-bus behaviour is unchanged
+    // (Z1 on a 40-seat bus is still invalid).
+    $rowsNeeded = (int)ceil(max(1, $capacity) / 4);
+    if ($rowsNeeded < 10) $rowsNeeded = 10;
+    if ($rowsNeeded > 26) $rowsNeeded = 26;
+    $maxRow = chr(ord('A') + $rowsNeeded - 1);
+    if ($m[1] < 'A' || $m[1] > $maxRow) return false;
     $index = (ord($m[1]) - ord('A')) * 4 + (int)$m[2];
     return $index <= $capacity;
+}
+function bops_booking_trip_id(array $rec): string {
+    foreach (['trip_id', 'tripId', 'tripID', 'trip', 'booking_trip', 'trip_ref'] as $key) {
+        if (isset($rec[$key]) && trim((string)$rec[$key]) !== '') return trim((string)$rec[$key]);
+    }
+    return '';
+}
+function bops_booking_seats($rec): array {
+    if (!is_array($rec)) $rec = ['seats' => $rec];
+    foreach (['seats', 'seat_numbers', 'seatNumbers', 'seat', 'seats_string', 'selected_seats'] as $key) {
+        if (array_key_exists($key, $rec) && $rec[$key] !== '' && $rec[$key] !== null) {
+            $norm = bops_norm_seats($rec[$key]);
+            if (!empty($norm)) return $norm;
+        }
+    }
+    return [];
+}
+function bops_booking_ref(array $rec): string {
+    foreach (['ref', 'booking_ref', 'ticket_ref', 'ticketRef', 'bookingRef', 'confirmation_code'] as $key) {
+        if (isset($rec[$key]) && trim((string)$rec[$key]) !== '') return strtoupper(trim((string)$rec[$key]));
+    }
+    return strtoupper(trim((string)($rec['id'] ?? '')));
+}
+function bops_normalize_booking_aliases(array $rec): array {
+    $tripId = bops_booking_trip_id($rec);
+    if ($tripId !== '') $rec['trip_id'] = $tripId;
+    $seats = bops_booking_seats($rec);
+    if (!empty($seats)) $rec['seats'] = $seats;
+    foreach (['passenger' => ['passenger', 'passenger_name', 'passengerName', 'customer', 'name', 'full_name'],
+              'phone' => ['phone', 'phone_number', 'phoneNumber', 'mobile', 'tel'],
+              'email' => ['email', 'email_address', 'emailAddress', 'customer_email']] as $canonical => $aliases) {
+        if (isset($rec[$canonical]) && trim((string)$rec[$canonical]) !== '') continue;
+        foreach ($aliases as $alias) {
+            if (isset($rec[$alias]) && trim((string)$rec[$alias]) !== '') { $rec[$canonical] = $rec[$alias]; break; }
+        }
+    }
+    if (empty($rec['ref'])) {
+        foreach (['booking_ref', 'ticket_ref', 'ticketRef', 'bookingRef'] as $alias) {
+            if (!empty($rec[$alias])) { $rec['ref'] = strtoupper((string)$rec[$alias]); break; }
+        }
+    }
+    return $rec;
+}
+// Backward-compatible display view: legacy records stored under camelCase or
+// alternate keys (tripId, seat_numbers, booking_ref, …) resolve to the same
+// canonical fields so admin tables and dashboards never show "—" for data
+// that is actually present. Never invents values; truly missing stays ''.
+function bops_booking_view(array $rec): array {
+    $rec = bops_normalize_booking_aliases($rec);
+    if (!isset($rec['seats']) || !is_array($rec['seats'])) $rec['seats'] = bops_booking_seats($rec);
+    if (empty($rec['trip_id'])) $rec['trip_id'] = bops_booking_trip_id($rec);
+    if (empty($rec['ref'])) $rec['ref'] = bops_booking_ref($rec);
+    return $rec;
 }
 const BOPS_MIRROR_ENTITIES = ['bookings', 'orders', 'appointments', 'inquiries', 'subscribers', 'payments',
     'products', 'customers', 'coupons', 'menu_items', 'reservations', 'rooms', 'services', 'staff',
     'doctors', 'patients', 'properties', 'viewings', 'courses', 'enrollments', 'tutors',
     'packages', 'departures', 'events', 'tickets', 'units', 'rentals', 'vehicles', 'service_jobs',
-    'plans', 'projects', 'buses', 'routes'];
+    'plans', 'projects', 'buses', 'routes', 'trips'];
 
 // Registry-driven validation (lenient v1): status allowlists + conflict guards
 // across ALL business categories. Required-field enforcement stays soft for
@@ -457,7 +605,9 @@ function bops_dispatch(array $req): array {
         // Privacy: non-admins see only own records (owner must match).
         // Ownerless rows are admin-visible only — never leaked across customers.
         if (!bops_is_admin($slug)) {
-            $identities = bops_customer_ids($req);
+            $sessionEmail = strtolower(trim((string)($_SESSION['customer_user']['email'] ?? '')));
+            $identities = ($entity === 'bookings' && $sessionEmail === '')
+                ? [] : bops_customer_ids($req);
             if ($identities) {
                 $rows = array_values(array_filter($rows, function ($r) use ($identities) {
                     if (!is_array($r)) return false;
@@ -480,7 +630,7 @@ function bops_dispatch(array $req): array {
     }
 
     if ($action === 'availability') {
-        $tripId = trim((string)($req['trip_id'] ?? ''));
+        $tripId = trim((string)($req['trip_id'] ?? $req['tripId'] ?? ''));
         if ($tripId === '') return ['http' => 400, 'body' => ['success' => false, 'error' => 'Missing trip_id']];
         $trip = null;
         foreach (bops_load($slug, 'trips') as $row) {
@@ -489,15 +639,24 @@ function bops_dispatch(array $req): array {
         if (!$trip) return ['http' => 404, 'body' => ['success' => false, 'error' => 'Trip not found']];
         $capacity = bops_trip_capacity($slug, $tripId) ?? 0;
         $reserved = [];
+        $heldSeats = [];
+        $bookedSeats = [];
         foreach (bops_load($slug, 'bookings') as $booking) {
-            if (!is_array($booking) || (string)($booking['trip_id'] ?? '') !== $tripId
+            if (!is_array($booking)) continue;
+            $booking = bops_booking_view($booking);
+            if ((string)($booking['trip_id'] ?? '') !== $tripId
                 || !bops_active_status((string)($booking['status'] ?? '')) || !bops_hold_live($booking)) continue;
-            $reserved = array_merge($reserved, bops_norm_seats($booking['seats'] ?? []));
+            $seats = bops_norm_seats($booking['seats'] ?? []);
+            $reserved = array_merge($reserved, $seats);
+            if (($booking['status'] ?? '') === 'held') $heldSeats = array_merge($heldSeats, $seats);
+            else $bookedSeats = array_merge($bookedSeats, $seats);
         }
         return ['http' => 200, 'body' => ['success' => true, 'data' => [
             'trip_id' => $tripId,
             'total_seats' => $capacity,
             'reserved_seats' => array_values(array_unique($reserved)),
+            'held_seats' => array_values(array_unique($heldSeats)),
+            'booked_seats' => array_values(array_unique($bookedSeats)),
         ]]];
     }
 
@@ -526,12 +685,20 @@ function bops_dispatch(array $req): array {
         $rec = $req['record'] ?? [];
         if (!is_array($rec) || empty($rec)) return ['http' => 400, 'body' => ['success' => false, 'error' => 'Empty record']];
         $rec = bops_sanitize_record($rec);
+        if ($entity === 'bookings') $rec = bops_normalize_booking_aliases($rec);
         if (isset($rec['email']) && $rec['email'] !== '' && !filter_var($rec['email'], FILTER_VALIDATE_EMAIL)) {
             return ['http' => 400, 'body' => ['success' => false, 'error' => 'Invalid email']];
+        }
+        if ($entity === 'bookings' && !filter_var((string)($rec['email'] ?? ''), FILTER_VALIDATE_EMAIL)) {
+            return ['http' => 400, 'body' => ['success' => false, 'error' => 'A valid customer email is required for bus bookings']];
         }
         if (!empty($req['company'])) return ['http' => 403, 'body' => ['success' => false, 'error' => 'Spam detected']];
         unset($rec['company']); // honeypot residue is never business data
         $idem = (string)($req['idempotency_key'] ?? $rec['idempotency_key'] ?? '');
+        $tripRow = $entity === 'bookings' ? bops_ensure_trip_for_booking($slug, $rec) : null;
+        if ($entity === 'bookings' && !$tripRow) {
+            return ['http' => 400, 'body' => ['success' => false, 'error' => 'Trip not found. Search and select a live trip first.']];
+        }
         $capacity = $entity === 'bookings' ? bops_trip_capacity($slug, (string)($rec['trip_id'] ?? '')) : null;
         if ($entity === 'bookings' && $capacity !== null) {
             if ($capacity < 1) return ['http' => 400, 'body' => ['success' => false, 'error' => 'Trip has no seat capacity']];
@@ -541,14 +708,16 @@ function bops_dispatch(array $req): array {
                 }
             }
         }
-        [$ok, $out] = bops_transact($slug, $entity, function ($rows) use ($rec, $entity, $idem, $slug) {
+        [$ok, $out] = bops_transact($slug, $entity, function ($rows) use ($rec, $entity, $idem, $slug, $tripRow) {
             $check = bops_union_rows($rows, $slug, $entity);
             if ($idem !== '') {
                 foreach ($check as $r) {
                     if (is_array($r) && ($r['idempotency_key'] ?? '') === $idem) return [$rows, ['rec' => $r, 'deduped' => true]];
                 }
             }
-            $rec['id'] = $rec['id'] ?? ('r_' . bin2hex(random_bytes(8)));
+            $rec['id'] = $rec['id'] ?? ($entity === 'trips'
+                ? 'TRIP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)))
+                : ($entity === 'bookings' ? 'BKG-' : 'r_') . strtoupper(bin2hex(random_bytes(6))));
             $rec['created_at'] = date('c');
             $rec['updated_at'] = date('c');
             if ($idem !== '') $rec['idempotency_key'] = $idem;
@@ -585,7 +754,16 @@ function bops_dispatch(array $req): array {
                 }
                 $rec['seats'] = $seats;
                 if (empty($rec['ref'])) $rec['ref'] = 'BK-' . strtoupper(substr(md5($rec['id']), 0, 8));
-                if (empty($rec['status'])) $rec['status'] = 'awaiting_payment';
+                if (empty($rec['verify_token'])) $rec['verify_token'] = bin2hex(random_bytes(16));
+                $rec['route'] = (string)($tripRow['route'] ?? trim((string)($tripRow['origin'] ?? '') . ' → ' . (string)($tripRow['destination'] ?? '')));
+                $rec['trip_date'] = (string)($tripRow['date'] ?? $tripRow['departure_date'] ?? '');
+                $rec['departure'] = (string)($tripRow['departure'] ?? $tripRow['departure_time'] ?? '');
+                $fare = is_numeric($tripRow['price'] ?? $tripRow['fare'] ?? null)
+                    ? (float)($tripRow['price'] ?? $tripRow['fare']) : 0.0;
+                $rec['price_per_seat'] = round($fare, 2);
+                $rec['amount'] = round($fare * count($seats), 2);
+                $rec['currency'] = (string)($tripRow['currency'] ?? 'LKR');
+                $rec['status'] = 'pending';
                 if (empty($rec['payment_status'])) $rec['payment_status'] = 'unpaid';
             }
             if ($entity === 'orders') {
@@ -651,7 +829,15 @@ function bops_dispatch(array $req): array {
         $patch = is_array($req['patch'] ?? null) ? $req['patch'] : (is_array($req['record'] ?? null) ? $req['record'] : []);
         $patch = bops_sanitize_record($patch);
         unset($patch['id']);
-        [$ok, $out] = bops_transact($slug, $entity, function ($rows) use ($id, $patch, $slug, $entity) {
+        if ($entity === 'bookings' && isset($patch['status'])
+            && !in_array(strtolower((string)$patch['status']), [
+                'pending', 'approved', 'rejected', 'cancelled',
+                'held', 'awaiting_payment', 'confirmed', 'expired',
+            ], true)) {
+            return ['http' => 400, 'body' => ['success' => false, 'error' => 'Booking status must be pending, approved, rejected, or cancelled']];
+        }
+        $previousStatus = '';
+        [$ok, $out] = bops_transact($slug, $entity, function ($rows) use ($id, $patch, $slug, $entity, &$previousStatus) {
             $foundIdx = -1;
             foreach ($rows as $i => $r) {
                 if (is_array($r) && (string)($r['id'] ?? '') === $id) { $foundIdx = $i; break; }
@@ -671,13 +857,47 @@ function bops_dispatch(array $req): array {
             if (($r['status'] ?? '') === 'cancelled' && ($patch['status'] ?? 'cancelled') !== 'cancelled') {
                 return [false, 'Cancelled records cannot be reactivated'];
             }
+            $previousStatus = strtolower((string)($r['status'] ?? 'pending'));
+            $nextStatus = strtolower((string)($patch['status'] ?? $previousStatus));
+            if ($entity === 'bookings' && $nextStatus !== $previousStatus) {
+                $history = is_array($r['status_history'] ?? null) ? $r['status_history'] : [];
+                $history[] = ['from' => $previousStatus, 'to' => $nextStatus, 'at' => date('c')];
+                $patch['status_history'] = $history;
+                if ($nextStatus === 'approved') $patch['approved_at'] = date('c');
+                if ($nextStatus === 'rejected') $patch['rejected_at'] = date('c');
+            }
             $rows[$foundIdx] = array_merge($r, $patch, ['updated_at' => date('c')]);
             return [$rows, $rows[$foundIdx]];
         });
         if (!$ok) return ['http' => ($out === 'Not found' ? 404 : 400), 'body' => ['success' => false, 'error' => (string)$out]];
+        $notification = null;
+        if ($entity === 'bookings' && in_array((string)($out['status'] ?? ''), ['approved', 'rejected'], true)
+            && $previousStatus !== (string)$out['status']) {
+            $notification = bops_queue_booking_status_email($slug, $out);
+            $out['notification_status'] = $notification['status'];
+            $out['notification_error'] = $notification['error'] ?? '';
+            $out['notification_queue_id'] = $notification['queue_id'] ?? '';
+            [$persisted, $saved] = bops_transact($slug, $entity, function ($rows) use ($out) {
+                foreach ($rows as $i => $row) {
+                    if (is_array($row) && (string)($row['id'] ?? '') === (string)$out['id']) {
+                        $rows[$i] = array_merge($row, [
+                            'notification_status' => $out['notification_status'],
+                            'notification_error' => $out['notification_error'],
+                            'notification_queue_id' => $out['notification_queue_id'],
+                        ]);
+                        return [$rows, $rows[$i]];
+                    }
+                }
+                return [false, 'Booking disappeared while saving notification status'];
+            });
+            if (!$persisted) {
+                return ['http' => 500, 'body' => ['success' => false, 'error' => (string)$saved]];
+            }
+            $out = $saved;
+        }
         bops_mirror_admin($slug, $entity, $out);
         bops_sync_sites($slug, $entity, (string)($out['id'] ?? ''), is_array($out) ? $out : []);
-        return ['http' => 200, 'body' => ['success' => true, 'data' => $out]];
+        return ['http' => 200, 'body' => ['success' => true, 'data' => $out, 'notification' => $notification]];
     }
 
     if ($action === 'cancel') {
@@ -751,12 +971,111 @@ function bops_dispatch(array $req): array {
         return ['http' => 200, 'body' => ['success' => true, 'data' => $out, 'message' => 'Cancelled; capacity released']];
     }
 
+    if ($action === 'payment_quote') {
+        if (!bops_is_admin($slug)) return ['http' => 403, 'body' => ['success' => false, 'error' => 'Admin only']];
+        $ref = strtoupper(trim((string)($req['ref'] ?? '')));
+        if ($ref === '') return ['http' => 400, 'body' => ['success' => false, 'error' => 'Ticket reference is required']];
+        foreach (bops_load($slug, 'bookings') as $booking) {
+            if (!is_array($booking) || strtoupper((string)($booking['ref'] ?? '')) !== $ref) continue;
+            if (in_array((string)($booking['status'] ?? ''), ['rejected', 'cancelled'], true)) {
+                return ['http' => 400, 'body' => ['success' => false, 'error' => 'Rejected or cancelled bookings cannot be paid']];
+            }
+            if (($booking['payment_status'] ?? '') === 'paid') {
+                return ['http' => 400, 'body' => ['success' => false, 'error' => 'This booking is already paid', 'data' => [
+                    'ref' => $ref, 'payment_id' => $booking['payment_id'] ?? '',
+                ]]];
+            }
+            return ['http' => 200, 'body' => ['success' => true, 'data' => [
+                'ref' => $ref,
+                'passenger' => $booking['passenger'] ?? $booking['customer'] ?? '',
+                'amount' => bops_booking_amount($slug, $booking),
+                'currency' => $booking['currency'] ?? 'LKR',
+                'status' => $booking['status'] ?? 'pending',
+                'payment_status' => $booking['payment_status'] ?? 'unpaid',
+            ]]];
+        }
+        return ['http' => 404, 'body' => ['success' => false, 'error' => 'Ticket reference not found']];
+    }
+
+    if ($action === 'payment_intent') {
+        $ref = strtoupper(trim((string)($req['ref'] ?? '')));
+        $method = strtolower(trim((string)($req['method'] ?? '')));
+        $email = strtolower(trim((string)($req['email'] ?? '')));
+        $phone = trim((string)($req['phone'] ?? ''));
+        if ($ref === '' || !in_array($method, ['counter', 'online'], true)) {
+            return ['http' => 400, 'body' => ['success' => false, 'error' => 'Ticket reference and a valid payment method are required']];
+        }
+        if ($email === '' && $phone === '') {
+            return ['http' => 400, 'body' => ['success' => false, 'error' => 'Enter the email or phone number used for this booking']];
+        }
+
+        $sessionEmail = strtolower(trim((string)($_SESSION['customer_user']['email'] ?? '')));
+        [$ok, $out] = bops_transact($slug, 'bookings', function ($rows) use ($ref, $method, $email, $phone, $sessionEmail, $slug) {
+            $idx = -1;
+            foreach ($rows as $i => $booking) {
+                if (!is_array($booking) || strtoupper((string)($booking['ref'] ?? '')) !== $ref) continue;
+                $idx = $i;
+                break;
+            }
+            if ($idx < 0) {
+                foreach (bops_union_rows($rows, $slug, 'bookings') as $booking) {
+                    if (!is_array($booking) || strtoupper((string)($booking['ref'] ?? '')) !== $ref) continue;
+                    $rows[] = $booking;
+                    $idx = count($rows) - 1;
+                    break;
+                }
+            }
+            if ($idx < 0) return [false, 'Ticket reference not found'];
+
+            $booking = $rows[$idx];
+            $bookingEmail = strtolower(trim((string)($booking['email'] ?? '')));
+            $bookingPhone = trim((string)($booking['phone'] ?? ''));
+            $emailMatch = $email !== '' && $bookingEmail !== '' && hash_equals($bookingEmail, $email);
+            $phoneMatch = $phone !== '' && $bookingPhone !== '' && bops_phone_match($bookingPhone, $phone);
+            $sessionMatch = $sessionEmail !== '' && $bookingEmail !== '' && hash_equals($bookingEmail, $sessionEmail);
+            if (!$emailMatch && !$phoneMatch && !$sessionMatch) return [false, 'Booking contact details do not match'];
+
+            if (in_array((string)($booking['status'] ?? ''), ['cancelled', 'rejected', 'expired'], true)) {
+                return [false, 'Cancelled, rejected, or expired bookings cannot request payment'];
+            }
+            if (($booking['payment_status'] ?? '') === 'paid') return [false, 'This booking has already been paid'];
+
+            $booking['payment_method'] = $method;
+            $booking['payment_request_status'] = 'pending';
+            $booking['payment_requested_at'] = date('c');
+            $booking['updated_at'] = date('c');
+            $rows[$idx] = $booking;
+            return [$rows, $booking];
+        });
+        if (!$ok) {
+            $status = $out === 'Ticket reference not found' ? 404
+                : ($out === 'Booking contact details do not match' ? 403 : 400);
+            return ['http' => $status, 'body' => ['success' => false, 'error' => (string)$out]];
+        }
+        bops_sync_sites($slug, 'bookings', (string)($out['id'] ?? ''), $out);
+        bops_mirror_admin($slug, 'bookings', $out);
+        $message = $method === 'counter'
+            ? 'Counter payment selected. The booking remains unpaid until staff records the payment.'
+            : 'Online payment requested. The operator will follow up; no online charge was made.';
+        return ['http' => 200, 'body' => ['success' => true, 'data' => $out, 'message' => $message]];
+    }
+
     if ($action === 'pay') {
+        if (!bops_is_admin($slug)) return ['http' => 403, 'body' => ['success' => false, 'error' => 'Admin only']];
         $ref = (string)($req['ref'] ?? '');
-        $method = (string)($req['method'] ?? 'counter');
-        $amount = round((float)($req['amount'] ?? 0), 2);
+        $method = strtolower((string)($req['method'] ?? ''));
+        $ref = strtoupper(trim($ref));
+        if (!in_array($method, ['cash', 'card'], true)) {
+            return ['http' => 400, 'body' => ['success' => false, 'error' => 'Payment method must be cash or card']];
+        }
         if ($ref === '') return ['http' => 400, 'body' => ['success' => false, 'error' => 'Missing ref']];
-        [$ok, $out] = bops_transact($slug, 'bookings', function ($rows) use ($ref, $method, $amount, $slug) {
+        foreach (bops_load($slug, 'payments') as $existingPayment) {
+            if (is_array($existingPayment) && strtoupper((string)($existingPayment['booking_ref'] ?? '')) === $ref) {
+                return ['http' => 400, 'body' => ['success' => false, 'error' => 'A payment record already exists for this ticket']];
+            }
+        }
+        $paymentId = 'PAY-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+        [$ok, $out] = bops_transact($slug, 'bookings', function ($rows) use ($ref, $method, $slug, $paymentId) {
             $payIdx = -1;
             foreach ($rows as $i => $b) {
                 if (!is_array($b) || (($b['ref'] ?? '') !== $ref && ($b['id'] ?? '') !== $ref)) continue;
@@ -775,25 +1094,79 @@ function bops_dispatch(array $req): array {
             }
             $b = $rows[$payIdx];
             if (in_array(($b['status'] ?? ''), ['cancelled', 'expired'], true)) return [false, 'Booking ' . $b['status'] . ' — payment rejected'];
+            if (($b['status'] ?? '') !== 'approved') return [false, 'Booking must be approved before payment can be recorded'];
             if (($b['payment_status'] ?? '') === 'paid') return [false, 'Already paid — duplicate rejected'];
+            $amount = bops_booking_amount($slug, $b);
+            if ($amount <= 0) return [false, 'The booking has no valid fare; update the trip fare before recording payment'];
             $b['payment_status'] = 'paid';
-            $b['status'] = 'confirmed';
             $b['paid_at'] = date('c');
             $b['pay_method'] = $method;
             $b['pay_amount'] = $amount;
+            $b['payment_id'] = $paymentId;
+            if (($b['payment_request_status'] ?? '') === 'pending') {
+                $b['payment_request_status'] = 'completed';
+                $b['payment_received_at'] = date('c');
+            }
             $b['updated_at'] = date('c');
             $rows[$payIdx] = $b;
-            return [$rows, $b];
+            return [$rows, ['booking' => $b, 'payment' => [
+                'id' => $paymentId,
+                'payment_id' => $paymentId,
+                'booking_ref' => $ref,
+                'method' => $method,
+                'amount' => $amount,
+                'currency' => $b['currency'] ?? 'LKR',
+                'status' => 'completed',
+                'created_at' => date('c'),
+                'received_at' => date('c'),
+            ]]];
         });
         if (!$ok) return ['http' => ($out === 'Booking not found' ? 404 : 400), 'body' => ['success' => false, 'error' => (string)$out]];
-        bops_sync_sites($slug, 'bookings', (string)($out['id'] ?? ''), is_array($out) ? $out : []);
-        bops_transact($slug, 'payments', function ($rows) use ($ref, $method, $amount) {
-            $rows[] = ['id' => 'p_' . bin2hex(random_bytes(8)), 'booking_ref' => $ref, 'method' => $method,
-                'amount' => $amount, 'status' => 'completed', 'created_at' => date('c')];
-            return [$rows, true];
+        $booking = $out['booking'];
+        $payment = $out['payment'];
+        bops_sync_sites($slug, 'bookings', (string)($booking['id'] ?? ''), $booking);
+        [$paymentSaved, $paymentResult] = bops_transact($slug, 'payments', function ($rows) use ($payment) {
+            foreach ($rows as $row) {
+                if (is_array($row) && (($row['booking_ref'] ?? '') === $payment['booking_ref']
+                    || ($row['payment_id'] ?? $row['id'] ?? '') === $payment['payment_id'])) {
+                    return [false, 'Payment already exists for this booking'];
+                }
+            }
+            $rows[] = $payment;
+            return [$rows, $payment];
         });
-        bops_mirror_admin($slug, 'bookings', $out);
-        return ['http' => 200, 'body' => ['success' => true, 'data' => $out]];
+        if (!$paymentSaved) {
+            [$rollbackOk] = bops_transact($slug, 'bookings', function ($rows) use ($booking) {
+                foreach ($rows as $i => $row) {
+                    if (!is_array($row) || (string)($row['id'] ?? '') !== (string)$booking['id']) continue;
+                    if (($row['payment_id'] ?? '') !== ($booking['payment_id'] ?? '')) return [$rows, false];
+                    unset($row['payment_id'], $row['paid_at'], $row['pay_method'], $row['pay_amount']);
+                    $row['payment_status'] = 'unpaid';
+                    if (($row['payment_request_status'] ?? '') === 'completed') {
+                        $row['payment_request_status'] = 'pending';
+                        unset($row['payment_received_at']);
+                    }
+                    $row['updated_at'] = date('c');
+                    $rows[$i] = $row;
+                    return [$rows, $row];
+                }
+                return [$rows, false];
+            });
+            if ($rollbackOk) {
+                $restored = null;
+                foreach (bops_load($slug, 'bookings') as $row) {
+                    if (is_array($row) && (string)($row['id'] ?? '') === (string)$booking['id']) { $restored = $row; break; }
+                }
+                if ($restored) {
+                    bops_sync_sites($slug, 'bookings', (string)$booking['id'], $restored);
+                    bops_mirror_admin($slug, 'bookings', $restored);
+                }
+            }
+            return ['http' => 500, 'body' => ['success' => false, 'error' => (string)$paymentResult]];
+        }
+        bops_mirror_admin($slug, 'bookings', $booking);
+        bops_mirror_admin($slug, 'payments', $payment);
+        return ['http' => 200, 'body' => ['success' => true, 'data' => $booking, 'payment' => $payment]];
     }
 
     // Ticket retrieval by phone + booking ref (no login needed).
@@ -820,6 +1193,44 @@ function bops_dispatch(array $req): array {
             return ['http' => 200, 'body' => ['success' => true, 'data' => bops_strip_secrets($r)]];
         }
         return ['http' => 404, 'body' => ['success' => false, 'error' => 'No ticket found for that ref + contact. Check both and try again.']];
+    }
+
+    // Ticket verification for QR scans and operator checks (read-only).
+    // Ref alone returns a LIMITED public verdict (no PII, no contact data)
+    // so boarding staff can confirm valid/pending/cancelled/rejected without
+    // leaking customer details. A matching verify_token (embedded in the QR
+    // URL) unlocks the full ticket view. Never changes booking status.
+    if ($action === 'verify') {
+        $ref = strtoupper(trim((string)($req['ref'] ?? '')));
+        $token = trim((string)($req['token'] ?? $req['t'] ?? ''));
+        if ($ref === '') return ['http' => 400, 'body' => ['success' => false, 'error' => 'Booking ref required']];
+        if (!empty($req['company'])) return ['http' => 403, 'body' => ['success' => false, 'error' => 'Spam detected']];
+        $rows = bops_load($slug, $entity !== '' ? $entity : 'bookings');
+        foreach ($rows as $r) {
+            if (!is_array($r)) continue;
+            $r = bops_booking_view($r);
+            $rref = strtoupper((string)($r['ref'] ?? $r['id'] ?? ''));
+            if ($rref === '' || ($rref !== $ref && strtoupper((string)($r['id'] ?? '')) !== $ref)) continue;
+            $status = strtolower((string)($r['status'] ?? 'pending'));
+            $verdict = in_array($status, ['cancelled', 'rejected', 'expired'], true) ? $status : (in_array($status, ['approved', 'confirmed'], true) ? 'valid' : $status);
+            $tokenOk = ($token !== '' && !empty($r['verify_token']) && hash_equals((string)$r['verify_token'], $token));
+            if ($tokenOk) {
+                return ['http' => 200, 'body' => ['success' => true, 'data' => bops_strip_secrets($r), 'verdict' => $verdict]];
+            }
+            $seats = bops_norm_seats($r['seats'] ?? []);
+            return ['http' => 200, 'body' => ['success' => true, 'verdict' => $verdict, 'data' => [
+                'ref' => (string)($r['ref'] ?? ''),
+                'trip_id' => (string)($r['trip_id'] ?? ''),
+                'route' => (string)($r['route'] ?? ''),
+                'trip_date' => (string)($r['trip_date'] ?? ''),
+                'departure' => (string)($r['departure'] ?? ''),
+                'seats' => $seats,
+                'seat_count' => count($seats),
+                'status' => (string)($r['status'] ?? ''),
+                'payment_status' => (string)($r['payment_status'] ?? 'unpaid'),
+            ]]];
+        }
+        return ['http' => 404, 'body' => ['success' => false, 'error' => 'No ticket found for that reference.']];
     }
 
     return ['http' => 400, 'body' => ['success' => false, 'error' => 'Unknown action: ' . $action]];

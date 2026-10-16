@@ -81,7 +81,9 @@ function admin_accounts_file(): string {
 }
 
 /**
- * Default seeded admin accounts for all 4 roles
+ * Default seeded admin accounts for all 4 roles.
+ * Passwords are bcrypt hashes only — no plaintext is stored or compared.
+ * Initial passwords must be changed after first login (team.php).
  */
 function default_admin_accounts(): array {
     return [
@@ -91,7 +93,6 @@ function default_admin_accounts(): array {
             'email'      => 'admin@webcraft.ai',
             'role'       => ROLE_SUPERADMIN,
             'password'   => password_hash('WebCraft@2026!', PASSWORD_DEFAULT),
-            'raw_pass'   => 'WebCraft@2026!',
             'active'     => true,
             'created_at' => '2026-09-01 00:00:00',
         ],
@@ -101,7 +102,6 @@ function default_admin_accounts(): array {
             'email'      => 'support@webcraft.ai',
             'role'       => ROLE_SUPPORT,
             'password'   => password_hash('Support@2026!', PASSWORD_DEFAULT),
-            'raw_pass'   => 'Support@2026!',
             'active'     => true,
             'created_at' => '2026-09-01 00:00:00',
         ],
@@ -111,7 +111,6 @@ function default_admin_accounts(): array {
             'email'      => 'billing@webcraft.ai',
             'role'       => ROLE_BILLING,
             'password'   => password_hash('Billing@2026!', PASSWORD_DEFAULT),
-            'raw_pass'   => 'Billing@2026!',
             'active'     => true,
             'created_at' => '2026-09-01 00:00:00',
         ],
@@ -121,7 +120,6 @@ function default_admin_accounts(): array {
             'email'      => 'devops@webcraft.ai',
             'role'       => ROLE_DEVELOPER,
             'password'   => password_hash('Developer@2026!', PASSWORD_DEFAULT),
-            'raw_pass'   => 'Developer@2026!',
             'active'     => true,
             'created_at' => '2026-09-01 00:00:00',
         ],
@@ -129,7 +127,9 @@ function default_admin_accounts(): array {
 }
 
 /**
- * Load all registered admin accounts (merged with disk)
+ * Load all registered admin accounts (merged with disk).
+ * One-time hygiene: legacy `raw_pass` plaintext entries are stripped and
+ * the file rewritten — authentication is bcrypt-hash only.
  */
 function load_admin_accounts(): array {
     $file = admin_accounts_file();
@@ -141,6 +141,16 @@ function load_admin_accounts(): array {
     $data = json_decode(@file_get_contents($file), true);
     if (!is_array($data) || empty($data)) {
         return default_admin_accounts();
+    }
+    $dirty = false;
+    foreach ($data as $k => $acct) {
+        if (is_array($acct) && array_key_exists('raw_pass', $acct)) {
+            unset($data[$k]['raw_pass']);
+            $dirty = true;
+        }
+    }
+    if ($dirty) {
+        @file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
     return $data;
 }
@@ -166,22 +176,15 @@ function find_admin_account(string $username): ?array {
 }
 
 /**
- * Verify credentials for any defined admin account
+ * Verify credentials for any defined admin account (bcrypt hash only).
  */
 function authenticate_admin_account(string $username, string $password): ?array {
     $account = find_admin_account($username);
     if (!$account || empty($account['active'])) {
         // Fallback check against default config for legacy superadmin
+        // (hash verification only — no plaintext comparison).
         if (defined('PLATFORM_ADMIN_USERNAME') && strtolower($username) === strtolower(PLATFORM_ADMIN_USERNAME)) {
             if (defined('PLATFORM_ADMIN_PASSWORD_HASH') && password_verify($password, PLATFORM_ADMIN_PASSWORD_HASH)) {
-                return [
-                    'username' => PLATFORM_ADMIN_USERNAME,
-                    'name'     => 'Super Administrator',
-                    'email'    => 'admin@webcraft.ai',
-                    'role'     => ROLE_SUPERADMIN,
-                ];
-            }
-            if ($password === 'WebCraft@2026!') {
                 return [
                     'username' => PLATFORM_ADMIN_USERNAME,
                     'name'     => 'Super Administrator',
@@ -194,11 +197,7 @@ function authenticate_admin_account(string $username, string $password): ?array 
     }
 
     $hash = $account['password'] ?? '';
-    if (password_verify($password, $hash)) {
-        return $account;
-    }
-    // Check raw fallback if hash verify failed
-    if (!empty($account['raw_pass']) && $account['raw_pass'] === $password) {
+    if ($hash !== '' && password_verify($password, $hash)) {
         return $account;
     }
 

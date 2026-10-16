@@ -1,0 +1,153 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test": {
+      "status": "passed",
+      "failingExample": "Bug Condition Exploration Test Results (EXPECTED FAILURE on unfixed code):\n\nGenerated bus booking site for \"City Express\" (slug: city-express-2)\n\n**Counterexamples Found (proving bug exists):**\n\n1. **Missing data-wc-biz-runtime attribute**: The generated HTML does NOT contain the runtime integration script tag with the attribute `data-wc-biz-runtime`. This proves the `business_runtime_inject()` function was not called during site generation.\n\n2. **Missing IS_BUS_BOOKING flag**: The generated HTML does NOT contain `IS_BUS_BOOKING=(true)` or `IS_BUS_BOOKING=true`. This indicates the bus booking detection logic did not execute or was not injected.\n\n3. **Widget present but disconnected**: The generated HTML DOES contain the bus booking widget HTML (`data-wc-live-bus-booking`), confirming the widget is generated but has no runtime integration connecting it to the backend.\n\n**Findings Summary:**\n- Site generation: SUCCESS\n- Bus booking widget HTML: PRESENT\n- Runtime integration script (data-wc-biz-runtime): MISSING ✗\n- window.WCBiz object: PRESENT (from inline widget code)\n- IS_BUS_BOOKING flag: MISSING ✗  \n- api/business-ops.php reference: PRESENT (from widget)\n\n**Root Cause Confirmed:** The `AutoSiteGenerator::generate()` function builds the bus booking widget HTML but never calls `business_runtime_inject()` to inject the integration layer that defines the runtime environment, sets detection flags, and ensures proper backend connectivity.\n\nThis test will PASS after implementing the fix in task 3.",
+      "lastRunTimestamp": 1792155957359
+    },
+    "2. Write preservation property tests (BEFORE implementing fix)": {
+      "status": "passed",
+      "lastRunTimestamp": 1792156337469
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration test": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153810852
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153849858
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156000753
+      }
+    ],
+    "2. Write preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153811188
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156009631
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156369106
+      }
+    ],
+    "3.1 Construct business spec array after manifest generation": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153811348
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156375886
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156614425
+      }
+    ],
+    "3.2 Replace legacy runtime injection call with current function": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153811575
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156627304
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156893245
+      }
+    ],
+    "3.3 Verify BusinessRuntime.php is already required": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153811677
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156904030
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156958840
+      }
+    ],
+    "3.4 Verify bug condition exploration test now passes": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153811788
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792156981739
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792157219277
+      }
+    ],
+    "3.5 Verify preservation tests still pass": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153811973
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792157232221
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792157406288
+      }
+    ],
+    "4. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792153812045
+      },
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792157420418
+      }
+    ],
+    "3. Fix bus booking frontend-backend integration": [
+      {
+        "executionId": "bc4e8f95-0d67-48c2-a965-c592d748e7b6",
+        "chatSessionId": "sess_9b041b0c-f685-48d4-9ba7-860dc267f74a",
+        "timestamp": 1792157406399
+      }
+    ]
+  }
+}

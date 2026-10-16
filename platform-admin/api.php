@@ -270,5 +270,36 @@ if ($action === 'get_snapshots') {
     api_respond(true, 'Snapshots loaded', ['snapshots' => $snapshots]);
 }
 
+// ══════════════════════════════════════════
+// ACTION: storage_summary (quota overview for an email)
+// ══════════════════════════════════════════
+if ($action === 'storage_summary') {
+    require_once __DIR__ . '/../includes/StorageService.php';
+    $email = strtolower(trim($_GET['email'] ?? ''));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) api_respond(false, 'Invalid email.');
+    $refresh = StorageService::recalculateUsage($email);
+    if (empty($refresh['success'])) api_respond(false, 'Could not calculate storage usage.');
+    $s = StorageService::getSummary($email);
+    if (!$s) api_respond(false, 'Customer not found.');
+    api_respond(true, 'Storage summary loaded.', ['summary' => $s]);
+}
+
+// ══════════════════════════════════════════
+// ACTION: storage_reconcile (repair counter from disk inventory)
+// ══════════════════════════════════════════
+if ($action === 'storage_reconcile') {
+    if (!has_permission('billing_manage')) api_respond(false, 'Forbidden: billing_manage required.');
+    require_once __DIR__ . '/../includes/StorageService.php';
+    $email = strtolower(trim($_GET['email'] ?? ($_POST['email'] ?? '')));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) api_respond(false, 'Invalid email.');
+    $r = StorageService::recalculateUsage($email);
+    if (!empty($r['success'])) {
+        StorageService::auditLog(current_admin_user(), 'storage_reconcile:' . $email,
+            'Counter reconciled' . (!empty($r['repaired']) ? " ({$r['before']} → {$r['after']} bytes)" : ' (no drift)'));
+        api_respond(true, !empty($r['repaired']) ? 'Counter repaired.' : 'Counter already accurate.', ['result' => $r]);
+    }
+    api_respond(false, 'Reconcile failed.');
+}
+
 // Unknown action
 api_respond(false, 'Unknown action: ' . htmlspecialchars($action));

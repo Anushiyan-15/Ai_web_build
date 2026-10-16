@@ -72,17 +72,40 @@ class AutoSiteGenerator {
         $analysis = business_analyzer_analyze($analysisInput);
         $manifest = business_manifest_build($analysis, $slug, $orderId);
 
+        // Construct business spec for runtime injection
+        $businessSpec = [
+            'category' => $category,
+            'slug' => $slug,
+            'profile' => [
+                'business_name' => $bizName,
+                'domain' => $category,
+                'description' => $purpose . ' ' . $uvp,
+            ],
+            'business' => [
+                'category' => $category,
+                'name' => $bizName,
+            ],
+            'entities' => $manifest['entities'] ?? [],
+            'capabilities' => $manifest['capabilities'] ?? [],
+        ];
+
         // 5. Build Category-Specific Dynamic Frontend HTML
         $siteHtml = self::buildDynamicWebsiteHtml($category, $bizName, $catMeta, $input, $slug);
 
         // Inject Business Runtime & Safety Net
-        if (function_exists('injectBusinessRuntime')) {
-            $siteHtml = injectBusinessRuntime($siteHtml);
+        if (function_exists('business_runtime_inject')) {
+            $siteHtml = business_runtime_inject($siteHtml, $businessSpec, $slug);
         }
         if (function_exists('taste_apply_safety_net')) {
             $siteHtml = taste_apply_safety_net($siteHtml);
         }
         @file_put_contents($targetDir . '/index.html', $siteHtml);
+        if ($category === 'bus' && !copy(__DIR__ . '/templates/bus-customer-portal.php', $targetDir . '/customer.php')) {
+            throw new RuntimeException('Unable to create the generated bus customer portal.');
+        }
+        if ($category === 'bus') {
+            @copy(__DIR__ . '/templates/bus-ticket-verify.php', $targetDir . '/verify.php');
+        }
 
         // 6. Setup Admin Directory & Files
         $adminDir = $targetDir . '/admin';
@@ -514,7 +537,7 @@ HTML;
      * Renders specific dynamic widgets based on business type (Bus, Restaurant, Salon, etc.)
      */
     private static function renderDynamicWidget(string $cat, string $bizName, string $slug): string {
-        if ($cat === 'bus') return bus_booking_widget_html();
+        if ($cat === 'bus') return bus_booking_widget_html($slug);
         switch ($cat) {
             case 'bus':
                 return <<<HTML

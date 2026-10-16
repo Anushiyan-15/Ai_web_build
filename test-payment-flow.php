@@ -5,7 +5,7 @@
  * DELETE THIS FILE before going live!
  */
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/PayPalService.php';
+require_once __DIR__ . '/includes/PayHereService.php';
 
 $mode = $_GET['mode'] ?? 'info';
 $result = null;

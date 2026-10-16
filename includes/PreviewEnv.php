@@ -317,6 +317,13 @@ function preview_provision(array $p): array {
     if (pak_write($dir . '/index.html', $html) === false) {
         return ['ok' => false, 'error' => 'Cannot write preview site.'];
     }
+    if (wc_business_requires_bus_booking($spec)
+        && !copy(dirname(__DIR__) . '/includes/templates/bus-customer-portal.php', $dir . '/customer.php')) {
+        return ['ok' => false, 'error' => 'Cannot create preview customer booking portal.'];
+    }
+    if (wc_business_requires_bus_booking($spec)) {
+        @copy(dirname(__DIR__) . '/includes/templates/bus-ticket-verify.php', $dir . '/verify.php');
+    }
 
     // Public handlers in the preview root (isolated from production).
     if ($contactEmail !== '') {

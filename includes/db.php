@@ -200,17 +200,17 @@ function getCustomerOrdersFromDatabase(string $identifier): array {
             if ($isEmail) {
                 $stmt = $db->prepare("
                     SELECT * FROM orders
-                    WHERE admin_email = :id OR client_email = :id
+                    WHERE admin_email = :id1 OR client_email = :id2
                     ORDER BY id DESC
                 ");
-                $stmt->execute([':id' => $identifier]);
+                $stmt->execute([':id1' => $identifier, ':id2' => $identifier]);
             } else {
                 $stmt = $db->prepare("
                     SELECT * FROM orders
-                    WHERE admin_email = :id OR client_email = :id OR order_id = :id
+                    WHERE admin_email = :id1 OR client_email = :id2 OR order_id = :id3
                     ORDER BY id DESC
                 ");
-                $stmt->execute([':id' => $identifier]);
+                $stmt->execute([':id1' => $identifier, ':id2' => $identifier, ':id3' => $identifier]);
             }
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                 if (!empty($row['order_id'])) $merged[$row['order_id']] = $row + ['source' => 'db'];

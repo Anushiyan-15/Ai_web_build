@@ -17,6 +17,8 @@ if (!headers_sent()) {
 }
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/StorageService.php';
+require_once __DIR__ . '/includes/Csrf.php';
 require_once __DIR__ . '/includes/reviews.php';
 require_once __DIR__ . '/includes/ui-lang.php';
 $UI_LANG = ui_resolve_lang();
@@ -522,6 +524,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// ─── STORAGE PURCHASE RETURN (PayPal redirect → server-side capture) ─
+// A browser redirect is NEVER proof of payment: the PayPal order is
+// captured and verified server-side here before any quota is granted.
+// Storage orders (STG-*) live in storage/storage_orders/ and never touch
+// the website-publishing payment flow.
+if (isset($_GET['action']) && in_array($_GET['action'], ['storage_return', 'storage_cancel'], true)) {
+    $stgRef = preg_replace('/[^A-Za-z0-9-]/', '', (string)($_GET['ref'] ?? ''));
+    $sessEm = strtolower(trim((string)($_SESSION['customer_user']['email'] ?? '')));
+    if ($sessEm === '' || !filter_var($sessEm, FILTER_VALIDATE_EMAIL)) {
+        header('Location: ' . SITE_URL . '/customer-portal.php');
+        exit;
+    }
+    if ($_GET['action'] === 'storage_cancel' || isset($_GET['cancel'])) {
+        $_SESSION['flash_success'] = '';
+        header('Location: ' . SITE_URL . '/customer-portal.php?tab=storage&storage_result=cancelled');
+        exit;
+    }
+    $token = trim((string)($_GET['token'] ?? $_GET['paypal_order_id'] ?? ''));
+    $pend = StorageService::loadPendingOrder($stgRef);
+    if (!$pend || strcasecmp((string)($pend['email'] ?? ''), $sessEm) !== 0) {
+        header('Location: ' . SITE_URL . '/customer-portal.php?tab=storage&storage_result=invalid');
+        exit;
+    }
+    if (($pend['status'] ?? '') === 'captured' || $token === '') {
+        header('Location: ' . SITE_URL . '/customer-portal.php?tab=storage&storage_result=' . (($pend['status'] ?? '') === 'captured' ? 'done' : 'invalid'));
+        exit;
+    }
+    require_once __DIR__ . '/includes/PayPalService.php';
+    $pp = new PayPalService();
+    $cap = $pp->captureOrder($token);
+    if (empty($cap['success']) || ($cap['status'] ?? '') !== 'COMPLETED') {
+        header('Location: ' . SITE_URL . '/customer-portal.php?tab=storage&storage_result=failed');
+        exit;
+    }
+    $payRef = (string)($cap['capture_id'] ?? $token);
+    $note = 'Storage purchase ' . $stgRef . ' (' . (int)$pend['gb'] . ' GB)' . (!empty($cap['simulated']) ? ' [simulator]' : '');
+    $granted = StorageService::recordPurchase($sessEm, (int)$pend['gb'], (float)$pend['amount'], (string)$pend['currency'], $payRef, $note);
+    if (!empty($granted['success'])) StorageService::markPendingCaptured($stgRef, $payRef);
+    header('Location: ' . SITE_URL . '/customer-portal.php?tab=storage&storage_result=' . (!empty($granted['success']) ? 'done' : 'failed'));
+    exit;
+}
+
 // Check logged in state
 $currentUser = $_SESSION['customer_user'] ?? null;
 $flashSuccess = $_SESSION['flash_success'] ?? '';
@@ -529,13 +573,35 @@ unset($_SESSION['flash_success']);
 $customerOrders = [];
 $customerNotifs = [];
 $myReviews = [];
-$portalTab = ($_GET['tab'] ?? '') === 'reviews' ? 'reviews' : (($_GET['tab'] ?? '') === 'notifs' ? 'notifs' : 'sites');
+$portalTab = ($_GET['tab'] ?? '') === 'reviews' ? 'reviews' : ((($_GET['tab'] ?? '') === 'notifs' ? 'notifs' : ((($_GET['tab'] ?? '') === 'storage' ? 'storage' : 'sites'))));
 $reviewNeedsPw = false;
+$storageSummary = null;
+$storageFiles = [];
+$storageTxns = [];
+$storageInvoices = ['subscription' => [], 'storage' => []];
+$storageResult = trim($_GET['storage_result'] ?? '');
+$storageDbOffline = false;
 
 if ($currentUser) {
     $customerOrders = getCustomerOrdersFromDatabase($currentUser['email']);
     $myReviews = reviews_for_customer($currentUser['email'] ?? '');
     $reviewNeedsPw = review_delete_needs_password($currentUser['email'] ?? '');
+    try {
+        $refresh = StorageService::recalculateUsage($currentUser['email'] ?? '');
+        if (empty($refresh['success'])) {
+            throw new RuntimeException('Storage usage recalculation failed: ' . ($refresh['error'] ?? 'unknown error'));
+        }
+        $storageSummary = StorageService::getSummary($currentUser['email'] ?? '');
+        $storageFiles = StorageService::listFiles($currentUser['email'] ?? '', 100, 0);
+        $storageTxns = StorageService::listTransactions($currentUser['email'] ?? '', 20);
+        $storageInvoices = StorageService::invoices($currentUser['email'] ?? '');
+    } catch (Throwable $e) {
+        error_log('customer portal storage load failed: ' . $e->getMessage());
+        $storageSummary = null;
+    }
+    if ($storageSummary === null) {
+        try { $storageDbOffline = (StorageService::db() === null); } catch (Throwable $e) { $storageDbOffline = true; }
+    }
     foreach ($customerOrders as $o) {
         $oid = $o['order_id'] ?? '';
         if ($oid) {
@@ -1167,6 +1233,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
   <!-- Tabs Navigation -->
   <div class="tabs-bar">
     <button class="tab-btn<?= $portalTab === 'sites' ? ' active' : '' ?>" onclick="switchPortalTab('sites')" id="ptab-sites"><?= ui_t('p_tab_sites') ?> (<?= count($customerOrders) ?>)</button>
+    <button class="tab-btn<?= $portalTab === 'storage' ? ' active' : '' ?>" onclick="switchPortalTab('storage')" id="ptab-storage">💾 Storage<?= $storageSummary ? ' (' . htmlspecialchars((string)$storageSummary['used_mb']) . ' MB)' : '' ?></button>
     <button class="tab-btn<?= $portalTab === 'notifs' ? ' active' : '' ?>" onclick="switchPortalTab('notifs')" id="ptab-notifs"><?= ui_t('p_tab_notifs') ?> (<?= count($customerNotifs) ?>)</button>
     <button class="tab-btn<?= $portalTab === 'reviews' ? ' active' : '' ?>" onclick="switchPortalTab('reviews')" id="ptab-reviews"><?= ui_t('p_tab_reviews') ?> (<?= count($myReviews) ?>)</button>
   </div>
@@ -1250,6 +1317,158 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
           </div>
         </div>
       <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
+
+  <!-- ── STORAGE TAB (real backend data) ── -->
+  <div id="psec-storage"<?= $portalTab === 'storage' ? '' : ' style="display:none;"' ?>>
+    <?php if ($storageResult === 'done'): ?>
+      <div class="ok-box">✅ Extra storage purchase completed and credited to your account.</div>
+    <?php elseif ($storageResult === 'failed'): ?>
+      <div class="err-box">⚠️ Payment could not be verified. No charge was applied to your quota. Please try again.</div>
+    <?php elseif ($storageResult === 'cancelled'): ?>
+      <div class="err-box">Payment cancelled — no changes were made to your storage.</div>
+    <?php elseif ($storageResult === 'invalid'): ?>
+      <div class="err-box">⚠️ Unknown or expired storage order reference.</div>
+    <?php endif; ?>
+    <?php if (!$storageSummary): ?>
+      <div style="background:#0c1220;border:1px dashed #1e293b;border-radius:16px;padding:2.5rem;text-align:center;color:#94a3b8;">
+        <?= $storageDbOffline
+          ? 'Storage information is unavailable right now (database offline). Please try again later.'
+          : 'Your storage record is being set up. Please reload this tab in a moment — if it persists, sign out and sign back in.' ?>
+      </div>
+    <?php else:
+      $stg = $storageSummary;
+      $pct = min(100, max(0, (float)$stg['percent']));
+      $barColor = $pct < 70 ? '#10b981' : ($pct <= 90 ? '#f59e0b' : '#ef4444');
+      $rate = (float)($stg['plan']['price_per_extra_gb'] ?? 2);
+      $cur = htmlspecialchars(strtoupper($stg['plan']['currency'] ?? (defined('PAYPAL_CURRENCY') ? PAYPAL_CURRENCY : 'USD')));
+    ?>
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">
+          <div>
+            <h3 style="color:#fff;font-size:1.05rem;">💾 Storage — <?= htmlspecialchars($stg['plan']['name'] ?? 'Plan') ?> plan</h3>
+            <p style="color:#94a3b8;font-size:.8rem;margin-top:.25rem;">
+              You have used <?= htmlspecialchars((string)$stg['used_mb']) ?> MB out of <?= htmlspecialchars((string)$stg['limit_mb']) ?> MB. <?= htmlspecialchars((string)$stg['remaining_mb']) ?> MB free remaining.
+            </p>
+          </div>
+          <button class="act-btn act-btn-primary" onclick="stgOpenBuy()" <?= !empty($stg['suspended']) ? 'disabled title="Account suspended"' : '' ?>>➕ Buy Extra Storage</button>
+        </div>
+        <?php if (!empty($stg['suspended'])): ?>
+          <div class="err-box">⛔ Your account is suspended. Uploads and purchases are disabled. Please contact support.</div>
+        <?php endif; ?>
+        <?php if (!empty($stg['is_full'])): ?>
+          <div class="err-box" style="border-color:#ef4444;color:#fca5a5;">🔴 Storage full! Upgrade or buy extra GB to continue uploading.</div>
+        <?php endif; ?>
+        <div style="height:14px;background:#1e293b;border-radius:999px;overflow:hidden;" role="progressbar" aria-valuenow="<?= $pct ?>" aria-valuemin="0" aria-valuemax="100" aria-label="Storage usage">
+          <div id="stg-bar" style="height:100%;width:<?= $pct ?>%;background:<?= $barColor ?>;border-radius:999px;transition:width .4s;"></div>
+        </div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.9rem;font-size:.8rem;color:#94a3b8;">
+          <span>📦 Used: <strong id="stg-used" style="color:#fff;"><?= htmlspecialchars((string)$stg['used_mb']) ?> MB</strong></span>
+          <span>📏 Limit: <strong style="color:#fff;"><?= htmlspecialchars((string)$stg['limit_mb']) ?> MB</strong>
+            <span style="color:#64748b;">(base <?= (int)$stg['plan_base_limit_mb'] ?> + extra <?= (int)$stg['extra_allowance_mb'] ?> MB<?= $stg['manual_storage_limit_mb'] !== null ? '; admin override ' . (int)$stg['manual_storage_limit_mb'] . ' MB' : '' ?>)</span></span>
+          <span>🆓 Free: <strong id="stg-free" style="color:#fff;"><?= htmlspecialchars((string)$stg['remaining_mb']) ?> MB</strong></span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin-top:1rem;font-size:.78rem;color:#94a3b8;">
+          <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.7rem .9rem;">Billing period<br><strong style="color:#e2e8f0;"><?= htmlspecialchars((string)($stg['billing_period_start'] ?? '—')) ?> → <?= htmlspecialchars((string)($stg['billing_period_end'] ?? '—')) ?></strong></div>
+          <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.7rem .9rem;">Extra GB purchased<br><strong style="color:#e2e8f0;"><?= (int)$stg['extra_gb_purchased'] ?> GB</strong></div>
+          <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.7rem .9rem;">Bandwidth used<br><strong style="color:#e2e8f0;"><?= htmlspecialchars((string)$stg['bandwidth_used_mb']) ?> / <?= (int)$stg['bandwidth_limit_mb'] ?> MB</strong></div>
+          <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.7rem .9rem;">Auto-billing<br><strong style="color:#e2e8f0;" id="stg-autobill-state"><?= !empty($stg['auto_bill_enabled']) ? 'Opted in' : 'Off' ?></strong>
+            <?php if (empty($stg['auto_bill_supported'])): ?><div style="font-size:.7rem;color:#64748b;">Automatic charges not supported by the current gateway — renewals use manual checkout.</div><?php endif; ?>
+            <button class="rv-mini-btn" style="margin-top:.35rem;" onclick="stgToggleAutobill(<?= !empty($stg['auto_bill_enabled']) ? 'false' : 'true' ?>)"><?= !empty($stg['auto_bill_enabled']) ? 'Disable' : 'Enable' ?></button></div>
+        </div>
+      </div>
+
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;">
+        <h3 style="color:#fff;font-size:1rem;margin-bottom:.25rem;">📤 Upload a file</h3>
+        <p style="color:#64748b;font-size:.78rem;margin-bottom:.9rem;">Quota-checked before saving. Max <?= round((defined('STORAGE_MAX_FILE_BYTES') ? STORAGE_MAX_FILE_BYTES : 26214400) / 1048576, 1) ?> MB per file.</p>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+          <input type="file" id="stg-file" class="inp" style="max-width:320px;">
+          <button class="act-btn act-btn-green" id="stg-upload-btn" onclick="stgUpload()" <?= !empty($stg['suspended']) ? 'disabled' : '' ?>>Upload</button>
+          <span id="stg-upload-msg" style="font-size:.8rem;color:#94a3b8;" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;">
+        <h3 style="color:#fff;font-size:1rem;margin-bottom:.9rem;">📁 Your files (<span id="stg-file-count"><?= count($storageFiles) ?></span>)</h3>
+        <div id="stg-files" style="display:grid;gap:.6rem;">
+          <?php if (empty($storageFiles)): ?>
+            <div style="color:#64748b;font-size:.85rem;border:1px dashed #1e293b;border-radius:10px;padding:1.5rem;text-align:center;" id="stg-empty">No files yet — upload your first file above.</div>
+          <?php else: foreach ($storageFiles as $f): ?>
+            <div class="notif-row" id="stg-file-<?= (int)$f['id'] ?>">
+              <div class="notif-icon">📄</div>
+              <div class="notif-body">
+                <div class="notif-head"><span class="notif-title"><?= htmlspecialchars($f['file_name'] ?? '') ?></span>
+                  <span class="notif-time"><?= htmlspecialchars($f['uploaded_at'] ?? '') ?></span></div>
+                <div style="font-size:.75rem;color:#64748b;"><?= number_format((float)((int)($f['file_size_bytes'] ?? 0)) / 1048576, 2) ?> MB · <?= htmlspecialchars($f['mime_type'] ?? '') ?> · <a href="<?= SITE_URL ?>/customer-files.php?id=<?= (int)$f['id'] ?>" target="_blank" style="color:#38bdf8;">View</a></div>
+              </div>
+              <button class="rv-mini-btn rv-del" onclick="stgDelete(<?= (int)$f['id'] ?>, <?= json_encode($f['file_name'] ?? '', JSON_HEX_APOS | JSON_HEX_QUOT) ?>)">Delete</button>
+            </div>
+          <?php endforeach; endif; ?>
+        </div>
+      </div>
+
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;">
+        <h3 style="color:#fff;font-size:1rem;margin-bottom:.9rem;">🧾 Invoices &amp; purchases</h3>
+        <h4 style="color:#94a3b8;font-size:.8rem;margin-bottom:.5rem;">STORAGE PURCHASES</h4>
+        <?php if (empty(array_filter($storageTxns, fn($t) => ($t['action'] ?? '') === 'PURCHASE'))): ?>
+          <p style="color:#64748b;font-size:.82rem;margin-bottom:1rem;">No extra-storage purchases yet.</p>
+        <?php else: ?>
+          <div style="display:grid;gap:.5rem;margin-bottom:1rem;">
+          <?php foreach ($storageTxns as $t): if (($t['action'] ?? '') !== 'PURCHASE') continue; ?>
+            <div style="font-size:.8rem;color:#cbd5e1;background:#060a14;border:1px solid #1e293b;border-radius:9px;padding:.6rem .9rem;display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
+              <span><?= htmlspecialchars($t['note'] ?? 'Storage purchase') ?> · <span style="color:#64748b;"><?= htmlspecialchars($t['created_at'] ?? '') ?></span></span>
+              <strong style="color:#34d399;"><?= htmlspecialchars(($t['amount_charged'] ?? '') . ' ' . ($t['currency'] ?? '')) ?></strong>
+            </div>
+          <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+        <h4 style="color:#94a3b8;font-size:.8rem;margin-bottom:.5rem;">SUBSCRIPTION HISTORY</h4>
+        <?php if (empty($storageInvoices['subscription'])): ?>
+          <p style="color:#64748b;font-size:.82rem;">No subscription invoices yet.</p>
+        <?php else: ?>
+          <div style="display:grid;gap:.5rem;">
+          <?php foreach (array_slice($storageInvoices['subscription'], 0, 10) as $inv): ?>
+            <div style="font-size:.8rem;color:#cbd5e1;background:#060a14;border:1px solid #1e293b;border-radius:9px;padding:.6rem .9rem;display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
+              <span><?= htmlspecialchars($inv['site_name'] ?? $inv['order_id']) ?> · <span style="color:#64748b;"><?= htmlspecialchars($inv['order_id'] ?? '') ?></span></span>
+              <strong><?= htmlspecialchars(number_format((float)($inv['amount'] ?? 0), 2) . ' ' . ($inv['currency'] ?? 'USD')) ?></strong>
+            </div>
+          <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+        <h4 style="color:#94a3b8;font-size:.8rem;margin:.9rem 0 .5rem;">RECENT STORAGE ACTIVITY</h4>
+        <div style="display:grid;gap:.4rem;">
+        <?php foreach (array_slice($storageTxns, 0, 10) as $t): ?>
+          <div style="font-size:.75rem;color:#94a3b8;">[<?= htmlspecialchars($t['action'] ?? '') ?>] <?= htmlspecialchars($t['note'] ?? '') ?> <span style="color:#475569;">· <?= htmlspecialchars($t['created_at'] ?? '') ?></span></div>
+        <?php endforeach; ?>
+        </div>
+      </div>
+
+      <!-- Buy modal -->
+      <div id="stg-buy-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;" onclick="if(event.target===this)stgCloseBuy()">
+        <div style="background:#111622;border:1.5px solid #28334d;border-radius:20px;width:100%;max-width:440px;margin:1rem;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;background:#0d121c;border-bottom:1px solid #1e293b;">
+            <strong style="color:#fff;">➕ Buy Extra Storage</strong>
+            <button onclick="stgCloseBuy()" style="background:none;border:none;color:#64748b;font-size:1.4rem;cursor:pointer;" aria-label="Close">✕</button>
+          </div>
+          <div style="padding:1.4rem;">
+            <p style="font-size:.82rem;color:#94a3b8;line-height:1.6;">Current allowance: <strong style="color:#fff;" id="stg-modal-limit"><?= htmlspecialchars((string)$stg['limit_mb']) ?> MB</strong><br>
+            Rate: <strong style="color:#fff;"><?= $cur ?> <?= number_format($rate, 2) ?>/GB</strong> · Billed once for the current billing period (<?= htmlspecialchars((string)($stg['billing_period_start'] ?? '')) ?> → <?= htmlspecialchars((string)($stg['billing_period_end'] ?? '')) ?>). Storage purchases never alter your website subscription.</p>
+            <div class="field" style="margin-top:1rem;"><label>Extra GB (min 1)</label>
+              <input type="number" id="stg-gb" class="inp" min="1" max="100" value="1" oninput="stgCalcTotal()">
+            </div>
+            <div style="font-size:1rem;color:#fff;margin:.5rem 0 1rem;">Total: <strong id="stg-total"><?= $cur ?> <?= number_format($rate, 2) ?></strong></div>
+            <div id="stg-buy-msg" style="font-size:.8rem;color:#fca5a5;margin-bottom:.6rem;" role="status" aria-live="polite"></div>
+            <button class="btn-primary" id="stg-buy-go" onclick="stgBuyGo()"><span>Continue to PayPal</span></button>
+          </div>
+        </div>
+      </div>
+      <script>
+      var STG_EMAIL = <?= json_encode(strtolower(trim($currentUser['email'] ?? '')), JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+      var STG_CSRF = <?= json_encode(csrf_token(), JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+      var STG_RATE = <?= json_encode($rate) ?>;
+      var STG_CUR = <?= json_encode(trim($cur)) ?>;
+      </script>
     <?php endif; ?>
   </div>
 
@@ -1439,12 +1658,113 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
 
 <script>
 function switchPortalTab(tab) {
-  ['sites', 'notifs', 'reviews'].forEach(function (t) {
+  ['sites', 'storage', 'notifs', 'reviews'].forEach(function (t) {
     var sec = document.getElementById('psec-' + t);
     if (sec) sec.style.display = (tab === t) ? 'block' : 'none';
     var btn = document.getElementById('ptab-' + t);
     if (btn) btn.classList.toggle('active', tab === t);
   });
+}
+/* ── Storage tab: files, upload, delete, buy, auto-bill ── */
+function stgApi(path, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({'X-CSRF-Token': (typeof STG_CSRF !== 'undefined' ? STG_CSRF : '')}, opts.headers || {});
+  return fetch(path, opts).then(function (r) { return r.json().then(function (j) { j.__http = r.status; return j; }); });
+}
+function stgRefreshSummary(s) {
+  if (!s) return;
+  var u = document.getElementById('stg-used'); if (u) u.textContent = s.used_mb + ' MB';
+  var f = document.getElementById('stg-free'); if (f) f.textContent = s.remaining_mb + ' MB';
+  var bar = document.getElementById('stg-bar');
+  if (bar) {
+    var p = Math.min(100, parseFloat(s.percent) || 0);
+    bar.style.width = p + '%';
+    bar.style.background = p < 70 ? '#10b981' : (p <= 90 ? '#f59e0b' : '#ef4444');
+  }
+  var ml = document.getElementById('stg-modal-limit'); if (ml) ml.textContent = s.limit_mb + ' MB';
+  if (typeof s.csrf_token === 'string' && s.csrf_token) { try { STG_CSRF = s.csrf_token; } catch (e) {} }
+}
+function stgUpload() {
+  var inp = document.getElementById('stg-file');
+  var msg = document.getElementById('stg-upload-msg');
+  var btn = document.getElementById('stg-upload-btn');
+  if (!inp || !inp.files || !inp.files[0]) { if (msg) msg.textContent = 'Choose a file first.'; return; }
+  if (msg) msg.textContent = 'Uploading…';
+  if (btn) btn.disabled = true;
+  var fd = new FormData();
+  fd.append('file', inp.files[0]);
+  stgApi('api/storage.php?resource=files&email=' + encodeURIComponent(STG_EMAIL), {method: 'POST', body: fd})
+    .then(function (j) {
+      if (j.success) {
+        if (msg) { msg.style.color = '#6ee7b7'; msg.textContent = 'Uploaded ✓'; }
+        inp.value = '';
+        stgRefreshSummary(j.summary);
+        setTimeout(function () { location.reload(); }, 900);
+      } else {
+        if (msg) { msg.style.color = '#fca5a5'; msg.textContent = (j.error || 'Upload failed.') + (j.extra_gb_needed ? ' (≈' + j.extra_gb_needed + ' GB more needed)' : ''); }
+      }
+    })
+    .catch(function () { if (msg) msg.textContent = 'Network error.'; })
+    .finally(function () { if (btn) btn.disabled = false; });
+}
+function stgDelete(id, name) {
+  if (!confirm('Delete "' + name + '"? This frees its storage immediately.')) return;
+  stgApi('api/storage.php?resource=file&email=' + encodeURIComponent(STG_EMAIL) + '&id=' + encodeURIComponent(id),
+    {method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id})})
+    .then(function (j) {
+      if (j.success) {
+        var row = document.getElementById('stg-file-' + id);
+        if (row) row.remove();
+        stgRefreshSummary(j.summary);
+        var c = document.getElementById('stg-file-count');
+        var left = document.querySelectorAll('[id^="stg-file-"]').length;
+        if (c) c.textContent = left;
+        if (!left) {
+          var wrap = document.getElementById('stg-files');
+          if (wrap) wrap.innerHTML = '<div style="color:#64748b;font-size:.85rem;border:1px dashed #1e293b;border-radius:10px;padding:1.5rem;text-align:center;">No files yet — upload your first file above.</div>';
+        }
+      } else { alert(j.error || 'Delete failed.'); }
+    })
+    .catch(function () { alert('Network error.'); });
+}
+function stgOpenBuy() { var m = document.getElementById('stg-buy-modal'); if (m) { m.style.display = 'flex'; stgCalcTotal(); } }
+function stgCloseBuy() { var m = document.getElementById('stg-buy-modal'); if (m) m.style.display = 'none'; }
+function stgCalcTotal() {
+  var gb = Math.max(1, parseInt(document.getElementById('stg-gb').value || '1', 10));
+  var t = document.getElementById('stg-total');
+  if (t) t.textContent = STG_CUR + ' ' + (STG_RATE * gb).toFixed(2);
+}
+function stgBuyGo() {
+  var gb = Math.max(1, parseInt(document.getElementById('stg-gb').value || '1', 10));
+  var msg = document.getElementById('stg-buy-msg');
+  var btn = document.getElementById('stg-buy-go');
+  if (msg) msg.textContent = '';
+  if (btn) btn.disabled = true;
+  stgApi('api/storage.php?resource=buy-storage&email=' + encodeURIComponent(STG_EMAIL),
+    {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({gb: gb})})
+    .then(function (j) {
+      if (j.success && j.checkout_url) { window.location.href = j.checkout_url; }
+      else { if (msg) msg.textContent = j.error || 'Could not start payment.'; if (btn) btn.disabled = false; }
+    })
+    .catch(function () { if (msg) msg.textContent = 'Network error.'; if (btn) btn.disabled = false; });
+}
+function stgToggleAutobill(enable) {
+  var body = {enabled: enable};
+  if (enable) {
+    if (!confirm('Enable auto-billing preference? Note: the current gateway (PayPal Checkout) requires manual approval per payment, so no automatic charge will occur — this records your consent and preference.')) return;
+    body.consent = true;
+  }
+  stgApi('api/storage.php?resource=auto-bill&email=' + encodeURIComponent(STG_EMAIL),
+    {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)})
+    .then(function (j) {
+      if (j.success) {
+        var s = document.getElementById('stg-autobill-state');
+        if (s) s.textContent = j.auto_bill_enabled ? 'Opted in' : 'Off';
+        alert((j.auto_bill_enabled ? 'Auto-billing preference enabled. ' : 'Auto-billing disabled. ') + (j.notice || ''));
+        setTimeout(function () { location.reload(); }, 600);
+      } else { alert(j.error || 'Could not update preference.'); }
+    })
+    .catch(function () { alert('Network error.'); });
 }
 /* Interactive star ratings (add + edit forms share logic) */
 function rvSetRating(which, n) {

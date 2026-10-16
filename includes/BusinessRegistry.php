@@ -33,17 +33,20 @@ function business_registry_categories(): array {
             ['id'=>'bookings','name'=>'Bookings & Tickets','singular'=>'Booking','icon'=>'🎫','fields'=>[
                 _br_f('trip_id','Trip','text',true),_br_f('seats','Seats','text',true),
                 _br_f('passenger','Passenger','text',true),_br_f('phone','Phone','text',true),
-                _br_f('email','Email','email',false),
-                _br_f('status','Status','select',false,['held','awaiting_payment','confirmed','cancelled','expired']),
-                _br_f('payment_status','Payment','select',false,['unpaid','paid','refund_pending','refunded'])],
+                _br_f('email','Email','email',true),
+                _br_f('status','Status','select',false,['pending','approved','rejected','cancelled']),
+                _br_f('payment_status','Payment','select',false,['unpaid','paid','refund_pending','refunded']),
+                _br_f('payment_id','Payment ID','text',false),_br_f('amount','Fare total','number',false)],
                 'sensitive'=>false],
             ['id'=>'payments','name'=>'Payments','singular'=>'Payment','icon'=>'🧾','fields'=>[
-                _br_f('booking_ref','Booking Ref','text',true),_br_f('method','Method','select',true,['counter','online']),
-                _br_f('amount','Amount','number',true),_br_f('status','Status','select',false,['pending','completed','refunded'])]],
+                _br_f('payment_id','Payment ID','text',true),_br_f('booking_ref','Booking Ref','text',true),
+                _br_f('method','Method','select',true,['card','cash']),_br_f('amount','Amount','number',true),
+                _br_f('status','Status','select',false,['pending','completed','refunded']),
+                _br_f('received_at','Received at','text',false)]],
         ],
         'relationships' => ['trips.route→routes.id','bookings.trip_id→trips.id','payments.booking_ref→bookings.ref'],
         'workflows' => [
-            ['key'=>'booking','name'=>'Seat booking lifecycle','steps'=>['search trip','hold seats (15 min)','passenger details','confirm','QR ticket ref','pay (counter|online)','cancel per policy → release capacity']],
+            ['key'=>'booking','name'=>'Seat booking lifecycle','steps'=>['search trip','hold seats (15 min)','passenger details','pending review','admin approves or rejects + email notification','QR ticket ref','admin records cash/card payment','cancel per policy → release capacity']],
             ['key'=>'refund','name'=>'Cancellation & refund','steps'=>['cancel request','validate policy','cancelled','paid→refund_pending','admin refund → refunded']],
         ],
         'admin_modules' => [
@@ -57,7 +60,7 @@ function business_registry_categories(): array {
         'frontend_mappings' => [
             ['frontend'=>'booking form','api'=>'POST business-ops?action=create entity=bookings','entity'=>'bookings','admin_page'=>'Bookings & Tickets'],
             ['frontend'=>'seat map','api'=>'POST business-ops?action=hold','entity'=>'bookings','admin_page'=>'Bookings & Tickets'],
-            ['frontend'=>'pay button','api'=>'POST business-ops?action=pay','entity'=>'payments','admin_page'=>'Payments'],
+            ['frontend'=>'admin payment recorder','api'=>'POST business-ops?action=pay (admin only, after approval)','entity'=>'payments','admin_page'=>'Payments'],
         ],
         'roles' => ['visitor','customer','staff','admin'],
         'business_rules' => ['holds expire after 15 min','no double-book same seat+trip','cancelled/expired terminal','paid cancel → refund_pending','duplicate pay rejected','idempotent retries by idempotency_key'],

@@ -4,6 +4,9 @@
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../config/platform-admin.php';
+require_once __DIR__ . '/../config/storage.php';
+require_once __DIR__ . '/../includes/StorageService.php';
+require_once __DIR__ . '/../includes/Csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/helpers.php';
 
@@ -24,6 +27,58 @@ $status        = subscription_status($order);
 $notifications = load_notifications($order_id);
 $due_date      = next_due_date($order);
 $days_od       = days_overdue($order);
+
+// ── STORAGE ADMINISTRATION (server-side, RBAC + CSRF enforced) ──
+$stgEmail = strtolower(trim((string)($order['admin_email'] ?? '')));
+if ($stgEmail === '' || !filter_var($stgEmail, FILTER_VALIDATE_EMAIL)) {
+    $stgEmail = strtolower(trim((string)($order['client_email'] ?? '')));
+}
+if ($stgEmail) {
+    $storageRefresh = StorageService::recalculateUsage($stgEmail);
+    if (empty($storageRefresh['success'])) {
+        error_log('platform customer storage recalculation failed: ' . ($storageRefresh['error'] ?? 'unknown error'));
+    }
+}
+$stgSummary = $stgEmail && !empty($storageRefresh['success']) ? StorageService::getSummary($stgEmail) : null;
+$stgFiles = $stgEmail ? StorageService::listFiles($stgEmail, 50, 0) : [];
+$stgTxns = $stgEmail ? StorageService::listTransactions($stgEmail, 50) : [];
+$stgInvoices = $stgEmail ? StorageService::invoices($stgEmail) : ['subscription' => [], 'storage' => []];
+$stgPlans = StorageService::getAllPlans(false);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['storage_admin'])) {
+    if (!csrf_validate($_POST['csrf_token'] ?? null)) {
+        $msg_error = 'Invalid CSRF token. Please reload and try again.';
+    } elseif (!has_permission('billing_manage') && !has_permission('*')) {
+        http_response_code(403);
+        $msg_error = 'Forbidden: billing_manage permission required.';
+    } elseif (!$stgEmail) {
+        $msg_error = 'No customer email on this order.';
+    } else {
+        $adminUser = current_admin_user();
+        $note = trim(strip_tags((string)($_POST['stg_note'] ?? '')));
+        $ops = ['require_note' => true];
+        $sub = (string)($_POST['storage_admin'] ?? '');
+        if ($sub === 'plan' && isset($_POST['stg_plan'])) $ops['plan_slug'] = (string)$_POST['stg_plan'];
+        elseif ($sub === 'override') $ops['manual_limit_mb'] = ($_POST['stg_override'] ?? '') === '' ? null : (int)$_POST['stg_override'];
+        elseif ($sub === 'grant') { $ops['grant_gb'] = max(1, (int)($_POST['stg_grant_gb'] ?? 1)); }
+        elseif ($sub === 'reconcile') { $ops['reconcile'] = true; if ($note === '') $note = 'Counter reconciled from disk inventory.'; }
+        elseif ($sub === 'suspend') $ops['suspend'] = true;
+        elseif ($sub === 'reactivate') $ops['suspend'] = false;
+        elseif ($sub === 'autobill') $ops['auto_bill_enabled'] = !empty($_POST['stg_autobill']);
+        else $msg_error = 'Unknown storage operation.';
+        if ($msg_error === '') {
+            $res = StorageService::adminAdjust($stgEmail, $ops, $adminUser, $note);
+            if (!empty($res['success'])) {
+                $msg_success = 'Storage updated: ' . implode('; ', $res['applied'] ?? []) . '. Audit record written.';
+                $stgSummary = StorageService::getSummary($stgEmail);
+                $stgFiles = StorageService::listFiles($stgEmail, 50, 0);
+                $stgTxns = StorageService::listTransactions($stgEmail, 50);
+            } else {
+                $msg_error = $res['error'] ?? 'Storage update failed.';
+            }
+        }
+    }
+}
 
 // ── Handle POST (send notification) ───────────
 $msg_success = '';
@@ -221,6 +276,111 @@ render_sidebar('customers');
       </div>
 
     </div>
+  </div>
+
+  <!-- Storage & Quota Administration -->
+  <div class="card" id="storage" style="margin-bottom:20px;">
+    <h3 style="font-size:.95rem;font-weight:700;color:#fff;margin-bottom:4px;">💾 Storage &amp; Quota — <?= htmlspecialchars($stgEmail ?: 'no email on order') ?></h3>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:16px;">Every change below writes an <code>ADMIN_ADJUST</code> storage transaction plus an admin audit-log entry. Usage resets reconcile from the disk inventory — they never falsify disk consumption.</p>
+    <?php if (!$stgSummary): ?>
+      <div style="color:#f59e0b;font-size:.85rem;">Storage data unavailable (customer row or database unreachable).</div>
+    <?php else:
+      $sp = min(100, max(0, (float)$stgSummary['percent']));
+      $scol = $sp < 70 ? '#10b981' : ($sp <= 90 ? '#f59e0b' : '#ef4444');
+    ?>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div style="background:#0d1117;border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+          <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;font-weight:700;">Usage</div>
+          <div style="font-size:1.15rem;font-weight:800;color:#fff;margin:.3rem 0;"><?= htmlspecialchars((string)$stgSummary['used_mb']) ?> / <?= htmlspecialchars((string)$stgSummary['limit_mb']) ?> MB</div>
+          <div style="height:10px;background:#1e293b;border-radius:999px;overflow:hidden;"><div style="height:100%;width:<?= $sp ?>%;background:<?= $scol ?>;"></div></div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.4rem;">
+            Plan <?= htmlspecialchars($stgSummary['plan']['name'] ?? '') ?> (base <?= (int)$stgSummary['plan_base_limit_mb'] ?> MB)
+            + extra <?= (int)$stgSummary['extra_allowance_mb'] ?> MB (<?= (int)$stgSummary['extra_gb_purchased'] ?> GB purchased)
+            <?= $stgSummary['manual_storage_limit_mb'] !== null ? ' · <strong style="color:#f59e0b;">override ' . (int)$stgSummary['manual_storage_limit_mb'] . ' MB</strong>' : '' ?>
+            <br>Bandwidth <?= htmlspecialchars((string)$stgSummary['bandwidth_used_mb']) ?> / <?= (int)$stgSummary['bandwidth_limit_mb'] ?> MB
+            · Period <?= htmlspecialchars((string)($stgSummary['billing_period_start'] ?? '—')) ?> → <?= htmlspecialchars((string)($stgSummary['billing_period_end'] ?? '—')) ?>
+            · Status <strong style="color:<?= !empty($stgSummary['suspended']) ? '#ef4444' : '#10b981' ?>;"><?= htmlspecialchars($stgSummary['status']) ?></strong>
+            · Auto-bill <?= !empty($stgSummary['auto_bill_enabled']) ? 'opted-in' : 'off' ?><?= empty($stgSummary['auto_bill_supported']) ? ' (gateway auto-charge unsupported)' : '' ?>
+          </div>
+        </div>
+        <div style="background:#0d1117;border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+          <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:8px;">Adjust (note required)</div>
+          <?php if (has_permission('billing_manage') || has_permission('*')): ?>
+          <form method="POST" style="display:grid;gap:8px;">
+            <?= csrf_field() ?>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <select name="stg_plan" style="flex:1;min-width:140px;">
+                <?php foreach ($stgPlans as $pl): ?>
+                <option value="<?= htmlspecialchars($pl['slug']) ?>" <?= (($stgSummary['plan']['slug'] ?? '') === $pl['slug']) ? 'selected' : '' ?>><?= htmlspecialchars($pl['name']) ?> (<?= (int)$pl['storage_limit_mb'] ?> MB)</option>
+                <?php endforeach; ?>
+              </select>
+              <button type="submit" name="storage_admin" value="plan" class="btn btn-ghost btn-sm">Change plan</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <input type="number" min="0" name="stg_override" placeholder="Manual limit MB (blank = clear)" value="<?= $stgSummary['manual_storage_limit_mb'] !== null ? (int)$stgSummary['manual_storage_limit_mb'] : '' ?>" style="flex:1;min-width:140px;">
+              <button type="submit" name="storage_admin" value="override" class="btn btn-ghost btn-sm">Set override</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <input type="number" min="1" max="100" name="stg_grant_gb" value="1" style="flex:1;min-width:140px;">
+              <button type="submit" name="storage_admin" value="grant" class="btn btn-ghost btn-sm" onclick="return confirm('Grant free GB? A mandatory note is required below.')">Grant free GB</button>
+            </div>
+            <input type="text" name="stg_note" placeholder="Explanatory note (required, recorded in ledger)" maxlength="500">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="submit" name="storage_admin" value="reconcile" class="btn btn-ghost btn-sm">↻ Reconcile counter</button>
+              <?php if (!empty($stgSummary['suspended'])): ?>
+              <button type="submit" name="storage_admin" value="reactivate" class="btn btn-success btn-sm">Reactivate account</button>
+              <?php else: ?>
+              <button type="submit" name="storage_admin" value="suspend" class="btn btn-danger btn-sm" onclick="return confirm('Suspend this customer account? Uploads and purchases will be blocked.')">Suspend account</button>
+              <?php endif; ?>
+              <label style="display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);text-transform:none;"><input type="checkbox" name="stg_autobill" value="1" <?= !empty($stgSummary['auto_bill_enabled']) ? 'checked' : '' ?> style="width:15px;height:15px;"> auto-bill eligible</label>
+              <button type="submit" name="storage_admin" value="autobill" class="btn btn-ghost btn-sm">Save auto-bill</button>
+            </div>
+          </form>
+          <?php else: ?>
+          <div style="font-size:.8rem;color:#f59e0b;">🔒 billing_manage permission required.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <h4 style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">TRACKED FILES (<?= count($stgFiles) ?>)</h4>
+          <?php if (empty($stgFiles)): ?><div style="font-size:.8rem;color:var(--muted);">No tracked files.</div>
+          <?php else: ?><div style="display:grid;gap:6px;max-height:260px;overflow-y:auto;">
+            <?php foreach ($stgFiles as $f): ?>
+            <div style="font-size:.78rem;background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:flex;justify-content:space-between;gap:6px;">
+              <span style="color:#e2e8f0;"><?= htmlspecialchars($f['file_name'] ?? '') ?></span>
+              <span style="color:var(--muted);white-space:nowrap;"><?= number_format(((int)($f['file_size_bytes'] ?? 0)) / 1048576, 2) ?> MB · <?= htmlspecialchars(substr((string)($f['uploaded_at'] ?? ''), 0, 10)) ?></span>
+            </div>
+            <?php endforeach; ?>
+          </div><?php endif; ?>
+          <h4 style="font-size:.8rem;color:var(--muted);margin:12px 0 8px;">SUBSCRIPTION PAYMENTS (existing ledger)</h4>
+          <?php if (empty($stgInvoices['subscription'])): ?><div style="font-size:.8rem;color:var(--muted);">None.</div>
+          <?php else: foreach (array_slice($stgInvoices['subscription'], 0, 8) as $inv): ?>
+            <div style="font-size:.78rem;color:#cbd5e1;"><?= htmlspecialchars($inv['order_id'] ?? '') ?> — $<?= number_format((float)($inv['amount'] ?? 0), 2) ?> <?= htmlspecialchars($inv['currency'] ?? 'USD') ?> (<?= htmlspecialchars($inv['payment_status'] ?? $inv['status'] ?? '') ?>)</div>
+          <?php endforeach; endif; ?>
+          <h4 style="font-size:.8rem;color:var(--muted);margin:12px 0 8px;">STORAGE PURCHASES</h4>
+          <?php $sp2 = array_values(array_filter($stgInvoices['storage'])); ?>
+          <?php if (empty($sp2)): ?><div style="font-size:.8rem;color:var(--muted);">None.</div>
+          <?php else: foreach (array_slice($sp2, 0, 8) as $inv): ?>
+            <div style="font-size:.78rem;color:#cbd5e1;"><?= htmlspecialchars($inv['payment_reference'] ?? ('#' . $inv['id'])) ?> — <?= htmlspecialchars(($inv['amount_charged'] ?? '') . ' ' . ($inv['currency'] ?? '')) ?> <span style="color:var(--muted);"><?= htmlspecialchars($inv['created_at'] ?? '') ?></span></div>
+          <?php endforeach; endif; ?>
+        </div>
+        <div>
+          <h4 style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">STORAGE TRANSACTIONS (<?= count($stgTxns) ?>)</h4>
+          <?php if (empty($stgTxns)): ?><div style="font-size:.8rem;color:var(--muted);">No transactions.</div>
+          <?php else: ?><div style="display:grid;gap:6px;max-height:420px;overflow-y:auto;">
+            <?php foreach ($stgTxns as $t): ?>
+            <div style="font-size:.75rem;background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:7px 10px;">
+              <strong style="color:#818cf8;"><?= htmlspecialchars($t['action'] ?? '') ?></strong>
+              <span style="color:#cbd5e1;"><?= htmlspecialchars($t['note'] ?? '') ?></span>
+              <?php if ($t['amount_charged'] !== null): ?><span style="color:#10b981;"><?= htmlspecialchars($t['amount_charged'] . ' ' . ($t['currency'] ?? '')) ?></span><?php endif; ?>
+              <div style="color:#475569;"><?= htmlspecialchars($t['created_at'] ?? '') ?><?= !empty($t['payment_reference']) ? ' · ' . htmlspecialchars($t['payment_reference']) : '' ?></div>
+            </div>
+            <?php endforeach; ?>
+          </div><?php endif; ?>
+        </div>
+      </div>
+    <?php endif; ?>
   </div>
 
   <!-- Send Notification -->

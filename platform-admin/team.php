@@ -34,7 +34,6 @@ if ($action === 'create_admin' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'email'      => $email,
         'role'       => $role,
         'password'   => password_hash($password, PASSWORD_DEFAULT),
-        'raw_pass'   => $password,
         'active'     => true,
         'created_at' => date('Y-m-d H:i:s'),
     ];

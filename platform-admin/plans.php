@@ -11,10 +11,145 @@
  */
 
 require_once '../config.php';
+require_once '../config/storage.php';
+require_once '../includes/StorageService.php';
+require_once '../includes/Csrf.php';
 require_once 'auth.php';
 require_once 'helpers.php';
 
 $plansFile = dirname(__DIR__) . '/storage/plans.json';
+
+/** Keep storage/plans.json quota fields in sync with the DB source of truth. */
+function sync_plan_quotas_to_json(array $dbPlans, string $plansFile): void {
+    if (!file_exists($plansFile)) return;
+    $j = json_decode(@file_get_contents($plansFile), true);
+    if (!is_array($j)) return;
+    $bySlug = [];
+    foreach ($dbPlans as $p) $bySlug[strtolower($p['slug'])] = $p;
+    $changed = false;
+    foreach ($j as $slug => $entry) {
+        $k = strtolower((string)$slug);
+        if (!isset($bySlug[$k]) || !is_array($entry)) continue;
+        $p = $bySlug[$k];
+        foreach (['storage_limit_mb', 'bandwidth_limit_mb', 'max_sites', 'price_per_extra_gb', 'currency', 'is_active'] as $f) {
+            $nv = $f === 'is_active' ? (bool)$p[$f] : $p[$f];
+            if (($entry[$f] ?? null) !== $nv) { $j[$slug][$f] = $nv; $changed = true; }
+        }
+    }
+    if ($changed) @file_put_contents($plansFile, json_encode($j, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+
+/** Ensure every JSON plan slug has a DB row (name sync only; quotas untouched). */
+function ensure_db_plans_for_json(array $jsonPlans): void {
+    $db = StorageService::db();
+    if (!$db) return;
+    $driver = StorageService::driver($db);
+    foreach ($jsonPlans as $slug => $p) {
+        $slug = strtolower(preg_replace('/[^a-z0-9_-]/i', '', (string)$slug));
+        if ($slug === '' || !is_array($p)) continue;
+        try {
+            if ($driver === 'pgsql') {
+                $db->prepare("INSERT INTO plans (slug, name) VALUES (:s, :n) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name")
+                   ->execute([':s' => $slug, ':n' => substr(trim(strip_tags($p['label'] ?? $slug)), 0, 128) ?: $slug]);
+            } else {
+                $db->prepare("INSERT IGNORE INTO plans (slug, name) VALUES (:s, :n)")
+                   ->execute([':s' => $slug, ':n' => substr(trim(strip_tags($p['label'] ?? $slug)), 0, 128) ?: $slug]);
+                $db->prepare("UPDATE plans SET name = :n WHERE slug = :s")
+                   ->execute([':n' => substr(trim(strip_tags($p['label'] ?? $slug)), 0, 128) ?: $slug, ':s' => $slug]);
+            }
+        } catch (Throwable $e) {}
+    }
+}
+
+$quotaMsg = '';
+$quotaErr = '';
+
+// Handle POST: Save storage quotas (DB source of truth + JSON sync)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_storage_quotas') {
+    if (!csrf_validate($_POST['csrf_token'] ?? null)) {
+        $quotaErr = 'Invalid CSRF token. Please reload and try again.';
+    } elseif (!has_permission('plans_edit') && !has_permission('*')) {
+        $quotaErr = 'Unauthorized: plans_edit permission required.';
+    } else {
+        $db = StorageService::db();
+        if (!$db) { $quotaErr = 'Database unavailable.'; }
+        else {
+            $okCount = 0;
+            foreach (StorageService::getAllPlans(false) as $p) {
+                $id = (int)$p['id'];
+                $sMb = max(0, (int)($_POST['q_storage_' . $id] ?? $p['storage_limit_mb']));
+                $bMb = max(0, (int)($_POST['q_bandwidth_' . $id] ?? $p['bandwidth_limit_mb']));
+                $sites = max(0, (int)($_POST['q_sites_' . $id] ?? $p['max_sites']));
+                $rate = max(0, round((float)($_POST['q_rate_' . $id] ?? $p['price_per_extra_gb']), 2));
+                $cur = strtoupper(preg_replace('/[^A-Za-z]/', '', (string)($_POST['q_currency_' . $id] ?? $p['currency']))) ?: 'USD';
+                $active = !empty($_POST['q_active_' . $id]) ? 1 : 0;
+                try {
+                    $db->prepare("UPDATE plans SET storage_limit_mb=:s, bandwidth_limit_mb=:b, max_sites=:m, price_per_extra_gb=:r, currency=:c, is_active=:a, updated_at=NOW() WHERE id=:id")
+                       ->execute([':s' => $sMb, ':b' => $bMb, ':m' => $sites, ':r' => $rate, ':c' => $cur, ':a' => $active, ':id' => $id]);
+                    $okCount++;
+                } catch (Throwable $e) { $quotaErr = 'Some rows failed to save.'; }
+            }
+            // Push quotas into plans.json so checkout/portal readers never
+            // silently disagree with the database.
+            sync_plan_quotas_to_json(StorageService::getAllPlans(false), $plansFile);
+            log_admin_action('update_storage_quotas', 'pricing', "Updated storage quotas for $okCount plans");
+            if ($quotaErr === '') $quotaMsg = "Storage quotas saved ($okCount plans) and synced to plans.json.";
+        }
+    }
+}
+
+// Handle POST: create / disable-toggle / safe-delete a plan
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['storage_plan_create', 'storage_plan_toggle', 'storage_plan_delete'], true)) {
+    if (!csrf_validate($_POST['csrf_token'] ?? null)) {
+        $quotaErr = 'Invalid CSRF token.';
+    } elseif (!has_permission('plans_edit') && !has_permission('*')) {
+        $quotaErr = 'Unauthorized: plans_edit permission required.';
+    } else {
+        $db = StorageService::db();
+        $a = $_POST['action'];
+        try {
+            if ($a === 'storage_plan_create') {
+                $slug = strtolower(preg_replace('/[^a-z0-9_-]/i', '', (string)($_POST['np_slug'] ?? '')));
+                $name = substr(trim(strip_tags((string)($_POST['np_name'] ?? ''))), 0, 128);
+                if ($slug === '' || $name === '') { $quotaErr = 'Slug and name are required.'; }
+                else {
+                    $db->prepare("INSERT INTO plans (slug, name, storage_limit_mb, bandwidth_limit_mb, max_sites, price_per_extra_gb, currency, is_active) VALUES (:s,:n,:st,:b,:m,:r,:c,1)")
+                       ->execute([':s' => $slug, ':n' => $name, ':st' => max(0, (int)($_POST['np_storage'] ?? 250)), ':b' => max(0, (int)($_POST['np_bandwidth'] ?? 5120)), ':m' => max(0, (int)($_POST['np_sites'] ?? 1)), ':r' => max(0, round((float)($_POST['np_rate'] ?? 2), 2)), ':c' => 'USD']);
+                    log_admin_action('plan_created', 'pricing', "Created storage plan $slug");
+                    $quotaMsg = "Plan '$slug' created.";
+                }
+            } elseif ($a === 'storage_plan_toggle') {
+                $id = (int)($_POST['plan_id'] ?? 0);
+                $db->prepare("UPDATE plans SET is_active = 1 - is_active, updated_at = NOW() WHERE id = :id")->execute([':id' => $id]);
+                sync_plan_quotas_to_json(StorageService::getAllPlans(false), $plansFile);
+                log_admin_action('plan_toggled', 'pricing', "Toggled plan id $id active flag");
+                $quotaMsg = 'Plan status updated.';
+            } else {
+                // Safe delete: refuse when referenced by customers or legacy orders.
+                $id = (int)($_POST['plan_id'] ?? 0);
+                $p = StorageService::getPlan($id);
+                if (!$p) { $quotaErr = 'Plan not found.'; }
+                else {
+                    $refs = 0;
+                    try {
+                        $refs += (int)$db->query("SELECT COUNT(*) FROM customers WHERE plan_id = " . (int)$id)->fetchColumn();
+                        $st = $db->prepare("SELECT COUNT(*) FROM orders WHERE LOWER(package) = :s");
+                        $st->execute([':s' => strtolower($p['slug'])]);
+                        $refs += (int)$st->fetchColumn();
+                        $st = $db->prepare("SELECT COUNT(*) FROM customer_usage cu JOIN customers c ON c.email = cu.email WHERE c.plan_id = :id");
+                        $st->execute([':id' => $id]);
+                    } catch (Throwable $e) {}
+                    if ($refs > 0) { $quotaErr = "Cannot delete '{$p['slug']}': referenced $refs time(s). Disable it instead."; }
+                    else {
+                        $db->prepare("DELETE FROM plans WHERE id = :id")->execute([':id' => $id]);
+                        log_admin_action('plan_deleted', 'pricing', "Deleted unreferenced plan {$p['slug']}");
+                        $quotaMsg = "Plan '{$p['slug']}' deleted.";
+                    }
+                }
+            }
+        } catch (Throwable $e) { $quotaErr = 'Operation failed (slug may already exist).'; }
+    }
+}
 
 // Handle POST: Save Plans
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_plans') {
@@ -58,6 +193,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
     if ($ok) {
         log_admin_action('update_plans', 'pricing', 'Updated subscription pricing plans');
+        // Keep DB plan rows in step with JSON slugs (name sync only —
+        // quotas and per-GB rates stay authoritative in the database).
+        try { ensure_db_plans_for_json($clean); } catch (Throwable $e) {}
         echo json_encode(['success' => true, 'saved_at' => date('Y-m-d H:i:s')]);
     } else {
         echo json_encode(['success' => false, 'error' => 'Failed to write plans.json']);
@@ -107,6 +245,10 @@ $defaultPlans = [
 
 $plans = file_exists($plansFile) ? (json_decode(file_get_contents($plansFile), true) ?: $defaultPlans) : $defaultPlans;
 $lastSaved = file_exists($plansFile) ? date('M j, Y — g:i A', filemtime($plansFile)) : 'Never';
+// DB-backed quota/rate rows (source of truth for storage enforcement).
+try { ensure_db_plans_for_json($plans); } catch (Throwable $e) {}
+$dbPlans = StorageService::getAllPlans(false);
+$canEditPlans = has_permission('plans_edit') || has_permission('*');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -290,6 +432,71 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#0a0d14;col
       </button>
     </div>
     <?php endforeach; ?>
+  </div>
+
+  <!-- Storage Quotas & Per-GB Rates (DB source of truth) -->
+  <div class="preview-section" style="margin-top:0;margin-bottom:2.5rem;">
+    <div class="preview-title">
+      <div>
+        <h2 style="font-size:1.1rem;font-weight:800;color:#fff">💾 Storage Quotas &amp; Per-GB Rates</h2>
+        <p style="font-size:.8rem;color:#64748b;margin-top:.2rem">Enforced on every customer upload. Rates are charged in <?= htmlspecialchars(defined('PAYPAL_CURRENCY') ? PAYPAL_CURRENCY : 'USD') ?> via PayPal. Saving here also syncs quota fields into <code>storage/plans.json</code> so readers never silently disagree.</p>
+      </div>
+    </div>
+    <?php if (!empty($quotaMsg)): ?><div class="toast show" style="position:static;transform:none;opacity:1;margin-bottom:1rem;" id="q-toast-ok"><?= htmlspecialchars($quotaMsg) ?></div><?php endif; ?>
+    <?php if (!empty($quotaErr)): ?><div class="toast show error" style="position:static;transform:none;opacity:1;margin-bottom:1rem;"><?= htmlspecialchars($quotaErr) ?></div><?php endif; ?>
+    <?php if (empty($dbPlans)): ?>
+      <p style="color:#f59e0b;font-size:.85rem;">Database unavailable — quota editing is disabled until the database is reachable. (Checkout pricing above still works from plans.json.)</p>
+    <?php else: ?>
+    <form method="POST" action="plans.php">
+      <input type="hidden" name="action" value="save_storage_quotas">
+      <?= csrf_field() ?>
+      <div style="overflow-x:auto;">
+      <table style="min-width:760px;">
+        <thead><tr><th>Plan (slug)</th><th>Storage MB</th><th>Bandwidth MB</th><th>Max sites</th><th>Extra GB rate (USD)</th><th>Currency</th><th>Active</th><th style="text-align:right;">Danger</th></tr></thead>
+        <tbody>
+        <?php foreach ($dbPlans as $p): $pid = (int)$p['id']; ?>
+          <tr>
+            <td><strong style="color:#fff;"><?= htmlspecialchars($p['name']) ?></strong><br><span style="font-size:.72rem;color:#64748b;font-family:monospace;"><?= htmlspecialchars($p['slug']) ?></span></td>
+            <td><input type="number" min="0" name="q_storage_<?= $pid ?>" value="<?= (int)$p['storage_limit_mb'] ?>" <?= $canEditPlans ? '' : 'readonly' ?> style="max-width:110px;"></td>
+            <td><input type="number" min="0" name="q_bandwidth_<?= $pid ?>" value="<?= (int)$p['bandwidth_limit_mb'] ?>" <?= $canEditPlans ? '' : 'readonly' ?> style="max-width:110px;"></td>
+            <td><input type="number" min="0" name="q_sites_<?= $pid ?>" value="<?= (int)$p['max_sites'] ?>" <?= $canEditPlans ? '' : 'readonly' ?> style="max-width:90px;"></td>
+            <td><input type="number" step="0.01" min="0" name="q_rate_<?= $pid ?>" value="<?= number_format((float)$p['price_per_extra_gb'], 2, '.', '') ?>" <?= $canEditPlans ? '' : 'readonly' ?> style="max-width:100px;"></td>
+            <td><input type="text" name="q_currency_<?= $pid ?>" value="<?= htmlspecialchars($p['currency']) ?>" <?= $canEditPlans ? '' : 'readonly' ?> style="max-width:70px;"></td>
+            <td><input type="checkbox" name="q_active_<?= $pid ?>" value="1" <?= !empty($p['is_active']) ? 'checked' : '' ?> <?= $canEditPlans ? '' : 'disabled' ?> style="width:18px;height:18px;accent-color:#10b981;"></td>
+            <td style="text-align:right;white-space:nowrap;">
+              <?php if ($canEditPlans): ?>
+              <button type="submit" form="q-toggle-<?= $pid ?>" class="btn btn-ghost btn-sm" title="Toggle active"><?= !empty($p['is_active']) ? 'Disable' : 'Enable' ?></button>
+              <button type="submit" form="q-del-<?= $pid ?>" class="btn btn-danger btn-sm" title="Delete if unreferenced" onclick="return confirm('Delete plan <?= htmlspecialchars($p['slug']) ?>? Only unreferenced plans can be deleted.')">Delete</button>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+      </div>
+      <?php if ($canEditPlans): ?>
+      <div style="text-align:right;margin-top:1rem;"><button type="submit" class="btn btn-primary">💾 Save Quotas &amp; Rates</button></div>
+      <?php else: ?>
+      <p style="font-size:.78rem;color:#f59e0b;margin-top:.75rem;">🔒 Read-only (Super/Billing Admin can modify).</p>
+      <?php endif; ?>
+    </form>
+    <?php foreach ($dbPlans as $p): $pid = (int)$p['id']; ?>
+      <form method="POST" action="plans.php" id="q-toggle-<?= $pid ?>" style="display:none;"><input type="hidden" name="action" value="storage_plan_toggle"><input type="hidden" name="plan_id" value="<?= $pid ?>"><?= csrf_field() ?></form>
+      <form method="POST" action="plans.php" id="q-del-<?= $pid ?>" style="display:none;"><input type="hidden" name="action" value="storage_plan_delete"><input type="hidden" name="plan_id" value="<?= $pid ?>"><?= csrf_field() ?></form>
+    <?php endforeach; ?>
+    <?php if ($canEditPlans): ?>
+    <form method="POST" action="plans.php" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.25rem;align-items:flex-end;">
+      <input type="hidden" name="action" value="storage_plan_create"><?= csrf_field() ?>
+      <div><label class="lbl">Slug</label><input type="text" name="np_slug" class="inp" placeholder="starter" style="max-width:140px;"></div>
+      <div><label class="lbl">Name</label><input type="text" name="np_name" class="inp" placeholder="Starter" style="max-width:160px;"></div>
+      <div><label class="lbl">Storage MB</label><input type="number" min="0" name="np_storage" value="250" class="inp" style="max-width:110px;"></div>
+      <div><label class="lbl">Bandwidth MB</label><input type="number" min="0" name="np_bandwidth" value="5120" class="inp" style="max-width:110px;"></div>
+      <div><label class="lbl">Sites</label><input type="number" min="0" name="np_sites" value="1" class="inp" style="max-width:80px;"></div>
+      <div><label class="lbl">Rate/GB</label><input type="number" step="0.01" min="0" name="np_rate" value="2.00" class="inp" style="max-width:90px;"></div>
+      <div><button type="submit" class="btn btn-ghost">＋ Create Plan</button></div>
+    </form>
+    <?php endif; ?>
+    <?php endif; ?>
   </div>
 
   <!-- Live Customer Preview -->

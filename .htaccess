@@ -10,6 +10,20 @@
     RewriteRule ^config/.*$ - [F,L]
     RewriteRule ^database/.*$ - [F,L]
 
+    # Customer storage quota & per-GB billing REST API (api/storage.php is
+    # also callable directly with ?resource=&email=&id= as fallback where
+    # rewrites are unavailable — see STORAGE_SYSTEM.md for the URL mapping).
+    RewriteRule ^api/customer/([^/]+)/storage/?$ api/storage.php?resource=storage&email=$1 [QSA,L]
+    RewriteRule ^api/customer/([^/]+)/files/?$ api/storage.php?resource=files&email=$1 [QSA,L]
+    RewriteRule ^api/customer/([^/]+)/files/([0-9]+)/?$ api/storage.php?resource=file&email=$1&id=$2 [QSA,L]
+    RewriteRule ^api/customer/([^/]+)/buy-storage/?$ api/storage.php?resource=buy-storage&email=$1 [QSA,L]
+    RewriteRule ^api/customer/([^/]+)/invoices/?$ api/storage.php?resource=invoices&email=$1 [QSA,L]
+    RewriteRule ^api/customer/([^/]+)/transactions/?$ api/storage.php?resource=transactions&email=$1 [QSA,L]
+    RewriteRule ^api/admin/plans/?$ api/storage.php?resource=admin-plans [QSA,L]
+    RewriteRule ^api/admin/plans/([0-9]+)/?$ api/storage.php?resource=admin-plan&id=$1 [QSA,L]
+    RewriteRule ^api/admin/customers/?$ api/storage.php?resource=admin-customers [QSA,L]
+    RewriteRule ^api/admin/customers/([^/]+)/(adjust|override)/?$ api/storage.php?resource=admin-customer-action&email=$1&op=$2 [QSA,L]
+
     # Wildcard Domain Routing:
     # If the request is for a subdomain (e.g. client1.yourdomain.com),
     # forward it through wildcard-router.php

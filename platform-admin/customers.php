@@ -106,6 +106,7 @@ render_sidebar('customers');
             <td style="color:var(--muted);font-size:.82rem;"><?= !empty($c['last_login_at']) ? htmlspecialchars(date('M d, Y H:i', strtotime($c['last_login_at']))) : '—' ?></td>
             <td>
               <div style="display:flex;gap:6px;justify-content:flex-end;">
+                <button onclick="stgQuickView('<?= htmlspecialchars($c['email'] ?? '', ENT_QUOTES) ?>', this)" class="btn btn-ghost btn-sm" title="Storage quota overview">💾 Storage</button>
                 <a href="send-email.php?to=<?= urlencode($c['email'] ?? '') ?>" class="btn btn-ghost btn-sm" title="Send email to this user">
                   <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   Email
@@ -217,11 +218,12 @@ render_sidebar('customers');
             </td>
             <td><?= status_badge($status) ?></td>
             <td>
-              <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+              <div style="display:flex;gap:6px;justify-content:flex-end;">
                 <a href="customer-view.php?order_id=<?= $oid ?>" class="btn btn-ghost btn-sm" title="View Details">
                   <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   View
                 </a>
+                <button onclick="stgQuickView('<?= htmlspecialchars($o['admin_email'] ?? ($o['client_email'] ?? ''), ENT_QUOTES) ?>', this)" class="btn btn-ghost btn-sm" title="Storage quota overview">💾 Storage</button>
 
                 <?php if ($status === 'overdue' || $status === 'active'): ?>
                 <button onclick="sendReminder('<?= htmlspecialchars($o['order_id'] ?? '') ?>', this)" class="btn btn-warning btn-sm" title="Send Payment Reminder">
@@ -266,6 +268,22 @@ render_sidebar('customers');
 </body>
 
 <script>
+function stgQuickView(email, btn) {
+  if (!email) { showToast('No customer email on this order.', 'error'); return; }
+  btn.disabled = true;
+  const doneLoad = (window.paAjaxLoad ? paAjaxLoad('Loading storage…', 'Reading quota counters', 'db') : () => {});
+  fetch('api.php?action=storage_summary&email=' + encodeURIComponent(email))
+    .then(r => r.json())
+    .then(d => {
+      doneLoad();
+      btn.disabled = false;
+      if (!d.success) { showToast(d.message || 'Storage lookup failed.', 'error'); return; }
+      const s = d.summary;
+      showToast(s.email + ': ' + s.used_mb + '/' + s.limit_mb + ' MB used (' + s.percent + '%), plan ' + (s.plan.name || '') + ', extra ' + s.extra_gb_purchased + ' GB', 'success');
+    })
+    .catch(() => { doneLoad(); btn.disabled = false; showToast('Network error.', 'error'); });
+}
+
 function showToast(msg, type) {
   const t  = document.getElementById('toast');
   const tm = document.getElementById('toastMsg');

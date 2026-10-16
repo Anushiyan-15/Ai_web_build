@@ -320,12 +320,53 @@ render_sidebar('billing');
     </div>
   </div>
 
+  <!-- Storage Purchases Ledger (per-GB billing, separate from subscriptions) -->
+  <?php
+  $stgPurchases = [];
+  $stgRevenue = 0.0;
+  try {
+      require_once dirname(__DIR__) . '/includes/StorageService.php';
+      $sdb = StorageService::db();
+      if ($sdb) {
+          $stgPurchases = $sdb->query("SELECT id, email, action, size_bytes, amount_charged, currency, payment_reference, note, created_at FROM storage_transactions WHERE action = 'PURCHASE' ORDER BY id DESC LIMIT 100")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+          foreach ($stgPurchases as $sp) $stgRevenue += (float)($sp['amount_charged'] ?? 0);
+      }
+  } catch (Throwable $e) {}
+  ?>
+  <div class="card" id="storage-ledger" style="margin-bottom:28px;padding:0;overflow:hidden;">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div>
+        <h2 style="font-size:1.05rem;font-weight:800;color:#fff;">💾 Storage Purchases Ledger</h2>
+        <div style="font-size:0.78rem;color:var(--muted);">Extra-GB purchases only — kept separate from website subscription revenue. Total storage revenue: <strong style="color:#10b981;">$<?= number_format($stgRevenue, 2) ?> USD</strong></div>
+      </div>
+      <span style="font-size:0.78rem;color:#818cf8;font-weight:700;"><?= count($stgPurchases) ?> Records</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Payment Ref</th><th>Customer</th><th>Detail</th><th>Amount</th><th>Date</th></tr></thead>
+        <tbody>
+          <?php if (empty($stgPurchases)): ?>
+            <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);">No extra-storage purchases yet.</td></tr>
+          <?php else: foreach ($stgPurchases as $sp): ?>
+            <tr>
+              <td><span class="code-badge"><?= htmlspecialchars($sp['payment_reference'] ?? ('STX-' . $sp['id'])) ?></span></td>
+              <td style="color:#fff;font-weight:600;"><?= htmlspecialchars($sp['email'] ?? '') ?></td>
+              <td style="font-size:.8rem;color:var(--muted);"><?= htmlspecialchars($sp['note'] ?? '') ?></td>
+              <td style="font-weight:700;color:#10b981;"><?= htmlspecialchars(($sp['amount_charged'] ?? '') . ' ' . ($sp['currency'] ?? '')) ?></td>
+              <td style="font-size:.8rem;color:var(--muted);"><?= htmlspecialchars($sp['created_at'] ?? '') ?></td>
+            </tr>
+          <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Plans Management -->
   <div class="card" id="plans-section" style="margin-bottom:28px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
       <div>
         <h2 style="font-size:1.05rem;font-weight:800;color:#fff;">⚙️ SaaS Subscription Plans &amp; Pricing</h2>
-        <div style="font-size:0.78rem;color:var(--muted);">Configure client subscription tiers, monthly rates, and entitlements.</div>
+        <div style="font-size:0.78rem;color:var(--muted);">Configure client subscription tiers, monthly rates, and entitlements. Storage quotas &amp; per-GB rates are managed in <a href="plans.php" style="color:#818cf8;">Plans &amp; Pricing → Storage Quotas</a>.</div>
       </div>
       <?php if (!has_permission('plans_edit') && !has_permission('*')): ?>
         <span style="font-size:0.75rem;color:#f59e0b;">🔒 Read-only (Super Admin &amp; Billing Admin can modify)</span>

@@ -130,14 +130,17 @@ $PDIR = $ROOT . '/preview/' . $PID;
 $ADMIN = $PDIR . '/admin';
 
 echo "== 2. generated files (php -l) ==\n";
-foreach (['index.html', 'submit.php', 'contact.php', 'api/business-ops.php', 'draft.json',
+foreach (['index.html', 'submit.php', 'contact.php', 'customer.php', 'api/business-ops.php', 'draft.json',
           'admin/login.php', 'admin/index.php', 'admin/inbox.php', 'admin/settings.php',
           'admin/api.php', 'admin/install.php', 'admin/trips.php', 'admin/bookings.php',
           'admin/inquiries.php', 'admin/includes/auth.php', 'admin/includes/db.php',
           'admin/includes/layout.php'] as $f) {
     t_ok("exists: $f", is_file($PDIR . '/' . $f));
 }
-foreach (['submit.php', 'contact.php', 'admin/trips.php', 'admin/bookings.php',
+t_ok('bus preview exposes customer account link',
+    strpos((string)file_get_contents($PDIR . '/index.html'), 'customer.php') !== false
+    && is_file($PDIR . '/customer.php'));
+foreach (['submit.php', 'contact.php', 'customer.php', 'admin/trips.php', 'admin/bookings.php',
           'admin/inbox.php', 'admin/settings.php', 'admin/api.php'] as $f) {
     $out = []; $code = 0;
     exec(PHP_BINARY . ' -l ' . escapeshellarg($PDIR . '/' . $f) . ' 2>&1', $out, $code);

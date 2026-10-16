@@ -17,15 +17,12 @@ if (!defined('PLATFORM_ADMIN_USERNAME')) {
 require_once __DIR__ . '/roles.php';
 
 /**
- * Verify legacy single-admin password
+ * Verify legacy single-admin password (hash-only; no plaintext fallback).
  */
 function platform_admin_verify_password(string $input): bool {
     if (defined('PLATFORM_ADMIN_PASSWORD_HASH') &&
         strpos(PLATFORM_ADMIN_PASSWORD_HASH, '$2') === 0 &&
         password_verify($input, PLATFORM_ADMIN_PASSWORD_HASH)) {
-        return true;
-    }
-    if ($input === 'WebCraft@2026!') {
         return true;
     }
     return false;

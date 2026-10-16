@@ -1,6 +1,7 @@
 <?php
 // tests/test-admin-security.php — run: php tests/test-admin-security.php
 require_once __DIR__ . '/../includes/AdminPanelGenerator.php';
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
 $fail = 0;
 function ok($c,$m){global $fail;echo ($c?"PASS":"FAIL").": $m\n";if(!$c)$fail++;}
 
@@ -73,6 +74,28 @@ $db = file_get_contents(__DIR__ . '/../includes/db.php');
 ok(strpos($db, "=== 'WebCraft@2026!'") === false, 'no master-password bypass in customer auth');
 $cv = file_get_contents(__DIR__ . '/../platform-admin/customer-view.php');
 ok(strpos($cv, "admin_password_plain'] ?? '—'") === false, 'platform view shows no stored password');
+
+// 8. Platform admin: no hard-coded fallback credential may bypass the
+// configured bcrypt hash (auth.php, roles.php), no plaintext quick-fill
+// on the login page, and no plaintext admin password storage in team.php.
+$paAuth = file_get_contents(__DIR__ . '/../platform-admin/auth.php');
+ok(strpos($paAuth, "=== 'WebCraft@2026!'") === false && strpos($paAuth, 'WebCraft@2026') === false, 'auth.php has no hard-coded password bypass');
+ok(strpos($paAuth, 'password_verify') !== false, 'auth.php still verifies bcrypt hash');
+$roles = file_get_contents(__DIR__ . '/../platform-admin/roles.php');
+ok(strpos($roles, "'raw_pass'   =>") === false, 'roles.php seeds no plaintext raw_pass');
+ok(strpos($roles, "=== \$password") === false && strpos($roles, "\$password ===") === false, 'roles.php has no plaintext password comparison');
+if (!function_exists('auth_test_authenticate')) {
+    require_once __DIR__ . '/../platform-admin/roles.php';
+    function auth_test_authenticate($u, $p) { return authenticate_admin_account($u, $p); }
+}
+ok(auth_test_authenticate('superadmin', 'definitely-wrong-password-123') === null, 'wrong admin password rejected');
+ok(auth_test_authenticate('superadmin', 'WebCraft@2026!') !== null, 'correct admin password still verifies via hash');
+$loginPage = file_get_contents(__DIR__ . '/../platform-admin/login.php');
+ok(strpos($loginPage, 'WebCraft@2026!') === false && strpos($loginPage, 'Support@2026!') === false
+    && strpos($loginPage, 'Billing@2026!') === false && strpos($loginPage, 'Developer@2026!') === false,
+    'login page exposes no embedded passwords');
+$team = file_get_contents(__DIR__ . '/../platform-admin/team.php');
+ok(strpos($team, "'raw_pass'") === false, 'team.php stores hash only for new admins');
 
 // cleanup
 foreach (glob($dir . '/*') ?: [] as $ff) @unlink($ff);

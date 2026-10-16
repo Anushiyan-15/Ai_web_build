@@ -18,6 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__) . '/includes/StorageService.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
+// Authenticated customer (if any). quota-tracked uploads are attributed
+// to this email; guests keep the legacy shared studio flow (untracked:
+// external/studio assets are outside customer quota scope).
+$uploadCustomerEmail = strtolower(trim((string)($_SESSION['customer_user']['email'] ?? '')));
+if (!filter_var($uploadCustomerEmail, FILTER_VALIDATE_EMAIL)) $uploadCustomerEmail = '';
 
 $inputUrl = trim($_POST['url'] ?? '');
 if (!$inputUrl) {
@@ -131,6 +138,37 @@ $info = @getimagesize($file['tmp_name']);
 if (!$info || !isset($map[$info['mime']])) {
     echo json_encode(['success' => false, 'error' => 'Only JPG, PNG, GIF or WebP images allowed.']);
     exit;
+}
+
+// ── Authenticated customer: quota-enforced, email-scoped storage ──
+if ($uploadCustomerEmail !== '') {
+    $tmp = tempnam(sys_get_temp_dir(), 'wcu');
+    if ($tmp && @move_uploaded_file($file['tmp_name'], $tmp)) {
+        // Actual size is measured server-side inside storeUpload.
+        $res = StorageService::storeUpload(
+            $uploadCustomerEmail, $tmp,
+            (string)($file['name'] ?? 'image'), (string)$info['mime']
+        );
+        @unlink($tmp);
+        if (!empty($res['success'])) {
+            $base = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
+            echo json_encode([
+                'success' => true,
+                'url'     => $base . '/customer-files.php?id=' . (int)$res['file_id'],
+                'file_id' => (int)$res['file_id'],
+                'name'    => $res['file_name'],
+                'mime'    => $res['mime'],
+                'bytes'   => $res['size_bytes'],
+                'used_mb' => $res['used_mb'], 'limit_mb' => $res['limit_mb'],
+                'remaining_mb' => $res['remaining_mb'],
+            ]);
+            exit;
+        }
+        http_response_code($res['http'] ?? 400);
+        echo json_encode($res);
+        exit;
+    }
+    // Fall through to legacy flow if temp staging failed.
 }
 
 $dest = $dir . '/' . $hash . '.' . $map[$info['mime']];

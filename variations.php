@@ -345,7 +345,9 @@ window.__SITE_URL__ = <?= json_encode($siteUrl) ?>;
   function fullPreview(i, list) {
     var c = list[i];
     if (!c || !c.html) return;
-    var w = window.open('', '_blank');
+    // Avoid blob URLs: opening about:blank prevents the browser from creating a
+    // blob:-scoped preview that dies on form submits or cross-origin navigation.
+    var w = window.open('about:blank', '_blank');
     if (w) { w.document.open(); w.document.write(navFix(c.html)); w.document.close(); }
   }
   window.varFullPreview = function (i) { fullPreview(i, window.__VAR_LIST__ || []); };

@@ -431,7 +431,9 @@ function db_insert(string $entity, array $row): ?array {
         if (!is_array($rows)) $rows = [];
         $rows = array_values($rows);
         $now = date('c');
-        $row['id'] = db_new_id();
+        $row['id'] = $entity === 'trips'
+            ? 'TRIP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)))
+            : db_new_id();
         $row['created_at'] = $now;
         $row['updated_at'] = $now;
         array_unshift($rows, $row);
@@ -526,7 +528,7 @@ function db_project_root(): string {
 /** Site slug shared with both storefront backends (same sanitize as bops/Node). */
 function db_site_slug(): string {
     $s = strtolower((string)basename(dirname(db_dir())));
-    $s = preg_replace('/[^a-z0-9\-]/i', '', $s);
+    $s = preg_replace('/[^a-z0-9_-]/i', '', $s);
     return substr($s !== '' ? $s : 'site', 0, 60);
 }
 
@@ -814,6 +816,16 @@ $SINGULAR = '__SINGULAR__';
 if (!db_entity_allowed($ENTITY)) { http_response_code(404); exit('Unknown section.'); }
 
 $fields = db_field_defs($ENTITY);
+$fieldKeys = array_map(static fn($field) => (string)($field['name'] ?? ''), $fields);
+$isBusBookingPage = $ENTITY === 'bookings'
+    && in_array('trip_id', $fieldKeys, true) && in_array('seats', $fieldKeys, true);
+$isBusPaymentsPage = $ENTITY === 'payments'
+    && in_array('payment_id', $fieldKeys, true) && in_array('booking_ref', $fieldKeys, true);
+$isBusLifecyclePage = $isBusBookingPage || $isBusPaymentsPage;
+$editableFields = $isBusBookingPage
+    ? array_values(array_filter($fields, static fn($field) =>
+        !in_array((string)($field['name'] ?? ''), ['status', 'payment_status', 'payment_id', 'amount'], true)))
+    : $fields;
 $flash = '';
 $flashErr = '';
 if (isset($_GET['flash'])) {
@@ -852,13 +864,20 @@ function ent_validate(array $fields, array $input, &$clean, &$err): bool {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_validate();
     $action = (string)($_POST['action'] ?? '');
-    if ($action === 'save') {
+    if ($isBusLifecyclePage) {
+        http_response_code(403);
+        exit('Bus booking and payment records can only be changed through their lifecycle actions.');
+    } elseif ($action === 'save') {
         $id = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($_POST['id'] ?? ''));
-        if (ent_validate($fields, $_POST, $clean, $err)) {
+        if (ent_validate($editableFields, $_POST, $clean, $err)) {
             if ($id !== '') {
                 $ok = db_update($ENTITY, $id, $clean);
                 $dest = $ENTITY . '.php?flash=' . urlencode($ok ? 'Record updated.' : 'Record not found.');
             } else {
+                if ($isBusBookingPage) {
+                    $clean['status'] = 'pending';
+                    $clean['payment_status'] = 'unpaid';
+                }
                 $row = db_insert($ENTITY, $clean);
                 $dest = $ENTITY . '.php?flash=' . urlencode($row ? 'New record added.' : 'Storage failed. Nothing was saved.');
             }
@@ -880,7 +899,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ── List: search + pagination (20 per page) ──
 $q = strtolower(trim((string)($_GET['q'] ?? '')));
 $page = max(1, (int)($_GET['page'] ?? 1));
+// Backward-compatible booking view: legacy rows stored under camelCase or
+// alternate keys (tripId, seat_numbers, booking_ref, …) resolve to the
+// canonical trip_id/seats/ref so the table never shows "—" for data that is
+// actually present. Truly missing values still render as "—".
+if (!function_exists('bus_booking_cell')) {
+    function bus_booking_cell(array $row, string $field): string {
+        if ($field === 'trip_id') {
+            foreach (['trip_id','tripId','tripID','trip','booking_trip','trip_ref'] as $k) {
+                if (isset($row[$k]) && trim((string)$row[$k]) !== '') return trim((string)$row[$k]);
+            }
+            return '—';
+        }
+        if ($field === 'seats') {
+            foreach (['seats','seat_numbers','seatNumbers','seat','seats_string','selected_seats'] as $k) {
+                if (!array_key_exists($k, $row) || $row[$k] === '' || $row[$k] === null) continue;
+                $v = $row[$k];
+                if (is_array($v)) { $s = implode(', ', array_slice(array_map('strval', $v), 0, 8)); if ($s !== '') return $s; }
+                else { $s = trim((string)$v); if ($s !== '') return $s; }
+            }
+            return '—';
+        }
+        $v = $row[$field] ?? '—';
+        if (is_array($v)) $v = implode(', ', array_slice(array_map('strval', $v), 0, 4));
+        $s = (string)$v; if (strlen($s) > 60) $s = substr($s, 0, 60) . '…';
+        return $s === '' ? '—' : $s;
+    }
+}
 $all = db_read($ENTITY);
+if ($ENTITY === 'bookings') {
+    foreach ($all as &$normalizeRow) {
+        if (!is_array($normalizeRow)) continue;
+        $viewTrip = bus_booking_cell($normalizeRow, 'trip_id');
+        $viewSeats = bus_booking_cell($normalizeRow, 'seats');
+        if ($viewTrip !== '—' && empty($normalizeRow['trip_id'])) $normalizeRow['trip_id'] = $viewTrip;
+        if ($viewSeats !== '—' && (empty($normalizeRow['seats']) || $normalizeRow['seats'] === '')) $normalizeRow['seats'] = $viewSeats;
+    }
+    unset($normalizeRow);
+}
 if ($q !== '') {
     $all = array_values(array_filter($all, function ($r) use ($q) {
         if (!is_array($r)) return false;
@@ -894,11 +950,19 @@ $total = count($all);
 $pages = max(1, (int)ceil($total / 20));
 if ($page > $pages) $page = $pages;
 $rows = array_slice($all, ($page - 1) * 20, 20);
+$reportRows = db_read($ENTITY);
+$tableFields = $isBusBookingPage
+    ? array_values(array_filter($fields, static fn($field) =>
+        in_array((string)($field['name'] ?? ''), ['trip_id', 'seats', 'passenger', 'phone', 'email', 'status'], true)))
+    : ($isBusPaymentsPage
+        ? array_values(array_filter($fields, static fn($field) =>
+            in_array((string)($field['name'] ?? ''), ['payment_id', 'booking_ref', 'method', 'amount', 'status', 'received_at'], true)))
+        : array_slice($fields, 0, 5));
 
 // ── Edit target: load ACTUAL saved values ──
 $editId = isset($_GET['edit']) ? (string)$_GET['edit'] : '';
 $editRow = $editId !== '' ? db_find($ENTITY, $editId) : null;
-$showForm = isset($_GET['new']) || $editRow !== null;
+$showForm = !$isBusLifecyclePage && (isset($_GET['new']) || $editRow !== null);
 if ($editId !== '' && $editRow === null && $_SERVER['REQUEST_METHOD'] !== 'POST') $flashErr = 'Record not found.';
 
 function ent_input(array $f, $val): string {
@@ -931,7 +995,7 @@ header_html('ent_' . $ENTITY, $LABEL);
     <h1 class="page-title"><?= htmlspecialchars($LABEL) ?></h1>
     <p style="color:#64748b;font-size:.88rem;margin-top:.3rem"><?= (int)$total ?> record(s) · stored in JSON · updates appear immediately</p>
   </div>
-  <a class="btn btn-primary" href="<?= $ENTITY ?>.php?new=1">➕ Add <?= htmlspecialchars($SINGULAR) ?></a>
+  <?php if (!$isBusLifecyclePage): ?><a class="btn btn-primary" href="<?= $ENTITY ?>.php?new=1">➕ Add <?= htmlspecialchars($SINGULAR) ?></a><?php endif; ?>
 </div>
 
 <?php if ($flash): ?><div class="flash">✅ <?= htmlspecialchars($flash) ?></div><?php endif; ?>
@@ -946,7 +1010,7 @@ header_html('ent_' . $ENTITY, $LABEL);
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="save">
     <input type="hidden" name="id" value="<?= htmlspecialchars($editRow['id'] ?? '') ?>">
-    <?php foreach ($fields as $f): ?>
+    <?php foreach ($editableFields as $f): ?>
       <div class="field">
         <label class="lbl"><?= htmlspecialchars($f['label'] ?? $f['name']) ?><?= !empty($f['required']) ? ' *' : '' ?></label>
         <?= ent_input($f, $editRow[$f['name']] ?? '') ?>
@@ -964,8 +1028,30 @@ header_html('ent_' . $ENTITY, $LABEL);
   <form method="GET" style="display:flex;gap:.6rem;flex-wrap:wrap">
     <input class="inp" type="search" name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" placeholder="Search <?= htmlspecialchars($LABEL) ?>…" style="max-width:300px">
     <button class="btn btn-ghost" type="submit">🔍 Search</button>
+    <button class="btn btn-ghost" type="button" onclick="downloadEntityReport()">Download report</button>
     <?php if ($q !== ''): ?><a class="btn btn-ghost" href="<?= $ENTITY ?>.php">Clear</a><?php endif; ?>
   </form>
+  <?php if ($isBusBookingPage): ?>
+    <section style="border:1px solid #263244;border-radius:12px;padding:1rem;margin:1rem 0;background:#0b111d">
+      <h2 style="margin:0 0 .35rem;color:#fff;font-size:1rem">Record a received payment</h2>
+      <p style="margin:0 0 .85rem;color:#94a3b8;font-size:.82rem">Load the saved fare by ticket reference. Select Card or Cash only after the operator receives payment.</p>
+      <form id="bus-payment-form" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+        <label style="display:grid;gap:.35rem;min-width:210px;flex:1;color:#cbd5e1;font-size:.78rem;font-weight:700">
+          Ticket reference
+          <input class="inp" id="bus-payment-ref" required maxlength="50" placeholder="BK-XXXXXXXX">
+        </label>
+        <button class="btn btn-ghost" id="bus-payment-lookup" type="button">Load fare</button>
+        <label style="display:grid;gap:.35rem;min-width:150px;color:#cbd5e1;font-size:.78rem;font-weight:700">
+          Method
+          <select class="inp" id="bus-payment-method" required>
+            <option value="">Select method</option><option value="card">Card received</option><option value="cash">Cash received</option>
+          </select>
+        </label>
+        <button class="btn btn-primary" id="bus-payment-submit" type="submit" disabled>Save payment</button>
+      </form>
+      <p id="bus-payment-status" aria-live="polite" style="margin:.75rem 0 0;color:#94a3b8;font-size:.85rem">No ticket loaded.</p>
+    </section>
+  <?php endif; ?>
   <?php if (empty($rows)): ?>
     <div style="text-align:center;padding:3rem 1rem;color:#64748b">
       <div style="font-size:2rem;margin-bottom:.5rem">📂</div>
@@ -974,14 +1060,16 @@ header_html('ent_' . $ENTITY, $LABEL);
   <?php else: ?>
     <div style="overflow-x:auto"><table>
       <thead><tr>
-        <?php foreach (array_slice($fields, 0, 5) as $f): ?><th><?= htmlspecialchars($f['label'] ?? $f['name']) ?></th><?php endforeach; ?>
+        <?php foreach ($tableFields as $f): ?><th><?= htmlspecialchars($f['label'] ?? $f['name']) ?></th><?php endforeach; ?>
         <th>Updated</th><th style="text-align:right">Actions</th>
       </tr></thead>
       <tbody>
       <?php foreach ($rows as $r): ?>
         <tr>
-          <?php foreach (array_slice($fields, 0, 5) as $f):
-            $v = $r[$f['name']] ?? '—';
+          <?php foreach ($tableFields as $f):
+            $v = ($isBusBookingPage && in_array($f['name'], ['trip_id','seats'], true) && function_exists('bus_booking_cell'))
+              ? bus_booking_cell(is_array($r) ? $r : [], $f['name'])
+              : ($r[$f['name']] ?? '—');
             if (is_array($v)) $v = implode(', ', array_slice(array_map('strval', $v), 0, 4));
             $s = (string)$v; if (strlen($s) > 60) $s = substr($s, 0, 60) . '…';
           ?>
@@ -989,13 +1077,21 @@ header_html('ent_' . $ENTITY, $LABEL);
           <?php endforeach; ?>
           <td style="color:#64748b;font-size:.78rem"><?= htmlspecialchars(substr((string)($r['updated_at'] ?? $r['created_at'] ?? ''), 0, 16)) ?></td>
           <td style="text-align:right;white-space:nowrap">
-            <a class="btn btn-ghost" style="padding:.35rem .75rem;font-size:.78rem" href="<?= $ENTITY ?>.php?edit=<?= urlencode((string)($r['id'] ?? '')) ?>">✏️ Edit</a>
-            <form method="POST" style="display:inline" onsubmit="return confirm('Delete this record permanently?');">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="delete">
-              <input type="hidden" name="id" value="<?= htmlspecialchars((string)($r['id'] ?? '')) ?>">
-              <button class="btn btn-danger" style="padding:.35rem .75rem;font-size:.78rem" type="submit">🗑️</button>
-            </form>
+            <?php if ($isBusBookingPage && ($r['status'] ?? 'pending') === 'pending'): ?>
+              <button class="btn btn-primary" style="padding:.35rem .6rem;font-size:.76rem" type="button"
+                onclick='setBusBookingStatus(<?= json_encode((string)($r['id'] ?? '')) ?>,"approved")'>Approve</button>
+              <button class="btn btn-danger" style="padding:.35rem .6rem;font-size:.76rem" type="button"
+                onclick='setBusBookingStatus(<?= json_encode((string)($r['id'] ?? '')) ?>,"rejected")'>Reject</button>
+            <?php endif; ?>
+            <?php if (!$isBusLifecyclePage): ?>
+              <a class="btn btn-ghost" style="padding:.35rem .75rem;font-size:.78rem" href="<?= $ENTITY ?>.php?edit=<?= urlencode((string)($r['id'] ?? '')) ?>">✏️ Edit</a>
+              <form method="POST" style="display:inline" onsubmit="return confirm('Delete this record permanently?');">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="<?= htmlspecialchars((string)($r['id'] ?? '')) ?>">
+                <button class="btn btn-danger" style="padding:.35rem .75rem;font-size:.78rem" type="submit">🗑️</button>
+              </form>
+            <?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>
@@ -1008,6 +1104,119 @@ header_html('ent_' . $ENTITY, $LABEL);
     </div>
   <?php endif; ?>
 </div>
+
+<?php if ($isBusBookingPage): ?>
+<script>
+const BUS_ADMIN_CSRF = <?= json_encode(csrf_token()) ?>;
+const BUS_ADMIN_SLUG = <?= json_encode(db_site_slug()) ?>;
+let busPaymentQuote = null;
+function busOps(payload) {
+  return fetch('../../../api/business-ops.php', {
+    method:'POST', credentials:'same-origin',
+    headers:{'Content-Type':'application/json','X-Admin-CSRF':BUS_ADMIN_CSRF},
+    body:JSON.stringify(Object.assign({slug:BUS_ADMIN_SLUG},payload))
+  }).then(async function(response) {
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.error || 'Request failed.');
+    return result;
+  });
+}
+function setBusBookingStatus(id,status) {
+  if (!confirm('Set this booking to ' + status + '?')) return;
+  busOps({action:'update',entity:'bookings',id:id,patch:{status:status}})
+    .then(function(result) {
+      const note = result.notification || {};
+      alert('Booking ' + status + '. ' + (note.status === 'queued'
+        ? 'Customer email queued.'
+        : (note.error || 'No valid email address was saved for this booking.')));
+      location.reload();
+    })
+    .catch(function(error) { alert('Booking status was not updated: ' + error.message); });
+}
+function downloadEntityReport() {
+  const records = <?= json_encode($reportRows, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+  if (!records.length) { alert('There are no records to export.'); return; }
+  const columns = Array.from(new Set(records.reduce(function(keys,row) {
+    return keys.concat(Object.keys(row || {}));
+  },[])));
+  const csvCell = function(value) {
+    if (Array.isArray(value) || (value && typeof value === 'object')) value = JSON.stringify(value);
+    return '"' + String(value == null ? '' : value).replace(/"/g,'""') + '"';
+  };
+  const csv = [columns.map(csvCell).join(','), ...records.map(function(row) {
+    return columns.map(function(key) { return csvCell(row[key]); }).join(',');
+  })].join('\r\n');
+  const url = URL.createObjectURL(new Blob(['\uFEFF' + csv],{type:'text/csv;charset=utf-8'}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = BUS_ADMIN_SLUG + '-<?= htmlspecialchars($ENTITY, ENT_QUOTES, 'UTF-8') ?>-' + new Date().toISOString().slice(0,10) + '.csv';
+  link.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+document.getElementById('bus-payment-lookup').addEventListener('click',function() {
+  const out = document.getElementById('bus-payment-status');
+  const ref = document.getElementById('bus-payment-ref').value.trim().toUpperCase();
+  const submit = document.getElementById('bus-payment-submit');
+  busPaymentQuote = null; submit.disabled = true;
+  if (!ref) { out.textContent = 'Enter a ticket reference first.'; return; }
+  out.textContent = 'Loading saved fare…';
+  busOps({action:'payment_quote',entity:'bookings',ref:ref})
+    .then(function(result) {
+      busPaymentQuote = result.data;
+      out.textContent = result.data.ref + ' · ' + (result.data.passenger || 'Customer') + ' · '
+        + result.data.currency + ' ' + Number(result.data.amount).toFixed(2)
+        + ' · ' + result.data.status;
+      submit.disabled = result.data.status !== 'approved';
+      if (submit.disabled) out.textContent += ' · Approve booking before recording payment.';
+    })
+    .catch(function(error) { out.textContent = error.message; });
+});
+document.getElementById('bus-payment-form').addEventListener('submit',function(event) {
+  event.preventDefault();
+  if (!busPaymentQuote) { alert('Load a ticket fare first.'); return; }
+  const method = document.getElementById('bus-payment-method').value;
+  const submit = document.getElementById('bus-payment-submit');
+  submit.disabled = true;
+  busOps({action:'pay',entity:'bookings',ref:busPaymentQuote.ref,method:method})
+    .then(function(result) {
+      const payment = result.payment || {};
+      document.getElementById('bus-payment-status').textContent = 'Payment saved: '
+        + (payment.payment_id || payment.id) + ' · ' + payment.currency + ' '
+        + Number(payment.amount).toFixed(2) + ' · ' + method + ' · ' + payment.received_at;
+      busPaymentQuote = null;
+      document.getElementById('bus-payment-form').reset();
+      setTimeout(function(){location.reload();},1200);
+    })
+    .catch(function(error) {
+      document.getElementById('bus-payment-status').textContent = error.message;
+      submit.disabled = false;
+    });
+});
+</script>
+<?php else: ?>
+<script>
+function downloadEntityReport() {
+  const records = <?= json_encode($reportRows, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+  if (!records.length) { alert('There are no records to export.'); return; }
+  const columns = Array.from(new Set(records.reduce(function(keys,row) {
+    return keys.concat(Object.keys(row || {}));
+  },[])));
+  const csvCell = function(value) {
+    if (Array.isArray(value) || (value && typeof value === 'object')) value = JSON.stringify(value);
+    return '"' + String(value == null ? '' : value).replace(/"/g,'""') + '"';
+  };
+  const csv = [columns.map(csvCell).join(','), ...records.map(function(row) {
+    return columns.map(function(key) { return csvCell(row[key]); }).join(',');
+  })].join('\r\n');
+  const url = URL.createObjectURL(new Blob(['\uFEFF' + csv],{type:'text/csv;charset=utf-8'}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = '<?= htmlspecialchars($ENTITY, ENT_QUOTES, 'UTF-8') ?>-' + new Date().toISOString().slice(0,10) + '.csv';
+  link.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+</script>
+<?php endif; ?>
 
 <?php footer_html(); ?>
 PHP;
@@ -1786,6 +1995,22 @@ if ($entity === '') {
 }
 $defs = submit_entity_defs($entity, $ENTITIES);
 if ($defs === null) submit_out(400, ['success' => false, 'error' => 'Unknown form destination.']);
+// Bus bookings carry a lifecycle (hold → confirm → approve → pay). Direct
+// public writes must still name a real trip and seats (canonical or legacy
+// aliases); empty ghost rows are rejected instead of stored with "—" cells.
+if ($entity === 'bookings') {
+    $aliasTrip = '';
+    foreach (['trip_id','tripId','tripID','trip','booking_trip','trip_ref'] as $ak) {
+        if (isset($input[$ak]) && trim((string)$input[$ak]) !== '') { $aliasTrip = trim((string)$input[$ak]); break; }
+    }
+    $aliasSeats = '';
+    foreach (['seats','seat_numbers','seatNumbers','seat','seats_string','selected_seats'] as $ak) {
+        if (isset($input[$ak]) && trim((string)(is_array($input[$ak]) ? implode(',', $input[$ak]) : $input[$ak])) !== '') { $aliasSeats = 'x'; break; }
+    }
+    if ($aliasTrip === '' || $aliasSeats === '') {
+        submit_out(422, ['success' => false, 'error' => 'Bookings need a trip and seats. Search live trips, hold seats, then submit passenger details.']);
+    }
+}
 // Rate limit: 20 submissions/hour per IP+entity.
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 $hitsFile = __DIR__ . '/submit_hits.json';

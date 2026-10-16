@@ -47,6 +47,7 @@ function business_runtime_js(array $spec, string $slug): string {
     $s = json_encode($spec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $sl = json_encode($slug);
     $nodeApi = json_encode(wc_node_api_url());
+    $opsApi = json_encode((defined('SITE_URL') ? rtrim(SITE_URL, '/') : '') . '/api/business-ops.php');
     $isBusBooking = json_encode(wc_business_requires_bus_booking($spec));
     return <<<JS
 <script data-wc-biz-runtime>(function(){
@@ -58,6 +59,7 @@ var IS_BUS_BOOKING=($isBusBooking);
 // errors (HTTP 4xx) are final and never retried elsewhere, so a submit
 // can never create two records. Same idempotency key on both attempts.
 var NODE_API=($nodeApi).replace(/\/$/,'');
+var OPS_API=($opsApi);
 try{window.__WC_NODE_API__=NODE_API;}catch(e){}
 function postJson(url,body,ms){
   var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
@@ -71,8 +73,7 @@ function apiNode(action,payload){
     Object.assign({slug:SLUG},payload||{}),2500).then(function(r){return r.body;});
 }
 function apiPhp(action,payload){
-  var url=(function(){try{return new URL('api/business-ops.php',document.baseURI).toString();}catch(e){return 'api/business-ops.php';}})();
-  return postJson(url,Object.assign({action:action,slug:SLUG},payload||{}),12000).then(function(r){return r.body;});
+  return postJson(OPS_API,Object.assign({action:action,slug:SLUG},payload||{}),12000).then(function(r){return r.body;});
 }
 // Node action names differ slightly from the PHP contract — translate here.
 function api(action,payload){
@@ -81,12 +82,12 @@ function api(action,payload){
   // bookings, history, tickets, payment, cancellation and the admin mirror.
   if(IS_BUS_BOOKING&&(
     (action==='list'&&['trips','bookings'].indexOf(payload.entity)>=0)
-    ||action==='ticket'||action==='pay'
+    ||action==='ticket'||action==='pay'||action==='verify'||action==='payment_intent'
     ||(action==='cancel'&&payload.entity==='bookings')
   ))return apiPhp(action,payload);
   // Booking holds/creates and seat availability use the PHP transaction layer
   // so capacity checks, hold consumption, and the admin mirror stay atomic.
-  if(action==='availability'||action==='release_hold'
+  if(action==='availability'||action==='release_hold'||action==='verify'
     ||((action==='hold'||action==='create')&&payload.entity==='bookings'))
     return apiPhp(action,payload);
   var nodeCall;
@@ -296,26 +297,16 @@ document.querySelectorAll('[data-wc-ticket-lookup]').forEach(function(box){
         +'<div style="font-size:.72rem;font-weight:800;color:#059669;letter-spacing:.08em;">YOUR TICKET</div>'
         +'<div style="font-size:1.6rem;font-weight:900;color:#0f172a;letter-spacing:.03em;">'+escH(r.ref||r.id||'')+'</div>'
         +'<div style="display:flex;gap:1rem;flex-wrap:wrap;margin:.6rem 0;">'
-        +'<div>'+window.WCBiz.ticketQR(r.ref||r.id||'',150)+'</div>'
+        +'<div>'+window.WCBiz.ticketQR(r.ref||r.id||'',150,r.verify_token||'')+'</div>'
         +'<div style="font-size:.86rem;color:#0f172a;line-height:1.7;">'
         +'<div><strong>'+escH(r.passenger||r.customer||r.name||'')+'</strong></div>'
         +'<div>Seats: '+escH(seats==null?'—':seats)+'</div>'
         +'<div>Status: '+escH(r.status||'received')+(r.payment_status?' · '+escH(r.payment_status):'')+'</div>'
         +'</div></div>'
         +'<div style="display:flex;gap:.5rem;flex-wrap:wrap;">'
-        +'<button type="button" data-tk-pay="counter" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#6366f1;color:#fff;font-weight:700;cursor:pointer;">Pay at Counter</button>'
-        +'<button type="button" data-tk-pay="online" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#0ea5e9;color:#fff;font-weight:700;cursor:pointer;">Pay Online</button>'
         +'<button type="button" data-tk-print="1" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#0f172a;color:#fff;font-weight:700;cursor:pointer;">Print ticket</button>'
         +'<button type="button" data-tk-cancel="1" style="padding:.5rem 1rem;border-radius:9px;border:1px solid #f87171;background:#fff;color:#b91c1c;font-weight:700;cursor:pointer;">Cancel ticket</button>'
         +'</div></div>';
-      out.querySelectorAll('[data-tk-pay]').forEach(function(b){
-        b.addEventListener('click',function(){
-          window.WCBiz.pay(r.ref||r.id||'',b.getAttribute('data-tk-pay'),'0',entity).then(function(p){
-            if(p&&p.success)note('Payment recorded — status: '+(p.data&&p.data.status||'confirmed'),true,out);
-            else note('Payment failed: '+((p&&p.error)||'error'),false,out);
-          }).catch(function(){note('Network error. Try again.',false,out);});
-        });
-      });
       var cb=out.querySelector('[data-tk-cancel]');
       if(cb)cb.addEventListener('click',function(){
         if(!confirm('Cancel this ticket? Capacity is released immediately.'))return;
@@ -434,20 +425,37 @@ function wcTicketQRFallback(ref,size){
     +'<div style="font-size:1.5rem;font-weight:900;color:#0f172a;letter-spacing:.04em;margin:.4rem 0;word-break:break-all;">'+safe+'</div>'
     +'<div style="font-size:.72rem;color:#64748b;">QR image offline — this code scans the same.</div></div>';
 }
-function wcTicketQR(ref,size){
+function wcTicketVerifyUrl(ref,token){
+  ref=String(ref==null?'':ref);
+  try{
+    var base='';
+    try{base=new URL('verify.php',document.baseURI).toString();}catch(e){base='verify.php';}
+    var full=new URL(base,document.baseURI||window.location.href);
+    full.searchParams.set('ref',ref);
+    if(token)full.searchParams.set('t',String(token));
+    return full.toString();
+  }catch(e){
+    var q='verify.php?ref='+encodeURIComponent(ref);
+    if(token)q+='&t='+encodeURIComponent(String(token));
+    return q;
+  }
+}
+function wcTicketQR(ref,size,token){
   ref=String(ref==null?'':ref);size=size||180;
   var q=String(ref).split(String.fromCharCode(92)).join('').split("'").join('').slice(0,64);
-  var url='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(ref);
+  var data=wcTicketVerifyUrl(ref,token||'');
+  var url='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(data);
   return '<img src="'+url+'" width="'+size+'" height="'+size+'" alt="Ticket QR '+q+'" loading="lazy" style="border-radius:12px;background:#fff;padding:6px;max-width:100%;" onerror="this.outerHTML=window.WCBiz.ticketQRFallback(\''+q+'\','+size+')">';
 }
-// Printable ticket (backend record in, print window out). QR comes from the
-// same ref the backend returns, so the printout always matches the record.
+// Printable ticket (backend record in, print window out). QR encodes the
+// ticket-verification URL (ref + token when present) so a scan opens the
+// authoritative record; the printout always matches the backend row.
 function wcPrintTicketHTML(r){
   r=r||{};
   var seats=r.seats;
   if(Object.prototype.toString.call(seats)==='[object Array]')seats=seats.join(', ');
   var ref=String(r.ref||r.id||'');
-  var qr='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(ref);
+  var qr='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(wcTicketVerifyUrl(ref,r.verify_token||''));
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket '+escH(ref)+'</title>'
     +'<style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}'
     +' .t{max-width:480px;margin:0 auto;border:2px solid #059669;border-radius:16px;padding:28px;}'
@@ -540,14 +548,52 @@ window.WCBiz=Object.assign({},__pageBiz,{
   list:wcList,
   cancel:function(entity,id,identity){return api('cancel',Object.assign({entity:entity,id:id},identity||{}));},
   history:function(entity,identifier){return api('list',Object.assign({entity:entity},identifier||{}));},
-  pay:function(ref,method,amount,entity){return api('pay',{entity:entity||'bookings',ref:ref,method:method,amount:amount});},
+  pay:function(ref,method,amount,entity,identity){
+    identity=identity||{};
+    var booking=__pageBiz.lastBooking||window.__WC_LAST_BOOKING__||{};
+    var form=document.querySelector('[data-wc-form="booking"]');
+    if(form){
+      ['email','phone'].forEach(function(key){
+        var field=form.elements.namedItem(key);
+        if(!identity[key]&&field)identity[key]=field.value||'';
+      });
+    }
+    return api('payment_intent',Object.assign({
+      entity:entity||'bookings',ref:ref,method:method,
+      email:identity.email||booking.email||'',
+      phone:identity.phone||booking.phone||''
+    }));
+  },
   ticket:function(entity,phone,ref){return api('ticket',{entity:entity||'bookings',phone:phone,ref:ref});},
+  verify:function(ref,token,entity){return api('verify',{entity:entity||'bookings',ref:ref,token:token||''});},
+  ticketVerifyUrl:wcTicketVerifyUrl,
   gotoStep:(__wcFn(__pageBiz.gotoStep)?__pageBiz.gotoStep:wcGotoStep),
   ticketQR:wcTicketQR,
   ticketQRFallback:wcTicketQRFallback,
   printTicket:wcPrintTicket,
   create:wcCreate
 });
+document.addEventListener('click',function(event){
+  var button=event.target&&event.target.closest
+    ?event.target.closest('button[data-pay],button[data-payment-method]'):null;
+  if(!button)return;
+  event.stopImmediatePropagation();
+  event.preventDefault();
+  var method=String(button.getAttribute('data-pay')||button.getAttribute('data-payment-method')||'').toLowerCase();
+  var booking=window.__WC_LAST_BOOKING__||{};
+  var ref=String(booking.ref||window.__WC_LAST_REF__||window.WCBiz.bookingRef||'');
+  if(!ref){note('Confirm your booking before choosing a payment method.',false,button.parentNode);return;}
+  if(method!=='counter'&&method!=='online'){note('This payment method is not supported.',false,button.parentNode);return;}
+  button.disabled=true;
+  window.WCBiz.pay(ref,method,booking.amount||0,'bookings',{
+    email:booking.email||'',phone:booking.phone||''
+  }).then(function(result){
+    if(!result||!result.success)throw new Error((result&&result.error)||'Payment request could not be saved.');
+    note(result.message||'Payment request saved.',true,button.parentNode);
+  }).catch(function(error){
+    note(error.message||'Network error. Please try again.',false,button.parentNode);
+  }).finally(function(){button.disabled=false;});
+},true);
 // Dedup core: same customer intent within 2s shares one request.
 var wcCreateVOLATILE={hold_id:1,idempotency_key:1,company:1};
 var wcCreateIDENTITY={passenger:1,customer:1,name:1,email:1,phone:1};
@@ -586,7 +632,13 @@ function wcCreate(entity,record,opts){
   p.then(function(j){
     try{
       if(j&&j.success&&j.data){
-        if(entity==='bookings'&&j.data.ref){try{window.WCBiz.bookingRef=j.data.ref;}catch(e){}}
+        if(entity==='bookings'&&j.data.ref){
+          try{
+            window.WCBiz.bookingRef=j.data.ref;
+            window.__WC_LAST_BOOKING__=j.data;
+            window.__WC_LAST_REF__=j.data.ref;
+          }catch(e){}
+        }
       }else if(j&&!j.success&&entity==='bookings'){
         var msg=String(j.error||'');
         if(/Missing trip|Select at least/i.test(msg)){
@@ -633,7 +685,7 @@ JS;
 function business_runtime_inject(string $html, array $spec, string $slug): string {
     if (wc_business_requires_bus_booking($spec)
         && stripos($html, 'data-wc-live-bus-booking') === false) {
-        $widget = bus_booking_widget_html();
+        $widget = bus_booking_widget_html($slug);
         if (preg_match('/\bid\s*=\s*(["\'])booking\1/i', $html)) {
             $widget = preg_replace('/\bid="booking"/i', 'id="wc-live-bus-booking"', $widget, 1);
         }
