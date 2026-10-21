@@ -27,7 +27,8 @@ function gemini_api_key(): string {
 }
 
 // Single Gemini call. Returns [ok, text, err|null, usage[]]
-function gemini_chat_once(string $model, string $system, string $user, float $temperature = 0.7, int $maxTokens = 8000, int $timeout = 28): array {
+// $timeout = 0 means NO time limit: generation takes as long as it takes.
+function gemini_chat_once(string $model, string $system, string $user, float $temperature = 0.7, int $maxTokens = 8000, int $timeout = 0): array {
     $key = gemini_api_key();
     if ($key === '') return [false, '', 'Gemini API key not configured', ['prompt' => 0, 'completion' => 0]];
     $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . urlencode($key);
@@ -42,7 +43,11 @@ function gemini_chat_once(string $model, string $system, string $user, float $te
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => json_encode($payload),
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_TIMEOUT => $timeout,
+        // No total timeout (0 = unlimited): a healthy Gemini page can take
+        // minutes at max tokens. Only the TCP connect phase is bounded so a
+        // dead host cannot hang forever.
+        CURLOPT_TIMEOUT => max(0, $timeout),
+        CURLOPT_CONNECTTIMEOUT => 20,
         CURLOPT_SSL_VERIFYPEER => false,
     ]);
     $res = curl_exec($ch);
@@ -152,7 +157,7 @@ function gemini_template_brief(array $data): string {
 function gemini_analyze_requirements(array $data): array {
     $req = opencode_requirements_block($data);
     [$ok, $text, $err, $u] = gemini_chat_once(
-        'gemini-3.5-flash-lite', opencode_analyze_system(), $req, 0.5, 800, 12);
+        'gemini-3.5-flash-lite', opencode_analyze_system(), $req, 0.5, 800, 0);
     if ($ok && strlen(trim($text)) > 50) {
         return [true, trim($text), 'gemini-3.5-flash-lite', [], $u];
     }
@@ -199,11 +204,10 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
     $bookingTraining = gemini_booking_training_block($data);
     $isBooking = ($bookingTraining !== '');
     // MAX output budget: model-max tokens so projects come out complete.
-    // gemini-3.5-flash-lite supports 32k output; we request 28k (shop) /
-    // 24k (standard) — the largest safe single-shot budget. Bigger budget =
-    // fuller sections, no mid-file truncation = nalla project.
-    // Booking flow needs headroom for seat JS → same max budget as shop.
-    $outTokens = ($isShop || $isBooking) ? 28000 : 24000;
+    // gemini-3.5-flash-lite supports 64k output; 32k is the largest safe
+    // single-shot budget that still finishes inside the 300s call ceiling.
+    // Bigger budget = fuller sections, no mid-file truncation.
+    $outTokens = 32000;
     $user = "## TASK\nGenerate the complete, production-ready HTML file for the \"{$variationId}\" variant.\n\n"
         . "## GENERATION MODE — ALREADY DECIDED (DO NOT ASK)\nType: **{$modeLabel}**\nOutput the PUBLIC WEBSITE HTML only.\n\n"
         . "## AI DESIGN BRIEF (follow tightly)\n{$brief}\n\n"
@@ -239,11 +243,13 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
     $usageTotal = ['prompt' => 0, 'completion' => 0];
     $attempt = 0;
     foreach ($queue as $model) {
-        // 75s per attempt: MAX-budget pages take ~40-70s; shop grids need headroom.
+        // 300s per attempt: no artificial cut. Gemini 3.5 flash-lite can
+        // take 60-200s for a full max-token page; the 360s frontend budget
+        // and 600s PHP ceiling leave room for a complete generation.
         // Fits frontend ~110s budget on the FIRST attempt so the
         // retry below only fires on fast API errors, not on healthy slowness.
         $tryTemp = $attempt === 0 ? $temperature : max(0.1, $temperature - 0.25);
-        [$ok, $text, $err, $u] = gemini_chat_once($model, opencode_gen_system(), $user, $tryTemp, $outTokens, 75);
+        [$ok, $text, $err, $u] = gemini_chat_once($model, opencode_gen_system(), $user, $tryTemp, $outTokens, 0);
         $attempt++;
         $usageTotal = opencode_add_usage($usageTotal, $u);
         if (!$ok) {
@@ -252,7 +258,11 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
             // Skip retry when the first call already burned ~50s+ (would exceed
             // the HTTP budget and force a template fallback anyway).
             if ($attempt === 1 && stripos((string)$err, 'timed out') === false && stripos((string)$err, 'Timeout') === false) {
-                [$ok2, $text2, $err2, $u2] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 75);
+                // Transient provider congestion (503/overload/rate-limit):
+                // brief backoff so the retry lands after the spike instead
+                // of inside it. Bounded 6s — still inside HTTP budget.
+                if (preg_match('/503|overload|high demand|429|rate[\s\-_]*limit|temporarily/i', (string)$err)) sleep(6);
+                [$ok2, $text2, $err2, $u2] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 0);
                 $usageTotal = opencode_add_usage($usageTotal, $u2);
                 if ($ok2) { $ok = true; $text = $text2; }
                 else { $errors[] = $err2; continue; }
@@ -274,7 +284,7 @@ function gemini_generate_one(array $data, string $variationId, string $mode, str
         // calmer-temp second attempt (same lite model, no model hopping).
         // Truncation retries get the bigger shop-aware budget too.
         if ($attempt === 1) {
-            [$rok, $rtext, $rerr, $ru] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 75);
+            [$rok, $rtext, $rerr, $ru] = gemini_chat_once($model, opencode_gen_system(), $user, max(0.1, $temperature - 0.25), $outTokens, 0);
             $usageTotal = opencode_add_usage($usageTotal, $ru);
             if ($rok && !opencode_is_refusal($rtext)) {
                 $rhtml = opencode_clean_html($rtext);
@@ -299,7 +309,7 @@ function gemini_repair_html(string $html, array $issues): array {
     $usageTotal = ['prompt' => 0, 'completion' => 0];
     // Single-model policy: lite only.
     foreach (['gemini-3.5-flash-lite'] as $m) {
-        [$ok, $text, $err, $u] = gemini_chat_once($m, opencode_edit_system(), $user, 0.2, 12000, 26);
+        [$ok, $text, $err, $u] = gemini_chat_once($m, opencode_edit_system(), $user, 0.2, 12000, 0);
         $usageTotal = opencode_add_usage($usageTotal, $u);
         if (!$ok) continue;
         $out = opencode_clean_html($text);
@@ -335,7 +345,7 @@ function gemini_edit_html(string $currentHtml, string $instruction, string $bizN
     $errors = [];
     $usageTotal = ['prompt' => 0, 'completion' => 0];
     foreach ($queue as $model) {
-        [$ok, $text, $err, $u] = gemini_chat_once($model, opencode_edit_system(), $user, 0.3, 12000, 28);
+        [$ok, $text, $err, $u] = gemini_chat_once($model, opencode_edit_system(), $user, 0.3, 12000, 0);
         $usageTotal = opencode_add_usage($usageTotal, $u);
         if (!$ok) { $errors[] = $err; continue; }
         $html = opencode_clean_html($text);

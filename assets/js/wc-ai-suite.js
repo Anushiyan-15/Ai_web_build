@@ -52,7 +52,12 @@
   async function aiPost(endpoint, body, timeoutMs) {
     const url = siteBase() + endpoint;
     const ctrl = new AbortController();
-    const tm = setTimeout(() => ctrl.abort(), timeoutMs || 60000);
+    // No default time limit (timeoutMs <= 0 → no timer): AI work is never
+    // cut off by a client-side clock.
+    const limit = (typeof timeoutMs === 'number' && timeoutMs > 0) ? timeoutMs : 0;
+    // Explicit reason: bare abort() rejects with DOMException "signal is
+    // aborted without reason" in Chrome — name it so logs stay actionable.
+    const tm = limit > 0 ? setTimeout(() => { try { ctrl.abort(new Error('AI request to ' + endpoint + ' timed out — please try again.')); } catch (e) {} }, limit) : null;
     try {
       const r = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -62,9 +67,9 @@
       if (!j) throw new Error('Empty AI response');
       return j;
     } catch (e) {
-      if (e && e.name === 'AbortError') throw new Error('AI request timed out — please try again.');
+      if ((e && e.name === 'AbortError') || ctrl.signal.aborted) throw new Error(limit > 0 ? 'AI request timed out — please try again.' : 'AI request was cancelled (page reload or network drop).');
       throw new Error(e && e.message ? e.message : 'Network failure — please check connection.');
-    } finally { clearTimeout(tm); }
+    } finally { if (tm) clearTimeout(tm); }
   }
 
   /* ── Project-level state (stored INSIDE existing session/project) ── */

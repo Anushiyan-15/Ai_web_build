@@ -302,18 +302,16 @@ function preview_provision(array $p): array {
         'token' => $token, 'biz_name' => $bizName, 'preview' => true,
         'saved_at' => date('Y-m-d H:i:s')], JSON_PRETTY_PRINT));
 
-    // Site HTML: contact wiring + universal form wiring + REAL backend
-    // runtime keyed by the preview token (isolated collections storage).
-    if (function_exists('business_runtime_inject')) {
-        $spec = is_array($p['bizSpec'] ?? null) ? $p['bizSpec'] : ['entities' => $meta['entities']];
-        $html = business_runtime_inject($html, $spec, $token);
-    } else {
-        require_once __DIR__ . '/BusinessRuntime.php';
-        $spec = is_array($p['bizSpec'] ?? null) ? $p['bizSpec'] : ['entities' => $meta['entities']];
-        $html = business_runtime_inject($html, $spec, $token);
-    }
+    // Site HTML: contact wiring + universal form wiring, then the REAL
+    // backend runtime LAST. Keep the runtime as the final <script> before
+    // </body>: any later tail injector can otherwise land inside its JS and
+    // terminate it, which silently leaves an AI-generated mock in control
+    // (fake BK- references, no backend writes).
+    require_once __DIR__ . '/BusinessRuntime.php';
+    $spec = is_array($p['bizSpec'] ?? null) ? $p['bizSpec'] : ['entities' => $meta['entities']];
     if ($contactEmail !== '' && stripos($html, '<form') !== false) $html = injectContactHandler($html);
     $html = pak_wire_frontend_forms($html, pak_form_entity_map($entities));
+    $html = business_runtime_inject($html, $spec, $token);
     if (pak_write($dir . '/index.html', $html) === false) {
         return ['ok' => false, 'error' => 'Cannot write preview site.'];
     }
@@ -327,7 +325,7 @@ function preview_provision(array $p): array {
 
     // Public handlers in the preview root (isolated from production).
     if ($contactEmail !== '') {
-        pak_write($dir . '/contact.php', buildContactReceiver($bizName, $contactEmail));
+        pak_write($dir . '/contact.php', buildContactReceiver($bizName, $contactEmail, $slug));
     }
     $orderlike = preview_orderlike($meta, $entities, $adminUser, $storedHash);
     pak_public_handlers($dir, $orderlike, $entities);

@@ -1,0 +1,74 @@
+{
+    "token": "1a1c4472fc7474209c65cea4e81f609c",
+    "bizName": "TestCo",
+    "slug": "testco",
+    "entities": [
+        {
+            "id": "services",
+            "name": "Services",
+            "singular": "Service",
+            "icon": "💼",
+            "fields": [
+                {
+                    "name": "title",
+                    "label": "Title",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "details",
+                    "label": "Details",
+                    "type": "textarea",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "textarea",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "contactEmail": "owner@example.com",
+    "genMode": "admin",
+    "createdAt": "2026-10-19T16:46:26+01:00",
+    "updatedAt": "2026-10-19T16:46:26+01:00",
+    "htmlHash": "5d73320b0b63524e508f6650ac285acd",
+    "sharing": {
+        "enabled": true,
+        "expiresAt": 1793634387
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "contact": "inquiries",
+    "booking": "bookings",
+    "order": "orders",
+    "registration": "customers",
+    "review": "reviews",
+    "quote": "inquiries",
+    "newsletter": "subscribers",
+    "appointment": "appointments"
+}

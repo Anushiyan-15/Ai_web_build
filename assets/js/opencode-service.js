@@ -47,10 +47,14 @@ window.OpenCodeAI = (function () {
     return (b ? b : '') + path;
   }
 
+  // timeoutMs = 0 (default) → NO time limit. Generation takes as long as it
+  // takes; nothing is cut off or pushed into templates by a timer.
   async function post(path, body, timeoutMs) {
-    timeoutMs = timeoutMs || 95000;
+    timeoutMs = (typeof timeoutMs === 'number' && timeoutMs > 0) ? timeoutMs : 0;
     const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, timeoutMs) : null;
+    // Only a real page unload/cancel aborts; a named reason keeps the
+    // DOMException "signal is aborted without reason" out of the UI.
+    const timer = (ctrl && timeoutMs > 0) ? setTimeout(() => { try { ctrl.abort(new Error('AI request to ' + path + ' timed out after ' + Math.round(timeoutMs / 1000) + 's')); } catch (e) {} }, timeoutMs) : null;
     try {
       const resp = await fetch(endpoint(path), {
         method: 'POST',
@@ -61,7 +65,11 @@ window.OpenCodeAI = (function () {
       if (!resp.ok) throw new Error('HTTP ' + resp.status + ' on ' + path);
       return resp.json();
     } catch (e) {
-      if (e && e.name === 'AbortError') throw new Error('AI request timed out — please retry');
+      if ((e && e.name === 'AbortError') || (ctrl && ctrl.signal && ctrl.signal.aborted)) {
+        throw new Error(timeoutMs > 0
+          ? 'AI request to ' + path + ' timed out after ' + Math.round(timeoutMs / 1000) + 's'
+          : 'AI request to ' + path + ' was cancelled (page reload or network drop)');
+      }
       throw e;
     } finally {
       if (timer) clearTimeout(timer);
@@ -124,7 +132,8 @@ window.OpenCodeAI = (function () {
   async function analyzeRequirements(data, onProgress) {
     if (onProgress) onProgress({ stage: 'analyzing', pct: 12, message: 'OpenCode AI analysing requirements…' });
     try {
-      const j = await post('/api/opencode.php', { action: 'analyze', data, taste: tastePrefs(), model: getModel() }, 12000);
+      // No client budget: the server decides when the brief is ready.
+      const j = await post('/api/opencode.php', { action: 'analyze', data, taste: tastePrefs(), model: getModel() }, 0);
       if (j && j.brief) {
         // Track Gemini health: analyze rides the Gemini lite lane. If it
         // failed we know Gemini is down → route generation quick-first
@@ -195,13 +204,15 @@ window.OpenCodeAI = (function () {
     return j;
   }
 
-  /* One fast-lane call (Gemini MAX-budget full page ~40-70s). */
+  /* One fast-lane call (Gemini MAX-budget full page ~60-200s). 360s
+     frontend budget: no artificial cut — a healthy slow call is never
+     discarded and pushed into templates. */
   async function generateFast(data, variation, mode, brief, slot, model, temp) {
     const j = await post('/api/opencode.php', {
       action: 'fast_one', data, variation, mode, brief, taste: tastePrefs(),
       model: model || undefined, temperature: (typeof temp === 'number' ? temp : undefined),
       slot: (typeof slot === 'number' ? slot : -1)
-    }, 115000);
+    }, 0);
     if (j && j.success && j.html && j.html.length > 500) return assertShopOk(j, data, variation);
     throw new Error(((j && (j.errors || [])[0]) || (j && j.error) || 'fast lane failed') + ' [' + variation + ']');
   }
@@ -212,7 +223,7 @@ window.OpenCodeAI = (function () {
       action: 'quick_one', data, variation, mode, brief, taste: tastePrefs(), model: modelOverride || getModel(),
       temperature: (typeof temp === 'number' ? temp : undefined),
       slot: (typeof slot === 'number' ? slot : -1)
-    }, 130000);
+    }, 0);
     if (j && j.success && j.html && j.html.length > 500) return assertShopOk(j, data, variation);
     throw new Error(((j && (j.errors || [])[0]) || (j && j.error) || 'quick lane failed') + ' [' + variation + ']');
   }
@@ -243,7 +254,7 @@ window.OpenCodeAI = (function () {
       if (onPolish) onPolish();
       const r = await post('/api/opencode.php', {
         action: 'taste_repair', html: j.html, issues: j.taste_audit.issues || []
-      }, 58000);
+      }, 0);
       if (r && r.success && r.html && r.html.length > 500) {
         const ra = r.taste_audit || {};
         if (typeof ra.score !== 'number' || ra.score >= j.taste_audit.score) {
@@ -262,7 +273,7 @@ window.OpenCodeAI = (function () {
     const j = await post('/api/opencode.php', {
       action: 'generate_one', data, variation, mode, brief, taste: tastePrefs(), model: modelOverride || getModel(),
       slot: (typeof slot === 'number' ? slot : -1)
-    }, 280000);
+    }, 0);
     if (j && j.success && j.html && j.html.length > 500) return j;
     throw new Error(((j && (j.errors || [])[0]) || (j && j.error) || 'OpenCode generate failed') + ' [' + variation + ']');
   }
@@ -281,7 +292,7 @@ window.OpenCodeAI = (function () {
      Diversity via temperature + layout brief + slot direction + taste dials.
      Partial fallback: 1-2 AI ready → return them, caller fills the rest
      with server templates by variation id. Throws only on 0/3.
-     Bounded ≈ 100s (95s race + polish within budget). */
+     Bounded ≈ 170s (165s race + polish within budget; Apache allows 300s). */
   async function generateConcepts(data, mode, options) {
     options = options || {};
     const onProgress = options.onProgress;
@@ -325,13 +336,9 @@ window.OpenCodeAI = (function () {
         bump(`✓ ${done + 1}/3 variations ready (${j.model || 'AI'})`);
       } catch (e) { errors.push(v + ': ' + (e?.message || e)); }
     }));
-    await Promise.race([
-      lane1,
-      new Promise(r => setTimeout(() => {
-        if (!laneDone) errors.push('lane timeout 95s — proceeding with ready variations');
-        r();
-      }, 95000))
-    ]);
+    // No lane deadline: wait for every slot. A slow-but-healthy call is
+    // never discarded, and no artificial "lane timeout" error is produced.
+    await lane1;
     laneDone = true;
     // Concurrent polish batch (failing pages only, threshold 70, within budget).
     if (pending.length) {
@@ -407,13 +414,8 @@ window.OpenCodeAI = (function () {
       done++;
       if (onProgress) onProgress({ stage: 'generating', pct: 40 + Math.round((done / 3) * 55), completedCount: done, message: `✓ ${done}/3 AI layouts ready (${Math.round((Date.now() - t0) / 1000)}s) ${tokStr()}…` });
     }));
-    await Promise.race([
-      subAll,
-      new Promise(r => setTimeout(() => {
-        if (!subDone) errors.push('layout lane timeout 95s — proceeding with ready layouts');
-        r();
-      }, 95000))
-    ]);
+    // No lane deadline (see generateConcepts): wait for every layout.
+    await subAll;
     subDone = true;
     // Concurrent polish batch (failing pages only, within budget).
     if (pendingSub.length) {
@@ -523,7 +525,7 @@ window.OpenCodeAI = (function () {
       try {
         const fj = await post('/api/opencode.php', {
           action: 'fast_edit', current_html: currentHtml, instruction, biz_name: bizName, taste: tastePrefs(), model: chatModel
-        }, 35000);
+        }, 0);
         if (fj && fj.success && fj.html) {
           return {
             conversation: fj.response_msg || '✨ Applied your change.',
@@ -559,7 +561,7 @@ window.OpenCodeAI = (function () {
     const j = await post('/api/opencode.php', {
       action: 'edit_snippet', selected_html: selectedHtml.slice(0, 8000),
       instruction, biz_name: bizName, taste: tastePrefs(), model: getModel()
-    }, 95000);
+    }, 0);
     if (j && j.success && j.html) {
       return {
         conversation: j.response_msg || '✨ OpenCode AI updated the selected element.',
@@ -608,7 +610,7 @@ window.OpenCodeAI = (function () {
       mode: (data && data.gen_mode) || 'static', brief: brief || 'Polish the selected landing page only. Keep design system, improve hero clarity.',
       taste: tastePrefs(), model: OPENCODE_SLOT3_MODEL, landing_only: true,
       current_html: String(html || '').slice(0, 40000)
-    }, 100000);
+    }, 0);
     if (j && j.success && j.html && j.html.length > 500) return j;
     throw new Error('Space Bunny landing enhance failed');
   }

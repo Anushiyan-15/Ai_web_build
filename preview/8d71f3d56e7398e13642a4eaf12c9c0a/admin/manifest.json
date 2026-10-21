@@ -1,0 +1,184 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "csrfco",
+    "order_id": "PREVIEW-8d71f3d5",
+    "business": {
+        "name": "CsrfCo",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passenger",
+                    "label": "Passenger",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true
+                },
+                {
+                    "name": "status",
+                    "label": "Approval status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "pending",
+                        "approved",
+                        "rejected",
+                        "cancelled"
+                    ]
+                },
+                {
+                    "name": "payment_status",
+                    "label": "Payment status",
+                    "type": "text",
+                    "required": false
+                },
+                {
+                    "name": "amount",
+                    "label": "Fare total",
+                    "type": "number",
+                    "required": false
+                }
+            ]
+        },
+        {
+            "id": "customers",
+            "name": "Customers",
+            "singular": "Customer",
+            "icon": "👥",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Customer \/ Passenger",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true
+                },
+                {
+                    "name": "total_bookings",
+                    "label": "Total Bookings",
+                    "type": "number",
+                    "required": false
+                },
+                {
+                    "name": "total_spent",
+                    "label": "Total Spent",
+                    "type": "number",
+                    "required": false
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "active",
+                        "verified",
+                        "guest"
+                    ]
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "inquiries",
+            "label": "Inquiries",
+            "icon": "✉️",
+            "entity": "inquiries"
+        },
+        {
+            "id": "bookings",
+            "label": "Bookings",
+            "icon": "🎫",
+            "entity": "bookings"
+        },
+        {
+            "id": "customers",
+            "label": "Customers",
+            "icon": "👥",
+            "entity": "customers"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-20T09:50:49+01:00"
+}

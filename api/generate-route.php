@@ -8,6 +8,10 @@ header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
+// decide can run staged provider analysis; there is NO AI time cap, so the
+// endpoint runs until the model finishes. Only the PHP ceiling is lifted.
+@set_time_limit(0);
+
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/BizIntelligence/Schema.php';
 require_once __DIR__ . '/../includes/BizIntelligence/Pipeline.php';

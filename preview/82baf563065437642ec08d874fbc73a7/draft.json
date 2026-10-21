@@ -1,0 +1,81 @@
+{
+    "token": "82baf563065437642ec08d874fbc73a7",
+    "bizName": "CsrfCo",
+    "slug": "csrfco",
+    "entities": [
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "contactEmail": "o@example.com",
+    "genMode": "admin",
+    "createdAt": "2026-10-20T09:48:22+01:00",
+    "updatedAt": "2026-10-20T09:48:22+01:00",
+    "htmlHash": "3b5791c756864e6418eaac8dee487a1d",
+    "sharing": {
+        "enabled": true,
+        "expiresAt": 1793695702
+    }
+}

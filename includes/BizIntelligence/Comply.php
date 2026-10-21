@@ -6,6 +6,7 @@
 // business data), existing markup is never rewritten — only completed.
 // Verify.php stays read-only; call comply BEFORE verify.
 require_once __DIR__ . '/Schema.php';
+require_once __DIR__ . '/../HtmlUtil.php';
 
 function biz_comply_required_sections(array $spec): array {
     $need = ['hero', 'contact'];
@@ -74,7 +75,7 @@ function biz_ensure_html_compliance(string $html, array $spec): array {
         } elseif (preg_match('/<footer\b/i', $html)) {
             $html = preg_replace('/<footer\b/i', $block . '<footer', $html, 1);
         } else {
-            $html = preg_replace('/<\/body>/i', $block . '</body>', $html, 1);
+            $html = wc_insert_before_body_end($html, $block);
         }
         $fixes[] = 'Added missing section #' . $key;
     }

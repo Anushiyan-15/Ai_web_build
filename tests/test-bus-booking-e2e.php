@@ -1,9 +1,9 @@
 <?php
-// tests/test-bus-booking-e2e.php — run: php tests/test-bus-booking-e2e.php
-// Master-prompt §11 bus flow, all 12 steps against the real backend:
-// admin seeds route/bus/schedule → customer searches DB → hold → book (ref)
-// → retrieve → admin manages → seats protected → rejections → admin change
-// reflected → persistence. Plus runtime search/catalog wiring checks.
+// tests/test-bus-booking-e2e.php â€” run: php tests/test-bus-booking-e2e.php
+// Master-prompt Â§11 bus flow, all 12 steps against the real backend:
+// admin seeds route/bus/schedule â†’ customer searches DB â†’ hold â†’ book (ref)
+// â†’ retrieve â†’ admin manages â†’ seats protected â†’ rejections â†’ admin change
+// reflected â†’ persistence. Plus runtime search/catalog wiring checks.
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!defined('STORAGE_DIR')) define('STORAGE_DIR', sys_get_temp_dir() . '/webbbuilder-bus-booking-e2e-' . getmypid());
 require_once __DIR__ . '/../includes/BusinessOps.php';
@@ -69,7 +69,7 @@ $av0 = $D(['action' => 'availability', 'slug' => $SLUG, 'entity' => 'bookings', 
 ok($av0['http'] === 200 && ($av0['body']['data']['total_seats'] ?? 0) === 40
     && empty($av0['body']['data']['reserved_seats']), '1b: public seat availability returns capacity without customer data');
 
-// 2+3. Anonymous customer searches route+date → real schedule from DB.
+// 2+3. Anonymous customer searches route+date â†’ real schedule from DB.
 $s = $D(['action' => 'list', 'slug' => $SLUG, 'entity' => 'trips', 'route' => 'chennai', 'date' => $DATE]);
 ok($s['http'] === 200 && count($s['body']['data']) >= 1, '2: public search finds schedules');
 $found = null;
@@ -92,7 +92,7 @@ ok($release['http'] === 200, '4d: customer can release their hold');
 $h = $D(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => $tripId, 'seats' => ['A1', 'A2']]);
 ok($h['http'] === 200, '4e: released seats can be held again');
 
-// 5+6. Confirm booking → unique ref persisted.
+// 5+6. Confirm booking â†’ unique ref persisted.
 $c = $D(['action' => 'create', 'slug' => $SLUG, 'entity' => 'bookings',
     'record' => ['trip_id' => $tripId, 'seats' => ['A3'], 'passenger' => 'E2E Rider',
         'phone' => '0771112222', 'email' => 'e2erider@example.com']]);
@@ -105,7 +105,7 @@ $all = bops_load($SLUG, 'bookings');
 $real = false; foreach ($all as $row) { if (($row['ref'] ?? '') === $ref) $real = true; }
 ok($real, '6: ticket ref corresponds to a real stored booking');
 
-// 6b. Hold → confirm on the SAME seats (the real customer flow): the own
+// 6b. Hold â†’ confirm on the SAME seats (the real customer flow): the own
 // live hold converts instead of blocking its own confirmation.
 $hOwn = $D(['action' => 'hold', 'slug' => $SLUG, 'entity' => 'bookings', 'trip_id' => $tripId, 'seats' => ['B1', 'B2']]);
 ok($hOwn['http'] === 200, '6b: own seats held first');
@@ -213,8 +213,8 @@ ok($np == 900, '11: admin price change live in customer search');
 $re = bops_load($SLUG, 'trips');
 ok(count($re) === 1 && $re[0]['id'] === $tripId, '12: records persist across re-reads');
 
-// The generated bus widget follows the same live search → seat → hold →
-// passenger → ticket workflow as the bus-loop acceptance page.
+// The generated bus widget follows the same live search â†’ seat â†’ hold â†’
+// passenger â†’ ticket workflow as the bus-loop acceptance page.
 $renderWidget = new ReflectionMethod('AutoSiteGenerator', 'renderDynamicWidget');
 $renderWidget->setAccessible(true);
 $widget = $renderWidget->invoke(null, 'bus', 'City Express', $SLUG);
@@ -246,11 +246,10 @@ ok(strpos($customerPortal, "'bus_customer_'") !== false
     && strpos($customerPortal, 'password_verify($password') !== false
     && strpos($customerPortal, "bops_dispatch(['action' => 'list', 'entity' => 'bookings', 'slug' => \$slug])") !== false
     && strpos($customerPortal, 'customer_accounts.json') !== false
-    && strpos($customerPortal, '$requestVerification($email)') !== false
-    && strpos($customerPortal, 'verify_register') !== false
-    && strpos($customerPortal, 'email_verified_at') !== false
-    && strpos($customerPortal, "unset(\$_SESSION['admin_auth'])") !== false,
-    'UI: generated customer accounts verify email, hash passwords, and use site-scoped backend history');
+    && strpos($customerPortal, '$action === \'register\'') !== false
+    && strpos($customerPortal, '$_SESSION[$sessionKey]') !== false
+    && strpos($customerPortal, 'unset($_SESSION[\'admin_auth\'])') !== false,
+    'UI: generated customer accounts support immediate sign-up without mandatory email verification, hash passwords, and use site-scoped backend history');
 $autoGeneratorSource = (string)file_get_contents(__DIR__ . '/../includes/AutoSiteGenerator.php');
 $publishSource = (string)file_get_contents(__DIR__ . '/../publish.php');
 $compatPortal = (string)file_get_contents(__DIR__ . '/../bus-portal.php');
@@ -327,7 +326,7 @@ ok(strpos($var, '__VAR_RENDERED_KEY__') !== false, 'RT: variations render is ide
 
 // Cancellation + refund per policy.
 $cx2 = $D(['action' => 'cancel', 'slug' => $SLUG, 'entity' => 'bookings', 'id' => $bid, 'email' => 'e2erider@example.com']);
-ok($cx2['http'] === 200 && ($cx2['body']['data']['payment_status'] ?? '') === 'refund_pending', 'CX: paid cancel → refund_pending');
+ok($cx2['http'] === 200 && ($cx2['body']['data']['payment_status'] ?? '') === 'refund_pending', 'CX: paid cancel â†’ refund_pending');
 
 rmdir_r(bops_root() . '/collections/' . $SLUG);
 rmdir_r(bops_root() . '/sites/' . $SLUG);

@@ -138,7 +138,7 @@ const MIRROR = ['bookings', 'orders', 'appointments', 'inquiries', 'subscribers'
   'products', 'customers', 'coupons', 'menu_items', 'reservations', 'rooms', 'services', 'staff',
   'doctors', 'patients', 'properties', 'viewings', 'courses', 'enrollments', 'tutors',
   'packages', 'departures', 'events', 'tickets', 'units', 'rentals', 'vehicles', 'service_jobs',
-  'plans', 'projects', 'buses', 'routes'];
+  'plans', 'projects', 'buses', 'routes', 'trips'];
 // Mirror into the published admin's data files (same convergent upsert-by-id
 // rule as the PHP mirror): the admin dashboard manages these very rows.
 async function mirrorAdmin(slug, entity, rec, del = false) {

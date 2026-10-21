@@ -1,0 +1,101 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "debug2-co",
+    "order_id": "PREVIEW-b9187be0",
+    "business": {
+        "name": "Debug2 Co",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "tel",
+                    "required": true
+                },
+                {
+                    "name": "passenger",
+                    "label": "Passenger",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": false
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "held",
+                        "confirmed",
+                        "pending",
+                        "approved",
+                        "rejected",
+                        "cancelled"
+                    ]
+                },
+                {
+                    "name": "payment_status",
+                    "label": "Payment status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "unpaid",
+                        "paid",
+                        "refund_pending",
+                        "refunded"
+                    ]
+                },
+                {
+                    "name": "amount",
+                    "label": "Fare total",
+                    "type": "number",
+                    "required": false
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "bookings",
+            "label": "Bookings",
+            "icon": "🎫",
+            "entity": "bookings"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-20T14:16:55+01:00"
+}

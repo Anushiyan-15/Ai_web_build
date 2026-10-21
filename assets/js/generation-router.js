@@ -30,10 +30,16 @@ window.GenerationRouter = (function () {
     try { if (typeof SITE_URL !== 'undefined' && SITE_URL) return SITE_URL; } catch (e) {}
     return '';
   }
+  // timeoutMs = 0 (default) → NO time limit: routing/generation waits until
+  // the server answers, however long that takes.
   async function post(path, body, timeoutMs) {
-    timeoutMs = timeoutMs || 115000;
+    timeoutMs = (typeof timeoutMs === 'number' && timeoutMs > 0) ? timeoutMs : 0;
     const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, timeoutMs) : null;
+    // Explicit abort reason: a bare ctrl.abort() surfaces in Chrome as the
+    // cryptic DOMException "signal is aborted without reason", which then
+    // leaks into the builder flash as "Templates (AI failed: signal is
+    // aborted without reason)". Naming the reason keeps logs actionable.
+    const timer = (ctrl && timeoutMs > 0) ? setTimeout(() => { try { ctrl.abort(new Error('AI request to ' + path + ' timed out after ' + Math.round(timeoutMs / 1000) + 's')); } catch (e) {} }, timeoutMs) : null;
     try {
       const r = await fetch(base() + path, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -41,13 +47,20 @@ window.GenerationRouter = (function () {
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
+    } catch (e) {
+      // ctrl.abort(reason) makes fetch reject with the reason itself when
+      // supported; older engines throw DOMException AbortError instead.
+      if ((e && e.name === 'AbortError') || (ctrl && ctrl.signal && ctrl.signal.aborted))
+        throw new Error(timeoutMs > 0
+          ? 'AI request to ' + path + ' timed out after ' + Math.round(timeoutMs / 1000) + 's'
+          : 'AI request to ' + path + ' was cancelled (page reload or network drop)');
+      throw e;
     } finally { if (timer) clearTimeout(timer); }
   }
 
   async function decide(data, orderId) {
-    // Staged Gemini analysis takes ~15-25s; 60s budget so decide never
-    // false-fails into templates on a merely slow analysis.
-    const j = await post('/api/generate-route.php', { action: 'decide', data, order_id: orderId || '' }, 60000);
+    // No time limit: staged analysis can take as long as Gemini needs.
+    const j = await post('/api/generate-route.php', { action: 'decide', data, order_id: orderId || '' }, 0);
     if (!j || !j.success || !j.route) throw new Error((j && j.error) || 'routing failed');
     return j; // {spec, route, summary}
   }
@@ -292,8 +305,9 @@ window.GenerationRouter = (function () {
     if (options.spec && options.spec.schema === 'biz-spec/1') {
       // Approved blueprint is the single source of truth: assess only,
       // never rebuild (prevents requirement drift between steps).
+      // No time limit — assess waits for the server, however long it takes.
       const j = await post('/api/generate-route.php', { action: 'assess',
-        spec: options.spec, order_id: options.orderId || '' }, 30000);
+        spec: options.spec, order_id: options.orderId || '' }, 0);
       if (!j || !j.success || !j.route) throw new Error((j && j.error) || 'routing assess failed');
       spec = options.spec; route = j.route;
     } else {

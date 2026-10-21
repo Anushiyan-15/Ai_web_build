@@ -53,7 +53,8 @@ function biz_gemini_staged(string $text, array $wizard): array {
         'model' => "From the same business, return JSON {entities[{key,name,fields[],relations[],lifecycle[]}], actors[{role,actions[]}], workflows[{key,steps[],states[],failures[]}]} only.\n\nDESC:\n" . substr($text, 0, 3000),
     ];
     foreach ($stages as $k => $prompt) {
-        [$ok, $txt, $err] = gemini_chat_once($model, 'You are a business analyst. Output valid JSON only. No markdown.', $prompt, 0.4, 1500, 20);
+        // No per-stage limit: a slow-but-healthy reply must never be cut.
+        [$ok, $txt, $err] = gemini_chat_once($model, 'You are a business analyst. Output valid JSON only. No markdown.', $prompt, 0.4, 1500, 0);
         if (!$ok) { $errs[] = $k . ': ' . $err; continue; }
         $j = json_decode(preg_replace('/^```json|^```|```$/m', '', trim($txt)), true);
         if (!is_array($j)) { $errs[] = $k . ': bad json'; continue; }

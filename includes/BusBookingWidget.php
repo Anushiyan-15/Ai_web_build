@@ -6,104 +6,164 @@ if (!function_exists('bus_booking_widget_html')) {
         $accountUrl = $portalUrl . (strpos($portalUrl, '?') === false ? '?' : '&') . 'mode=register';
         $html = <<<'HTML'
 <style data-wc-bus-booking-style>
-[data-wc-live-bus-booking]{--wc-bus-accent:var(--accent,var(--primary,#0f766e));margin:clamp(2rem,6vw,5rem) auto;padding:clamp(1rem,3vw,2rem);max-width:1100px;border:1px solid var(--border,#dbe3e7);border-radius:18px;background:var(--surface,#fff);color:var(--text,#17212b);font:inherit}
-[data-wc-live-bus-booking] h2,[data-wc-live-bus-booking] h3{color:inherit}
+[data-wc-live-bus-booking]{--wc-bus-accent:var(--accent,var(--primary,#2563eb));margin:clamp(2rem,6vw,5rem) auto;padding:clamp(1.5rem,3.5vw,2.5rem);max-width:1150px;border:1px solid var(--border,#dbe3e7);border-radius:20px;background:var(--surface,#fff);color:var(--text,#0f172a);font:inherit;box-shadow:0 10px 30px -5px rgba(0,0,0,0.05)}
+[data-wc-live-bus-booking] h2,[data-wc-live-bus-booking] h3{color:inherit;font-weight:800}
+[data-wc-live-bus-booking] .booking-steps-indicator{display:flex;justify-content:space-between;position:relative;margin:0 auto 2.2rem;max-width:580px;padding:0 1rem}
+[data-wc-live-bus-booking] .booking-steps-indicator::before{content:"";position:absolute;top:16px;left:40px;right:40px;height:2px;background:var(--border,#e2e8f0);z-index:1}
+[data-wc-live-bus-booking] .step-indicator-item{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.82rem;font-weight:700;color:var(--text-muted,#64748b);position:relative;z-index:2;background:var(--surface,#fff);padding:0 8px;cursor:pointer}
+[data-wc-live-bus-booking] .step-indicator-item.active{color:var(--wc-bus-accent)}
+[data-wc-live-bus-booking] .step-indicator-dot{width:32px;height:32px;border-radius:50%;background:#f1f5f9;border:1.5px solid var(--border,#cbd5e1);color:#64748b;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;transition:all .2s ease}
+[data-wc-live-bus-booking] .step-indicator-item.active .step-indicator-dot{background:var(--wc-bus-accent);border-color:var(--wc-bus-accent);color:#fff;box-shadow:0 0 0 4px rgba(37,99,235,0.18)}
 [data-wc-live-bus-booking] .form-group{display:grid;gap:.45rem}
-[data-wc-live-bus-booking] .form-group label{font-size:.9rem;font-weight:650}
-[data-wc-live-bus-booking] .form-input{width:100%;min-height:44px;padding:.7rem .8rem;border:1px solid var(--border,#cbd5e1);border-radius:9px;background:var(--background,#fff);color:inherit;font:inherit}
-[data-wc-live-bus-booking] .btn-submit{min-height:44px;margin-top:1rem;padding:.7rem 1rem;border:0;border-radius:9px;background:var(--wc-bus-accent);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+[data-wc-live-bus-booking] .form-group label{font-size:.86rem;font-weight:700}
+[data-wc-live-bus-booking] .form-input{width:100%;min-height:46px;padding:.75rem .95rem;border:1px solid var(--border,#cbd5e1);border-radius:10px;background:var(--background,#fff);color:inherit;font:inherit;font-size:.95rem;transition:border-color .2s,box-shadow .2s}
+[data-wc-live-bus-booking] .form-input:focus{outline:none;border-color:var(--wc-bus-accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
+[data-wc-live-bus-booking] .btn-submit{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:.75rem 1.4rem;border:0;border-radius:10px;background:var(--wc-bus-accent);color:#fff;font:inherit;font-weight:750;cursor:pointer;transition:all .2s ease;text-decoration:none}
+[data-wc-live-bus-booking] .btn-submit:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
 [data-wc-live-bus-booking] .btn-submit:disabled{opacity:.55;cursor:not-allowed}
-[data-wc-live-bus-booking] .bus-trip-list{display:grid;gap:.75rem;margin-top:1rem}
-[data-wc-live-bus-booking] .bus-trip-option{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.5rem 1rem;padding:1rem 0;border-bottom:1px solid var(--border,#dbe3e7)}
-[data-wc-live-bus-booking] .bus-trip-option p{grid-column:1}
-[data-wc-live-bus-booking] .bus-trip-option .btn-submit{grid-column:2;grid-row:1/3;margin:0}
+[data-wc-live-bus-booking] .btn-outline{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:.5rem 1rem;border:1.5px solid var(--border,#cbd5e1);border-radius:9px;background:transparent;color:inherit;font:inherit;font-weight:650;font-size:.85rem;cursor:pointer;transition:all .2s}
+[data-wc-live-bus-booking] .btn-outline:hover{border-color:var(--wc-bus-accent);color:var(--wc-bus-accent)}
+[data-wc-live-bus-booking] .bus-trip-list{display:grid;gap:1rem;margin-top:1.5rem}
+[data-wc-live-bus-booking] .bus-trip-option{display:flex;justify-content:space-between;align-items:center;gap:1.25rem;padding:1.4rem;border:1px solid var(--border,#e2e8f0);border-radius:14px;background:var(--surface,#fff);box-shadow:0 2px 6px rgba(0,0,0,0.03);transition:all .2s ease}
+[data-wc-live-bus-booking] .bus-trip-option:hover{border-color:var(--wc-bus-accent);box-shadow:0 6px 18px rgba(37,99,235,0.08);transform:translateY(-1px)}
 [data-wc-live-bus-booking] [data-wc-step][hidden]{display:none!important}
-[data-wc-live-bus-booking] .bus-seat-grid{display:grid;grid-template-columns:repeat(4,minmax(44px,1fr));gap:.6rem;max-width:360px;margin:1rem 0}
-[data-wc-live-bus-booking] .bus-seat{min-height:44px;border:1px solid var(--border,#b8c4ca);border-radius:8px;background:var(--background,#fff);color:inherit;font:inherit;font-weight:650;cursor:pointer}
-[data-wc-live-bus-booking] .bus-seat.selected{border-color:var(--wc-bus-accent);background:var(--wc-bus-accent);color:#fff}
+[data-wc-live-bus-booking] .bus-seat-grid{display:grid;grid-template-columns:repeat(2,46px) 24px repeat(2,46px);gap:10px;max-width:360px;margin:1.5rem auto;justify-content:center}
+[data-wc-live-bus-booking] .aisle-gap{width:24px;display:flex;align-items:center;justify-content:center}
+[data-wc-live-bus-booking] .bus-seat{width:46px;height:46px;border:1.5px solid var(--border,#cbd5e1);border-radius:8px;background:var(--background,#fff);color:inherit;font:inherit;font-size:.82rem;font-weight:750;cursor:pointer;transition:all .2s}
+[data-wc-live-bus-booking] .bus-seat:hover:not(:disabled){border-color:var(--wc-bus-accent);background:rgba(37,99,235,0.08)}
+[data-wc-live-bus-booking] .bus-seat.selected{border-color:var(--wc-bus-accent);background:var(--wc-bus-accent);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,0.35)}
 [data-wc-live-bus-booking] .bus-seat.held{background:#fef3c7;border-color:#d97706;color:#92400e;cursor:not-allowed;text-decoration:none}
 [data-wc-live-bus-booking] .bus-seat.booked{background:#fee2e2;border-color:#b91c1c;color:#7f1d1d;cursor:not-allowed;text-decoration:line-through}
 [data-wc-live-bus-booking] .bus-seat:disabled{opacity:.75;cursor:not-allowed}
 [data-wc-live-bus-booking] .bus-seat:disabled:not(.held):not(.booked){opacity:.4;text-decoration:line-through}
-[data-wc-live-bus-booking] .bus-legend{display:flex;gap:1rem;flex-wrap:wrap;margin:.75rem 0 0;padding:0;list-style:none;font-size:.82rem;color:var(--text-muted,#64748b)}
-[data-wc-live-bus-booking] .bus-legend li{display:flex;align-items:center;gap:.4rem}
-[data-wc-live-bus-booking] .bus-legend .sw{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid #b8c4ca}
+[data-wc-live-bus-booking] .bus-legend{display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;margin:1.2rem 0;padding:0;list-style:none;font-size:.84rem;color:var(--text-muted,#64748b)}
+[data-wc-live-bus-booking] .bus-legend li{display:flex;align-items:center;gap:.45rem}
+[data-wc-live-bus-booking] .bus-legend .sw{display:inline-block;width:15px;height:15px;border-radius:4px;border:1px solid #b8c4ca}
 [data-wc-live-bus-booking] .bus-legend .sw-available{background:#fff}
 [data-wc-live-bus-booking] .bus-legend .sw-selected{background:var(--wc-bus-accent);border-color:var(--wc-bus-accent)}
 [data-wc-live-bus-booking] .bus-legend .sw-held{background:#fbbf24;border-color:#d97706}
 [data-wc-live-bus-booking] .bus-legend .sw-booked{background:#f87171;border-color:#b91c1c}
 [data-wc-live-bus-booking] .bus-legend .sw-unavailable{background:#e2e8f0;border-color:#94a3b8}
-[data-wc-live-bus-booking] .bus-status{min-height:1.4em}
-@media(max-width:600px){[data-wc-live-bus-booking] .bus-trip-option{grid-template-columns:1fr}[data-wc-live-bus-booking] .bus-trip-option .btn-submit{grid-column:1;grid-row:auto;width:100%}}
+[data-wc-live-bus-booking] .bus-status{min-height:1.4em;margin-top:.75rem;font-size:.9rem}
+@media(max-width:680px){[data-wc-live-bus-booking] .bus-trip-option{flex-direction:column;align-items:flex-start}[data-wc-live-bus-booking] .bus-trip-option .btn-submit{width:100%}}
 @media(prefers-reduced-motion:reduce){[data-wc-live-bus-booking], [data-wc-live-bus-booking] *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>
 <div id="booking" class="widget-wrap" data-wc-live-bus-booking>
-    <div style="margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:14px;">
-        <h2 style="font-size:22px;font-weight:700;color:inherit;">Book your journey</h2>
-        <p style="margin-top:5px;color:var(--text-muted);font-size:14px;">Live schedules are shown below. Filter by route or travel date, choose available seats, and confirm your ticket.</p>
+    <div style="margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:18px;text-align:center;">
+        <span style="font-size:.85rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:var(--wc-bus-accent);">Instant Reservation</span>
+        <h2 style="font-size:26px;font-weight:800;color:inherit;margin-top:4px;">Book Your Journey</h2>
+        <p style="margin-top:6px;color:var(--text-muted);font-size:15px;">Search daily routes, choose your preferred seats, and confirm your boarding ticket in minutes.</p>
     </div>
-    <form id="busTripSearch" method="POST" onsubmit="return false" data-wc-search="trips" data-wc-target="#busTripResults">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;">
-            <div class="form-group"><label for="busRoute">Route (optional)</label><input id="busRoute" name="route" class="form-input" placeholder="For example, Chennai"></div>
-            <div class="form-group"><label for="busDate">Travel date (optional)</label><input id="busDate" name="date" type="date" class="form-input"></div>
+
+    <!-- 4-Step Interactive Wizard Progress Indicator -->
+    <div class="booking-steps-indicator" aria-label="Booking steps">
+        <div class="step-indicator-item active" data-indicator="search" onclick="if(window.WCBiz)WCBiz.gotoStep('search')">
+            <div class="step-indicator-dot">1</div>
+            <span>Search</span>
         </div>
-        <button type="submit" class="btn-submit" id="busFindButton">Find buses</button>
-    </form>
-    <div id="busTripResults" class="bus-trip-list" data-wc-results aria-live="polite">
-        <p class="bus-status">Loading available trips…</p>
+        <div class="step-indicator-item" data-indicator="seats">
+            <div class="step-indicator-dot">2</div>
+            <span>Seats</span>
+        </div>
+        <div class="step-indicator-item" data-indicator="details">
+            <div class="step-indicator-dot">3</div>
+            <span>Details</span>
+        </div>
+        <div class="step-indicator-item" data-indicator="ticket">
+            <div class="step-indicator-dot">4</div>
+            <span>Ticket &amp; Pay</span>
+        </div>
     </div>
+
+    <!-- STEP 1: Search Form & Trip Results -->
+    <div data-wc-step="search">
+        <form id="busTripSearch" method="POST" onsubmit="return false" data-wc-search="trips" data-wc-target="#busTripResults">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;background:var(--background,#f8fafc);padding:20px;border-radius:14px;border:1px solid var(--border,#e2e8f0);align-items:end;">
+                <div class="form-group"><label for="busRoute">From / To Route</label><input id="busRoute" name="route" class="form-input" placeholder="Origin or Destination (e.g. Chennai)"></div>
+                <div class="form-group"><label for="busDate">Travel Date</label><input id="busDate" name="date" type="date" class="form-input"></div>
+                <div><button type="submit" class="btn-submit" id="busFindButton" style="width:100%;">Find Buses</button></div>
+            </div>
+        </form>
+        <div id="busTripResults" class="bus-trip-list" data-wc-results aria-live="polite">
+            <p class="bus-status">Loading available trips…</p>
+        </div>
+    </div>
+
+    <!-- STEP 2: Interactive Seat Map (4-column with Center Aisle) -->
     <section data-wc-step="seats" hidden>
-        <div class="widget-wrap" style="margin:24px 0 0;padding:22px;">
-            <h3 style="font-size:18px;">Choose your seats</h3>
-            <p id="busTripSummary" style="color:var(--text-muted);font-size:13px;"></p>
+        <div style="margin:16px 0 0;padding:22px;border:1px solid var(--border,#e2e8f0);border-radius:16px;background:var(--surface,#fff);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+                <div>
+                    <h3 style="font-size:20px;">Select Your Seats (Max 6)</h3>
+                    <p id="busTripSummary" style="color:var(--text-muted);font-size:14px;margin-top:2px;"></p>
+                </div>
+                <button type="button" class="btn-outline" onclick="window.WCBiz.gotoStep('search')">← Back to Search</button>
+            </div>
             <ul class="bus-legend" aria-label="Seat legend">
                 <li><span class="sw sw-available" aria-hidden="true"></span>Available</li>
                 <li><span class="sw sw-selected" aria-hidden="true"></span>Selected</li>
-                <li><span class="sw sw-held" aria-hidden="true"></span>Held (checkout)</li>
+                <li><span class="sw sw-held" aria-hidden="true"></span>Held (15 min)</li>
                 <li><span class="sw sw-booked" aria-hidden="true"></span>Booked</li>
                 <li><span class="sw sw-unavailable" aria-hidden="true"></span>Unavailable</li>
             </ul>
             <div id="busSeatMap" class="bus-seat-grid" role="group" aria-label="Available seats"></div>
-            <button type="button" class="btn-submit" id="busHoldButton">Hold seats</button>
-            <p id="busHoldStatus" class="bus-status" role="status" aria-live="polite"></p>
+            <div style="text-align:center;margin-top:20px;">
+                <button type="button" class="btn-submit" id="busHoldButton" style="min-width:220px;">Hold Seats (15 Min)</button>
+                <p id="busHoldStatus" class="bus-status" role="status" aria-live="polite"></p>
+            </div>
         </div>
     </section>
+
+    <!-- STEP 3: Passenger Details & Hold Timer -->
     <section data-wc-step="details" hidden>
-        <div class="widget-wrap" style="margin:24px 0 0;padding:22px;">
-            <h3 style="font-size:18px;">Passenger details</h3>
-            <form id="busPassengerForm" data-wc-form="booking" data-wc-thanks="Booking request submitted. Your ticket is pending operator approval.">
+        <div style="margin:16px 0 0;padding:24px;border:1px solid var(--border,#e2e8f0);border-radius:16px;background:var(--surface,#fff);max-width:720px;margin-left:auto;margin-right:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <h3 style="font-size:20px;">Passenger Details</h3>
+                <button type="button" class="btn-outline" onclick="window.WCBiz.gotoStep('seats')">← Back to Seats</button>
+            </div>
+            <div id="hold-summary-box" style="background:#dbeafe;border:1px solid #bfdbfe;color:#1e40af;padding:12px 16px;border-radius:10px;font-size:.9rem;font-weight:650;margin-bottom:18px;">
+                ⏱️ Hold active for 15 minutes. Complete details to confirm your ticket.
+            </div>
+            <form id="busPassengerForm" data-wc-form="booking" data-wc-thanks="Booking request submitted! Your ticket reference and QR code are ready." style="display:grid;gap:16px;">
                 <input type="hidden" name="trip_id" id="busTripId">
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
-                    <div class="form-group"><label for="busPassenger">Full name</label><input id="busPassenger" name="passenger" class="form-input" autocomplete="name" required maxlength="120"></div>
-                    <div class="form-group"><label for="busPhone">Phone</label><input id="busPhone" name="phone" type="tel" class="form-input" autocomplete="tel" required maxlength="30"></div>
-                    <div class="form-group"><label for="busEmail">Email</label><input id="busEmail" name="email" type="email" class="form-input" autocomplete="email" required maxlength="160"></div>
-                </div>
-                <button type="submit" class="btn-submit">Confirm booking</button>
+                <div class="form-group"><label for="busPassenger">Full Name</label><input id="busPassenger" name="passenger" class="form-input" autocomplete="name" required maxlength="120" placeholder="e.g. Rahul Sharma"></div>
+                <div class="form-group"><label for="busPhone">Mobile Phone</label><input id="busPhone" name="phone" type="tel" class="form-input" autocomplete="tel" required maxlength="30" placeholder="+91 98765 43210"></div>
+                <div class="form-group"><label for="busEmail">Email Address</label><input id="busEmail" name="email" type="email" class="form-input" autocomplete="email" required maxlength="160" placeholder="name@example.com"></div>
+                <button type="submit" class="btn-submit" style="margin-top:8px;">Confirm &amp; Proceed to Ticket</button>
             </form>
         </div>
     </section>
+
+    <!-- STEP 4: Boarding Ticket & Payment Options -->
     <section data-wc-step="ticket" hidden>
-        <div class="widget-wrap" style="margin:24px 0 0;padding:22px;">
-            <h3 style="font-size:18px;">Your ticket</h3>
-            <div id="busTicketBox" style="margin-top:12px;"></div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+        <div style="margin:16px 0 0;padding:26px;border:1px solid var(--border,#e2e8f0);border-radius:18px;background:var(--surface,#fff);max-width:680px;margin-left:auto;margin-right:auto;text-align:center;">
+            <span style="font-size:.85rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#16a34a;">Booking Confirmed</span>
+            <h3 style="font-size:22px;margin:4px 0 16px;">Your Boarding Ticket</h3>
+            <div id="busTicketBox" style="margin:16px auto;padding:20px;border:1.5px dashed var(--border,#cbd5e1);border-radius:14px;background:#f8fafc;"></div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
                 <button type="button" data-wc-pay="counter" class="btn-submit" style="width:auto;">Pay at Counter</button>
-                <button type="button" data-wc-pay="online" class="btn-submit" style="width:auto;background:#334155;">Request Online Payment</button>
-                <button type="button" id="busPrintButton" class="btn-submit" style="width:auto;background:#334155;">Print ticket</button>
-                <button type="button" id="busCancelButton" class="btn-submit" style="width:auto;background:#b91c1c;">Cancel ticket</button>
+                <button type="button" data-wc-pay="online" class="btn-submit" style="width:auto;background:#334155;">Pay Online Now</button>
+                <button type="button" id="busPrintButton" class="btn-outline" style="width:auto;">🖨️ Print Ticket</button>
+                <button type="button" id="busCancelButton" class="btn-outline" style="width:auto;color:#b91c1c;border-color:#fca5a5;">Cancel Booking</button>
             </div>
-            <p id="busTicketStatus" class="bus-status" role="status" aria-live="polite">Your booking will be saved for the operator. Payment is not complete until the operator records it.</p>
+            <p id="busTicketStatus" class="bus-status" role="status" aria-live="polite" style="color:var(--text-muted);font-size:.88rem;margin-top:14px;">Your booking is recorded in our system. Payment can be completed at boarding or online.</p>
             <p id="busPaymentStatus" class="bus-status" role="status" aria-live="polite"></p>
         </div>
     </section>
-    <section style="margin-top:24px;">
-        <div class="widget-wrap" style="padding:22px;">
-            <h3 style="font-size:18px;">My tickets</h3>
-            <p>Sign in to view your booking history, approval updates, and payment records.</p>
-            <p style="margin:.75rem 0 1rem;">
-                <a href="__WC_BUS_PORTAL_URL__" data-wc-booking-dashboard data-wc-account-link style="font-weight:700;">Sign in, create an account, or open your booking dashboard</a>
-            </p>
-            <h3 style="font-size:18px;margin-top:20px;">Find a ticket by reference</h3>
+
+    <!-- Customer Portal & Booking History Section -->
+    <section style="margin-top:36px;border-top:1px solid var(--border,#e2e8f0);padding-top:28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;background:var(--background,#f8fafc);padding:24px;border-radius:16px;border:1px solid var(--border,#e2e8f0);">
+            <div style="max-width:580px;">
+                <h3 style="font-size:18px;margin-bottom:4px;">Customer Portal &amp; Booking History</h3>
+                <p style="color:var(--text-muted);font-size:14px;margin:0;">Sign in or create an account to view previous trips, verify boarding passes, check approval updates, or manage bookings.</p>
+            </div>
+            <a href="__WC_BUS_PORTAL_URL__" data-wc-booking-dashboard data-wc-account-link class="btn-submit" style="background:#1e293b;">
+                <span>👤</span> Open My Account / Dashboard
+            </a>
+        </div>
+        <div style="margin-top:24px;padding:20px;background:var(--surface,#fff);border:1px solid var(--border,#e2e8f0);border-radius:14px;">
+            <h4 style="font-size:15px;font-weight:750;margin-bottom:8px;">Find a ticket by reference</h4>
             <div data-wc-ticket-lookup="bookings"></div>
         </div>
     </section>
@@ -197,6 +257,11 @@ if (!function_exists('bus_booking_widget_html')) {
             var rows=[];for(var ri=0;ri<rowCount;ri++)rows.push(String.fromCharCode(65+ri));
             seatMap.textContent='';
             for(let row=0;row<rows.length;row++)for(let col=1;col<=4;col++){
+                if(col===3){
+                    var aisle=document.createElement('div');
+                    aisle.className='aisle-gap';
+                    seatMap.appendChild(aisle);
+                }
                 let seatName=rows[row]+col,seatIndex=row*4+col;
                 if(seatIndex>capacity)break;
                 let seat=document.createElement('button');seat.type='button';seat.className='bus-seat';

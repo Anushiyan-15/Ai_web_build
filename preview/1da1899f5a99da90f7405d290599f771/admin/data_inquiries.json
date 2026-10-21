@@ -1,0 +1,14 @@
+[
+    {
+        "id": "r_604652e26296783e",
+        "name": "E2E Contact",
+        "email": "e2e-contact@example.com",
+        "phone": "",
+        "message": "E2E hello inbox",
+        "date": "2026-10-19 16:57",
+        "created_at": "2026-10-19T16:57:39+01:00",
+        "updated_at": "2026-10-19T16:57:39+01:00",
+        "read": false,
+        "status": "unread"
+    }
+]

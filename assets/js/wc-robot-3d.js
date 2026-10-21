@@ -89,6 +89,27 @@
     brandColor: 0x22d3ee,
     stageProgress: 0,
 
+    // ── Story / performance state ──
+    storyAct: 'idle',          // idle | walking | reaching | catching | collecting | assembling | complete
+    storyTime: 0,              // elapsed seconds inside the current act
+    walkCycle: 0,              // walk animation phase
+    actStartPct: 0,            // generation pct when the current act began
+    cardsCaught: 0,            // how many requirement cards have been collected
+    totalCards: 0,             // total floating requirement cards
+
+    // ── Hierarchy nodes (story) ──
+    leftLeg: null,
+    rightLeg: null,
+    reachTarget: null,         // {x,y,z} world target the hands reach toward
+    caughtCards: [],           // card meshes currently being pulled in
+    collectedParticles: null,  // THREE.Points for particles flowing into the core
+    particlePool: [],          // {mesh, target, speed, life} for collection particles
+    websiteRoot: null,         // group holding the assembling holographic website
+    websiteComponents: [],     // {mesh, targetPos, targetRot, active, delay} website pieces
+    cameraOrbitAngle: 0,       // orbital camera angle (radians)
+    cameraRadius: 7.2,         // orbital distance from scene centre
+    cameraHeight: 0.6,         // orbital camera height
+
     /**
      * Initializes the 3D scene and robot model
      */
@@ -140,6 +161,8 @@
         this._buildRobotModel();
         this._buildHolographicScene();
         this._buildParticleClouds();
+        this._buildCollectionParticles();
+        this._buildWebsiteAssembly();
         this._setupMouseParallax();
 
         // Resize listener
@@ -624,6 +647,14 @@
       this.bodyGroup.add(this.rightArm);
 
       // ──────────────────────────────────────────
+      // 3.5 ARTICULATED LEGS (walk cycle)
+      // ──────────────────────────────────────────
+      this.leftLeg = this._createLeg(-1, armorTitanium, armorWhite, chromeTrim, glowCyan);
+      this.rightLeg = this._createLeg(1, armorTitanium, armorWhite, chromeTrim, glowCyan);
+      this.bodyGroup.add(this.leftLeg);
+      this.bodyGroup.add(this.rightLeg);
+
+      // ──────────────────────────────────────────
       // 4. ANTI-GRAVITY PROPULSION POD
       // ──────────────────────────────────────────
       var thrusterGroup = new THREE.Group();
@@ -763,6 +794,54 @@
     },
 
     /**
+     * Builds one articulated robot leg with hip, knee and ankle joints.
+     * side: -1 (left) or 1 (right).
+     */
+    _createLeg: function(side, titaniumMat, whiteMat, metalMat, glowMat) {
+      var THREE = window.THREE;
+      var legGroup = new THREE.Group();
+      legGroup.position.set(side * 0.22, -0.06, 0);
+
+      // Hip joint
+      var hip = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 14), metalMat);
+      legGroup.add(hip);
+
+      // Thigh
+      var thighGeo = new THREE.CylinderGeometry(0.13, 0.10, 0.52, 14);
+      var thigh = new THREE.Mesh(thighGeo, titaniumMat);
+      thigh.position.set(side * 0.04, -0.34, 0);
+      thigh.rotation.z = side * 0.10;
+      legGroup.add(thigh);
+
+      // Knee
+      var knee = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 12), metalMat);
+      knee.position.set(side * 0.08, -0.66, 0.02);
+      legGroup.add(knee);
+
+      // Shin
+      var shinGeo = new THREE.CylinderGeometry(0.10, 0.08, 0.50, 14);
+      var shin = new THREE.Mesh(shinGeo, titaniumMat);
+      shin.position.set(side * 0.10, -0.96, 0.10);
+      shin.rotation.z = -side * 0.12;
+      legGroup.add(shin);
+
+      // Ankle / foot
+      var footGeo = new THREE.BoxGeometry(0.26, 0.10, 0.42);
+      var foot = new THREE.Mesh(footGeo, whiteMat);
+      foot.position.set(side * 0.12, -1.24, 0.14);
+      foot.rotation.x = -0.10;
+      legGroup.add(foot);
+
+      // Foot thruster glow (hover assist)
+      var footGlow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), glowMat);
+      footGlow.position.set(side * 0.12, -1.30, 0.28);
+      legGroup.add(footGlow);
+
+      legGroup.userData = { side: side, baseY: -0.06, knee: knee, thigh: thigh, shin: shin, foot: foot };
+      return legGroup;
+    },
+
+    /**
      * Builds surrounding holographic wireframes, celestial gyro rings, and ground radar
      */
     _buildHolographicScene: function() {
@@ -881,10 +960,12 @@
       // 5. FLOATING REQUIREMENT CHIPS
       // ──────────────────────────────────────────
       this._buildRequirementChips([
-        '✦ REQUIREMENT SCAN',
-        '✦ LAYOUT ARCHITECTURE',
-        '✦ DESIGN TOKENS',
-        '✦ CODE SYNTHESIS'
+        'Business Idea',
+        'Images & Media',
+        'Layout Structure',
+        'Features & Functions',
+        'Colors & Style',
+        'Custom Website for Your Business'
       ]);
 
       // ──────────────────────────────────────────
@@ -949,6 +1030,108 @@
         self.holoGroup.add(chipMesh);
         self.chipMeshes.push(chipMesh);
       });
+    },
+
+    /**
+     * Builds the holographic website assembly that forms in front of the robot.
+     * Components start hidden/scattered and snap into a complete layout during
+     * the "assembling" story act.
+     */
+    _buildWebsiteAssembly: function() {
+      var THREE = window.THREE;
+      this.websiteRoot = new THREE.Group();
+      this.websiteRoot.position.set(0, -0.05, 2.6);
+      this.websiteRoot.visible = false;
+      this.scene.add(this.websiteRoot);
+
+      var glass = new THREE.MeshBasicMaterial({
+        color: 0xffffff, transparent: true, opacity: 0.72, side: THREE.DoubleSide
+      });
+      var glowCyan = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.9 });
+      var glowViolet = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.85 });
+      var darkPanel = new THREE.MeshBasicMaterial({
+        color: 0x050b1d, transparent: true, opacity: 0.85, side: THREE.DoubleSide
+      });
+
+      var self = this;
+      function addPiece(geo, mat, pos, rot, scale, delay) {
+        var mesh = new THREE.Mesh(geo, mat);
+        if (pos) mesh.position.copy(pos);
+        if (rot) mesh.rotation.copy(rot);
+        if (scale) mesh.scale.set(scale, scale, scale);
+        mesh.visible = false;
+        self.websiteRoot.add(mesh);
+        self.websiteComponents.push({
+          mesh: mesh,
+          targetPos: pos ? pos.clone() : new THREE.Vector3(),
+          targetRot: rot ? rot.clone() : new THREE.Euler(),
+          targetScale: scale || 1,
+          active: false,
+          delay: delay || 0,
+          started: false
+        });
+        return mesh;
+      }
+
+      var w = 2.4, h = 1.5;
+
+      // Navigation bar (top)
+      addPiece(
+        new THREE.PlaneGeometry(w * 0.92, h * 0.16),
+        darkPanel,
+        new THREE.Vector3(0, h * 0.42, 0),
+        null, 1, 0
+      );
+      // Nav links (3 small squares)
+      for (var i = 0; i < 3; i++) {
+        addPiece(
+          new THREE.PlaneGeometry(0.14, 0.14),
+          glowCyan,
+          new THREE.Vector3(-0.55 + i * 0.55, h * 0.42, 0.02),
+          null, 1, 0.15 + i * 0.05
+        );
+      }
+
+      // Hero section (large panel)
+      addPiece(
+        new THREE.PlaneGeometry(w, h * 0.62),
+        glass,
+        new THREE.Vector3(0, h * 0.05, 0),
+        null, 1, 0.4
+      );
+      // Hero title bars
+      addPiece(new THREE.PlaneGeometry(w * 0.5, 0.06), glowCyan, new THREE.Vector3(-0.6, h * 0.34, 0.02), null, 1, 0.5);
+      addPiece(new THREE.PlaneGeometry(w * 0.3, 0.05), glowViolet, new THREE.Vector3(-0.6, h * 0.24, 0.02), null, 1, 0.55);
+      // Hero CTA button
+      addPiece(new THREE.PlaneGeometry(0.5, 0.14), glowCyan, new THREE.Vector3(0.55, -0.12, 0.02), null, 1, 0.6);
+
+      // Image / media card (right)
+      addPiece(
+        new THREE.PlaneGeometry(w * 0.42, h * 0.42),
+        darkPanel,
+        new THREE.Vector3(w * 0.38, -h * 0.14, 0),
+        null, 1, 0.7
+      );
+      addPiece(new THREE.PlaneGeometry(w * 0.38, 0.05), glowCyan, new THREE.Vector3(w * 0.38, -h * 0.14, 0.02), null, 1, 0.75);
+
+      // Service cards row (3 cards at bottom)
+      for (var i = 0; i < 3; i++) {
+        addPiece(
+          new THREE.PlaneGeometry(w * 0.26, h * 0.30),
+          glass,
+          new THREE.Vector3(-w * 0.32 + i * w * 0.32, -h * 0.44, 0),
+          null, 1, 0.85 + i * 0.06
+        );
+        addPiece(new THREE.PlaneGeometry(w * 0.22, 0.05), glowViolet, new THREE.Vector3(-w * 0.32 + i * w * 0.32, -h * 0.22, 0.02), null, 1, 0.9 + i * 0.06);
+      }
+
+      // Footer strip
+      addPiece(
+        new THREE.PlaneGeometry(w * 0.92, 0.14),
+        darkPanel,
+        new THREE.Vector3(0, -h * 0.66, 0),
+        null, 1, 1.0
+      );
     },
 
     /**
@@ -1031,6 +1214,75 @@
     },
 
     /**
+     * Builds the particle system used when requirement cards are collected:
+     * particles flow from the caught card into the robot's core.
+     */
+    _buildCollectionParticles: function() {
+      var THREE = window.THREE;
+      var count = 60;
+      var pos = new Float32Array(count * 3);
+      var col = new Float32Array(count * 3);
+      for (var i = 0; i < count; i++) {
+        pos[i * 3] = 0;
+        pos[i * 3 + 1] = 0;
+        pos[i * 3 + 2] = 0;
+        col[i * 3] = 0.13;
+        col[i * 3 + 1] = 0.82;
+        col[i * 3 + 2] = 0.93;
+      }
+      var geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      var mat = new THREE.PointsMaterial({
+        size: 0.07,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending
+      });
+      this.collectedParticles = new THREE.Points(geo, mat);
+      this.collectedParticles.visible = false;
+      this.scene.add(this.collectedParticles);
+
+      for (var i = 0; i < count; i++) {
+        this.particlePool.push({
+          active: false,
+          x: 0, y: 0, z: 0,
+          tx: 0, ty: 0, tz: 0,
+          speed: 0,
+          life: 0,
+          index: i
+        });
+      }
+    },
+
+    /**
+     * Spawns a burst of collection particles from a card position toward the core.
+     */
+    _emitCollectionBurst: function(sx, sy, sz) {
+      if (!this.collectedParticles) return;
+      var corePos = new THREE.Vector3(0, 0.12, 0.50);
+      if (this.coreMesh) {
+        this.coreMesh.getWorldPosition(corePos);
+      }
+      var pool = this.particlePool;
+      var spawned = 0;
+      for (var i = 0; i < pool.length && spawned < 18; i++) {
+        var p = pool[i];
+        if (p.active) continue;
+        p.active = true;
+        p.x = sx; p.y = sy; p.z = sz;
+        p.tx = corePos.x + (Math.random() - 0.5) * 0.15;
+        p.ty = corePos.y + (Math.random() - 0.5) * 0.15;
+        p.tz = corePos.z + (Math.random() - 0.5) * 0.15;
+        p.speed = 0.06 + Math.random() * 0.09;
+        p.life = 1.0;
+        spawned++;
+      }
+      if (!this.collectedParticles.visible) this.collectedParticles.visible = true;
+    },
+
+    /**
      * Window / Container resize handler
      */
     _handleResize: function() {
@@ -1039,16 +1291,16 @@
       var h = this.container.clientHeight || window.innerHeight;
       this.camera.aspect = w / h;
 
-      // Adjust camera distance for mobile responsiveness
+      // Adjust orbital camera distance for mobile responsiveness
       if (w < 600) {
-        this.camera.position.z = 8.6;
-        this.camera.position.y = 0.35;
+        this.cameraRadius = 9.4;
+        this.cameraHeight = 0.45;
       } else if (w < 900) {
-        this.camera.position.z = 7.6;
-        this.camera.position.y = 0.32;
+        this.cameraRadius = 8.4;
+        this.cameraHeight = 0.4;
       } else {
-        this.camera.position.z = 7.0;
-        this.camera.position.y = 0.28;
+        this.cameraRadius = 7.2;
+        this.cameraHeight = 0.6;
       }
 
       this.camera.updateProjectionMatrix();
@@ -1062,7 +1314,17 @@
       this.businessData = data || null;
       if (!this.isInitialized) {
         var ok = this.init();
-        if (!ok) return;
+        if (!ok) {
+          // WebGL / Three.js unavailable: emphasize the CSS-based robot fallback
+          try {
+            var ov = document.getElementById('gen-overlay');
+            if (ov) ov.classList.add('wc-robot-3d-fallback');
+          } catch (e) {}
+          if (this.container) {
+            this.container.style.display = 'none';
+          }
+          return;
+        }
       }
 
       // Customer color palette reactivity
@@ -1089,10 +1351,12 @@
         var typePart = (data.biz_type || 'LAYOUT').slice(0, 18).toUpperCase();
         var palPart = (data.color_palette || 'CYBER').toUpperCase();
         this._buildRequirementChips([
-          '✦ ' + namePart + ' BRIEF',
-          '✦ ' + typePart + ' ARCHITECTURE',
-          '✦ ' + palPart + ' DESIGN TOKENS',
-          '✦ FLOWCRAFT SYNTHESIS'
+          'Business Idea: ' + namePart,
+          'Images & Media',
+          'Layout Structure: ' + typePart,
+          'Features & Functions',
+          'Colors & Style: ' + palPart,
+          'Custom Website for Your Business'
         ]);
 
         // Re-generate texture for Code panel with real customer brief
@@ -1107,6 +1371,24 @@
       this.stageProgress = 0;
       this.isRunning = true;
       if (this.clock) this.clock.start();
+
+      // Reset story animation state
+      this.storyAct = 'walking';
+      this.storyTime = 0;
+      this.walkCycle = 0;
+      this.cardsCaught = 0;
+      this.totalCards = this.chipMeshes ? this.chipMeshes.length : 4;
+      this.reachTarget = null;
+      this.caughtCards = [];
+      if (this.websiteRoot) this.websiteRoot.visible = false;
+      if (this.websiteComponents) {
+        this.websiteComponents.forEach(function(c) {
+          c.active = false; c.started = false; c.mesh.visible = false;
+        });
+      }
+      if (this.collectedParticles) this.collectedParticles.visible = false;
+      this.particlePool.forEach(function(p) { p.active = false; });
+      this.cameraOrbitAngle = 0;
 
       // Ensure canvas wrapper is visible
       if (this.container) {
@@ -1142,32 +1424,118 @@
       var delta = this.clock ? this.clock.getDelta() : 0.016;
       var time = this.clock ? this.clock.getElapsedTime() : Date.now() * 0.001;
 
-      // ──────────────────────────────────────────
-      // 0. SMOOTH MOUSE PARALLAX LERP
-      // ──────────────────────────────────────────
-      this.currentMouseX += (this.mouseTargetX - this.currentMouseX) * 0.06;
-      this.currentMouseY += (this.mouseTargetY - this.currentMouseY) * 0.06;
+      // Advance story clock (seconds inside the current act)
+      this.storyTime += delta;
 
+      // ──────────────────────────────────────────
+      // 0. ORBITAL CAMERA — smooth 360° around the scene
+      //    Subtle mouse parallax is layered on top so the orbit stays readable.
+      // ──────────────────────────────────────────
+      var orbitSpeed = this.reducedMotion ? 0.06 : 0.22;
+      this.cameraOrbitAngle += orbitSpeed * delta;
+      var mx = this.currentMouseX * 0.5;
+      var my = this.currentMouseY * 0.35;
       if (this.camera) {
-        this.camera.position.x = this.currentMouseX * 1.1;
-        this.camera.position.y = (window.innerWidth < 600 ? 0.35 : 0.28) + this.currentMouseY * 0.8;
+        this.camera.position.x = Math.sin(this.cameraOrbitAngle) * this.cameraRadius + mx;
+        this.camera.position.y = this.cameraHeight + my;
+        this.camera.position.z = Math.cos(this.cameraOrbitAngle) * this.cameraRadius;
         this.camera.lookAt(0, 0.05, 0);
       }
 
+      // Keep mouse parallax values fresh (used by story targeting)
+      this.currentMouseX += (this.mouseTargetX - this.currentMouseX) * 0.06;
+      this.currentMouseY += (this.mouseTargetY - this.currentMouseY) * 0.06;
+
       // ──────────────────────────────────────────
-      // 1. FULL 360° CONTINUOUS ROTATION
+      // 1. ROBOT ROTATION + STORY DRIVEN MOVEMENT
       // ──────────────────────────────────────────
       if (this.robotRoot) {
-        var rotSpeed = this.reducedMotion ? 0.08 : this.rotationSpeed;
+        // Slow continuous rotation so the full robot is visible from all angles
+        var rotSpeed = this.reducedMotion ? 0.06 : 0.28;
         this.robotRoot.rotation.y += rotSpeed * delta;
 
-        // Subtle floating / hovering bobbing on Y axis
-        var hoverAmp = this.reducedMotion ? 0.04 : 0.12;
+        // Story-driven translation (robot walks toward the requirement cards)
+        var moveX = 0, moveZ = 0;
+        if (this.storyAct === 'walking') {
+          // Walk from front-left toward centre
+          var t = Math.min(1, this.storyTime / 2.2);
+          moveX = -1.6 + (1.6 * t);
+          moveZ = 1.0 - (1.0 * t);
+        } else if (this.storyAct === 'reaching' || this.storyAct === 'catching') {
+          moveX = 0; moveZ = 0;
+        } else if (this.storyAct === 'collecting' || this.storyAct === 'assembling') {
+          moveX = 0; moveZ = 0;
+        } else if (this.storyAct === 'complete') {
+          moveX = 0; moveZ = 0;
+        }
+        this.robotRoot.position.x = moveX;
+        this.robotRoot.position.z = moveZ;
+
+        // Subtle floating bobbing
+        var hoverAmp = this.reducedMotion ? 0.04 : 0.10;
         this.robotRoot.position.y = this.baseHoverY + Math.sin(time * 1.8) * hoverAmp;
       }
 
+      // ── Walk cycle (legs) ──
+      if ((this.storyAct === 'walking') && this.leftLeg && this.rightLeg) {
+        this.walkCycle += delta * 2.6;
+        var wAmp = this.reducedMotion ? 0.10 : 0.28;
+        var wSpeed = this.walkCycle;
+        var leftKnee = this.leftLeg.userData.knee;
+        var leftThigh = this.leftLeg.userData.thigh;
+        var leftShin = this.leftLeg.userData.shin;
+        var leftFoot = this.leftLeg.userData.foot;
+        var rightKnee = this.rightLeg.userData.knee;
+        var rightThigh = this.rightLeg.userData.thigh;
+        var rightShin = this.rightLeg.userData.shin;
+        var rightFoot = this.rightLeg.userData.foot;
+
+        var lSwing = Math.sin(wSpeed) * wAmp;
+        var rSwing = Math.sin(wSpeed + Math.PI) * wAmp;
+        var lKneeBend = Math.max(0, Math.sin(wSpeed)) * 0.9;
+        var rKneeBend = Math.max(0, Math.sin(wSpeed + Math.PI)) * 0.9;
+        var lFootRoll = Math.sin(wSpeed) * 0.15;
+        var rFootRoll = Math.sin(wSpeed + Math.PI) * 0.15;
+
+        leftThigh.rotation.z = lSwing * 0.6;
+        rightThigh.rotation.z = rSwing * 0.6;
+        if (leftKnee) leftKnee.rotation.x = lKneeBend;
+        if (rightKnee) rightKnee.rotation.x = rKneeBend;
+        if (leftShin) leftShin.rotation.z = -lSwing * 0.4 + lFootRoll;
+        if (rightShin) rightShin.rotation.z = -rSwing * 0.4 + rFootRoll;
+        if (leftFoot) leftFoot.rotation.x = -0.10 + lFootRoll * 0.5;
+        if (rightFoot) rightFoot.rotation.x = -0.10 + rFootRoll * 0.5;
+
+        // Body bob with steps
+        if (this.robotRoot) {
+          this.robotRoot.position.y = this.baseHoverY + Math.abs(Math.sin(wSpeed)) * 0.06 + Math.sin(time * 1.8) * 0.05;
+        }
+        // Feet glow pulses with steps
+        if (this.leftLeg && this.rightLeg) {
+          var glowL = this.leftLeg.children[this.leftLeg.children.length - 1];
+          var glowR = this.rightLeg.children[this.rightLeg.children.length - 1];
+          if (glowL) glowL.scale.setScalar(0.8 + Math.abs(Math.sin(wSpeed)) * 0.6);
+          if (glowR) glowR.scale.setScalar(0.8 + Math.abs(Math.sin(wSpeed + Math.PI)) * 0.6);
+        }
+      } else if (this.leftLeg && this.rightLeg) {
+        // Idle stance: legs straight, slight hover
+        var idleBob = Math.sin(time * 1.8) * 0.03;
+        var lk = this.leftLeg.userData.knee, rk = this.rightLeg.userData.knee;
+        var lt = this.leftLeg.userData.thigh, rt = this.rightLeg.userData.thigh;
+        var ls = this.leftLeg.userData.shin, rs = this.rightLeg.userData.shin;
+        var lf = this.leftLeg.userData.foot, rf = this.rightLeg.userData.foot;
+        if (lt) lt.rotation.z = 0;
+        if (rt) rt.rotation.z = 0;
+        if (lk) lk.rotation.x = 0;
+        if (rk) rk.rotation.x = 0;
+        if (ls) ls.rotation.z = 0;
+        if (rs) rs.rotation.z = 0;
+        if (lf) lf.rotation.x = -0.10;
+        if (rf) rf.rotation.x = -0.10;
+      }
+
       // ──────────────────────────────────────────
-      // 2. NATURAL HEAD, HALO & EYE MOVEMENT
+      // 2. HEAD, HALO, CORE & EYES
       // ──────────────────────────────────────────
       if (this.headGroup) {
         this.headGroup.rotation.y = Math.sin(time * 1.2) * 0.18;
@@ -1175,15 +1543,21 @@
         this.headGroup.rotation.z = Math.sin(time * 0.9) * 0.04;
       }
 
-      // Floating halo spin & wobble
       if (this.haloRing) {
         this.haloRing.rotation.z += 0.8 * delta;
         this.haloRing.position.y = 0.65 + Math.sin(time * 2.4) * 0.04;
       }
 
-      // Inner Core turbine rotation
       if (this.coreTurbine) {
         this.coreTurbine.rotation.z += 2.2 * delta;
+      }
+
+      // Core light pulsation — brighter while collecting / assembling
+      if (this.coreLight) {
+        var baseInt = 2.6;
+        if (this.storyAct === 'collecting' || this.storyAct === 'assembling') baseInt = 4.2;
+        if (this.storyAct === 'complete') baseInt = 6.0;
+        this.coreLight.intensity = baseInt + Math.sin(time * 3.4) * 0.8;
       }
 
       // Visor eye blinking simulation
@@ -1213,20 +1587,27 @@
       }
 
       // ──────────────────────────────────────────
-      // 3. ARM GESTURES & ENERGY PULSE
+      // 3. ARM GESTURES — story driven (reach vs idle)
       // ──────────────────────────────────────────
-      if (this.leftArm) {
-        this.leftArm.rotation.x = -0.15 + Math.sin(time * 1.5) * 0.10;
-        this.leftArm.rotation.y = Math.sin(time * 1.1) * 0.08;
-      }
-      if (this.rightArm) {
-        this.rightArm.rotation.x = -0.22 + Math.cos(time * 1.5) * 0.10;
-        this.rightArm.rotation.y = -Math.sin(time * 1.1) * 0.08;
-      }
-
-      // Core light pulsation
-      if (this.coreLight) {
-        this.coreLight.intensity = 2.6 + Math.sin(time * 3.4) * 0.8;
+      if (this.leftArm && this.rightArm) {
+        var reach = 0;
+        if (this.storyAct === 'reaching' || this.storyAct === 'catching') {
+          reach = Math.min(1, this.storyTime / 1.1) * 1.35;
+        }
+        // Left arm (side -1): rotate toward centre when reaching
+        if (this.storyAct === 'reaching' || this.storyAct === 'catching') {
+          this.leftArm.rotation.x = -0.15 + reach * 1.1;
+          this.leftArm.rotation.y = -0.25 + reach * 0.55;
+          this.leftArm.rotation.z = -0.35 + reach * 0.5;
+          this.rightArm.rotation.x = -0.22 + reach * 1.1;
+          this.rightArm.rotation.y = 0.25 - reach * 0.55;
+          this.rightArm.rotation.z = 0.35 - reach * 0.5;
+        } else {
+          this.leftArm.rotation.x = -0.15 + Math.sin(time * 1.5) * 0.10;
+          this.leftArm.rotation.y = Math.sin(time * 1.1) * 0.08;
+          this.rightArm.rotation.x = -0.22 + Math.cos(time * 1.5) * 0.10;
+          this.rightArm.rotation.y = -Math.sin(time * 1.1) * 0.08;
+        }
       }
 
       // Thruster concentric rings pulse & jet flame
@@ -1246,28 +1627,119 @@
       if (this.gyroRing2) this.gyroRing2.rotation.x -= 0.28 * delta;
 
       // ──────────────────────────────────────────
-      // 5. ORBITING WEBSITE PANELS & LASER BEAMS
+      // 5. STORY: REQUIREMENT CARDS (chips) — orbit, catch & collect
       // ──────────────────────────────────────────
       var self = this;
       var handWorldPosLeft = new THREE.Vector3();
       var handWorldPosRight = new THREE.Vector3();
+      var handWorldPos = new THREE.Vector3();
       if (this.leftHand) this.leftHand.getWorldPosition(handWorldPosLeft);
       if (this.rightHand) this.rightHand.getWorldPosition(handWorldPosRight);
+      handWorldPos.copy(handWorldPosLeft).add(handWorldPosRight).multiplyScalar(0.5);
 
+      this.chipMeshes.forEach(function(c, i) {
+        if (!c.userData) return;
+        var caught = c.userData.caught;
+        if (caught) {
+          // Card is held in hands: pull toward centre / core
+          c.userData.catchT = Math.min(1, (c.userData.catchT || 0) + delta * 2.0);
+          var ct = c.userData.catchT;
+          c.position.x = c.userData.catchStartX + (handWorldPos.x - c.userData.catchStartX) * ct;
+          c.position.y = c.userData.catchStartY + (0.75 - c.userData.catchStartY) * ct;
+          c.position.z = c.userData.catchStartZ + (0.55 - c.userData.catchStartZ) * ct;
+          c.rotation.z += delta * 2.0;
+          c.scale.setScalar(1.0 - ct * 0.7);
+          c.material.opacity = 0.9 - ct * 0.5;
+        } else {
+          // Orbit around robot
+          c.userData.angle += c.userData.speed * delta;
+          var rad = c.userData.radius;
+          var radiusMod = (self.storyAct === 'reaching' || self.storyAct === 'catching') ? 0.7 : 1.0;
+          c.position.x = Math.cos(c.userData.angle) * rad * radiusMod;
+          c.position.z = Math.sin(c.userData.angle) * rad * radiusMod;
+          c.position.y = c.userData.baseY + Math.sin(time * 2.2 + i) * 0.07;
+          c.scale.setScalar(1.0);
+          c.material.opacity = 0.9;
+        }
+        if (self.camera) c.lookAt(self.camera.position);
+      });
+
+      // Catch a card when within reach during 'catching' act
+      if (this.storyAct === 'catching') {
+        this.chipMeshes.forEach(function(c, i) {
+          if (c.userData.caught || self.cardsCaught >= self.totalCards) return;
+          if (!self.reachTarget) return;
+          var dist = c.position.distanceTo(self.reachTarget);
+          if (dist < 0.9) {
+            c.userData.caught = true;
+            c.userData.catchT = 0;
+            c.userData.catchStartX = c.position.x;
+            c.userData.catchStartY = c.position.y;
+            c.userData.catchStartZ = c.position.z;
+            self.cardsCaught++;
+            // Emit a burst of particles from card position to core
+            self._emitCollectionBurst(c.position.x, c.position.y, c.position.z);
+          }
+        });
+      }
+
+      // ──────────────────────────────────────────
+      // 6. STORY: COLLECTION PARTICLES → CORE
+      // ──────────────────────────────────────────
+      if (this.collectedParticles && this.particlePool.length) {
+        var posAttr = this.collectedParticles.geometry.attributes.position;
+        var colAttr = this.collectedParticles.geometry.attributes.color;
+        var anyActive = false;
+        var corePos = new THREE.Vector3(0, 0.12, 0.50);
+        if (this.coreMesh) this.coreMesh.getWorldPosition(corePos);
+        this.particlePool.forEach(function(p) {
+          if (!p.active) return;
+          anyActive = true;
+          p.life -= delta * 1.4;
+          if (p.life <= 0) { p.active = false; return; }
+          // Move toward target
+          var dx = p.tx - p.x, dy = p.ty - p.y, dz = p.tz - p.z;
+          var d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.001;
+          p.x += (dx / d) * p.speed;
+          p.y += (dy / d) * p.speed;
+          p.z += (dz / d) * p.speed;
+        });
+        this.collectedParticles.visible = anyActive;
+        if (posAttr) {
+          var arr = posAttr.array;
+          var carr = colAttr.array;
+          this.particlePool.forEach(function(p) {
+            arr[p.index * 3] = p.x;
+            arr[p.index * 3 + 1] = p.y;
+            arr[p.index * 3 + 2] = p.z;
+            var a = p.life;
+            carr[p.index * 3] = 0.13 * a;
+            carr[p.index * 3 + 1] = 0.82 * a;
+            carr[p.index * 3 + 2] = 0.93 * a;
+          });
+          posAttr.needsUpdate = true;
+          colAttr.needsUpdate = true;
+        }
+        if (this.coreMesh) {
+          this.coreMesh.material.opacity = 0.6 + Math.sin(time * 8) * 0.25 + (anyActive ? 0.3 : 0);
+        }
+      }
+
+      // ──────────────────────────────────────────
+      // 7. ORBITING WEBSITE PANELS & LASER BEAMS
+      // ──────────────────────────────────────────
       this.wireframePanels.forEach(function(p, i) {
         p.userData.angle += p.userData.speed * delta;
         p.position.x = Math.cos(p.userData.angle) * p.userData.radius;
         p.position.z = Math.sin(p.userData.angle) * p.userData.radius;
         p.position.y = p.userData.baseY + Math.sin(time * 1.6 + i) * 0.09;
-        p.lookAt(0, p.position.y, 0); // Always face robot core
+        p.lookAt(0, p.position.y, 0);
 
-        // Update Dynamic Energy Construction Laser Beam
         if (self.laserBeams[i]) {
           var beam = self.laserBeams[i];
           var startPos = beam.userData.side === -1 ? handWorldPosLeft : handWorldPosRight;
           var panelWorldPos = new THREE.Vector3();
           p.getWorldPosition(panelWorldPos);
-
           var posAttr = beam.geometry.attributes.position;
           var arr = posAttr.array;
           arr[0] = startPos.x;
@@ -1277,24 +1749,14 @@
           arr[4] = panelWorldPos.y;
           arr[5] = panelWorldPos.z;
           posAttr.needsUpdate = true;
-
-          // Pulse beam opacity
           beam.material.opacity = 0.45 + Math.sin(time * 8.0 + i) * 0.35;
         }
-      });
-
-      // Orbiting requirement chips
-      this.chipMeshes.forEach(function(c, i) {
-        c.userData.angle += c.userData.speed * delta;
-        c.position.x = Math.cos(c.userData.angle) * c.userData.radius;
-        c.position.z = Math.sin(c.userData.angle) * c.userData.radius;
-        c.position.y = c.userData.baseY + Math.sin(time * 2.2 + i) * 0.07;
-        if (self.camera) c.lookAt(self.camera.position); // Always face camera
       });
 
       // Laser scanning beam sweeps up and down
       if (this.scannerBeam) {
         this.scannerBeam.position.y = 0.15 + Math.sin(time * 2.6) * 0.90;
+        this.scannerBeam.visible = (this.storyAct === 'walking' || this.storyAct === 'reaching');
       }
 
       // Slow ambient particles & thruster particles
@@ -1303,6 +1765,43 @@
       }
       if (this.thrusterParticles) {
         this.thrusterParticles.rotation.y += 1.8 * delta;
+      }
+
+      // ──────────────────────────────────────────
+      // 8. STORY: HOLOGRAPHIC WEBSITE ASSEMBLY
+      // ──────────────────────────────────────────
+      if (this.websiteRoot && this.websiteComponents.length) {
+        var assembling = (this.storyAct === 'assembling' || this.storyAct === 'complete');
+        this.websiteRoot.visible = assembling;
+        this.websiteComponents.forEach(function(c) {
+          if (!c.active && assembling) {
+            c.started = true;
+            c.active = true;
+            c.mesh.visible = true;
+            c.mesh.scale.setScalar(0.01);
+          }
+          if (!c.started) return;
+          var t = Math.min(1, ((self.storyTime - (c.delay || 0)) / 0.9));
+          if (t <= 0) {
+            c.mesh.scale.setScalar(0.01);
+            c.mesh.rotation.z = Math.PI * 0.5;
+            return;
+          }
+          var ease = 1 - Math.pow(1 - t, 3);
+          var s = ease;
+          c.mesh.scale.setScalar(s);
+          // Snap rotation toward 0
+          c.mesh.rotation.z = (1 - ease) * Math.PI * 0.5;
+          c.mesh.position.x = c.targetPos.x * (1 - (1 - ease) * 0.6);
+          c.mesh.position.y = c.targetPos.y * (1 - (1 - ease) * 0.6);
+          c.mesh.position.z = c.targetPos.z;
+          c.mesh.material.opacity = Math.min(1, 0.3 + ease * 0.7);
+        });
+        // Gentle float of assembled site
+        if (assembling) {
+          this.websiteRoot.position.y = -0.05 + Math.sin(time * 1.4) * 0.05;
+          this.websiteRoot.rotation.y = Math.sin(time * 0.5) * 0.08;
+        }
       }
 
       // Render Scene
@@ -1319,22 +1818,41 @@
         this.stageProgress = pct;
         var stageIdx = pct < 15 ? 0 : pct < 35 ? 1 : pct < 55 ? 2 : pct < 75 ? 3 : pct < 90 ? 4 : 5;
         this.currentStage = stageIdx;
+
+        // Drive the robot story acts from real progress
+        var prevAct = this.storyAct;
+        if (pct < 18) { this.storyAct = 'walking'; }
+        else if (pct < 40) { this.storyAct = 'reaching'; }
+        else if (pct < 62) { this.storyAct = 'catching'; }
+        else if (pct < 84) { this.storyAct = 'collecting'; }
+        else if (pct < 100) { this.storyAct = 'assembling'; }
+        else { this.storyAct = 'complete'; }
+        if (prevAct !== this.storyAct) {
+          this.storyTime = 0;
+          this.reachTarget = null;
+          // Set a reach target when reaching begins (hand world position approx)
+          if (this.storyAct === 'reaching' && this.rightHand) {
+            this.reachTarget = new THREE.Vector3(0.35, 0.55, 1.2);
+          }
+        }
       }
 
       // Stage-specific visual metamorphosis
+      if (this.scannerBeam) {
+        this.scannerBeam.visible = (this.currentStage === 0 || this.currentStage === 1);
+      }
       if (this.currentStage === 0 || this.currentStage === 1) {
         // Analyzing requirements: active scanning laser
-        if (this.scannerBeam) this.scannerBeam.visible = true;
-        this.rotationSpeed = 0.52;
+        if (this.coreLight) this.coreLight.intensity = 3.0;
       } else if (this.currentStage === 2 || this.currentStage === 3) {
         // Planning & Layout: panels expand outward and orbit
-        this.wireframePanels.forEach(function(p) { p.userData.radius = p.userData.baseRadius * 1.05; });
+        this.wireframePanels.forEach(function(p) { p.userData.radius = p.userData.baseRadius * 1.08; });
       } else if (this.currentStage === 4 || this.currentStage === 5) {
         // Components & Connections: intense core light and active arms
-        if (this.coreLight) this.coreLight.intensity = 4.2;
+        if (this.coreLight) this.coreLight.intensity = 4.6;
       } else if (this.currentStage >= 6) {
         // Finalizing: panels converge closer to center into finished website model
-        this.wireframePanels.forEach(function(p) { p.userData.radius = p.userData.baseRadius * 0.85; });
+        this.wireframePanels.forEach(function(p) { p.userData.radius = p.userData.baseRadius * 0.8; });
       }
     },
 

@@ -28,9 +28,9 @@ require_once dirname(__DIR__) . '/includes/OpenCodeService.php';
 require_once dirname(__DIR__) . '/includes/GeminiService.php';
 require_once dirname(__DIR__) . '/includes/ShopHelper.php';
 
-// Free-lane AI generations are slow (chunked, up to ~5 min for 3 chunks).
-// Lift PHP's execution cap so Apache doesn't kill the request mid-stream.
-@set_time_limit(600);
+// Free-lane AI generations can take several minutes. No PHP execution cap:
+// the request lives until the model is done (client has no timer either).
+@set_time_limit(0);
 
 $raw = file_get_contents('php://input');
 $req = json_decode($raw, true) ?: [];

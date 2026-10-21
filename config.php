@@ -7,7 +7,7 @@
 //  copy the documented defaults from git history if you need a template.
 // ═══════════════════════════════════════════════════════════════
 
-foreach (['app.php', 'payhere.php', 'database.php', 'mail.php', 'platform-admin.php', 'social.php', 'storage.php'] as $cfg) {
+foreach (['app.php', 'payhere.php', 'database.php', 'mail.php', 'owner-email.php', 'platform-admin.php', 'social.php', 'storage.php'] as $cfg) {
     $f = __DIR__ . '/config/' . $cfg;
     if (file_exists($f)) require_once $f;
 }

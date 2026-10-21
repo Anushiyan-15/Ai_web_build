@@ -1,23 +1,129 @@
 /* ═══════════════════════════════════════════════════════════════
-   assets/css/wc-robot-3d.css — 360° 3D AI Robot Canvas Layer
+   assets/css/wc-robot-3d.css — WebCraft AI Premium Futuristic 3D Website Generation Screen
+   Palette:
+     Navy Blue: #050B1D, #0A1630, #0C1A3A
+     Electric Cyan: #20DFFF, #38BDF8, #06B6D4
+     Neon Blue: #2563EB, #3B82F6
+     Purple / Violet: #8B5CFF, #A855F7, #C084FC
+     Subtle Orange Accent: #F97316, #FB923C
+   Layout: 100vw × 100dvh, STRICTLY ZERO SCROLLBARS / NO OVERFLOW
    ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. Full-Screen Fixed Viewport Root ── */
+#gen-overlay,
+#gen-overlay.gen-futuristic-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 100vw;
+  max-height: 100dvh;
+  overflow: hidden !important;
+  z-index: 99999;
+  background: radial-gradient(ellipse 90% 70% at 50% 30%, #0d1b3e 0%, #050b1d 65%, #02040a 100%);
+  color: #f8fafc;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#gen-overlay.active {
+  display: flex;
+  flex-direction: column;
+  animation: genScreenFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes genScreenFadeIn {
+  from { opacity: 0; transform: scale(0.99); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Perspective Cyber Grid Floor with Moving Neon Lines */
+#gen-overlay::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -25%;
+  right: -25%;
+  height: 44%;
+  background-image:
+    linear-gradient(to right, rgba(32, 223, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to top, rgba(139, 92, 255, 0.09) 1px, transparent 1px);
+  background-size: 52px 52px;
+  transform: perspective(480px) rotateX(68deg);
+  transform-origin: bottom center;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 90%, black 20%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 90%, black 20%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+  animation: cyberGridFloorMove 12s linear infinite;
+}
+
+@keyframes cyberGridFloorMove {
+  from { background-position: 0 0; }
+  to { background-position: 0 52px; }
+}
+
+/* Atmospheric Aurora Glow Blobs (Cyan, Purple, Subtle Orange) */
+.gen-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.gen-aurora span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.25;
+}
+.gen-aurora .ab1 {
+  width: 44vmax; height: 44vmax;
+  background: #20dfff;
+  top: -12%; left: -6%;
+  animation: auroraDrift1 14s ease-in-out infinite alternate;
+}
+.gen-aurora .ab2 {
+  width: 40vmax; height: 40vmax;
+  background: #8b5cff;
+  bottom: -15%; right: -6%;
+  animation: auroraDrift2 16s ease-in-out infinite alternate-reverse;
+}
+.gen-aurora .ab3 {
+  width: 32vmax; height: 32vmax;
+  background: #f97316;
+  top: 35%; left: 45%;
+  opacity: 0.12;
+  animation: auroraDrift1 11s ease-in-out infinite alternate;
+}
+
+@keyframes auroraDrift1 {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(4vmax, 3vmax) scale(1.1); }
+}
+@keyframes auroraDrift2 {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(-3vmax, -4vmax) scale(1.08); }
+}
+
+/* ── 2. Three.js Robot Canvas Wrap ── */
 .wc-robot-3d-wrap {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1; /* Sits beneath foreground .gen-overlay-content (z-index: 2) */
+  z-index: 1;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-#gen-overlay.active .wc-robot-3d-wrap {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .wc-robot-3d-wrap canvas {
@@ -26,92 +132,1089 @@
   display: block;
   outline: none;
   pointer-events: none;
-  filter: drop-shadow(0 0 60px rgba(6, 182, 212, 0.32)) drop-shadow(0 0 100px rgba(168, 85, 247, 0.18));
-  transition: transform 0.25s ease-out;
+  filter: drop-shadow(0 0 60px rgba(32, 223, 255, 0.35)) drop-shadow(0 0 100px rgba(139, 92, 255, 0.22));
 }
 
-/* Atmospheric holographic horizon & vignette */
 .wc-robot-3d-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: 
-    radial-gradient(ellipse 65% 55% at 50% 45%, rgba(6, 182, 212, 0.08), transparent 70%),
-    radial-gradient(circle at 50% 45%, transparent 32%, rgba(3, 7, 18, 0.45) 75%, rgba(1, 3, 10, 0.88) 100%);
+  background:
+    radial-gradient(ellipse 65% 55% at 50% 45%, rgba(32, 223, 255, 0.06), transparent 70%),
+    radial-gradient(circle at 50% 45%, transparent 35%, rgba(3, 7, 18, 0.45) 75%, rgba(2, 4, 10, 0.90) 100%);
   z-index: 1;
 }
 
-/* Perspective cyber grid floor */
-.wc-robot-3d-wrap::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: -20%;
-  right: -20%;
-  height: 48%;
-  background-image: 
-    linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
-    linear-gradient(to top, rgba(168, 85, 247, 0.08) 1px, transparent 1px);
-  background-size: 50px 50px;
-  transform: perspective(400px) rotateX(65deg);
-  transform-origin: bottom center;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 90%, black 20%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 90%, black 20%, transparent 80%);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.7;
+/* ── 3. Top Cyber Status Bar ── */
+.gen-hud-bar {
+  position: relative;
+  z-index: 20;
+  height: 48px;
+  min-height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background: rgba(5, 11, 29, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(32, 223, 255, 0.22);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* High-tech holographic scanline pulse */
-.wc-robot-3d-wrap::after {
-  content: '';
+.gen-hud-left,
+.gen-hud-right {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.gen-brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.gen-brand-spark {
+  color: #20dfff;
+  font-size: 1.1rem;
+  filter: drop-shadow(0 0 8px #20dfff);
+  animation: sparkTwinkle 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes sparkTwinkle {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.2); opacity: 1; }
+}
+
+.gen-brand-title {
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.gen-brand-sep {
+  color: rgba(32, 223, 255, 0.4);
+  font-size: 0.8rem;
+}
+
+.gen-brand-sub {
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hud-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2.5px;
+  height: 14px;
+}
+.hud-eq i {
+  width: 2.5px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #20dfff, #8b5cff);
+  box-shadow: 0 0 6px rgba(32, 223, 255, 0.8);
+  transform-origin: bottom;
+  animation: eqBounce 0.9s ease-in-out infinite;
+}
+.hud-eq i:nth-child(2) { animation-delay: 0.15s; }
+.hud-eq i:nth-child(3) { animation-delay: 0.30s; }
+.hud-eq i:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes eqBounce {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.gen-hud-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gen-hud-badge.mode {
+  background: rgba(32, 223, 255, 0.12);
+  border: 1px solid rgba(32, 223, 255, 0.4);
+  color: #20dfff;
+  box-shadow: 0 0 10px rgba(32, 223, 255, 0.2);
+}
+
+.gen-hud-badge.live {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.gen-hud-timer-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(10, 22, 48, 0.7);
+  border: 1px solid rgba(32, 223, 255, 0.25);
+  padding: 0.18rem 0.65rem;
+  border-radius: 999px;
+}
+
+.gen-hud-mono {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.74rem;
+  color: #e2e8f0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.gen-hud-mono.eta {
+  color: #20dfff;
+}
+
+.gen-clock {
+  --p: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(from -90deg, #20dfff calc(var(--p) * 1%), rgba(255,255,255,0.08) 0);
+  box-shadow: 0 0 8px rgba(32, 223, 255, 0.4);
+}
+.gen-clock .gc-face {
+  position: relative;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #050b1d;
+}
+.gen-clock .gc-face i {
+  position: absolute; left: 50%; bottom: 50%; transform-origin: 50% 100%; border-radius: 2px;
+}
+.gen-clock .gc-h { width: 1.5px; height: 4px; margin-left: -0.75px; background: #e2e8f0; animation: gcSpin 120s linear infinite; }
+.gen-clock .gc-m { width: 1.2px; height: 6px; margin-left: -0.6px; background: #20dfff; animation: gcSpin 60s linear infinite; }
+.gen-clock .gc-s { width: 1px; height: 7px; margin-left: -0.5px; background: #8b5cff; animation: gcSpin 12s linear infinite; }
+.gen-clock .gc-pin { position: absolute; left: 50%; top: 50%; width: 2.5px; height: 2.5px; margin: -1.25px 0 0 -1.25px; border-radius: 50%; background: #fff; }
+
+@keyframes gcSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── 4. Central Panoramic Viewport Stage (Grid Layout, No Scroll) ── */
+.gen-viewport-stage {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  width: 100%;
+  height: calc(100vh - 48px - 40px);
+  height: calc(100dvh - 48px - 40px);
+  max-height: calc(100dvh - 48px - 40px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 1.25rem;
+  padding: 0.85rem 1.4rem;
+  box-sizing: border-box;
+  overflow: hidden !important;
+}
+
+/* ── 5. Left/Center Main Stage Area ── */
+.gen-stage-main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden !important;
+  pointer-events: none;
+}
+
+/* 6 Floating Holographic Component Panels surrounding robot */
+.gen-floating-components {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(34, 211, 238, 0.04) 50%, transparent 100%);
-  background-size: 100% 200%;
-  animation: wcHoloScan 7s linear infinite;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  z-index: 2;
+}
+
+.gen-holo-card {
+  position: absolute;
+  width: 195px;
+  background: rgba(10, 22, 48, 0.82);
+  border: 1px solid rgba(32, 223, 255, 0.35);
+  border-radius: 14px;
+  padding: 0.65rem 0.85rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 18px rgba(32, 223, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+.gen-holo-card .ghc-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(32, 223, 255, 0.25), transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+.gen-holo-card.active {
+  border-color: #20dfff;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 28px rgba(32, 223, 255, 0.45), inset 0 0 15px rgba(32, 223, 255, 0.2);
+  transform: scale(1.04);
+}
+
+.gen-holo-card.active .ghc-tag {
+  background: #20dfff;
+  color: #050b1d;
+  box-shadow: 0 0 10px #20dfff;
+}
+
+.ghc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.3rem;
+}
+.ghc-ic {
+  font-size: 1rem;
+}
+.ghc-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+.ghc-tag {
+  margin-left: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #20dfff;
+  background: rgba(32, 223, 255, 0.14);
+  padding: 0.1rem 0.38rem;
+  border-radius: 4px;
+}
+.ghc-body {
+  margin-bottom: 0.35rem;
+}
+.ghc-val {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ghc-meta {
+  font-size: 0.64rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ghc-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.ghc-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #20dfff, #8b5cff);
+}
+
+/* Floating positions around the perimeter */
+.holo-card-idea {
+  top: 4%; left: 2%;
+  animation: holoLevitate 6s ease-in-out infinite alternate;
+}
+.holo-card-media {
+  top: 32%; left: 1%;
+  animation: holoLevitate 7s ease-in-out infinite alternate-reverse;
+}
+.holo-card-layout {
+  bottom: 24%; left: 3%;
+  animation: holoLevitate 6.5s ease-in-out infinite alternate;
+}
+.holo-card-features {
+  top: 4%; right: 2%;
+  animation: holoLevitate 6.2s ease-in-out infinite alternate-reverse;
+}
+.holo-card-style {
+  top: 32%; right: 1%;
+  animation: holoLevitate 7.2s ease-in-out infinite alternate;
+}
+.holo-card-custom {
+  bottom: 24%; right: 3%;
+  animation: holoLevitate 6.8s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes holoLevitate {
+  0% { transform: translateY(0px) rotate(-0.5deg); }
+  100% { transform: translateY(-8px) rotate(0.5deg); }
+}
+
+/* ── 6. Holographic Browser Window (Live Assembling Website Preview Beside Robot) ── */
+.gen-holo-browser {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -58%);
+  width: min(390px, 58vw);
+  height: 240px;
+  background: rgba(8, 16, 36, 0.78);
+  border: 1px solid rgba(32, 223, 255, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.75), 0 0 35px rgba(32, 223, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+}
+
+.ghb-bar {
+  height: 30px;
+  background: rgba(5, 11, 29, 0.95);
+  border-bottom: 1px solid rgba(32, 223, 255, 0.25);
+  display: flex;
+  align-items: center;
+  padding: 0 0.8rem;
+  gap: 0.6rem;
+}
+
+.ghb-dots {
+  display: flex;
+  gap: 4px;
+}
+.ghb-dots span {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.ghb-dots span:nth-child(1) { background: #ef4444; }
+.ghb-dots span:nth-child(2) { background: #f59e0b; }
+.ghb-dots span:nth-child(3) { background: #10b981; }
+
+.ghb-url {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(32, 223, 255, 0.2);
+  border-radius: 5px;
+  padding: 0.12rem 0.5rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  color: #38bdf8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ghb-live-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #10b981;
+  letter-spacing: 0.04em;
+}
+
+.ghb-window {
+  position: relative;
+  flex: 1;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.ghb-scanline {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #20dfff, #8b5cff, transparent);
+  box-shadow: 0 0 12px #20dfff;
+  opacity: 0.85;
+  animation: holoWindowScan 3.6s linear infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes holoWindowScan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.ghb-nav-mock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+.ghb-brand-logo {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #f8fafc;
+  background: linear-gradient(90deg, #ffffff, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.ghb-nav-pills {
+  display: flex;
+  gap: 5px;
+}
+.ghb-nav-pills span {
+  width: 22px; height: 5px; border-radius: 3px; background: rgba(32, 223, 255, 0.25);
+}
+
+.ghb-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+  line-height: 1.25;
+}
+.ghb-sub {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin: 0 0 0.55rem;
+  line-height: 1.35;
+}
+.ghb-ctas {
+  display: flex;
+  gap: 0.45rem;
+}
+.ghb-btn {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+.ghb-btn.primary {
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+.ghb-btn.outline {
+  border: 1px solid rgba(32, 223, 255, 0.4);
+  color: #38bdf8;
+}
+
+.ghb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+.ghb-card {
+  height: 44px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(32, 223, 255, 0.25);
+  border-radius: 6px;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.ghb-card-bar {
+  width: 60%;
+  height: 4px;
+  border-radius: 2px;
+  background: #38bdf8;
+}
+.ghb-card-line {
+  width: 85%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* ── 7. Circular Percentage and Estimated Time Hub (Lower Main Stage) ── */
+.gen-circular-hub {
+  position: absolute;
+  bottom: 0.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(640px, 92%);
+  background: rgba(8, 18, 42, 0.90);
+  border: 1px solid rgba(32, 223, 255, 0.35);
+  border-radius: 20px;
+  padding: 0.75rem 1.4rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 28px rgba(32, 223, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.gen-ring-wrapper {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gen-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gen-ring-bar {
+  transition: stroke-dashoffset 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gen-ring-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 32px;
+  font-family: 'Fira Code', monospace;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(32, 223, 255, 0.7);
+}
+
+.gen-ring-pct {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.gen-ring-sym {
+  font-size: 0.95rem;
+  color: #20dfff;
+  margin-left: 2px;
+}
+
+.gen-ring-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.gen-ring-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #20dfff;
+  background: rgba(32, 223, 255, 0.10);
+  border: 1px solid rgba(32, 223, 255, 0.3);
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  margin-bottom: 0.22rem;
+}
+
+.grb-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  animation: grbDotPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes grbDotPulse {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
+.gen-ring-heading {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.18rem;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gen-ring-sub {
+  font-size: 0.74rem;
+  color: #cbd5e1;
+  margin: 0 0 0.32rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gen-ring-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.68rem;
+  flex-wrap: wrap;
+}
+
+.grm-keep {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.grm-divider {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.grm-eta {
+  color: #67e8f9;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* ── 8. Right-Side Professional Generation Progress Panel ── */
+.gen-progress-panel {
+  position: relative;
+  z-index: 15;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
+.gpp-card {
+  width: 100%;
+  height: 100%;
+  background: rgba(8, 18, 42, 0.88);
+  border: 1px solid rgba(32, 223, 255, 0.3);
+  border-radius: 20px;
+  padding: 1rem 1.15rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.7), 0 0 30px rgba(32, 223, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.gpp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(32, 223, 255, 0.2);
+  margin-bottom: 0.55rem;
+}
+
+.gpp-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gpp-spark {
+  color: #20dfff;
+  font-size: 1rem;
+}
+
+.gpp-heading {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.gpp-step-counter {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(32, 223, 255, 0.12);
+  padding: 0.12rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* 7 Stage Items List */
+.gpp-stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  flex: 1;
+  justify-content: space-around;
+  margin: 0.2rem 0;
+}
+
+.gpp-stage {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.42rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid transparent;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gps-state-ic {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.gps-spinner {
+  display: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(32, 223, 255, 0.25);
+  border-top-color: #20dfff;
+  animation: gpsSpin 0.75s linear infinite;
+}
+
+@keyframes gpsSpin {
+  to { transform: rotate(360deg); }
+}
+
+.gps-check {
+  display: none;
+  color: #10b981;
+}
+
+.gps-fail {
+  display: none;
+  color: #ef4444;
+}
+
+.gps-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gps-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gps-status {
+  font-size: 0.62rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* 4 States Styling */
+
+/* State 1: WAITING */
+.gpp-stage.waiting {
+  opacity: 0.42;
+}
+
+/* State 2: IN PROGRESS (Active) */
+.gpp-stage.active {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(32, 223, 255, 0.15), rgba(139, 92, 255, 0.12));
+  border-color: rgba(32, 223, 255, 0.65);
+  box-shadow: 0 0 16px rgba(32, 223, 255, 0.25);
+}
+.gpp-stage.active .gps-state-ic {
+  border-color: #20dfff;
+  box-shadow: 0 0 10px rgba(32, 223, 255, 0.6);
+}
+.gpp-stage.active .gps-spinner {
+  display: block;
+}
+.gpp-stage.active .gps-title {
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 0 12px rgba(32, 223, 255, 0.4);
+}
+.gpp-stage.active .gps-status {
+  color: #20dfff;
+  font-weight: 800;
+}
+
+/* State 3: COMPLETED */
+.gpp-stage.completed,
+.gpp-stage.done {
+  opacity: 1;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+.gpp-stage.completed .gps-state-ic,
+.gpp-stage.done .gps-state-ic {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+.gpp-stage.completed .gps-check,
+.gpp-stage.done .gps-check {
+  display: block;
+  animation: checkPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gpp-stage.completed .gps-title,
+.gpp-stage.done .gps-title {
+  color: #f1f5f9;
+}
+.gpp-stage.completed .gps-status,
+.gpp-stage.done .gps-status {
+  color: #34d399;
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* State 4: FAILED */
+.gpp-stage.failed {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+.gpp-stage.failed .gps-state-ic {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+}
+.gpp-stage.failed .gps-fail {
+  display: block;
+}
+.gpp-stage.failed .gps-status {
+  color: #ef4444;
+}
+
+/* Live AI Reasoning Ticker */
+.gpp-telemetry {
+  margin-top: 0.55rem;
+}
+.gen-ai-ticker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(5, 11, 29, 0.9);
+  border: 1px solid rgba(32, 223, 255, 0.3);
+  box-shadow: 0 0 14px rgba(32, 223, 255, 0.1);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  color: #a5f3fc;
+  overflow: hidden;
+}
+.gen-ai-ticker .tk-orb {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: #20dfff; box-shadow: 0 0 8px #20dfff;
+  animation: tkOrbPulse 1.4s ease-in-out infinite;
+}
+@keyframes tkOrbPulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.4); opacity: 1; }
+}
+.gen-ai-ticker .tk-tx {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gen-ai-ticker .tk-conf {
+  flex-shrink: 0;
+  font-weight: 800;
+  color: #34d399;
+}
+
+/* ── 9. Bottom Information Bar ── */
+.gen-bottom-bar {
+  position: relative;
+  z-index: 20;
+  height: 40px;
+  min-height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.6rem;
+  background: rgba(5, 11, 29, 0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(32, 223, 255, 0.22);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  font-size: 0.76rem;
+  overflow: hidden;
+}
+
+.gbb-glow-beam {
+  position: absolute;
+  top: 0; left: -30%; width: 40%; height: 1.5px;
+  background: linear-gradient(90deg, transparent, #20dfff, #8b5cff, transparent);
+  box-shadow: 0 0 14px #20dfff;
+  animation: gbbBeamMove 5s linear infinite;
+}
+
+@keyframes gbbBeamMove {
+  0% { left: -40%; }
+  100% { left: 110%; }
+}
+
+.gbb-left,
+.gbb-right,
+.gbb-center {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  position: relative;
   z-index: 1;
 }
 
-@keyframes wcHoloScan {
-  0% { background-position: 0% -100%; }
-  100% { background-position: 0% 200%; }
+.gbb-left {
+  color: #e2e8f0;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-/* Light mode adjustments */
-[data-theme="light"] .wc-robot-3d-vignette {
-  background: 
-    radial-gradient(ellipse 65% 55% at 50% 45%, rgba(6, 182, 212, 0.06), transparent 70%),
-    radial-gradient(circle at 50% 45%, transparent 38%, rgba(241, 245, 249, 0.4) 80%, rgba(226, 232, 240, 0.8) 100%);
+.gbb-spark {
+  color: #20dfff;
 }
 
-[data-theme="light"] .wc-robot-3d-wrap::before {
-  opacity: 0.35;
+.gbb-center {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+.gbb-pulse-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #20dfff; box-shadow: 0 0 6px #20dfff;
+  animation: gbbPulse 1.4s ease-in-out infinite;
+}
+@keyframes gbbPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
-/* Responsive scaling for mobile & tablet */
-@media (max-width: 768px) {
-  .wc-robot-3d-wrap canvas {
-    transform: scale(0.86) translateY(-18px);
-    transform-origin: center center;
+.gbb-right {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* ── 10. Responsive Adaptations (Tablet & Mobile, Strictly 100dvh Zero Scroll) ── */
+@media (max-width: 1080px) {
+  .gen-viewport-stage {
+    grid-template-columns: minmax(0, 1fr) 290px;
+    gap: 0.9rem;
+    padding: 0.6rem 0.9rem;
+  }
+  .gen-holo-card {
+    width: 160px;
+    padding: 0.5rem 0.65rem;
+  }
+  .gen-holo-browser {
+    width: 330px;
+    height: 210px;
+  }
+  .gen-circular-hub {
+    padding: 0.55rem 1rem;
+    gap: 0.9rem;
+  }
+  .gen-ring-wrapper {
+    width: 80px; height: 80px;
+  }
+  .gen-ring-content {
+    margin-top: 26px;
+  }
+  .gen-ring-pct {
+    font-size: 1.35rem;
   }
 }
 
-@media (max-width: 480px) {
-  .wc-robot-3d-wrap canvas {
-    transform: scale(0.72) translateY(-32px);
-    transform-origin: center center;
+@media (max-width: 820px) {
+  .gen-viewport-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    padding: 0.5rem 0.75rem;
+    gap: 0.6rem;
+  }
+  .gen-progress-panel {
+    max-height: 190px;
+  }
+  .gpp-card {
+    padding: 0.65rem 0.85rem;
+  }
+  .gpp-stages-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.3rem;
+  }
+  .gpp-stage:last-child {
+    grid-column: span 2;
+  }
+  .holo-card-media, .holo-card-style {
+    display: none; /* Simplify on tablets */
+  }
+  .gen-holo-browser {
+    display: none; /* Keep robot focal on smaller screens */
+  }
+  .gbb-center {
+    display: none;
   }
 }
 
-/* Respect user's reduced-motion preference */
-@media (prefers-reduced-motion: reduce) {
-  .wc-robot-3d-wrap canvas {
-    filter: none;
-    transform: none !important;
+@media (max-width: 580px) {
+  .gen-hud-bar {
+    padding: 0 0.8rem;
   }
-  .wc-robot-3d-wrap::after {
-    animation: none;
+  .gen-brand-sub, .gen-hud-badge.live {
+    display: none;
+  }
+  .gen-holo-card {
+    display: none; /* Pure focal robot on mobile */
+  }
+  .gen-circular-hub {
+    flex-direction: column;
+    text-align: center;
+    padding: 0.6rem 0.8rem;
+    gap: 0.4rem;
+  }
+  .gen-ring-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .gpp-stages-list {
+    display: none; /* Mobile keeps clean circular ring + ticker */
+  }
+  .gen-progress-panel {
+    max-height: 60px;
+  }
+  .gen-bottom-bar {
+    padding: 0 0.8rem;
+    font-size: 0.68rem;
+  }
+  .gbb-right {
+    display: none;
   }
 }

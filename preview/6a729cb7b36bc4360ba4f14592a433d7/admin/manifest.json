@@ -1,0 +1,290 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "full-e2e-co",
+    "order_id": "PREVIEW-6a729cb7",
+    "business": {
+        "name": "Full E2E Co",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passenger",
+                    "label": "Passenger",
+                    "type": "text",
+                    "required": false
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": false
+                },
+                {
+                    "name": "status",
+                    "label": "Approval status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "pending",
+                        "approved",
+                        "rejected",
+                        "cancelled"
+                    ]
+                },
+                {
+                    "name": "payment_status",
+                    "label": "Payment status",
+                    "type": "text",
+                    "required": false
+                },
+                {
+                    "name": "amount",
+                    "label": "Fare total",
+                    "type": "number",
+                    "required": false
+                }
+            ]
+        },
+        {
+            "id": "orders",
+            "name": "Orders",
+            "singular": "Order",
+            "icon": "🧾",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "total",
+                    "label": "Total",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "customers",
+            "name": "Customers",
+            "singular": "Customer",
+            "icon": "👥",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "reviews",
+            "name": "Reviews",
+            "singular": "Review",
+            "icon": "⭐",
+            "fields": [
+                {
+                    "name": "reviewer",
+                    "label": "Reviewer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "stars",
+                    "label": "Stars",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "appointments",
+            "name": "Appointments",
+            "singular": "Appointment",
+            "icon": "📅",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "date",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "subscribers",
+            "name": "Subscribers",
+            "singular": "Subscriber",
+            "icon": "💌",
+            "fields": [
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "trips",
+            "name": "Trips",
+            "singular": "Trip",
+            "icon": "🚌",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "date",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "inquiries",
+            "label": "Inquiries",
+            "icon": "✉️",
+            "entity": "inquiries"
+        },
+        {
+            "id": "bookings",
+            "label": "Bookings",
+            "icon": "🎫",
+            "entity": "bookings"
+        },
+        {
+            "id": "orders",
+            "label": "Orders",
+            "icon": "🧾",
+            "entity": "orders"
+        },
+        {
+            "id": "customers",
+            "label": "Customers",
+            "icon": "👥",
+            "entity": "customers"
+        },
+        {
+            "id": "reviews",
+            "label": "Reviews",
+            "icon": "⭐",
+            "entity": "reviews"
+        },
+        {
+            "id": "appointments",
+            "label": "Appointments",
+            "icon": "📅",
+            "entity": "appointments"
+        },
+        {
+            "id": "subscribers",
+            "label": "Subscribers",
+            "icon": "💌",
+            "entity": "subscribers"
+        },
+        {
+            "id": "trips",
+            "label": "Trips",
+            "icon": "🚌",
+            "entity": "trips"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-20T12:58:32+01:00"
+}

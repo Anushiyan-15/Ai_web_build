@@ -3,6 +3,7 @@ config/app.php
 config/database.php
 config/paypal.php
 config/mail.php
+config/owner-email.php
 config/platform-admin.php
 config/social.php
 .env

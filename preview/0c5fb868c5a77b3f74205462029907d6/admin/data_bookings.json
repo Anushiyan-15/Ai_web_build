@@ -1,0 +1,29 @@
+[
+    {
+        "passenger": "Anu Anushiyan",
+        "phone": "+94752038598",
+        "email": "ut01336tic2024@gmail.com",
+        "trip_id": "D1",
+        "seats": [
+            "F3"
+        ],
+        "hold_ref": "HOLD-385A01098A5767F303B4D1454960C2A2",
+        "id": "BKG-BDD25BC5CC81",
+        "created_at": "2026-10-21T10:15:46+01:00",
+        "updated_at": "2026-10-21T10:15:48+01:00",
+        "idempotency_key": "k_mvhwd3ua_jbkzy5",
+        "ref": "BK-82D6A172",
+        "verify_token": "11bfae4419dd3abf558dcdfc93e8f018",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-22",
+        "departure": "06:30",
+        "price_per_seat": 899,
+        "amount": 899,
+        "currency": "LKR",
+        "status": "pending",
+        "payment_status": "unpaid",
+        "payment_method": "counter",
+        "payment_request_status": "pending",
+        "payment_requested_at": "2026-10-21T10:15:48+01:00"
+    }
+]

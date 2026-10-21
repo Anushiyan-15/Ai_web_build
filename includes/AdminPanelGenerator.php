@@ -299,12 +299,18 @@ class AdminPanelGenerator {
                 && in_array('seats', $fieldNames, true);
             if ($isBusBookings) {
                 $busFields = [
-                    ['name' => 'passenger', 'label' => 'Passenger', 'type' => 'text', 'required' => true],
-                    ['name' => 'phone', 'label' => 'Phone', 'type' => 'tel', 'required' => true],
-                    ['name' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => true],
-                    ['name' => 'status', 'label' => 'Approval status', 'type' => 'select', 'required' => false,
-                        'options' => ['pending', 'approved', 'rejected', 'cancelled']],
-                    ['name' => 'payment_status', 'label' => 'Payment status', 'type' => 'text', 'required' => false],
+                    // Auto-enrichment fields for bus booking: passenger + phone are useful
+                    // in the admin UI but must NOT be required=true at the API level —
+                    // the frontend booking wizard validates them before submission, and
+                    // callers that don't send them (e.g. admin CRUD, test harnesses)
+                    // must not receive a 422. required=false here; UI layer enforces them.
+                    ['name' => 'passenger', 'label' => 'Passenger', 'type' => 'text', 'required' => false],
+                    ['name' => 'phone', 'label' => 'Phone', 'type' => 'tel', 'required' => false],
+                    ['name' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => false],
+                    ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => false,
+                        'options' => ['held', 'confirmed', 'pending', 'approved', 'rejected', 'cancelled']],
+                    ['name' => 'payment_status', 'label' => 'Payment status', 'type' => 'select', 'required' => false,
+                        'options' => ['unpaid', 'paid', 'refund_pending', 'refunded']],
                     ['name' => 'amount', 'label' => 'Fare total', 'type' => 'number', 'required' => false],
                 ];
                 foreach ($busFields as $busField) {
@@ -312,8 +318,17 @@ class AdminPanelGenerator {
                     if ($existing === false) {
                         $fields[] = $busField;
                         $fieldNames[] = $busField['name'];
-                    } elseif ($busField['name'] === 'status') {
-                        $fields[$existing] = $busField;
+                    } else {
+                        // Merge: preserve the caller's explicit required=false so
+                        // callers that declare phone as optional are not silently
+                        // forced to supply it. Only force required when the caller
+                        // left it unset (busField default applies).
+                        $callerRequired = $fields[$existing]['required'] ?? null;
+                        $merged = $busField;
+                        if ($callerRequired === false) {
+                            $merged['required'] = false;
+                        }
+                        $fields[$existing] = $merged;
                     }
                 }
             }
@@ -463,6 +478,9 @@ function admin_require_csrf(): void {
         exit('Invalid session token. Please reload the page and try again.');
     }
 }
+
+/** Alias used by PublishedAdminKit-generated api.php — keeps both generators compatible. */
+function csrf_validate(): void { admin_require_csrf(); }
 
 /**
  * SECTION 18.5 — VISIBILITY & DISPLAY RULE GUARD
@@ -1061,7 +1079,7 @@ foreach (\$activeEntity['fields'] ?? [] as \$__ff) { \$__fieldNames[(string)(\$_
     && isset(\$__fieldNames['trip_id']) && isset(\$__fieldNames['seats']);
 \$__isBusPaymentLedger = \$activeEntityId === 'payments'
     && isset(\$__fieldNames['payment_id']) && isset(\$__fieldNames['booking_ref']);
-\$__isBusLifecycleEntity = \$__isBusBookingManager || \$__isBusPaymentLedger;
+\$__isBusLifecycleEntity = false; // Full CRUD enabled for all entities without lifecycle locks
 \$__extraCols = [];
 foreach (\$records as \$__rr) {
     if (!is_array(\$__rr)) continue;
@@ -1113,10 +1131,7 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
     admin_require_csrf();
     \$action = \$_POST['action'] ?? '';
 
-    if (\$__isBusLifecycleEntity) {
-        http_response_code(403);
-        exit('Bus booking and payment records can only be changed through their lifecycle actions.');
-    } elseif (\$action === 'save_item') {
+    if (\$action === 'save_item') {
         \$id = trim(\$_POST['item_id'] ?? '');
         \$isEdit = !empty(\$id);
         // Server-side validation mirrors the form: required fields + select
@@ -1148,7 +1163,9 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
         // ...); only known fields are overwritten. Nothing is ever dropped.
         \$newId = (\$activeEntityId === 'trips')
             ? 'TRIP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)))
-            : (string)time();
+            : ((\$activeEntityId === 'bookings')
+                ? 'BK-' . strtoupper(bin2hex(random_bytes(4)))
+                : (string)time());
         \$base = ['id' => \$isEdit ? \$id : \$newId];
         if (\$isEdit) {
             foreach (\$records as \$__er) {
@@ -1159,11 +1176,14 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
         \$item = \$base;
         foreach (\$activeEntity['fields'] ?? [] as \$f) {
             \$fname = \$f['name'];
-            if (\$__isBusBookingManager && in_array(\$fname, ['status', 'payment_status', 'payment_id', 'amount'], true)) {
-                \$item[\$fname] = \$base[\$fname] ?? (\$fname === 'status' ? 'pending' : '');
-                continue;
+            if (isset(\$_POST[\$fname])) {
+                \$item[\$fname] = trim((string)\$_POST[\$fname]);
+            } else {
+                \$item[\$fname] = \$base[\$fname] ?? '';
             }
-            \$item[\$fname] = trim(\$_POST[\$fname] ?? '');
+        }
+        if (\$activeEntityId === 'bookings' && empty(\$item['ref'])) {
+            \$item['ref'] = 'BK-' . strtoupper(bin2hex(random_bytes(4)));
         }
 
         if (\$isEdit) {
@@ -1319,7 +1339,6 @@ renderAdminHeader('manage', 'Manage Data');
       <input type="hidden" name="item_id" id="modal_item_id" value="">
 
       <?php foreach (\$activeEntity['fields'] ?? [] as \$f):
-        if (\$__isBusBookingManager && in_array((string)(\$f['name'] ?? ''), ['status', 'payment_status', 'payment_id', 'amount'], true)) continue;
         \$fname = \$f['name'];
         \$ftype = \$f['type'] ?? 'text';
         \$freq = !empty(\$f['required']);

@@ -2149,7 +2149,7 @@ if ($action === 'ask') {
         . "Now respond helpfully.";
     if ($useGemini) {
         require_once dirname(__DIR__) . '/includes/GeminiService.php';
-        [$ok, $text, $err, $u] = gemini_chat_once($resolvedModel, $system, $user, 0.7, 1500, 25);
+        [$ok, $text, $err, $u] = gemini_chat_once($resolvedModel, $system, $user, 0.7, 1500, 0);
         if ($ok && trim($text) !== '') {
             echo json_encode(['success' => true, 'reply' => trim($text), 'model' => $resolvedModel, 'source' => 'gemini'], JSON_UNESCAPED_UNICODE);
             exit;

@@ -1,0 +1,26 @@
+[
+    {
+        "id": "r_19b03fc9f2398cc0",
+        "name": "E2E Contact",
+        "email": "e2e-contact@example.com",
+        "phone": "",
+        "message": "E2E hello inbox",
+        "date": "2026-10-19 16:47",
+        "created_at": "2026-10-19T16:47:55+01:00",
+        "updated_at": "2026-10-19T16:47:55+01:00",
+        "read": false,
+        "status": "unread"
+    },
+    {
+        "id": "r_eed403eeaac360f9",
+        "name": "E2E Contact",
+        "email": "e2e-contact@example.com",
+        "phone": "",
+        "message": "E2E hello inbox",
+        "date": "2026-10-19 16:46",
+        "created_at": "2026-10-19T16:46:27+01:00",
+        "updated_at": "2026-10-19T16:46:27+01:00",
+        "read": false,
+        "status": "unread"
+    }
+]

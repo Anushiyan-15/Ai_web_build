@@ -19,7 +19,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Cinzel:wght@500;700;800&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/css/grapes.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.21.10/grapes.min.js"></script>
-  <script src="<?= SITE_URL ?>/assets/js/opencode-service.js"></script>
+  <script src="<?= SITE_URL ?>/assets/js/opencode-service.js?v=20261021a"></script>
   <?php require_once __DIR__ . '/includes/theme-head.php'; ?>
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/loader-3d.css">
   <script src="<?= SITE_URL ?>/assets/js/loader-3d.js"></script>

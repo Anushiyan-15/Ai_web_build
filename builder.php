@@ -628,13 +628,13 @@ body { background:#0a0d14; color:#e2e8f0; font-family:'Inter',system-ui,sans-ser
   box-shadow: 0 0 8px #10b981; animation: hudDotPulse 1.4s ease-in-out infinite;
 }
 
-/* C. Seven-Stage Generation Progress (Row 1: 4 steps, Row 2: 3 steps) */
+/* C. Six-Stage Generation Progress (Row 1: 3 steps, Row 2: 3 steps) */
 .wc-stages {
   width: 100%; display: flex; flex-direction: column; gap: 0.42rem; margin-bottom: 0.95rem;
 }
 .wc-stage-row { display: grid; gap: 0.42rem; width: 100%; }
-.wc-stage-row.row-1 { grid-template-columns: repeat(4, 1fr); }
-.wc-stage-row.row-2 { grid-template-columns: repeat(3, 1fr); max-width: 82%; margin: 0 auto; }
+.wc-stage-row.row-1 { grid-template-columns: repeat(3, 1fr); }
+.wc-stage-row.row-2 { grid-template-columns: repeat(3, 1fr); }
 .wc-stage {
   display: flex; align-items: center; gap: 0.45rem;
   padding: 0.36rem 0.55rem; border-radius: 9px;
@@ -1523,18 +1523,17 @@ body.builder-focus .resume-banner { top: 12px; }
       </div>
     </div>
 
-    <!-- C. Seven-Stage Generation Progress (Row 1: 4 steps, Row 2: 3 steps) -->
+    <!-- C. Six-Stage Generation Progress (Row 1: 3 steps, Row 2: 3 steps) -->
     <div class="wc-stages" id="wc-stages" aria-label="Generation stages">
       <div class="wc-stage-row row-1">
-        <span class="wc-stage active" data-wc="0"><span class="n">1</span><span class="st-ic">📄</span><span class="stage-label">Analyzing requirements</span></span>
-        <span class="wc-stage" data-wc="1"><span class="n">2</span><span class="st-ic">🏢</span><span class="stage-label">Business type</span></span>
-        <span class="wc-stage" data-wc="2"><span class="n">3</span><span class="st-ic">🗺️</span><span class="stage-label">Planning structure</span></span>
-        <span class="wc-stage" data-wc="3"><span class="n">4</span><span class="st-ic">🎨</span><span class="stage-label">Designing layout</span></span>
+        <span class="wc-stage active" data-wc="0"><span class="n">1</span><span class="st-ic">📋</span><span class="stage-label">Analysing requirements</span></span>
+        <span class="wc-stage" data-wc="1"><span class="n">2</span><span class="st-ic">🗺️</span><span class="stage-label">Planning structure</span></span>
+        <span class="wc-stage" data-wc="2"><span class="n">3</span><span class="st-ic">🎨</span><span class="stage-label">Generating design</span></span>
       </div>
       <div class="wc-stage-row row-2">
-        <span class="wc-stage" data-wc="4"><span class="n">5</span><span class="st-ic">🧩</span><span class="stage-label">Generating components</span></span>
-        <span class="wc-stage" data-wc="5"><span class="n">6</span><span class="st-ic">🔌</span><span class="stage-label">Connecting functionality</span></span>
-        <span class="wc-stage" data-wc="6"><span class="n">7</span><span class="st-ic">✨</span><span class="stage-label">Finalizing website</span></span>
+        <span class="wc-stage" data-wc="3"><span class="n">4</span><span class="st-ic">🔌</span><span class="stage-label">Connecting functionality</span></span>
+        <span class="wc-stage" data-wc="4"><span class="n">5</span><span class="st-ic">🛡️</span><span class="stage-label">Checking permissions</span></span>
+        <span class="wc-stage" data-wc="5"><span class="n">6</span><span class="st-ic">🚀</span><span class="stage-label">Preparing preview</span></span>
       </div>
     </div>
 
@@ -2459,10 +2458,10 @@ Be specific about fields you need!"></textarea>
 
 <div class="toast" id="toast"><span id="toast-text"></span></div>
 
-<script src="<?= SITE_URL ?>/assets/js/ai-flowcraft.js"></script>
-<script src="<?= SITE_URL ?>/assets/js/opencode-service.js"></script>
-<script src="<?= SITE_URL ?>/assets/js/biz-intelligence.js"></script>
-<script src="<?= SITE_URL ?>/assets/js/generation-router.js"></script>
+<script src="<?= SITE_URL ?>/assets/js/ai-flowcraft.js?v=20261021a"></script>
+<script src="<?= SITE_URL ?>/assets/js/opencode-service.js?v=20261021a"></script>
+<script src="<?= SITE_URL ?>/assets/js/biz-intelligence.js?v=20261021a"></script>
+<script src="<?= SITE_URL ?>/assets/js/generation-router.js?v=20261021a"></script>
 <!-- Loader3D JS comes from includes/nav.php (guarded against double-include) -->
 <script>
 window.__CUSTOMER__ = <?= json_encode($customerUser ?: null) ?>;
@@ -4662,12 +4661,19 @@ function paintWire(n) {
   if (cap) cap.textContent = n >= 3 ? '✓ Website assembled!' : (n > 0 ? `Assembling sections… ${Math.min(n, 3)}/3 live` : 'Assembling sections…');
 }
 
-/* ── Honest 7-stage rail: maps real pct → 7 required stages ── */
-var WC_STAGES = ['Analyzing business requirements', 'Understanding the business type', 'Planning the website structure', 'Designing the website layout', 'Generating website components', 'Connecting required functionality', 'Finalizing the generated website'];
+/* ── Honest 6-stage rail: maps real pct → 6 required stages ── */
+var WC_STAGES = [
+  'Analysing business requirements',
+  'Planning website structure',
+  'Generating design and pages',
+  'Connecting backend functionality',
+  'Checking forms, data flow and permissions',
+  'Preparing preview'
+];
 function wcPaintStages(pct) {
-  var idx = pct < 10 ? 0 : pct < 24 ? 1 : pct < 38 ? 2 : pct < 55 ? 3 : pct < 72 ? 4 : pct < 90 ? 5 : 6;
-  // Illustrative creep never claims completion: cap at stage 6 until success.
-  if (pct < 100 && idx > 5 && !_wcRealDone) idx = 5;
+  var idx = pct < 18 ? 0 : pct < 36 ? 1 : pct < 56 ? 2 : pct < 76 ? 3 : pct < 94 ? 4 : 5;
+  // Illustrative creep never claims completion: cap at stage 5 until success.
+  if (pct < 100 && idx > 4 && !_wcRealDone) idx = 4;
   document.querySelectorAll('#wc-stages .wc-stage').forEach(function (el) {
     var s = parseInt(el.getAttribute('data-wc'), 10);
     el.classList.toggle('done', s < idx);
@@ -4676,7 +4682,7 @@ function wcPaintStages(pct) {
   var nowT = document.getElementById('gen-now-text');
   var nowI = document.getElementById('gen-now-ic');
   if (nowT) nowT.textContent = WC_STAGES[idx];
-  if (nowI) nowI.textContent = ['🔍', '🏢', '🗺️', '🎨', '🧩', '🔌', '✨'][idx] || '🤖';
+  if (nowI) nowI.textContent = ['📋', '🗺️', '🎨', '🔌', '🛡️', '🚀'][idx] || '✨';
 }
 var _wcRealDone = false;
 var _wcCreepTimer = null;
@@ -4838,6 +4844,21 @@ function hideGenOverlayDismiss() {
 }
 try { window.hideGenOverlayRetry = hideGenOverlayRetry; window.hideGenOverlayDismiss = hideGenOverlayDismiss; } catch (e) {}
 
+// Raw browser/provider abort text is not useful to the user. Map it to one
+// short, actionable line (long generations need time, not a template fallback).
+function friendlyAiErr(raw) {
+  let s = String(raw == null ? '' : raw).replace(/\s+/g, ' ').trim();
+  if (/signal is aborted without reason|AbortError|signal is aborted/i.test(s)) {
+    return 'AI request was cancelled (page reload or network drop) — retry.';
+  }
+  if (/timed out after/i.test(s)) {
+    // Timers are removed everywhere; if this still appears, keep the detail
+    // (endpoint + seconds) so the cause is visible instead of hidden.
+    return 'AI timed out — ' + s.slice(0, 180) + ' — retry';
+  }
+  return s.slice(0, 220);
+}
+
 async function generateWithMode(mode) {
   // Prevent accidental duplicate requests; preserve cancel via overlay close.
   if (window.__generating) { showToast('⏳ Generation already running…'); return; }
@@ -4971,12 +4992,12 @@ async function generateWithMode(mode) {
           else {
             engineNote = 'AI (' + oc.designs.length + '/3) + template (' + (3 - oc.designs.length) + '/3)';
             showToast('⚠️ Partial AI — ' + oc.designs.length + '/3 AI ready, templates filled ' + (3 - oc.designs.length) + ' slot(s)');
-            if (oc.errors && oc.errors.length) aiErr = String(oc.errors[0]).slice(0, 220);
+            if (oc.errors && oc.errors.length) aiErr = friendlyAiErr(oc.errors[0]);
           }
         }
       }
     } catch (e) {
-      aiErr = String(e?.message || e).slice(0, 220);
+      aiErr = friendlyAiErr(e?.message || e);
       console.warn('[generate] Routed lane failed, using templates:', e?.message);
     }
     if (!concepts) {
@@ -5739,9 +5760,9 @@ async function showSubDesigns(conceptIndex) {
           showToast('Partial AI — ' + r.designs.length + '/3 AI layouts ready, templates filled ' + (3 - r.designs.length) + ' slot(s)');
         }
       }
-      if (r.errors && r.errors.length) subAiErr = String(r.errors[0]).slice(0, 220);
+      if (r.errors && r.errors.length) subAiErr = friendlyAiErr(r.errors[0]);
     } catch (e) {
-      subAiErr = String(e?.message || e).slice(0, 220);
+      subAiErr = friendlyAiErr(e?.message || e);
       console.warn('[subdesigns] AI lane failed, using templates:', e?.message);
     }
     if (!subs || !subs.length) {

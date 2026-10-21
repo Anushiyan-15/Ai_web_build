@@ -85,7 +85,7 @@ function ai_chat(string $system, string $user, array $opts = [], array $deps = [
 
     // ── 2. Secondary: Gemini ──
     try {
-        $g = ($d['gemini'])($system, $user, $temp, $maxT, min($to, 28));
+        $g = ($d['gemini'])($system, $user, $temp, $maxT, $to);
         [$gok, $gtext, $gerr] = [$g[0] ?? false, $g[1] ?? '', $g[2] ?? 'unknown'];
         $attempts[] = 'gemini:' . ($gok ? 'ok' : 'fail');
         if ($gok) return ['ok' => true, 'provider' => 'gemini', 'model' => 'gemini-3.5-flash-lite',

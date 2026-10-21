@@ -11,7 +11,7 @@ $pubCustomerEmail = strtolower(trim($_SESSION['customer_user']['email'] ?? 'gues
 
 // ─── Utilities ──────────────────────────────────────────
 function clean(string $v): string { return htmlspecialchars(strip_tags(trim($v)), ENT_QUOTES, 'UTF-8'); }
-function slugify(string $s): string { $s = strtolower(trim($s)); $s = preg_replace('/[^a-z0-9]+/', '-', $s); return trim($s, '-') ?: 'site'; }
+function slugify(string $s): string { $s = strtolower(trim($s)); $s = preg_replace('/[^a-z0-9_-]+/', '-', $s); return trim($s, '-') ?: 'site'; }
 function ordersDir(): string { $d = defined('STORAGE_DIR') ? STORAGE_DIR . '/orders' : __DIR__ . '/storage/orders'; if (!is_dir($d)) @mkdir($d, 0755, true); return $d; }
 function publishedDir(): string { $d = __DIR__ . '/published'; if (!is_dir($d)) @mkdir($d, 0755, true); return $d; }
 function loadOrder(string $orderId): ?array {
@@ -25,6 +25,7 @@ function saveOrder(array $o): bool {
 
 // Shared contact wiring + receiver (also used by the preview env).
 require_once __DIR__ . '/includes/ContactReceiver.php';
+require_once __DIR__ . '/includes/OwnerEmail.php';
 
 /**
  * Inject the Studio Business-Blocks runtime (countdown, slider autoplay,
@@ -309,8 +310,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'crea
                 'admin_username'    => $needsAdmin ? $adminUser : '',
                 'admin_email'       => $ownerEmail,
                 'contact_email'     => (filter_var($contactEmail, FILTER_VALIDATE_EMAIL) ? $contactEmail : ($needsAdmin ? $adminEmail : '')),
+                // Owner business email credentials are encrypted at rest in
+                // storage/owner-email/<slug>.json (NOT in this order file).
+                // smtp_user is stored for reference; smtp_pass is never stored here.
                 'smtp_user'         => $smtpUser,
-                'smtp_pass'         => $smtpPass, // Gmail App Password (contact form sends FROM owner Gmail)
+                'smtp_owner'        => ($smtpUser !== '' && $smtpPass !== ''),
                 'use_subdomain'     => $useSubdomain,
                 // Hash-only: plaintext is NEVER persisted. The one-time password
                 // is returned transiently in this response for single display.
@@ -336,6 +340,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'crea
                 'ip'                => $_SERVER['REMOTE_ADDR'] ?? '',
             ];
             saveOrder($order);
+
+            // Persist owner business email credentials encrypted at rest,
+            // keyed by the website slug (outside the public web root).
+            // Never store the SMTP/app password in the order JSON.
+            if ($smtpUser !== '' && $smtpPass !== '') {
+                try {
+                    $emailCfg = [
+                        'email' => $smtpUser,
+                        'name' => $siteName,
+                        'provider' => !empty($data['smtpProvider']) ? clean($data['smtpProvider']) : 'custom',
+                        'auth_method' => !empty($data['smtpAuthMethod']) ? clean($data['smtpAuthMethod']) : 'smtp_app_password',
+                        'smtp_host' => !empty($data['smtpHost']) ? clean($data['smtpHost']) : '',
+                        'smtp_port' => (int)($data['smtpPort'] ?? 587),
+                        'smtp_secure' => in_array($data['smtpSecure'] ?? 'tls', ['ssl', 'tls'], true) ? $data['smtpSecure'] : 'tls',
+                        'smtp_user' => $smtpUser,
+                        'smtp_pass' => $smtpPass,
+                        'oauth_access_token' => (string)($data['oauthAccessToken'] ?? ''),
+                        'oauth_refresh_token' => (string)($data['oauthRefreshToken'] ?? ''),
+                        'oauth_expires_at' => (string)($data['oauthExpiresAt'] ?? ''),
+                        'updated_by' => $pubCustomerEmail,
+                    ];
+                    \OwnerEmail::save($slug, $emailCfg);
+                } catch (Throwable $e) {
+                    error_log('[publish owner-email] ' . $e->getMessage());
+                }
+            }
 
             // Provision the portal account NOW (user present, plaintext in POST
             // only — hashed at rest, never stored in the order).
@@ -515,6 +545,7 @@ if (($_GET['action'] ?? '') === 'do_publish') {
     // 1a. Business blocks runtime (countdown/slider/forms/cart/…) when used
     $siteHtml = injectBusinessRuntime($siteHtml);
     // 1a2. Universal business runtime: real booking/shop/inquiry logic from spec
+    $runtimeSpec = null;
     try {
         require_once __DIR__ . '/includes/BusinessSpec.php';
         require_once __DIR__ . '/includes/BusinessRuntime.php';
@@ -542,7 +573,7 @@ if (($_GET['action'] ?? '') === 'do_publish') {
                 return ['name' => $e['name'] ?? 'items', 'label' => $e['label'] ?? 'Items'];
             }, $spec['entities']);
         }
-        $siteHtml = business_runtime_inject($siteHtml, $spec, $slug);
+        $runtimeSpec = $spec;
         // Universal form wiring: every business (non-contact) form posts to
         // submit.php so frontend input → validation → JSON → admin panel.
         // Contact forms keep the contact.php + mailer flow (left untouched).
@@ -585,12 +616,19 @@ if (($_GET['action'] ?? '') === 'do_publish') {
     if (function_exists('taste_apply_safety_net')) {
         $siteHtml = taste_apply_safety_net($siteHtml);
     }
-    file_put_contents($targetDir . '/index.html', $siteHtml);
-    if (stripos($siteHtml, 'data-wc-live-bus-booking') !== false
-        && !copy(__DIR__ . '/includes/templates/bus-customer-portal.php', $targetDir . '/customer.php')) {
+    // Runtime LAST: real WCBiz wins over any AI mock and nothing is injected
+    // after it that could split the script.
+    if (is_array($runtimeSpec)) {
+        @require_once __DIR__ . '/includes/BusinessRuntime.php';
+        if (function_exists('business_runtime_inject')) {
+            $siteHtml = business_runtime_inject($siteHtml, $runtimeSpec, $slug);
+        }
+    }
+    $isBusSite = (stripos($siteHtml, 'data-wc-live-bus-booking') !== false || (isset($runtimeSpec) && is_array($runtimeSpec) && wc_business_requires_bus_booking($runtimeSpec)));
+    if ($isBusSite && !copy(__DIR__ . '/includes/templates/bus-customer-portal.php', $targetDir . '/customer.php')) {
         throw new RuntimeException('Unable to create the generated bus customer portal.');
     }
-    if (stripos($siteHtml, 'data-wc-live-bus-booking') !== false) {
+    if ($isBusSite) {
         @copy(__DIR__ . '/includes/templates/bus-ticket-verify.php', $targetDir . '/verify.php');
     }
 
@@ -598,8 +636,7 @@ if (($_GET['action'] ?? '') === 'do_publish') {
     // Owner Gmail SMTP first (tested step-by-step), platform queue as fallback.
     if ($contactInbox) {
         file_put_contents($targetDir . '/contact.php', buildContactReceiver(
-            $order['site_name'] ?? 'Website', $contactInbox,
-            $order['smtp_user'] ?? '', $order['smtp_pass'] ?? ''
+            $order['site_name'] ?? 'Website', $contactInbox, $slug
         ));
     }
 
@@ -1066,7 +1103,83 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:radial-grad
 
         <div class="field">
           <label class="lbl">Send FROM your own Gmail? <span style="color:#64748b;font-weight:400;">(optional — step by step below)</span></label>
-          <div class="hint" style="margin-bottom:.6rem;">1️⃣ Put your Gmail below → 2️⃣ paste a <strong>Gmail App Password</strong> (Google Account → Security → 2-Step Verification → App passwords → Mail) → 3️⃣ press <strong>Test</strong> → ✓ then publish. Mails go FROM your Gmail. Skip = WebCraft AI mailer sends them.</div>
+          <div class="hint" style="margin-bottom:.6rem;">Mails go FROM your Gmail address when configured. Skip if you prefer the built-in WebCraft AI mailer.</div>
+
+          <!-- Gmail App Password Step-by-Step Instructions -->
+          <div class="gmail-guide-card" style="margin: 0.85rem 0 1.1rem; padding: 1.15rem; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.55rem;">
+                <span style="font-size: 1.25rem;">🔑</span>
+                <div>
+                  <strong style="color: #f8fafc; font-size: 0.95rem; display: block;">How to Generate Your Gmail App Password</strong>
+                  <span style="color: #94a3b8; font-size: 0.78rem;">Follow these 4 simple steps to connect your Gmail securely</span>
+                </div>
+              </div>
+              <span style="font-size: 0.72rem; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.35); padding: 0.2rem 0.55rem; border-radius: 999px; font-weight: 600;">Gmail Setup Guide</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem; margin-bottom: 0.9rem;">
+              <!-- Step 1 -->
+              <div style="background: rgba(30, 41, 59, 0.55); border: 1px solid rgba(148, 163, 184, 0.15); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 0.75rem; font-weight: 700;">1</span>
+                    <strong style="color: #f1f5f9; font-size: 0.86rem;">Step 1: Enable 2-Step Verification</strong>
+                  </div>
+                  <p style="color: #94a3b8; font-size: 0.78rem; line-height: 1.45; margin: 0 0 0.75rem;">You must enable 2-Step Verification in your Google Account first.</p>
+                </div>
+                <a href="https://myaccount.google.com/security" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.65rem; background: rgba(99, 102, 241, 0.15); color: #c7d2fe; border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 7px; font-size: 0.76rem; font-weight: 600; text-decoration: none; text-align: center;">
+                  <span>Open Google Security Settings</span>
+                  <span style="font-size: 0.75rem;">↗</span>
+                </a>
+              </div>
+
+              <!-- Step 2 -->
+              <div style="background: rgba(30, 41, 59, 0.55); border: 1px solid rgba(148, 163, 184, 0.15); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 0.75rem; font-weight: 700;">2</span>
+                    <strong style="color: #f1f5f9; font-size: 0.86rem;">Step 2: Open App Passwords</strong>
+                  </div>
+                  <p style="color: #94a3b8; font-size: 0.78rem; line-height: 1.45; margin: 0 0 0.75rem;">After enabling 2-Step Verification, open Google's App Passwords page and sign in if requested.</p>
+                </div>
+                <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.65rem; background: rgba(99, 102, 241, 0.15); color: #c7d2fe; border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 7px; font-size: 0.76rem; font-weight: 600; text-decoration: none; text-align: center;">
+                  <span>Open App Passwords</span>
+                  <span style="font-size: 0.75rem;">↗</span>
+                </a>
+              </div>
+
+              <!-- Step 3 -->
+              <div style="background: rgba(30, 41, 59, 0.55); border: 1px solid rgba(148, 163, 184, 0.15); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 0.75rem; font-weight: 700;">3</span>
+                    <strong style="color: #f1f5f9; font-size: 0.86rem;">Step 3: Generate the Password</strong>
+                  </div>
+                  <p style="color: #94a3b8; font-size: 0.78rem; line-height: 1.45; margin: 0;">Select the available <strong>Mail</strong> option, choose <em>Other (Custom name)</em> if available, enter <code style="background: rgba(0,0,0,0.35); color: #38bdf8; padding: 1px 4px; border-radius: 4px; font-size: 0.75rem;">WebCraft AI SMTP</code>, and click <strong>Generate</strong>. The exact options may vary depending on Google's interface.</p>
+                </div>
+              </div>
+
+              <!-- Step 4 -->
+              <div style="background: rgba(30, 41, 59, 0.55); border: 1px solid rgba(148, 163, 184, 0.15); border-radius: 10px; padding: 0.85rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.35rem;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 0.75rem; font-weight: 700;">4</span>
+                    <strong style="color: #f1f5f9; font-size: 0.86rem;">Step 4: Copy the Password</strong>
+                  </div>
+                  <p style="color: #94a3b8; font-size: 0.78rem; line-height: 1.45; margin: 0;">Google displays an App Password, usually shown as 16 characters. Copy it and use it in the existing <strong>Gmail App Password</strong> field below.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Important Note Callout -->
+            <div style="display: flex; align-items: flex-start; gap: 0.55rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.78rem; color: #fde68a; line-height: 1.45;">
+              <span style="font-size: 0.95rem; line-height: 1;">⚠️</span>
+              <div>
+                <strong style="color: #fbbf24;">Important Note:</strong> Use your <strong>Gmail App Password</strong>, not your normal Gmail account password. Never share your password with anyone.
+              </div>
+            </div>
+          </div>
           <label class="lbl" for="smtp-user" style="margin-top:.6rem;">Gmail address</label>
           <input class="inp" type="email" id="smtp-user" placeholder="you@gmail.com" autocomplete="off">
           <label class="lbl" for="smtp-pass" style="margin-top:.8rem;">Gmail App Password (16 letters)</label>

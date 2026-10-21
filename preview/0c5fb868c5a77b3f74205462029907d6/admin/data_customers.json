@@ -1,0 +1,22 @@
+[
+    {
+        "id": "cust_d25d7ea34ce0",
+        "name": "Anu Anushiyan",
+        "email": "ut01336tic2024@gmail.com",
+        "phone": "+94752038598",
+        "status": "active",
+        "created_at": "2026-10-21T10:17:19+01:00",
+        "updated_at": "2026-10-21T10:17:19+01:00"
+    },
+    {
+        "id": "c_d25d7ea34ce0",
+        "name": "Anu Anushiyan",
+        "phone": "+94752038598",
+        "email": "ut01336tic2024@gmail.com",
+        "total_bookings": 1,
+        "total_spent": 899,
+        "status": "active",
+        "created_at": "2026-10-21T10:15:46+01:00",
+        "updated_at": "2026-10-21T10:15:46+01:00"
+    }
+]

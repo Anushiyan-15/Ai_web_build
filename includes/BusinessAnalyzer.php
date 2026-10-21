@@ -33,7 +33,7 @@ function business_analyzer_gemini_hint(string $text, ?string &$provider = null):
         $prompt = "Classify this business into ONE key: bus,ecommerce,restaurant,hotel,salon,clinic,realestate,education,travel,events,rental,automotive,subscription,portfolio,agency,professional,generic.\n"
             . "Reply with JSON only: {\"category\":\"...\",\"confidence\":0-1,\"reason\":\"...\"}\nBusiness:\n" . substr($text, 0, 1500);
         $r = ai_chat('You classify businesses. Reply with JSON only.',
-            $prompt, ['task' => 'json', 'temperature' => 0.1, 'max_tokens' => 256, 'timeout' => 12]);
+            $prompt, ['task' => 'json', 'temperature' => 0.1, 'max_tokens' => 256, 'timeout' => 0]);
         if (empty($r['ok']) || trim((string)($r['text'] ?? '')) === '') return null;
         $provider = (string)($r['provider'] ?? '');
         $t = (string)$r['text'];

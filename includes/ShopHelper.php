@@ -5,6 +5,8 @@
 //  and seamless shop injection for both Server Templates & AI Generations.
 // ═══════════════════════════════════════════════════════════════
 
+require_once __DIR__ . '/HtmlUtil.php';
+
 if (!function_exists('isShopSite')) {
     // Booking-style businesses (bus/travel/hotel/food/salon/clinic/…) sell
     // seats/slots/rooms, NOT cart goods: their "products" text is a catalog
@@ -652,10 +654,7 @@ if (!function_exists('injectShopIntoHtml')) {
                     }
                 }
             }
-            if (stripos($html, '</body>') !== false) {
-                return str_ireplace('</body>', $engine . "\n</body>", $html);
-            }
-            return $html . "\n" . $engine;
+            return wc_insert_before_body_end($html, $engine);
         }
         // Full skip: shop section AND engine both present
         if ($hasShop) return $html;
@@ -683,10 +682,7 @@ if (!function_exists('injectShopIntoHtml')) {
         if (stripos($html, '</main>') !== false) {
             return preg_replace('/<\/main>/i', $shopHtml . "\n</main>", $html, 1);
         }
-        if (stripos($html, '</body>') !== false) {
-            return str_ireplace('</body>', $shopHtml . "\n</body>", $html);
-        }
-        return $html . "\n" . $shopHtml;
+        return wc_insert_before_body_end($html, $shopHtml);
     }
 }
 

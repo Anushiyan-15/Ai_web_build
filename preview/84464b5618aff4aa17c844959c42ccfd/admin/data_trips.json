@@ -1,0 +1,54 @@
+[
+    {
+        "route": "Chennai → Bangalore",
+        "date": "2026-10-20",
+        "departure": "7.30",
+        "price": "130",
+        "total_seats": "32",
+        "id": "TRIP-20261020-BCFFC7",
+        "created_at": "2026-10-20T11:33:26+01:00",
+        "updated_at": "2026-10-20T11:33:26+01:00"
+    },
+    {
+        "route": "Chennai → Bangalore",
+        "origin": "Chennai",
+        "destination": "Bangalore",
+        "date": "2026-10-21",
+        "departure": "06:30",
+        "price": 899,
+        "total_seats": 40,
+        "bus": "AC Sleeper",
+        "id": "r_0e847731dac5eebe",
+        "created_at": "2026-10-20T11:32:06+01:00",
+        "updated_at": "2026-10-20T11:32:06+01:00",
+        "demo": true
+    },
+    {
+        "route": "Chennai → Bangalore",
+        "origin": "Chennai",
+        "destination": "Bangalore",
+        "date": "2026-10-21",
+        "departure": "22:15",
+        "price": 549,
+        "total_seats": 40,
+        "bus": "Non-AC Seater",
+        "id": "r_3312e718a2fc2015",
+        "created_at": "2026-10-20T11:32:06+01:00",
+        "updated_at": "2026-10-20T11:32:06+01:00",
+        "demo": true
+    },
+    {
+        "route": "Bangalore → Chennai",
+        "origin": "Bangalore",
+        "destination": "Chennai",
+        "date": "2026-10-22",
+        "departure": "21:00",
+        "price": 899,
+        "total_seats": 32,
+        "bus": "AC Sleeper",
+        "id": "r_e780e764d72dab06",
+        "created_at": "2026-10-20T11:32:06+01:00",
+        "updated_at": "2026-10-20T11:32:06+01:00",
+        "demo": true
+    }
+]

@@ -40,8 +40,10 @@ class AutoSiteGenerator {
         $categories = business_registry_categories();
         $catMeta = $categories[$category] ?? $categories['generic'];
 
-        // 2. Generate Slug
-        $baseSlug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', trim($bizName)));
+        // 2. Generate Slug (underscores preserved: storage/API layers treat
+        // "_" as significant; stripping it once split "__bustest2" into two
+        // stores whose bookings could never meet).
+        $baseSlug = strtolower(preg_replace('/[^a-z0-9_-]+/i', '-', trim($bizName)));
         $baseSlug = trim($baseSlug, '-');
         if (strlen($baseSlug) < 3) $baseSlug = 'business-' . substr(md5(uniqid()), 0, 5);
         
@@ -229,14 +231,21 @@ class AutoSiteGenerator {
         switch ($cat) {
             case 'bus':
                 $seeds['trips'] = [
-                    ['id' => 'trip_101', 'route' => 'Downtown Station → Airport Terminal', 'date' => date('Y-m-d', strtotime('+1 day')), 'departure' => '08:00 AM', 'price' => 25, 'total_seats' => 40, 'available_seats' => 34, 'created_at' => $now],
-                    ['id' => 'trip_102', 'route' => 'Central Plaza → West Coast Express', 'date' => date('Y-m-d', strtotime('+1 day')), 'departure' => '11:30 AM', 'price' => 35, 'total_seats' => 45, 'available_seats' => 40, 'created_at' => $now],
-                    ['id' => 'trip_103', 'route' => 'Metro Terminal → Northern Hills', 'date' => date('Y-m-d', strtotime('+2 days')), 'departure' => '04:15 PM', 'price' => 30, 'total_seats' => 36, 'available_seats' => 31, 'created_at' => $now],
+                    ['id' => 'trip_101', 'route' => 'Chennai → Bangalore Express', 'date' => date('Y-m-d', strtotime('+1 day')), 'departure' => '08:00 AM', 'price' => 850, 'total_seats' => 40, 'available_seats' => 34, 'created_at' => $now],
+                    ['id' => 'trip_102', 'route' => 'Chennai → Bangalore AC Sleeper', 'date' => date('Y-m-d', strtotime('+1 day')), 'departure' => '10:30 PM', 'price' => 1100, 'total_seats' => 36, 'available_seats' => 30, 'created_at' => $now],
+                    ['id' => 'trip_103', 'route' => 'Bangalore → Chennai Superfast', 'date' => date('Y-m-d', strtotime('+2 days')), 'departure' => '06:15 AM', 'price' => 850, 'total_seats' => 40, 'available_seats' => 38, 'created_at' => $now],
                 ];
                 $seeds['routes'] = [
-                    ['id' => 'rt_1', 'origin' => 'Downtown Station', 'destination' => 'Airport Terminal', 'distance' => 35, 'fare' => 25, 'created_at' => $now],
-                    ['id' => 'rt_2', 'origin' => 'Central Plaza', 'destination' => 'West Coast Express', 'distance' => 60, 'fare' => 35, 'created_at' => $now],
+                    ['id' => 'rt_1', 'origin' => 'Chennai', 'destination' => 'Bangalore', 'distance' => 350, 'fare' => 850, 'created_at' => $now],
+                    ['id' => 'rt_2', 'origin' => 'Bangalore', 'destination' => 'Chennai', 'distance' => 350, 'fare' => 850, 'created_at' => $now],
                 ];
+                $seeds['buses'] = [
+                    ['id' => 'bus_1', 'plate' => 'TN-01-AB-1234', 'capacity' => 40, 'layout' => '2x2', 'status' => 'active', 'created_at' => $now],
+                    ['id' => 'bus_2', 'plate' => 'KA-01-CD-5678', 'capacity' => 36, 'layout' => '2x1', 'status' => 'active', 'created_at' => $now],
+                ];
+                $seeds['bookings'] = [];
+                $seeds['payments'] = [];
+                $seeds['customers'] = [];
                 break;
 
             case 'restaurant':
@@ -268,6 +277,34 @@ class AutoSiteGenerator {
                     ['id' => 'p_1', 'title' => 'Signature Classic Series Item', 'category' => 'Featured', 'price' => 49.99, 'stock' => 50, 'description' => 'Premium quality crafted for daily performance.', 'created_at' => $now],
                     ['id' => 'p_2', 'title' => 'Pro Edition Dynamic Accessory', 'category' => 'New', 'price' => 89.99, 'stock' => 30, 'description' => 'Engineered with top-tier materials and sleek design.', 'created_at' => $now],
                 ];
+                break;
+
+            case 'construction':
+                $seeds['projects'] = [
+                    ['id' => 'proj_1', 'title' => 'Modern Commercial Tower', 'category' => 'Commercial', 'status' => 'completed', 'value' => 2500000, 'location' => 'Downtown Business District', 'year' => date('Y') - 1, 'description' => 'A 12-storey mixed-use development delivering premium office and retail space.', 'created_at' => $now],
+                    ['id' => 'proj_2', 'title' => 'Luxury Residential Complex', 'category' => 'Residential', 'status' => 'completed', 'value' => 1800000, 'location' => 'Uptown Heights', 'year' => date('Y') - 1, 'description' => '48 premium apartments with rooftop garden, gym and underground parking.', 'created_at' => $now],
+                    ['id' => 'proj_3', 'title' => 'Infrastructure Bridge Overhaul', 'category' => 'Civil', 'status' => 'in_progress', 'value' => 900000, 'location' => 'City North Corridor', 'year' => date('Y'), 'description' => 'Structural rehabilitation and widening of a major arterial bridge.', 'created_at' => $now],
+                ];
+                $seeds['services'] = [
+                    ['id' => 'svc_1', 'name' => 'Structural Engineering & Design', 'category' => 'Engineering', 'description' => 'Full structural analysis, design and certification for all building types.', 'created_at' => $now],
+                    ['id' => 'svc_2', 'name' => 'General Contracting & Project Management', 'category' => 'Construction', 'description' => 'End-to-end project delivery from groundbreaking to handover.', 'created_at' => $now],
+                    ['id' => 'svc_3', 'name' => 'Renovation & Fit-Out Works', 'category' => 'Renovation', 'description' => 'Interior and exterior renovation with minimal operational disruption.', 'created_at' => $now],
+                ];
+                $seeds['inquiries'] = [];
+                break;
+
+            case 'portfolio':
+                $seeds['projects'] = [
+                    ['id' => 'port_1', 'title' => 'Brand Identity — Apex Fintech', 'category' => 'Branding', 'year' => date('Y') - 1, 'client' => 'Apex Financial Group', 'description' => 'Complete visual identity including logo system, typography, colour palette and brand guidelines.', 'created_at' => $now],
+                    ['id' => 'port_2', 'title' => 'Product UI Design — HealthTrack App', 'category' => 'UI/UX', 'year' => date('Y'), 'client' => 'HealthTrack Inc', 'description' => 'End-to-end mobile UX research, wireframes, prototypes and high-fidelity UI for iOS and Android.', 'created_at' => $now],
+                    ['id' => 'port_3', 'title' => 'Motion Campaign — SkyRoute Airlines', 'category' => 'Motion', 'year' => date('Y'), 'client' => 'SkyRoute Airlines', 'description' => 'Animated promotional series for social media and in-flight entertainment channels.', 'created_at' => $now],
+                ];
+                $seeds['services'] = [
+                    ['id' => 'sv_1', 'name' => 'Brand Identity Design', 'category' => 'Branding', 'starting_price' => 1500, 'turnaround' => '2–3 weeks', 'description' => 'Logo, colour palette, typography and full brand guidelines.', 'created_at' => $now],
+                    ['id' => 'sv_2', 'name' => 'UI/UX Design & Prototyping', 'category' => 'Digital', 'starting_price' => 2500, 'turnaround' => '3–5 weeks', 'description' => 'Research-driven wireframes, interactive prototypes and pixel-perfect UI delivery.', 'created_at' => $now],
+                    ['id' => 'sv_3', 'name' => 'Motion Graphics & Video', 'category' => 'Motion', 'starting_price' => 1200, 'turnaround' => '1–2 weeks', 'description' => 'Animated explainers, social reels and broadcast-quality motion graphics.', 'created_at' => $now],
+                ];
+                $seeds['inquiries'] = [];
                 break;
 
             default:
@@ -424,6 +461,7 @@ class AutoSiteGenerator {
                 <a href="#services">Services</a>
                 <a href="#booking">Book Online</a>
                 <a href="#contact">Contact</a>
+                <a href="customer.php" class="btn-portal">👤 My Account</a>
                 <a href="admin/login.php" class="btn-portal">🔐 Staff Admin</a>
             </div>
         </div>
@@ -852,6 +890,166 @@ document.getElementById('salBookingForm')?.addEventListener('submit', function(e
     }).catch(function(){
         document.getElementById('salSuccessToast').style.display = 'block';
         btn.disabled = false; btn.textContent = '📅 Confirm Appointment';
+    });
+});
+</script>
+HTML;
+
+            case 'construction':
+                return <<<HTML
+<div id="quotation" class="widget-wrap">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:14px;">
+        <div>
+            <h2 style="font-size:20px; font-weight:700; color:#fff;">🏗️ Request a Project Quotation</h2>
+            <p style="margin-top:4px; color:var(--text-muted); font-size:14px;">Submit your architectural or structural plans for an upfront cost estimate and construction schedule.</p>
+        </div>
+        <span style="font-size:12px; background:rgba(234,179,8,0.15); color:#facc15; padding:4px 10px; border-radius:999px; font-weight:600;">Licensed &amp; Insured</span>
+    </div>
+    <form id="constEstimateForm">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group">
+                <label>Contact Name</label>
+                <input type="text" name="name" class="form-input" required placeholder="Project Director / Property Owner">
+            </div>
+            <div class="form-group">
+                <label>Phone / WhatsApp</label>
+                <input type="tel" name="phone" class="form-input" required placeholder="+1 555-0248">
+            </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px;">
+            <div class="form-group">
+                <label>Project Scope</label>
+                <select name="scope" class="form-select">
+                    <option value="commercial">Commercial Development</option>
+                    <option value="residential">Residential Villa / Home</option>
+                    <option value="renovation">Structural Renovation &amp; Fitout</option>
+                    <option value="civil">Civil Engineering &amp; Infrastructure</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Estimated Budget / Timeline</label>
+                <input type="text" name="budget" class="form-input" placeholder="e.g. $100k - $250k / Q3 2026">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+            <label>Project Details &amp; Location</label>
+            <textarea name="details" class="form-input" rows="3" placeholder="Site location, square footage, design requirements..."></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="constSubmitBtn" style="margin-top:16px;">📋 Request Free Detailed Estimate</button>
+        <div id="constSuccessToast" class="toast toast-success">
+            <strong>✅ Quotation Request Received!</strong> Our estimating team will review your specifications and contact you within 24 business hours.
+        </div>
+    </form>
+</div>
+<script>
+document.getElementById('constEstimateForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var f = e.target;
+    var btn = document.getElementById('constSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting...';
+    var payload = {
+        entity: 'inquiries',
+        record: {
+            name: f.name.value,
+            phone: f.phone.value,
+            scope: f.scope.value,
+            budget: f.budget.value,
+            details: f.details.value,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        }
+    };
+    fetch('api/business-ops.php?action=create&entity=inquiries&slug={$slug}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    }).then(function(){
+        document.getElementById('constSuccessToast').style.display = 'block';
+        f.reset();
+        btn.disabled = false; btn.textContent = '📋 Request Free Detailed Estimate';
+    }).catch(function(){
+        document.getElementById('constSuccessToast').style.display = 'block';
+        btn.disabled = false; btn.textContent = '📋 Request Free Detailed Estimate';
+    });
+});
+</script>
+HTML;
+
+            case 'portfolio':
+                return <<<HTML
+<div id="inquiry" class="widget-wrap">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:14px;">
+        <div>
+            <h2 style="font-size:20px; font-weight:700; color:#fff;">📸 Commission a Session or Project</h2>
+            <p style="margin-top:4px; color:var(--text-muted); font-size:14px;">Inquire about editorial shoots, commercial campaigns, or private portrait commissions.</p>
+        </div>
+        <span style="font-size:12px; background:rgba(99,102,241,0.15); color:#a5b4fc; padding:4px 10px; border-radius:999px; font-weight:600;">Now Booking</span>
+    </div>
+    <form id="portfolioInquiryForm">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" name="name" class="form-input" required placeholder="Full Name or Brand Name">
+            </div>
+            <div class="form-group">
+                <label>Email / Phone</label>
+                <input type="text" name="contact" class="form-input" required placeholder="email@brand.com or +1 ...">
+            </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px;">
+            <div class="form-group">
+                <label>Project Type</label>
+                <select name="type" class="form-select">
+                    <option value="commercial">Commercial / Advertising</option>
+                    <option value="editorial">Editorial / Fashion</option>
+                    <option value="portrait">Studio Portrait / Branding</option>
+                    <option value="events">Private Event / Wedding</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Target Date or Timeline</label>
+                <input type="text" name="date" class="form-input" placeholder="e.g. Early next month">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+            <label>Creative Vision &amp; Notes</label>
+            <textarea name="notes" class="form-input" rows="3" placeholder="Tell us about the concept, mood board, deliverable formats..."></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="pfSubmitBtn" style="margin-top:16px;">✨ Inquire Availability &amp; Pricing</button>
+        <div id="pfSuccessToast" class="toast toast-success">
+            <strong>✨ Inquiry Sent!</strong> We have received your creative brief and will reply with availability and tailored package details.
+        </div>
+    </form>
+</div>
+<script>
+document.getElementById('portfolioInquiryForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var f = e.target;
+    var btn = document.getElementById('pfSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    var payload = {
+        entity: 'inquiries',
+        record: {
+            name: f.name.value,
+            contact: f.contact.value,
+            type: f.type.value,
+            date: f.date.value,
+            notes: f.notes.value,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        }
+    };
+    fetch('api/business-ops.php?action=create&entity=inquiries&slug={$slug}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    }).then(function(){
+        document.getElementById('pfSuccessToast').style.display = 'block';
+        f.reset();
+        btn.disabled = false; btn.textContent = '✨ Inquire Availability & Pricing';
+    }).catch(function(){
+        document.getElementById('pfSuccessToast').style.display = 'block';
+        btn.disabled = false; btn.textContent = '✨ Inquire Availability & Pricing';
     });
 });
 </script>

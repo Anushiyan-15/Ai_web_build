@@ -6,15 +6,49 @@
 
 require_once __DIR__ . '/BusinessSpec.php';
 require_once __DIR__ . '/BusBookingWidget.php';
+require_once __DIR__ . '/HtmlUtil.php';
+
+/**
+ * AI/blueprint payloads arrive as {compat:{...}, canonical:{...}}. Detection
+ * MUST read through both layers, otherwise a genuine bus site is treated as
+ * generic: no seat runtime routing, no customer.php, no portal link.
+ */
+function wc_business_spec_flat(array $spec): array {
+    if (!isset($spec['canonical']) || !is_array($spec['canonical'])) return $spec;
+    $canonical = $spec['canonical'];
+    $flat = array_merge($canonical, $spec);
+    if (empty($flat['entities']) && !empty($canonical['entities'])) {
+        $flat['entities'] = $canonical['entities'];
+    }
+    if (empty($flat['profile']) && !empty($canonical['profile'])) {
+        $flat['profile'] = $canonical['profile'];
+    }
+    return $flat;
+}
 
 function wc_business_requires_bus_booking(array $spec): bool {
+    $spec = wc_business_spec_flat($spec);
     $profile = is_array($spec['profile'] ?? null) ? $spec['profile'] : [];
     $business = is_array($spec['business'] ?? null) ? $spec['business'] : [];
-    $explicit = strtolower(trim((string)($spec['category'] ?? $business['category'] ?? '')));
-    if (in_array($explicit, ['bus', 'coach', 'bus_booking', 'transport'], true)) return true;
+    $explicit = strtolower(trim((string)($spec['category'] ?? $business['category']
+        ?? $spec['business_type'] ?? $spec['biz_type'] ?? '')));
+    if (in_array($explicit, ['bus', 'coach', 'bus_booking', 'transport', 'travel', 'bus_ticketing'], true)) return true;
 
     $domain = strtolower(trim((string)($profile['domain'] ?? '')));
-    if (in_array($domain, ['bus', 'coach', 'bus_booking', 'transport'], true)) return true;
+    if (in_array($domain, ['bus', 'coach', 'bus_booking', 'transport', 'travel'], true)) return true;
+
+    // Capability/page fingerprints unique to seat-based transport. A generic
+    // booking business (salon/clinic) never carries trip/seat primitives.
+    $markerParts = array_merge(
+        (array)($spec['features'] ?? []),
+        (array)($spec['pages'] ?? []),
+        (array)($spec['admin_modules'] ?? []),
+        (array)($spec['capabilities'] ?? [])
+    );
+    $markerParts = array_filter($markerParts, 'is_scalar');
+    $markers = strtolower(implode(' ', array_map('strval', $markerParts)));
+    if (preg_match('/\b(trip_search|seat_map|hold_seats|seat-select|trip-detail|qr_ticket)\b/', $markers)) return true;
+
     $identity = implode(' ', [
         (string)($profile['business_name'] ?? ''),
         (string)($profile['description'] ?? ''),
@@ -35,6 +69,110 @@ function wc_business_requires_bus_booking(array $spec): bool {
         if ($key === 'bookings' || $name === 'bookings') $hasBookings = true;
     }
     return $hasTrips && $hasBookings;
+}
+
+/**
+ * Remove AI-authored fake backend objects (window.WCBiz = { ...create with
+ * Math.random BK-... }). The real runtime is injected after page scripts and
+ * is authoritative, but stripping the mock prevents any cached reference or
+ * fallback path from ever producing a fake confirmation.
+ * A tiny placeholder keeps page UI assignments (WCBiz.selectedSeats = …) safe.
+ */
+function wc_neutralize_mock_wcbiz(string $html): string {
+    if (stripos($html, 'window.WCBiz') === false) return $html;
+    return preg_replace_callback('/<script\b([^>]*)>(.*?)<\/script\s*>/is', function ($m) {
+        $attrs = strtolower($m[1]);
+        if (strpos($attrs, 'data-wc-biz-runtime') !== false
+            || strpos($attrs, 'application/json') !== false
+            || strpos($attrs, 'data-wc-pak-submit') !== false) {
+            return $m[0];
+        }
+        $js = $m[2];
+        if (stripos($js, 'window.WCBiz') === false) return $m[0];
+        $offset = 0;
+        while (preg_match('/window\.WCBiz\s*=\s*\{/', $js, $hit, PREG_OFFSET_CAPTURE, $offset)) {
+            $start = (int)$hit[0][1];
+            $brace = strpos($js, '{', $start);
+            if ($brace === false) break;
+            $end = wc_find_balanced_brace($js, $brace);
+            if ($end === null) break;
+            $block = substr($js, $start, $end - $start + 1);
+            $isMock = (bool)preg_match('/Mock\s+WCBiz/i', $block)
+                || ((bool)preg_match('/Math\.random\(\)/', $block)
+                    && (bool)preg_match('/[\'"]BK-|[\'"]HOLD-/', $block))
+                || ((bool)preg_match('/\basync\s+create\s*\(/', $block)
+                    && (bool)preg_match('/success\s*:\s*true/', $block)
+                    && (bool)preg_match('/Math\.random|setTimeout/', $block));
+            if ($isMock) {
+                $replacement = 'window.WCBiz=window.WCBiz||{};/* WebCraft: AI mock WCBiz removed — real backend runtime is authoritative */';
+                $js = substr($js, 0, $start) . $replacement . substr($js, $end + 1);
+                $offset = $start + strlen($replacement);
+            } else {
+                $offset = $end + 1;
+            }
+        }
+        return '<script' . $m[1] . '>' . $js . '</script>';
+    }, $html) ?? $html;
+}
+
+/** Index of the closing brace matching $open, string/escape aware. */
+function wc_find_balanced_brace(string $src, int $open): ?int {
+    $depth = 0;
+    $quote = null;
+    $escaped = false;
+    $len = strlen($src);
+    for ($i = $open; $i < $len; $i++) {
+        $ch = $src[$i];
+        if ($quote !== null) {
+            if ($escaped) { $escaped = false; continue; }
+            if ($ch === '\\') { $escaped = true; continue; }
+            if ($ch === $quote) { $quote = null; }
+            continue;
+        }
+        if ($ch === '"' || $ch === "'" || $ch === '`') { $quote = $ch; continue; }
+        if ($ch === '{') { $depth++; continue; }
+        if ($ch === '}') {
+            $depth--;
+            if ($depth === 0) return $i;
+        }
+    }
+    return null;
+}
+
+/**
+ * Add a visible "My Account" entry pointing at the generated customer portal
+ * (customer.php). Idempotent; skips pages that already link to it.
+ */
+function business_customer_portal_inject(string $html): string {
+    if (stripos($html, 'customer.php') !== false) return $html;
+    $link = '<a href="customer.php" class="wc-portal-link" data-wc-portal="1" '
+        . 'style="display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;'
+        . 'border:1.5px solid currentColor;border-radius:999px;font-weight:700;'
+        . 'text-decoration:none;white-space:nowrap;font:inherit;">'
+        . "\xF0\x9F\x91\xA4" . ' My Account</a>';
+
+    // Primary navigation: append inside the first real <nav>…</nav>.
+    if (preg_match('/<nav\b[^>]*>/i', $html, $nav, PREG_OFFSET_CAPTURE)) {
+        $navStart = (int)$nav[0][1];
+        $after = $navStart + strlen($nav[0][0]);
+        $close = stripos($html, '</nav>', $after);
+        if ($close !== false && $navStart > (int)(stripos($html, '<body') ?: 0)) {
+            return substr($html, 0, $close) . $link . substr($html, $close);
+        }
+    }
+    // Header fallback.
+    if (preg_match('/<\/header\s*>/i', $html, $hh, PREG_OFFSET_CAPTURE)) {
+        $at = (int)$hh[0][1];
+        return substr($html, 0, $at) . $link . substr($html, $at);
+    }
+    // Last resort: a floating button so the portal is never unreachable.
+    $float = '<a href="customer.php" data-wc-portal="1" '
+        . 'style="position:fixed;right:18px;bottom:18px;z-index:9998;display:inline-flex;'
+        . 'align-items:center;gap:.4rem;padding:.7rem 1.1rem;border-radius:999px;'
+        . 'background:#6366f1;color:#fff;text-decoration:none;font-weight:700;'
+        . 'box-shadow:0 12px 30px rgba(15,23,42,.28);font-family:inherit;">'
+        . "\xF0\x9F\x91\xA4" . ' My Account</a>';
+    return wc_insert_before_body_end($html, $float);
 }
 
 function wc_node_api_url(): string {
@@ -399,6 +537,14 @@ function wcGotoStep(id){
   });
   el.removeAttribute('hidden');
   try{if(el.style)el.style.display='';}catch(e){}
+  document.querySelectorAll('.step-indicator-item').forEach(function(item){
+    var ind=item.getAttribute('data-indicator');
+    if(ind===id||(id==='ticket'&&ind==='ticket')){
+      item.classList.add('active');
+    }else{
+      item.classList.remove('active');
+    }
+  });
   try{
     var offset=0;
     document.querySelectorAll('header,nav,[role="banner"]').forEach(function(bar){
@@ -474,7 +620,8 @@ function wcPrintTicketHTML(r){
     +'<div class="foot">Printed '+escH(new Date().toLocaleString())+'</div>'
     +'<div class="noprint" style="text-align:center;margin-top:16px;">'
     +'<button onclick="window.print()" style="padding:10px 26px;font-size:15px;font-weight:700;background:#059669;color:#fff;border:none;border-radius:9px;cursor:pointer;">Print</button></div>'
-    +'</div></body></html>';
+    // Escaped so later HTML tail injectors can never match this inline string.
+    +'<\/div><\/body><\/html>';
 }
 function wcPrintTicket(r){
   try{
@@ -524,6 +671,8 @@ function wcHold(entity,payload){
         window.__WC_HOLD__={entity:entity,trip_id:j.data.trip_id||payload.trip_id,
           seats:j.data.seats||payload.seats,ref:j.data.ref,hold_id:j.data.id,at:Date.now()};
         try{window.WCBiz.holdRef=j.data.ref;}catch(e){}
+        // Page-level code (AI generations) reads res.ref directly.
+        if(j.ref===undefined)j.ref=j.data.ref;
       }
     }catch(e){}
     return j;
@@ -683,24 +832,32 @@ JS;
 }
 
 function business_runtime_inject(string $html, array $spec, string $slug): string {
-    if (wc_business_requires_bus_booking($spec)
-        && stripos($html, 'data-wc-live-bus-booking') === false) {
+    // Strip AI-generated mock backends before anything else touches the HTML.
+    $html = wc_neutralize_mock_wcbiz($html);
+
+    $isBus = wc_business_requires_bus_booking($spec);
+    if ($isBus) {
+        // The customer portal is generated next to index.html; make it
+        // reachable from the navbar even when the AI did not add a link.
+        $html = business_customer_portal_inject($html);
+    }
+    if ($isBus && stripos($html, 'data-wc-live-bus-booking') === false) {
         $widget = bus_booking_widget_html($slug);
         if (preg_match('/\bid\s*=\s*(["\'])booking\1/i', $html)) {
             $widget = preg_replace('/\bid="booking"/i', 'id="wc-live-bus-booking"', $widget, 1);
         }
         if (preg_match('/<script\b[^>]*data-wc-biz-runtime\b[^>]*>/i', $html, $runtimeTag, PREG_OFFSET_CAPTURE)) {
             $html = substr_replace($html, $widget, $runtimeTag[0][1], 0);
-        } elseif (preg_match('/<\/body\s*>/i', $html)) {
-            $html = preg_replace('/<\/body\s*>/i', $widget . '</body>', $html, 1);
         } else {
-            $html .= $widget;
+            $html = wc_insert_before_body_end($html, $widget);
         }
     }
     if (stripos($html, 'wc-biz-runtime') !== false) return $html;
     $specTag = '<script type="application/json" id="wc-biz-spec">' . htmlspecialchars(json_encode($spec, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') . '</script>';
     $js = business_runtime_js($spec, $slug);
     $bundle = $specTag . $js;
-    if (preg_match('/<\/body\s*>/i', $html)) return preg_replace('/<\/body\s*>/i', $bundle . '</body>', $html, 1);
-    return $html . $bundle;
+    // Always the LAST body close: generated JS may legitimately contain the
+    // string "</body>" inside templates, and matching that used to truncate
+    // this runtime script (leaving the AI mock in control).
+    return wc_insert_before_body_end($html, $bundle);
 }

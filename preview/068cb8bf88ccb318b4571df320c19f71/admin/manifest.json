@@ -1,0 +1,51 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "pubco",
+    "order_id": "PREVIEW-068cb8bf",
+    "business": {
+        "name": "PubCo",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "inquiries",
+            "label": "Inquiries",
+            "icon": "✉️",
+            "entity": "inquiries"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-19T17:06:53+01:00"
+}

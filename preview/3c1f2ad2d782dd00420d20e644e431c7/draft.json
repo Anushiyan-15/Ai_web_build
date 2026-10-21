@@ -1,0 +1,52 @@
+{
+    "token": "3c1f2ad2d782dd00420d20e644e431c7",
+    "bizName": "Debug2 Co",
+    "slug": "debug2-co",
+    "entities": [
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "contactEmail": "owner@example.com",
+    "genMode": "admin",
+    "createdAt": "2026-10-20T14:20:55+01:00",
+    "updatedAt": "2026-10-20T14:20:55+01:00",
+    "htmlHash": "13219a8c7264b4ead0868393c33776ac",
+    "sharing": {
+        "enabled": true,
+        "expiresAt": 1793712055
+    }
+}

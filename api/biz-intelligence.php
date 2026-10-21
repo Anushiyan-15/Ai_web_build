@@ -7,6 +7,10 @@ header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
+// Staged AI analysis: no artificial cap — let the model finish instead of
+// failing into template fallback.
+@set_time_limit(0);
+
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/BizIntelligence/Schema.php';
 require_once __DIR__ . '/../includes/BizIntelligence/Pipeline.php';
