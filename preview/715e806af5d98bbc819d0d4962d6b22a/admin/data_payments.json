@@ -1,0 +1,38 @@
+[
+    {
+        "id": "PAY-20261021-2FEFB67E",
+        "payment_id": "PAY-20261021-2FEFB67E",
+        "booking_ref": "BK-0D31319F",
+        "method": "cash",
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "completed",
+        "created_at": "2026-10-21T11:40:01+01:00",
+        "received_at": "2026-10-21T11:40:01+01:00",
+        "updated_at": "2026-10-21T11:40:01+01:00"
+    },
+    {
+        "id": "PAY-20261021-86ED2393",
+        "payment_id": "PAY-20261021-86ED2393",
+        "booking_ref": "BK-5CBC28C5",
+        "method": "cash",
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "completed",
+        "created_at": "2026-10-21T11:39:52+01:00",
+        "received_at": "2026-10-21T11:39:52+01:00",
+        "updated_at": "2026-10-21T11:39:52+01:00"
+    },
+    {
+        "id": "PAY-20261021-CA1B56E9",
+        "payment_id": "PAY-20261021-CA1B56E9",
+        "booking_ref": "BK-892DF3BF",
+        "method": "cash",
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "completed",
+        "created_at": "2026-10-21T11:39:22+01:00",
+        "received_at": "2026-10-21T11:39:22+01:00",
+        "updated_at": "2026-10-21T11:39:22+01:00"
+    }
+]

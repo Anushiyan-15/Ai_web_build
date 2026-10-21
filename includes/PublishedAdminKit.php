@@ -24,6 +24,8 @@
 // - No external dependencies. PHP 8.0+, vanilla output, htmlspecialchars
 //   everywhere, CSRF on all state-changing admin requests.
 
+require_once __DIR__ . '/HtmlUtil.php';
+
 if (!function_exists('pak_normalize_entities')) {
 
 function pak_slug(string $s): string {
@@ -114,6 +116,30 @@ function pak_default_entities(): array {
                        ['name'=>'phone','label'=>'Phone','type'=>'text','required'=>false],
                        ['name'=>'message','label'=>'Message','type'=>'textarea','required'=>false]]],
     ]);
+}
+
+/**
+ * Customers module for the admin panel (customer management).
+ * Always installed: without customers.php the "Customers" nav entry (built
+ * from the on-disk data_customers.json) links to a 404.
+ */
+function pak_customers_entity(): array {
+    return [
+        'id' => 'customers',
+        'name' => 'Customers',
+        'singular' => 'Customer',
+        'icon' => "\u{1F465}",
+        'fields' => [
+            ['name' => 'name', 'label' => 'Full Name', 'type' => 'text', 'required' => true, 'options' => []],
+            ['name' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => false, 'options' => []],
+            ['name' => 'phone', 'label' => 'Phone', 'type' => 'tel', 'required' => false, 'options' => []],
+            ['name' => 'total_bookings', 'label' => 'Bookings', 'type' => 'number', 'required' => false, 'options' => []],
+            ['name' => 'total_spent', 'label' => 'Total Spent', 'type' => 'number', 'required' => false, 'options' => []],
+            ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => false,
+             'options' => ['active', 'inactive', 'blocked']],
+            ['name' => 'notes', 'label' => 'Notes', 'type' => 'textarea', 'required' => false, 'options' => []],
+        ],
+    ];
 }
 
 /** Entities for an order: manifest first, safe default only when empty. */
@@ -351,6 +377,15 @@ function db_entities(): array {
     return $cache;
 }
 
+/** Href for an entity module: its own page when it exists, otherwise
+ *  the generic entity manager (a missing page must never be a 404). */
+function db_entity_href(string $entity): string {
+    $id = strtolower(preg_replace('/[^a-z0-9_]/i', '', (string)$entity));
+    if ($id === '') return 'manage.php';
+    return is_file(db_dir() . '/' . $id . '.php')
+        ? $id . '.php'
+        : 'manage.php?entity=' . rawurlencode($id);
+}
 function db_entity_allowed(string $entity): bool {
     if (!preg_match('/^[a-z0-9_]{1,40}$/', $entity)) return false;
     return in_array($entity, db_entities(), true);
@@ -433,7 +468,12 @@ function db_insert(string $entity, array $row): ?array {
         $now = date('c');
         $row['id'] = $entity === 'trips'
             ? 'TRIP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)))
-            : db_new_id();
+            : ($entity === 'bookings'
+                ? 'BK-' . strtoupper(bin2hex(random_bytes(4)))
+                : db_new_id());
+        if ($entity === 'bookings' && empty($row['ref'])) {
+            $row['ref'] = $row['id'];
+        }
         $row['created_at'] = $now;
         $row['updated_at'] = $now;
         array_unshift($rows, $row);
@@ -659,6 +699,7 @@ function pak_layout_php(): string {
 // Sidebar is built DYNAMICALLY from manifest.json + on-disk data files,
 // so entities added later appear without republishing the layout.
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/db.php';
 require_login();
 
 function pak_nav_entities(): array {
@@ -724,7 +765,7 @@ function sidebar(string $active = 'dashboard'): void {
     echo $nav('dashboard', 'index.php', '📊 Dashboard');
     echo $nav('inbox', 'inbox.php', '✉️ Inbox' . ($unread > 0 ? ' <span class="badge badge-green" style="margin-left:auto">' . $unread . '</span>' : ''));
     foreach ($ents as $e) {
-        echo $nav('ent_' . $e['id'], htmlspecialchars($e['id']) . '.php',
+        echo $nav('ent_' . $e['id'], htmlspecialchars(db_entity_href($e['id'])),
             htmlspecialchars($e['icon'] . ' ' . $e['name']));
     }
     echo $nav('settings', 'settings.php', '⚙️ Settings');
@@ -821,11 +862,8 @@ $isBusBookingPage = $ENTITY === 'bookings'
     && in_array('trip_id', $fieldKeys, true) && in_array('seats', $fieldKeys, true);
 $isBusPaymentsPage = $ENTITY === 'payments'
     && in_array('payment_id', $fieldKeys, true) && in_array('booking_ref', $fieldKeys, true);
-$isBusLifecyclePage = $isBusBookingPage || $isBusPaymentsPage;
-$editableFields = $isBusBookingPage
-    ? array_values(array_filter($fields, static fn($field) =>
-        !in_array((string)($field['name'] ?? ''), ['status', 'payment_status', 'payment_id', 'amount'], true)))
-    : $fields;
+$isBusLifecyclePage = false; // Lifecycle locks removed: admin has full CRUD capability
+$editableFields = $fields;
 $flash = '';
 $flashErr = '';
 if (isset($_GET['flash'])) {
@@ -864,10 +902,7 @@ function ent_validate(array $fields, array $input, &$clean, &$err): bool {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_validate();
     $action = (string)($_POST['action'] ?? '');
-    if ($isBusLifecyclePage) {
-        http_response_code(403);
-        exit('Bus booking and payment records can only be changed through their lifecycle actions.');
-    } elseif ($action === 'save') {
+    if ($action === 'save') {
         $id = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($_POST['id'] ?? ''));
         if (ent_validate($editableFields, $_POST, $clean, $err)) {
             if ($id !== '') {
@@ -912,7 +947,9 @@ if (!function_exists('bus_booking_cell')) {
             return '—';
         }
         if ($field === 'seats') {
-            foreach (['seats','seat_numbers','seatNumbers','seat','seats_string','selected_seats'] as $k) {
+            // seats_display = the label the customer actually clicked
+            // (e.g. "6C"); seats = canonical fleet seat (e.g. "F3").
+            foreach (['seats_display','seats','seat_numbers','seatNumbers','seat','seats_string','selected_seats'] as $k) {
                 if (!array_key_exists($k, $row) || $row[$k] === '' || $row[$k] === null) continue;
                 $v = $row[$k];
                 if (is_array($v)) { $s = implode(', ', array_slice(array_map('strval', $v), 0, 8)); if ($s !== '') return $s; }
@@ -950,7 +987,7 @@ $total = count($all);
 $pages = max(1, (int)ceil($total / 20));
 if ($page > $pages) $page = $pages;
 $rows = array_slice($all, ($page - 1) * 20, 20);
-$reportRows = db_read($ENTITY);
+$reportRows = $all; // respect the active ?q= filter (export + embedded data)
 $tableFields = $isBusBookingPage
     ? array_values(array_filter($fields, static fn($field) =>
         in_array((string)($field['name'] ?? ''), ['trip_id', 'seats', 'passenger', 'phone', 'email', 'status'], true)))
@@ -1021,6 +1058,69 @@ header_html('ent_' . $ENTITY, $LABEL);
       <a class="btn btn-ghost" href="<?= $ENTITY ?>.php">Cancel</a>
     </div>
   </form>
+</div>
+<?php endif; ?>
+
+<?php if ($ENTITY === 'customers' && $editRow !== null): ?>
+<?php
+  $custEmail = strtolower(trim((string)($editRow['email'] ?? '')));
+  $custPhone = trim((string)($editRow['phone'] ?? ''));
+  $custBookings = [];
+  $custSpent = 0.0;
+  foreach (db_read('bookings') as $b) {
+    if (!is_array($b)) continue;
+    $bEmail = strtolower(trim((string)($b['email'] ?? '')));
+    $bPhone = trim((string)($b['phone'] ?? ''));
+    if (($custEmail !== '' && $bEmail === $custEmail) || ($custPhone !== '' && $bPhone === $custPhone)) {
+      $custBookings[] = $b;
+      $custSpent += (float)($b['amount'] ?? 0);
+    }
+  }
+?>
+<div class="card">
+  <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:1rem">👤 Customer details</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem;margin-bottom:1.25rem">
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">BOOKINGS</div>
+      <div style="color:#fff;font-size:1.4rem;font-weight:800"><?= count($custBookings) ?></div>
+    </div>
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">TOTAL SPENT</div>
+      <div style="color:#fff;font-size:1.4rem;font-weight:800"><?= htmlspecialchars(number_format($custSpent, 2)) ?></div>
+    </div>
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">MEMBER SINCE</div>
+      <div style="color:#fff;font-size:.95rem;font-weight:800"><?= htmlspecialchars(substr((string)($editRow['created_at'] ?? ''), 0, 10)) ?: '—' ?></div>
+    </div>
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">STATUS</div>
+      <div style="color:#fff;font-size:.95rem;font-weight:800"><?= htmlspecialchars((string)($editRow['status'] ?? 'active')) ?></div>
+    </div>
+  </div>
+  <?php if (!$custBookings): ?>
+    <p style="color:#64748b;font-size:.85rem">No bookings recorded for this customer yet.</p>
+  <?php else: ?>
+  <div style="overflow-x:auto"><table>
+    <thead><tr><th>Ref</th><th>Trip</th><th>Route</th><th>Date</th><th>Seats</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    <?php foreach ($custBookings as $b):
+      $bSeats = $b['seats_display'] ?? ($b['seats'] ?? []);
+      if (!is_array($bSeats)) $bSeats = preg_split('/[\s,;|]+/', (string)$bSeats, -1, PREG_SPLIT_NO_EMPTY);
+    ?>
+      <tr>
+        <td><?= htmlspecialchars((string)($b['ref'] ?? $b['id'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['trip_id'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['route'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['trip_date'] ?? '')) ?></td>
+        <td><?= htmlspecialchars(implode(', ', array_map('strval', $bSeats))) ?></td>
+        <td><?= htmlspecialchars((string)($b['amount'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['status'] ?? '')) ?></td>
+        <td><a class="btn btn-ghost" style="padding:.3rem .6rem;font-size:.75rem" href="bookings.php?edit=<?= urlencode((string)($b['id'] ?? '')) ?>">Open</a></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table></div>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -2199,7 +2299,7 @@ header_html('dashboard', 'Dashboard');
   <?php foreach ($entities as $e): ?>
   <div class="stat-box"><div class="stat-lbl"><?= htmlspecialchars($e['icon'] . ' ' . $e['name']) ?></div>
     <div class="stat-val"><?= (int)($counts[$e['id']] ?? 0) ?></div>
-    <div style="font-size:.75rem;color:#64748b"><a href="<?= htmlspecialchars($e['id']) ?>.php" style="color:#818cf8;text-decoration:none">Manage →</a></div></div>
+    <div style="font-size:.75rem;color:#64748b"><a href="<?= htmlspecialchars(db_entity_href($e['id'])) ?>" style="color:#818cf8;text-decoration:none">Manage →</a></div></div>
   <?php endforeach; ?>
 </div>
 
@@ -2219,7 +2319,7 @@ header_html('dashboard', 'Dashboard');
       if (strlen($detail) > 60) $detail = substr($detail, 0, 60) . '…';
     ?>
       <tr>
-        <td><a href="<?= htmlspecialchars($item['entity']) ?>.php" style="color:#a5b4fc;text-decoration:none"><?= htmlspecialchars($item['label']) ?></a></td>
+        <td><a href="<?= htmlspecialchars(db_entity_href($item['entity'])) ?>" style="color:#a5b4fc;text-decoration:none"><?= htmlspecialchars($item['label']) ?></a></td>
         <td><?= htmlspecialchars($detail === '' ? '—' : $detail) ?></td>
         <td><span class="badge badge-blue"><?= htmlspecialchars((string)($r['status'] ?? ($item['entity'] === 'inquiries' ? (empty($r['read']) ? 'unread' : 'read') : 'stored'))) ?></span></td>
         <td style="color:#64748b;font-size:.78rem"><?= htmlspecialchars(substr((string)$item['ts'], 0, 16)) ?></td>
@@ -2235,7 +2335,7 @@ header_html('dashboard', 'Dashboard');
   <div style="display:flex;gap:.6rem;flex-wrap:wrap">
     <a class="btn btn-ghost" href="inbox.php">✉️ Inbox<?= $unread > 0 ? ' (' . $unread . ')' : '' ?></a>
     <?php foreach ($entities as $e): ?>
-      <a class="btn btn-ghost" href="<?= htmlspecialchars($e['id']) ?>.php"><?= htmlspecialchars($e['icon'] . ' ' . $e['name']) ?></a>
+      <a class="btn btn-ghost" href="<?= htmlspecialchars(db_entity_href($e['id'])) ?>"><?= htmlspecialchars($e['icon'] . ' ' . $e['name']) ?></a>
     <?php endforeach; ?>
     <a class="btn btn-ghost" href="settings.php">⚙️ Settings</a>
     <a class="btn btn-ghost" href="server.php">🖥️ Server</a>
@@ -2269,7 +2369,8 @@ function pak_install(string $adminDir, array $order): array {
 
     // 2. manifest.json — refresh entity/module contract, preserve nothing else.
     $mf = $adminDir . '/manifest.json';
-    if (!is_file($mf)) {
+    $manifest = is_file($mf) ? json_decode(@file_get_contents($mf), true) : null;
+    if (!is_array($manifest)) {
         $manifest = [
             'schema' => 'business-manifest/1',
             'slug' => pak_slug((string)($order['slug'] ?? 'site')),
@@ -2288,6 +2389,22 @@ function pak_install(string $adminDir, array $order): array {
         ];
         if (pak_write($mf, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) $written[] = 'manifest.json';
     }
+    // Customer management module: the sidebar builds a "Customers" entry from
+    // the on-disk data_customers.json, so the page itself must always exist
+    // (otherwise the entry 404s) and the entity must be in the manifest.
+    $custEntity = pak_customers_entity();
+    $hasCust = false;
+    foreach ((array)($manifest['entities'] ?? []) as $e) {
+        if (is_array($e) && strtolower(trim((string)($e['id'] ?? ''))) === 'customers') { $hasCust = true; break; }
+    }
+    if (!$hasCust) {
+        $manifest['entities'][] = ['id' => 'customers', 'name' => 'Customers',
+            'singular' => 'Customer', 'icon' => $custEntity['icon'], 'fields' => $custEntity['fields']];
+        $manifest['admin_modules'][] = ['id' => 'customers', 'label' => 'Customers',
+            'icon' => $custEntity['icon'], 'entity' => 'customers'];
+        $manifest['updated_at'] = date('c');
+        if (pak_write($mf, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) $written[] = 'manifest.json';
+    }
 
     // 3. form_map.json — explicit validated frontend→entity mapping.
     if (pak_write($adminDir . '/form_map.json', json_encode($formMap, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
@@ -2298,6 +2415,15 @@ function pak_install(string $adminDir, array $order): array {
     foreach ($entities as $e) {
         if (pak_write($adminDir . '/' . $e['id'] . '.php', pak_entity_php($e))) $written[] = $e['id'] . '.php';
         else $errors[] = 'Cannot write ' . $e['id'] . '.php';
+    }
+
+    // 4b. Customers page (admin customer management) — always installed so
+    // the sidebar's Customers entry never leads to a 404.
+    if (pak_write($adminDir . '/customers.php', pak_entity_php(pak_customers_entity()))) $written[] = 'customers.php';
+    else $errors[] = 'Cannot write customers.php';
+    if (!is_file($adminDir . '/data_customers.json')) {
+        if (pak_write($adminDir . '/data_customers.json', '[]')) $written[] = 'data_customers.json';
+        else $errors[] = 'Cannot init data_customers.json';
     }
 
     // 5. Inbox / settings / API / installer / server control.
@@ -2448,10 +2574,10 @@ function pak_wire_frontend_forms(string $html, array $formMap): string {
 })();
 </script>
 WCJS;
-    if (preg_match('/<\/body\s*>/i', $html)) {
-        return preg_replace('/<\/body\s*>/i', $js . "\n</body>", $html, 1);
-    }
-    return $html . "\n" . $js;
+    // Last real </body> only — a first-match replace can land inside an
+    // injected runtime script (its print template contains "</body>"),
+    // splitting the script and reviving the page's mock backend.
+    return wc_insert_before_body_end($html, $js);
 }
 
 } // end function_exists guard

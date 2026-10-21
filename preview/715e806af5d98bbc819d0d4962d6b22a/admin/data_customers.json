@@ -1,0 +1,13 @@
+[
+    {
+        "id": "c_a64bc5ccba24",
+        "name": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "total_bookings": 3,
+        "total_spent": 5700,
+        "status": "active",
+        "created_at": "2026-10-21T11:39:22+01:00",
+        "updated_at": "2026-10-21T11:40:01+01:00"
+    }
+]

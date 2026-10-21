@@ -2,7 +2,7 @@
     "contact": "trips",
     "booking": "bookings",
     "order": "trips",
-    "registration": "trips",
+    "registration": "customers",
     "review": "trips",
     "quote": "trips",
     "newsletter": "trips",

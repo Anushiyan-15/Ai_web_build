@@ -54,7 +54,16 @@ function bops_sites_file(string $slug, string $entity): string {
 function bops_all_rows(string $slug, string $entity): array {
     $byId = [];
     $order = [];
-    foreach ([bops_file($slug, $entity), bops_sites_file($slug, $entity)] as $fi => $f) {
+    // Admin store (owner-managed rows) is part of the public union for
+    // catalog entities - the owner's data must be live even when the public
+    // mirror does not know about it yet. Transactional entities are never
+    // unioned (a public list must not expose other customers' records).
+    $sources = [bops_file($slug, $entity), bops_sites_file($slug, $entity)];
+    if (bops_is_public_entity($entity)) {
+        $adminFile = dirname(__DIR__) . '/published/' . $slug . '/admin/data_' . $entity . '.json';
+        if (is_file($adminFile)) $sources[] = $adminFile;
+    }
+    foreach ($sources as $fi => $f) {
         if (!is_file($f)) continue;
         $j = json_decode(@file_get_contents($f), true);
         if (!is_array($j)) continue;
@@ -332,6 +341,36 @@ function bops_hold_live(array $r): bool {
     $ca = strtotime($r['created_at'] ?? '');
     return !($ca && (time() - $ca > 900)); // expired holds release capacity
 }
+// Lazy reaper: expired 15-minute holds accumulate as dead rows (seen live:
+// stale HOLD-* rows from days earlier still unioned on every read). Runs
+// inside the booking hot paths under the same lock discipline, bounded to
+// a handful of rows per call. Only touches expired 'held' rows — live
+// holds and confirmed bookings are never modified.
+function bops_purge_expired_holds(string $slug, string $entity = 'bookings'): int {
+    if ($entity !== 'bookings') return 0;
+    $removed = 0;
+    try {
+        [$ok, $out] = bops_transact($slug, $entity, function ($rows) {
+            $kept = [];
+            $gone = [];
+            foreach ($rows as $r) {
+                if (is_array($r) && ($r['status'] ?? '') === 'held' && !bops_hold_live($r)) { $gone[] = $r; continue; }
+                $kept[] = $r;
+            }
+            return [$kept, $gone];
+        });
+        if ($ok && is_array($out)) {
+            foreach ($out as $g) {
+                $gid = (string)($g['id'] ?? '');
+                if ($gid === '') continue;
+                $removed++;
+                bops_sync_sites($slug, $entity, $gid, null);
+                bops_mirror_admin($slug, $entity, ['id' => $gid], true);
+            }
+        }
+    } catch (Throwable $e) { /* best-effort only */ }
+    return $removed;
+}
 function bops_norm_seats($seats): array {
     if (is_string($seats)) {
         $t = trim($seats);
@@ -345,7 +384,18 @@ function bops_norm_seats($seats): array {
         if (is_string($seats)) $seats = preg_split('/[\s,;|]+/', $t, -1, PREG_SPLIT_NO_EMPTY);
     }
     return array_values(array_unique(array_filter(array_map(
-        fn($seat) => strtoupper(trim((string)$seat)),
+        function ($seat) {
+            $s = strtoupper(trim((string)$seat));
+            if (preg_match('/^(\d+)([A-D])$/', $s, $m)) {
+                $rowNum = (int)$m[1];
+                if ($rowNum >= 1 && $rowNum <= 26) {
+                    $rowLetter = chr(ord('A') + $rowNum - 1);
+                    $colNum = ord($m[2]) - ord('A') + 1;
+                    return $rowLetter . $colNum;
+                }
+            }
+            return $s;
+        },
         (array)$seats
     ))));
 }
@@ -419,7 +469,7 @@ function bops_queue_booking_status_email(string $slug, array $booking): array {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return ['success' => false, 'status' => 'not_sent', 'error' => 'Booking has no valid customer email'];
     }
-    require_once __DIR__ . '/MailQueue.php';
+    require_once __DIR__ . '/OwnerEmail.php';
     $status = strtolower((string)($booking['status'] ?? ''));
     $approved = $status === 'approved';
     $subject = $approved ? 'Your bus booking is approved' : 'Update on your bus booking';
@@ -433,16 +483,167 @@ function bops_queue_booking_status_email(string $slug, array $booking): array {
         . '<h2>' . htmlspecialchars($subject, ENT_QUOTES, 'UTF-8') . '</h2><p>' . $safeMessage . '</p>'
         . '<p>Booking reference: <strong>' . htmlspecialchars((string)($booking['ref'] ?? ''), ENT_QUOTES, 'UTF-8') . '</strong></p>'
         . '</body></html>';
-    $queued = queueMail([
-        'to' => $email,
-        'subject' => $subject,
-        'html' => $html,
-        'text' => $message,
-        'kind' => 'bus_booking_status',
-    ]);
-    return !empty($queued['success'])
-        ? ['success' => true, 'status' => 'queued', 'queue_id' => $queued['id'] ?? '']
-        : ['success' => false, 'status' => 'failed', 'error' => (string)($queued['error'] ?? 'Mail queue failed')];
+
+    // Send via the website owner's authorized business email account.
+    $ownerCfg = class_exists('OwnerEmail') ? \OwnerEmail::load($slug, false) : [];
+    if (!empty($ownerCfg['email'])) {
+        $sent = \OwnerEmail::send($slug, $email, $subject, $html, $message);
+        if (!empty($sent['success'])) {
+            return ['success' => true, 'status' => 'sent', 'via' => 'owner_account'];
+        }
+        return ['success' => false, 'status' => 'failed', 'error' => $sent['error'] ?? 'Owner email send failed'];
+    }
+
+    require_once __DIR__ . '/MailQueue.php';
+    if (function_exists('queueMail')) {
+        $queued = queueMail([
+            'to' => $email,
+            'subject' => $subject,
+            'html' => $html,
+            'text' => $message,
+            'kind' => 'bus_booking_status',
+        ]);
+        if (!empty($queued['success'])) {
+            return ['success' => true, 'status' => 'queued', 'queue_id' => $queued['id'] ?? ''];
+        }
+    }
+
+    return [
+        'success' => false, 'status' => 'not_configured',
+        'error' => "Business email is not configured for this website. The owner must set up Business Email Setup (owner's SMTP/OAuth credentials) before booking confirmations can be sent from the owner's account.",
+    ];
+}
+
+/**
+ * Notify the business owner of a new booking via the owner's own email account.
+ * Called after a booking is successfully saved.
+ */
+function bops_queue_new_booking_owner_notification(string $slug, array $booking): array {
+    require_once __DIR__ . '/OwnerEmail.php';
+    $ownerCfg = \OwnerEmail::load($slug, false);
+    $ownerEmail = $ownerCfg['email'] ?? '';
+    if (!$ownerEmail || !filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'success' => false, 'status' => 'not_configured',
+            'error' => 'Business email not configured. Set up Business Email Setup to receive new-booking notifications at your own address.',
+        ];
+    }
+    $customerEmail = strtolower(trim((string)($booking['email'] ?? '')));
+    $customerName = trim((string)($booking['passenger'] ?? $booking['name'] ?? 'Customer'));
+    $ref = strtoupper(trim((string)($booking['ref'] ?? $booking['id'] ?? '')));
+    $route = trim((string)($booking['route'] ?? ''));
+    $seats = is_array($booking['seats'] ?? []) ? implode(', ', $booking['seats']) : ((string)($booking['seats'] ?? ''));
+    $subject = '🚌 New booking received — ' . $ref;
+    $message = "A new booking has been placed on your website.\n\n"
+        . "Customer: {$customerName} ({$customerEmail})\n"
+        . "Booking reference: {$ref}\n"
+        . "Route: {$route}\n"
+        . "Seats: {$seats}\n"
+        . "Status: " . ucfirst((string)($booking['status'] ?? 'pending')) . "\n";
+    $html = '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#17212b;padding:24px;">'
+        . '<h2 style="color:#2563eb;">New booking received</h2>'
+        . '<p>A new booking has been placed on your website.</p>'
+        . '<table style="border-collapse:collapse;font-size:14px;">'
+        . '<tr><td style="padding:4px 8px;"><strong>Customer:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($customerName) . ' (' . htmlspecialchars($customerEmail) . ')</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Reference:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($ref) . '</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Route:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($route) . '</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Seats:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($seats) . '</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Status:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars(ucfirst((string)($booking['status'] ?? 'pending'))) . '</td></tr>'
+        . '</table></body></html>';
+
+    return \OwnerEmail::send($slug, $ownerEmail, $subject, $html, $message);
+}
+
+/**
+ * Order confirmation email to the customer, sent from the website owner's
+ * own authorized business email account. Called after an order is saved.
+ */
+function bops_queue_order_confirmation(string $slug, array $order): array {
+    require_once __DIR__ . '/OwnerEmail.php';
+    $ownerCfg = \OwnerEmail::load($slug, false);
+    $ownerEmail = $ownerCfg['email'] ?? '';
+    $ownerName = $ownerCfg['name'] ?? $ownerEmail;
+    if (!$ownerEmail || !filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'success' => false, 'status' => 'not_configured',
+            'error' => 'Business email not configured. Set up Business Email Setup to send order confirmations from your own address.',
+        ];
+    }
+    $customerEmail = strtolower(trim((string)($order['email'] ?? $order['customer_email'] ?? '')));
+    if (!$customerEmail || !filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+        return ['success' => false, 'status' => 'not_sent', 'error' => 'Order has no valid customer email'];
+    }
+    $customerName = trim((string)($order['name'] ?? $order['customer_name'] ?? 'Customer'));
+    $ref = strtoupper(trim((string)($order['ref'] ?? $order['id'] ?? '')));
+    $total = (float)($order['total'] ?? $order['amount'] ?? 0);
+    $currency = (string)($order['currency'] ?? 'USD');
+    $items = is_array($order['items'] ?? []) ? $order['items'] : [];
+    $itemsHtml = '';
+    foreach ($items as $it) {
+        $itemsHtml .= '<tr><td style="padding:4px 8px;border-bottom:1px solid #e5e7eb;">'
+            . htmlspecialchars((string)($it['name'] ?? $it['item'] ?? 'Item'))
+            . '</td><td style="padding:4px 8px;border-bottom:1px solid #e5e7eb;text-align:right;">'
+            . number_format((float)($it['price'] ?? 0), 2) . ' ' . htmlspecialchars($currency) . '</td></tr>';
+    }
+    $subject = '✅ Order confirmed — ' . $ref;
+    $message = "Your order {$ref} has been confirmed.\n\n"
+        . "Customer: {$customerName} ({$customerEmail})\n"
+        . "Total: {$total} {$currency}\n\n"
+        . "Thank you for your purchase!";
+    $html = '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#17212b;padding:24px;">'
+        . '<h2 style="color:#059669;">Order confirmed</h2>'
+        . '<p>Hi ' . htmlspecialchars($customerName) . ', your order <strong>' . htmlspecialchars($ref) . '</strong> has been confirmed.</p>'
+        . '<p>Total: <strong>' . number_format($total, 2) . ' ' . htmlspecialchars($currency) . '</strong></p>'
+        . ($itemsHtml !== '' ? '<table style="border-collapse:collapse;font-size:14px;margin:16px 0;">' . $itemsHtml . '</table>' : '')
+        . '<p style="color:#6b7280;">Thank you for shopping with us!</p></body></html>';
+
+    return \OwnerEmail::send($slug, $customerEmail, $subject, $html, $message);
+}
+
+/**
+ * New enquiry / quotation notification to the business owner, sent from the
+ * website owner's own authorized email account. Called after an inquiry is
+ * saved. Visitor auto-reply is handled by the generated contact.php; this is
+ * the backend inquiry API path.
+ */
+function bops_queue_inquiry_notification(string $slug, array $inquiry): array {
+    require_once __DIR__ . '/OwnerEmail.php';
+    $ownerCfg = \OwnerEmail::load($slug, false);
+    $ownerEmail = $ownerCfg['email'] ?? '';
+    if (!$ownerEmail || !filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'success' => false, 'status' => 'not_configured',
+            'error' => 'Business email not configured. Set up Business Email Setup to receive enquiry notifications.',
+        ];
+    }
+    $visitorEmail = strtolower(trim((string)($inquiry['email'] ?? '')));
+    $visitorName = trim((string)($inquiry['name'] ?? 'Visitor'));
+    $subject = trim((string)($inquiry['subject'] ?? 'Website enquiry'));
+    $message = trim((string)($inquiry['message'] ?? ''));
+    $phone = trim((string)($inquiry['phone'] ?? ''));
+    $ref = strtoupper(trim((string)($inquiry['ref'] ?? $inquiry['id'] ?? '')));
+    $emailSubject = '📩 New enquiry — ' . ($ref ?: $subject);
+    $body = "A new enquiry was submitted on your website.\n\n"
+        . "Name: {$visitorName}\n"
+        . "Email: {$visitorEmail}\n"
+        . "Phone: {$phone}\n"
+        . "Reference: {$ref}\n"
+        . "Subject: {$subject}\n\n"
+        . "Message:\n{$message}\n";
+    $html = '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#17212b;padding:24px;">'
+        . '<h2 style="color:#2563eb;">New website enquiry</h2>'
+        . '<p>A new enquiry was submitted on your website.</p>'
+        . '<table style="border-collapse:collapse;font-size:14px;">'
+        . '<tr><td style="padding:4px 8px;"><strong>Name:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($visitorName) . '</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Email:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($visitorEmail) . '</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Phone:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($phone ?: '—') . '</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Reference:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($ref) . '</td></tr>'
+        . '<tr><td style="padding:4px 8px;"><strong>Subject:</strong></td><td style="padding:4px 8px;">' . htmlspecialchars($subject) . '</td></tr>'
+        . '</table>'
+        . '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:10px;padding:16px;color:#cbd5e1;font-size:14px;white-space:pre-wrap;margin-top:16px;">'
+        . htmlspecialchars($message) . '</div></body></html>';
+
+    return \OwnerEmail::send($slug, $ownerEmail, $emailSubject, $html, $body);
 }
 function bops_seat_fits_capacity(string $seat, int $capacity): bool {
     $seat = strtoupper(trim($seat));
@@ -606,7 +807,8 @@ function bops_dispatch(array $req): array {
         // Ownerless rows are admin-visible only — never leaked across customers.
         if (!bops_is_admin($slug)) {
             $sessionEmail = strtolower(trim((string)($_SESSION['customer_user']['email'] ?? '')));
-            $identities = ($entity === 'bookings' && $sessionEmail === '')
+            $phone = trim((string)($req['phone'] ?? ''));
+            $identities = ($entity === 'bookings' && $sessionEmail === '' && $phone === '')
                 ? [] : bops_customer_ids($req);
             if ($identities) {
                 $rows = array_values(array_filter($rows, function ($r) use ($identities) {
@@ -632,6 +834,7 @@ function bops_dispatch(array $req): array {
     if ($action === 'availability') {
         $tripId = trim((string)($req['trip_id'] ?? $req['tripId'] ?? ''));
         if ($tripId === '') return ['http' => 400, 'body' => ['success' => false, 'error' => 'Missing trip_id']];
+        bops_purge_expired_holds($slug, $entity !== '' ? $entity : 'bookings');
         $trip = null;
         foreach (bops_load($slug, 'trips') as $row) {
             if (is_array($row) && (string)($row['id'] ?? '') === $tripId) { $trip = $row; break; }
@@ -685,7 +888,7 @@ function bops_dispatch(array $req): array {
         $rec = $req['record'] ?? [];
         if (!is_array($rec) || empty($rec)) return ['http' => 400, 'body' => ['success' => false, 'error' => 'Empty record']];
         $rec = bops_sanitize_record($rec);
-        if ($entity === 'bookings') $rec = bops_normalize_booking_aliases($rec);
+        if ($entity === 'bookings') { $rec = bops_normalize_booking_aliases($rec); bops_purge_expired_holds($slug, $entity); }
         if (isset($rec['email']) && $rec['email'] !== '' && !filter_var($rec['email'], FILTER_VALIDATE_EMAIL)) {
             return ['http' => 400, 'body' => ['success' => false, 'error' => 'Invalid email']];
         }
@@ -746,6 +949,13 @@ function bops_dispatch(array $req): array {
                     }
                     foreach ($seats as $s) { if (in_array($s, bops_norm_seats($r['seats'] ?? []), true)) return [false, 'Seat ' . $s . ' already reserved']; }
                 }
+                // A hold_ref was presented but no live hold matching this trip
+                // and seat set was consumed: the hold expired, was released, or
+                // was never valid. Reject instead of booking past it. An expired
+                // hold must never permit booking submission.
+                if ($holdRef !== '' && $consumeHoldId === '') {
+                    return [false, 'Seat hold has expired or is invalid. Please select and hold your seats again.'];
+                }
                 if ($consumeHoldId !== '') {
                     $rows = array_values(array_filter($rows,
                         fn($r) => (string)(is_array($r) ? ($r['id'] ?? '') : '') !== $consumeHoldId));
@@ -787,6 +997,23 @@ function bops_dispatch(array $req): array {
             bops_mirror_admin($slug, $entity, ['id' => $holdId], true);
         }
         if (in_array($entity, BOPS_MIRROR_ENTITIES, true)) bops_mirror_admin($slug, $entity, $out['rec']);
+        // Auto-record customer profile for admin customer management
+        if ($entity === 'bookings') {
+            bops_upsert_customer($slug, $out['rec']);
+            $ownerNotif = bops_queue_new_booking_owner_notification($slug, $out['rec']);
+            $body['owner_notification'] = $ownerNotif;
+        }
+        // Order confirmation to the customer via the owner's account.
+        if ($entity === 'orders') {
+            $orderConfirm = bops_queue_order_confirmation($slug, $out['rec']);
+            $body['order_confirmation'] = $orderConfirm;
+        }
+        // New enquiry / quotation notification to the business owner via the
+        // owner's own account.
+        if ($entity === 'inquiries') {
+            $inquiryNotif = bops_queue_inquiry_notification($slug, $out['rec']);
+            $body['inquiry_notification'] = $inquiryNotif;
+        }
         $body = ['success' => true, 'data' => $out['rec']];
         if ($out['deduped']) $body['deduped'] = true;
         return ['http' => 200, 'body' => $body];
@@ -796,6 +1023,7 @@ function bops_dispatch(array $req): array {
         $trip = (string)($req['trip_id'] ?? '');
         $seats = bops_norm_seats($req['seats'] ?? []);
         if ($trip === '' || empty($seats)) return ['http' => 400, 'body' => ['success' => false, 'error' => 'trip_id + seats required']];
+        bops_purge_expired_holds($slug, $entity !== '' ? $entity : 'bookings');
         $capacity = bops_trip_capacity($slug, $trip);
         if ($capacity !== null) {
             if ($capacity < 1) return ['http' => 400, 'body' => ['success' => false, 'error' => 'Trip has no seat capacity']];
@@ -827,6 +1055,9 @@ function bops_dispatch(array $req): array {
         $id = (string)($req['id'] ?? '');
         if ($id === '') return ['http' => 400, 'body' => ['success' => false, 'error' => 'Missing id']];
         $patch = is_array($req['patch'] ?? null) ? $req['patch'] : (is_array($req['record'] ?? null) ? $req['record'] : []);
+        if (empty($patch) && isset($req['status'])) {
+            $patch = ['status' => $req['status']];
+        }
         $patch = bops_sanitize_record($patch);
         unset($patch['id']);
         if ($entity === 'bookings' && isset($patch['status'])
@@ -1094,7 +1325,7 @@ function bops_dispatch(array $req): array {
             }
             $b = $rows[$payIdx];
             if (in_array(($b['status'] ?? ''), ['cancelled', 'expired'], true)) return [false, 'Booking ' . $b['status'] . ' — payment rejected'];
-            if (($b['status'] ?? '') !== 'approved') return [false, 'Booking must be approved before payment can be recorded'];
+            if (!in_array(($b['status'] ?? ''), ['approved', 'confirmed'], true)) return [false, 'Booking must be approved before payment can be recorded'];
             if (($b['payment_status'] ?? '') === 'paid') return [false, 'Already paid — duplicate rejected'];
             $amount = bops_booking_amount($slug, $b);
             if ($amount <= 0) return [false, 'The booking has no valid fare; update the trip fare before recording payment'];
@@ -1246,6 +1477,12 @@ function bops_dispatch(array $req): array {
  * Returns the seeded rows (empty when skipped).
  */
 function bops_seed_demo_trips(string $slug, string $adminDir = '', array $entityIds = []): array {
+// Demo rows are OFF by default: the schedule must be REAL data the owner
+// manages from the admin panel. Set WB_SEED_DEMO_TRIPS=1 to opt in.
+$flag = getenv('WB_SEED_DEMO_TRIPS');
+if ($flag === false || !in_array(strtolower(trim((string)$flag)), ['1', 'true', 'yes'], true)) {
+    return [];
+}
     try {
         $slug = bops_slug(['slug' => $slug]);
         $hasTrips = in_array('trips', $entityIds, true)
@@ -1273,8 +1510,10 @@ function bops_seed_demo_trips(string $slug, string $adminDir = '', array $entity
             ['route' => 'Bangalore → Chennai', 'origin' => 'Bangalore', 'destination' => 'Chennai',
              'date' => $d2, 'departure' => '21:00', 'price' => 899, 'total_seats' => 32, 'bus' => 'AC Sleeper'],
         ];
-        foreach ($demo as &$t) {
-            $t['id'] = 'r_' . bin2hex(random_bytes(8));
+        // Stable ids: AI-generated demo cards use D1/D2/D3 and must be able
+        // to hold + book against these exact backend rows on an empty store.
+        foreach ($demo as $i => &$t) {
+            $t['id'] = 'D' . ($i + 1);
             $t['created_at'] = $now;
             $t['updated_at'] = $now;
             $t['demo'] = true;
@@ -1360,3 +1599,72 @@ function bops_mirror_admin(string $slug, string $entity, array $rec, bool $delet
     $didPrev = bops_mirror_to_dir($base . '/preview/' . $slug . '/admin', $entity, $rec, $delete);
     return $didPub || $didPrev;
 }
+
+/**
+ * Automatically tracks and upserts a customer record into collections/<slug>/data_customers.json
+ * and mirrors it into admin data files, so the admin panel provides live customer management.
+ */
+function bops_upsert_customer(string $slug, array $booking): void {
+    $email = strtolower(trim((string)($booking['email'] ?? '')));
+    $phone = trim((string)($booking['phone'] ?? ''));
+    $name = trim((string)($booking['passenger'] ?? $booking['customer'] ?? $booking['name'] ?? ''));
+    if ($email === '' && $phone === '') return;
+    $amount = is_numeric($booking['amount'] ?? null) ? (float)$booking['amount'] : 0.0;
+
+    $custFile = bops_root() . '/collections/' . $slug . '/data_customers.json';
+    $dir = dirname($custFile);
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+
+    $h = @fopen($custFile, 'c+');
+    if (!$h) return;
+    $custRec = null;
+    try {
+        if (!flock($h, LOCK_EX)) return;
+        $raw = stream_get_contents($h);
+        $rows = ($raw !== false && trim((string)$raw) !== '') ? (json_decode($raw, true) ?: []) : [];
+        if (!is_array($rows)) $rows = [];
+        $found = false;
+        foreach ($rows as &$r) {
+            if (!is_array($r)) continue;
+            $rEmail = strtolower(trim((string)($r['email'] ?? '')));
+            $rPhone = trim((string)($r['phone'] ?? ''));
+            if (($email !== '' && $rEmail === $email) || ($phone !== '' && $rPhone === $phone)) {
+                $r['total_bookings'] = ((int)($r['total_bookings'] ?? 0)) + 1;
+                $r['total_spent'] = round(((float)($r['total_spent'] ?? 0)) + $amount, 2);
+                if ($name !== '' && (empty($r['name']) || $r['name'] === 'Passenger')) $r['name'] = $name;
+                if ($phone !== '' && empty($r['phone'])) $r['phone'] = $phone;
+                if ($email !== '' && empty($r['email'])) $r['email'] = $email;
+                $r['updated_at'] = date('c');
+                $found = true;
+                $custRec = $r;
+                break;
+            }
+        }
+        unset($r);
+        if (!$found) {
+            $custRec = [
+                'id' => 'c_' . substr(md5($email ?: $phone), 0, 12),
+                'name' => $name ?: 'Passenger',
+                'phone' => $phone,
+                'email' => $email,
+                'total_bookings' => 1,
+                'total_spent' => round($amount, 2),
+                'status' => 'active',
+                'created_at' => date('c'),
+                'updated_at' => date('c')
+            ];
+            array_unshift($rows, $custRec);
+        }
+        ftruncate($h, 0);
+        rewind($h);
+        fwrite($h, json_encode(array_values($rows), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        fflush($h);
+    } finally {
+        flock($h, LOCK_UN);
+        fclose($h);
+    }
+    if ($custRec) {
+        bops_mirror_admin($slug, 'customers', $custRec);
+    }
+}
+

@@ -1,11 +1,488 @@
-<!DOCTYPE html><html><head><title>Bus Test Co</title></head><body><h1>Bus Test Co</h1><form id="contact-form" method="POST"><input name="name"><input type="email" name="email"><textarea name="message"></textarea><button type="submit">Send</button></form><form data-wc-form="booking"><input name="company" style="display:none"><input name="passenger"><input name="phone"><input name="email" type="email"><button type="submit">Book</button></form><script type="application/json" id="wc-biz-spec">{&quot;entities&quot;:[{&quot;id&quot;:&quot;inquiries&quot;,&quot;name&quot;:&quot;Inquiries&quot;,&quot;singular&quot;:&quot;Inquirie&quot;,&quot;icon&quot;:&quot;✉️&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;name&quot;,&quot;label&quot;:&quot;Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;message&quot;,&quot;label&quot;:&quot;Message&quot;,&quot;type&quot;:&quot;textarea&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;trips&quot;,&quot;name&quot;:&quot;Trips&quot;,&quot;singular&quot;:&quot;Trip&quot;,&quot;icon&quot;:&quot;🚌&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;route&quot;,&quot;label&quot;:&quot;Route&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;date&quot;,&quot;label&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;date&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;price&quot;,&quot;label&quot;:&quot;Price&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;bookings&quot;,&quot;name&quot;:&quot;Bookings&quot;,&quot;singular&quot;:&quot;Booking&quot;,&quot;icon&quot;:&quot;🎫&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;trip_id&quot;,&quot;label&quot;:&quot;Trip&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]},{&quot;name&quot;:&quot;seats&quot;,&quot;label&quot;:&quot;Seats&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;reviews&quot;,&quot;name&quot;:&quot;Reviews&quot;,&quot;singular&quot;:&quot;Review&quot;,&quot;icon&quot;:&quot;⭐&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;reviewer&quot;,&quot;label&quot;:&quot;Reviewer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;stars&quot;,&quot;label&quot;:&quot;Stars&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]}]}</script><script data-wc-biz-runtime>(function(){
+<!DOCTYPE html><html><head><title>Bus Test Co</title></head><body><h1>Bus Test Co</h1><form id="contact-form" method="POST"><input name="name"><input type="email" name="email"><textarea name="message"></textarea><button type="submit">Send</button></form><form data-wc-form="booking"><input name="company" style="display:none"><input name="passenger"><input name="phone"><input name="email" type="email"><button type="submit">Book</button></form><script>
+/* WebCraft contact wiring — sends this form to contact.php via platform mailer */
+(function(){
+  function note(msg, ok){
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14px;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.4);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
+    document.body.appendChild(d);
+    setTimeout(function(){ d.remove(); }, 4000);
+  }
+  document.addEventListener('submit', function(e){
+    var f = e.target;
+    if (!f || f.tagName !== 'FORM' || f.dataset.wcWired) return;
+    var hasEmail = f.querySelector('input[type=email]');
+    var hasMsg = f.querySelector('textarea') || f.querySelector('[name=message],[name=your-message],[name=comments]') || f.id === 'contact-form';
+    if (!hasEmail || !hasMsg) return; // not a contact form — leave it alone
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    f.dataset.wcWired = '1';
+    var btn = f.querySelector('[type=submit],button');
+    var orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
+    fetch('contact.php', { method: 'POST', body: new FormData(f) })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.success) {
+          f.innerHTML = '<div style="padding:28px;text-align:center;background:rgba(16,185,129,.1);border:1.5px solid #10b981;border-radius:12px;font-weight:700;">✓ Thank you! Your message has been sent. We will reply soon.</div>';
+        } else {
+          note((j && j.error) || 'Could not send. Try again.', false);
+          if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+          delete f.dataset.wcWired;
+        }
+      })
+      .catch(function(){
+        note('Network error. Try again.', false);
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcWired;
+      });
+  }, true);
+})();
+</script>
+<script data-wc-pak-submit>
+/* WebCraft universal form wiring — every data form posts to submit.php
+   (no admin login needed) and the record appears in the admin panel. */
+(function(){
+  function note(msg, ok, form){
+    var host = (form && form.parentNode) ? form.parentNode : document.body;
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'margin:12px 0;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
+    if (host === document.body) d.style.cssText += 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;';
+    host.appendChild(d);
+    setTimeout(function(){ d.remove(); }, 5000);
+  }
+  function purpose(f){
+    var p = (f.getAttribute('data-wc-form') || f.getAttribute('data-form') || '').toLowerCase();
+    if (p) return p;
+    var html = ((f.id || '') + ' ' + (f.className || '') + ' ' + (f.innerHTML || '')).toLowerCase();
+    // Booking markers win over order markers: a bus passenger form talks
+    // about "payment" (pay online/counter) but its record is a booking, and
+    // "order" also matches "in order to". Shop checkouts carry cart/buy
+    // markers that never collide with booking words.
+    if (/book|reserv|appoint|seat|trip|schedule|slot/.test(html)) return 'booking';
+    if (/checkout|cart|order|payment|buy|add-to-cart/.test(html)) return 'order';
+    if (/subscrib|newsletter/.test(html)) return 'newsletter';
+    if (/review|rating|testimonial|feedback/.test(html)) return 'review';
+    if (/quote|estimate/.test(html)) return 'quote';
+    if (/register|signup|sign-up|join|member/.test(html)) return 'registration';
+    return '';
+  }
+  document.addEventListener('submit', function(e){
+    var f = e.target;
+    if (!f || f.tagName !== 'FORM' || f.dataset.wcPakWired) return;
+    // Search/catalog/lookup forms never create records — the storefront
+    // runtime (or the page's own JS) owns them. Hijacking them here would
+    // break trip search AND file bogus bookings (stopImmediatePropagation
+    // runs before their handlers).
+    if (f.hasAttribute('data-wc-search') || f.getAttribute('data-remote') === 'off'
+        || f.hasAttribute('data-wc-history') || f.hasAttribute('data-wc-ticket-lookup')
+        || f.hasAttribute('data-wc-lookup') || /history|lookup|track|my-booking/i.test(f.id || '')) return;
+    // Contact forms keep the contact.php+mailer flow; skip them here.
+    var hasEmail = f.querySelector('input[type=email]');
+    var hasMsg = f.querySelector('textarea');
+    if (hasEmail && hasMsg) return;
+    var p = purpose(f);
+    if (!p) return; // generic/static form — leave native behaviour alone
+    // Hold/slot flows (booking/order/appointment) belong to the storefront
+    // runtime when present: it attaches held trip+seats, uses idempotency,
+    // and tries Node first. Posting them here instead would drop the hold
+    // context and fail validation. On runtime-less pages submit.php serves.
+    if ((p === 'booking' || p === 'order' || p === 'appointment')
+        && window.WCBiz && typeof window.WCBiz.create === 'function') return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    f.dataset.wcPakWired = '1';
+    var btn = f.querySelector('[type=submit],button');
+    var orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
+    var fd = new FormData(f);
+    fd.append('form', p);
+    fetch('submit.php', { method: 'POST', body: fd })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.success) {
+          f.reset();
+          note(j.deduped ? 'Already received — thank you!' : '✓ Thank you! We received it and will be in touch shortly.', true, f);
+        } else {
+          note((j && j.error) || 'Could not send. Try again.', false, f);
+        }
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcPakWired;
+      })
+      .catch(function(){
+        note('Network error. Try again.', false, f);
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcPakWired;
+      });
+  }, true);
+})();
+</script>
+<a href="customer.php" data-wc-portal="1" style="position:fixed;right:18px;bottom:18px;z-index:9998;display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.1rem;border-radius:999px;background:#6366f1;color:#fff;text-decoration:none;font-weight:700;box-shadow:0 12px 30px rgba(15,23,42,.28);font-family:inherit;">👤 My Account</a>
+<style data-wc-bus-booking-style>
+[data-wc-live-bus-booking]{--wc-bus-accent:var(--accent,var(--primary,#2563eb));margin:clamp(2rem,6vw,5rem) auto;padding:clamp(1.5rem,3.5vw,2.5rem);max-width:1150px;border:1px solid var(--border,#dbe3e7);border-radius:20px;background:var(--surface,#fff);color:var(--text,#0f172a);font:inherit;box-shadow:0 10px 30px -5px rgba(0,0,0,0.05)}
+[data-wc-live-bus-booking] h2,[data-wc-live-bus-booking] h3{color:inherit;font-weight:800}
+[data-wc-live-bus-booking] .booking-steps-indicator{display:flex;justify-content:space-between;position:relative;margin:0 auto 2.2rem;max-width:580px;padding:0 1rem}
+[data-wc-live-bus-booking] .booking-steps-indicator::before{content:"";position:absolute;top:16px;left:40px;right:40px;height:2px;background:var(--border,#e2e8f0);z-index:1}
+[data-wc-live-bus-booking] .step-indicator-item{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.82rem;font-weight:700;color:var(--text-muted,#64748b);position:relative;z-index:2;background:var(--surface,#fff);padding:0 8px;cursor:pointer}
+[data-wc-live-bus-booking] .step-indicator-item.active{color:var(--wc-bus-accent)}
+[data-wc-live-bus-booking] .step-indicator-dot{width:32px;height:32px;border-radius:50%;background:#f1f5f9;border:1.5px solid var(--border,#cbd5e1);color:#64748b;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;transition:all .2s ease}
+[data-wc-live-bus-booking] .step-indicator-item.active .step-indicator-dot{background:var(--wc-bus-accent);border-color:var(--wc-bus-accent);color:#fff;box-shadow:0 0 0 4px rgba(37,99,235,0.18)}
+[data-wc-live-bus-booking] .form-group{display:grid;gap:.45rem}
+[data-wc-live-bus-booking] .form-group label{font-size:.86rem;font-weight:700}
+[data-wc-live-bus-booking] .form-input{width:100%;min-height:46px;padding:.75rem .95rem;border:1px solid var(--border,#cbd5e1);border-radius:10px;background:var(--background,#fff);color:inherit;font:inherit;font-size:.95rem;transition:border-color .2s,box-shadow .2s}
+[data-wc-live-bus-booking] .form-input:focus{outline:none;border-color:var(--wc-bus-accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
+[data-wc-live-bus-booking] .btn-submit{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:.75rem 1.4rem;border:0;border-radius:10px;background:var(--wc-bus-accent);color:#fff;font:inherit;font-weight:750;cursor:pointer;transition:all .2s ease;text-decoration:none}
+[data-wc-live-bus-booking] .btn-submit:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
+[data-wc-live-bus-booking] .btn-submit:disabled{opacity:.55;cursor:not-allowed}
+[data-wc-live-bus-booking] .btn-outline{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:.5rem 1rem;border:1.5px solid var(--border,#cbd5e1);border-radius:9px;background:transparent;color:inherit;font:inherit;font-weight:650;font-size:.85rem;cursor:pointer;transition:all .2s}
+[data-wc-live-bus-booking] .btn-outline:hover{border-color:var(--wc-bus-accent);color:var(--wc-bus-accent)}
+[data-wc-live-bus-booking] .bus-trip-list{display:grid;gap:1rem;margin-top:1.5rem}
+[data-wc-live-bus-booking] .bus-trip-option{display:flex;justify-content:space-between;align-items:center;gap:1.25rem;padding:1.4rem;border:1px solid var(--border,#e2e8f0);border-radius:14px;background:var(--surface,#fff);box-shadow:0 2px 6px rgba(0,0,0,0.03);transition:all .2s ease}
+[data-wc-live-bus-booking] .bus-trip-option:hover{border-color:var(--wc-bus-accent);box-shadow:0 6px 18px rgba(37,99,235,0.08);transform:translateY(-1px)}
+[data-wc-live-bus-booking] [data-wc-step][hidden]{display:none!important}
+[data-wc-live-bus-booking] .bus-seat-grid{display:grid;grid-template-columns:repeat(2,46px) 24px repeat(2,46px);gap:10px;max-width:360px;margin:1.5rem auto;justify-content:center}
+[data-wc-live-bus-booking] .aisle-gap{width:24px;display:flex;align-items:center;justify-content:center}
+[data-wc-live-bus-booking] .bus-seat{width:46px;height:46px;border:1.5px solid var(--border,#cbd5e1);border-radius:8px;background:var(--background,#fff);color:inherit;font:inherit;font-size:.82rem;font-weight:750;cursor:pointer;transition:all .2s}
+[data-wc-live-bus-booking] .bus-seat:hover:not(:disabled){border-color:var(--wc-bus-accent);background:rgba(37,99,235,0.08)}
+[data-wc-live-bus-booking] .bus-seat.selected{border-color:var(--wc-bus-accent);background:var(--wc-bus-accent);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,0.35)}
+[data-wc-live-bus-booking] .bus-seat.held{background:#fef3c7;border-color:#d97706;color:#92400e;cursor:not-allowed;text-decoration:none}
+[data-wc-live-bus-booking] .bus-seat.booked{background:#fee2e2;border-color:#b91c1c;color:#7f1d1d;cursor:not-allowed;text-decoration:line-through}
+[data-wc-live-bus-booking] .bus-seat:disabled{opacity:.75;cursor:not-allowed}
+[data-wc-live-bus-booking] .bus-seat:disabled:not(.held):not(.booked){opacity:.4;text-decoration:line-through}
+[data-wc-live-bus-booking] .bus-legend{display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;margin:1.2rem 0;padding:0;list-style:none;font-size:.84rem;color:var(--text-muted,#64748b)}
+[data-wc-live-bus-booking] .bus-legend li{display:flex;align-items:center;gap:.45rem}
+[data-wc-live-bus-booking] .bus-legend .sw{display:inline-block;width:15px;height:15px;border-radius:4px;border:1px solid #b8c4ca}
+[data-wc-live-bus-booking] .bus-legend .sw-available{background:#fff}
+[data-wc-live-bus-booking] .bus-legend .sw-selected{background:var(--wc-bus-accent);border-color:var(--wc-bus-accent)}
+[data-wc-live-bus-booking] .bus-legend .sw-held{background:#fbbf24;border-color:#d97706}
+[data-wc-live-bus-booking] .bus-legend .sw-booked{background:#f87171;border-color:#b91c1c}
+[data-wc-live-bus-booking] .bus-legend .sw-unavailable{background:#e2e8f0;border-color:#94a3b8}
+[data-wc-live-bus-booking] .bus-status{min-height:1.4em;margin-top:.75rem;font-size:.9rem}
+@media(max-width:680px){[data-wc-live-bus-booking] .bus-trip-option{flex-direction:column;align-items:flex-start}[data-wc-live-bus-booking] .bus-trip-option .btn-submit{width:100%}}
+@media(prefers-reduced-motion:reduce){[data-wc-live-bus-booking], [data-wc-live-bus-booking] *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+<div id="booking" class="widget-wrap" data-wc-live-bus-booking>
+    <div style="margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:18px;text-align:center;">
+        <span style="font-size:.85rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:var(--wc-bus-accent);">Instant Reservation</span>
+        <h2 style="font-size:26px;font-weight:800;color:inherit;margin-top:4px;">Book Your Journey</h2>
+        <p style="margin-top:6px;color:var(--text-muted);font-size:15px;">Search daily routes, choose your preferred seats, and confirm your boarding ticket in minutes.</p>
+    </div>
+
+    <!-- 4-Step Interactive Wizard Progress Indicator -->
+    <div class="booking-steps-indicator" aria-label="Booking steps">
+        <div class="step-indicator-item active" data-indicator="search" onclick="if(window.WCBiz)WCBiz.gotoStep('search')">
+            <div class="step-indicator-dot">1</div>
+            <span>Search</span>
+        </div>
+        <div class="step-indicator-item" data-indicator="seats">
+            <div class="step-indicator-dot">2</div>
+            <span>Seats</span>
+        </div>
+        <div class="step-indicator-item" data-indicator="details">
+            <div class="step-indicator-dot">3</div>
+            <span>Details</span>
+        </div>
+        <div class="step-indicator-item" data-indicator="ticket">
+            <div class="step-indicator-dot">4</div>
+            <span>Ticket &amp; Pay</span>
+        </div>
+    </div>
+
+    <!-- STEP 1: Search Form & Trip Results -->
+    <div data-wc-step="search">
+        <form id="busTripSearch" method="POST" onsubmit="return false" data-wc-search="trips" data-wc-target="#busTripResults">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;background:var(--background,#f8fafc);padding:20px;border-radius:14px;border:1px solid var(--border,#e2e8f0);align-items:end;">
+                <div class="form-group"><label for="busRoute">From / To Route</label><input id="busRoute" name="route" class="form-input" placeholder="Origin or Destination (e.g. Chennai)"></div>
+                <div class="form-group"><label for="busDate">Travel Date</label><input id="busDate" name="date" type="date" class="form-input"></div>
+                <div><button type="submit" class="btn-submit" id="busFindButton" style="width:100%;">Find Buses</button></div>
+            </div>
+        </form>
+        <div id="busTripResults" class="bus-trip-list" data-wc-results aria-live="polite">
+            <p class="bus-status">Loading available trips…</p>
+        </div>
+    </div>
+
+    <!-- STEP 2: Interactive Seat Map (4-column with Center Aisle) -->
+    <section data-wc-step="seats" hidden>
+        <div style="margin:16px 0 0;padding:22px;border:1px solid var(--border,#e2e8f0);border-radius:16px;background:var(--surface,#fff);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+                <div>
+                    <h3 style="font-size:20px;">Select Your Seats (Max 6)</h3>
+                    <p id="busTripSummary" style="color:var(--text-muted);font-size:14px;margin-top:2px;"></p>
+                </div>
+                <button type="button" class="btn-outline" onclick="window.WCBiz.gotoStep('search')">← Back to Search</button>
+            </div>
+            <ul class="bus-legend" aria-label="Seat legend">
+                <li><span class="sw sw-available" aria-hidden="true"></span>Available</li>
+                <li><span class="sw sw-selected" aria-hidden="true"></span>Selected</li>
+                <li><span class="sw sw-held" aria-hidden="true"></span>Held (15 min)</li>
+                <li><span class="sw sw-booked" aria-hidden="true"></span>Booked</li>
+                <li><span class="sw sw-unavailable" aria-hidden="true"></span>Unavailable</li>
+            </ul>
+            <div id="busSeatMap" class="bus-seat-grid" role="group" aria-label="Available seats"></div>
+            <div style="text-align:center;margin-top:20px;">
+                <button type="button" class="btn-submit" id="busHoldButton" style="min-width:220px;">Hold Seats (15 Min)</button>
+                <p id="busHoldStatus" class="bus-status" role="status" aria-live="polite"></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- STEP 3: Passenger Details & Hold Timer -->
+    <section data-wc-step="details" hidden>
+        <div style="margin:16px 0 0;padding:24px;border:1px solid var(--border,#e2e8f0);border-radius:16px;background:var(--surface,#fff);max-width:720px;margin-left:auto;margin-right:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <h3 style="font-size:20px;">Passenger Details</h3>
+                <button type="button" class="btn-outline" onclick="window.WCBiz.gotoStep('seats')">← Back to Seats</button>
+            </div>
+            <div id="hold-summary-box" style="background:#dbeafe;border:1px solid #bfdbfe;color:#1e40af;padding:12px 16px;border-radius:10px;font-size:.9rem;font-weight:650;margin-bottom:18px;">
+                ⏱️ Hold active for 15 minutes. Complete details to confirm your ticket.
+            </div>
+            <form id="busPassengerForm" data-wc-form="booking" data-wc-thanks="Booking request submitted! Your ticket reference and QR code are ready." style="display:grid;gap:16px;">
+                <input type="hidden" name="trip_id" id="busTripId">
+                <div class="form-group"><label for="busPassenger">Full Name</label><input id="busPassenger" name="passenger" class="form-input" autocomplete="name" required maxlength="120" placeholder="e.g. Rahul Sharma"></div>
+                <div class="form-group"><label for="busPhone">Mobile Phone</label><input id="busPhone" name="phone" type="tel" class="form-input" autocomplete="tel" required maxlength="30" placeholder="+91 98765 43210"></div>
+                <div class="form-group"><label for="busEmail">Email Address</label><input id="busEmail" name="email" type="email" class="form-input" autocomplete="email" required maxlength="160" placeholder="name@example.com"></div>
+                <button type="submit" class="btn-submit" style="margin-top:8px;">Confirm &amp; Proceed to Ticket</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- STEP 4: Boarding Ticket & Payment Options -->
+    <section data-wc-step="ticket" hidden>
+        <div style="margin:16px 0 0;padding:26px;border:1px solid var(--border,#e2e8f0);border-radius:18px;background:var(--surface,#fff);max-width:680px;margin-left:auto;margin-right:auto;text-align:center;">
+            <span style="font-size:.85rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#16a34a;">Booking Confirmed</span>
+            <h3 style="font-size:22px;margin:4px 0 16px;">Your Boarding Ticket</h3>
+            <div id="busTicketBox" style="margin:16px auto;padding:20px;border:1.5px dashed var(--border,#cbd5e1);border-radius:14px;background:#f8fafc;"></div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+                <button type="button" data-wc-pay="counter" class="btn-submit" style="width:auto;">Pay at Counter</button>
+                <button type="button" data-wc-pay="online" class="btn-submit" style="width:auto;background:#334155;">Pay Online Now</button>
+                <button type="button" id="busPrintButton" class="btn-outline" style="width:auto;">🖨️ Print Ticket</button>
+                <button type="button" id="busCancelButton" class="btn-outline" style="width:auto;color:#b91c1c;border-color:#fca5a5;">Cancel Booking</button>
+            </div>
+            <p id="busTicketStatus" class="bus-status" role="status" aria-live="polite" style="color:var(--text-muted);font-size:.88rem;margin-top:14px;">Your booking is recorded in our system. Payment can be completed at boarding or online.</p>
+            <p id="busPaymentStatus" class="bus-status" role="status" aria-live="polite"></p>
+        </div>
+    </section>
+
+    <!-- Customer Portal & Booking History Section -->
+    <section style="margin-top:36px;border-top:1px solid var(--border,#e2e8f0);padding-top:28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;background:var(--background,#f8fafc);padding:24px;border-radius:16px;border:1px solid var(--border,#e2e8f0);">
+            <div style="max-width:580px;">
+                <h3 style="font-size:18px;margin-bottom:4px;">Customer Portal &amp; Booking History</h3>
+                <p style="color:var(--text-muted);font-size:14px;margin:0;">Sign in or create an account to view previous trips, verify boarding passes, check approval updates, or manage bookings.</p>
+            </div>
+            <a href="customer.php" data-wc-booking-dashboard data-wc-account-link class="btn-submit" style="background:#1e293b;">
+                <span>👤</span> Open My Account / Dashboard
+            </a>
+        </div>
+        <div style="margin-top:24px;padding:20px;background:var(--surface,#fff);border:1px solid var(--border,#e2e8f0);border-radius:14px;">
+            <h4 style="font-size:15px;font-weight:750;margin-bottom:8px;">Find a ticket by reference</h4>
+            <div data-wc-ticket-lookup="bookings"></div>
+        </div>
+    </section>
+</div>
+<script>
+(function(){
+    var search=document.getElementById('busTripSearch'),results=document.getElementById('busTripResults');
+    var seatMap=document.getElementById('busSeatMap'),holdButton=document.getElementById('busHoldButton');
+    var holdStatus=document.getElementById('busHoldStatus'),ticketStatus=document.getElementById('busTicketStatus');
+    var paymentStatus=document.getElementById('busPaymentStatus');
+    var pickedTrip=null,pickedSeats=[],lastBooking=null,currentHold=null;
+    function setStatus(el,text,state){el.textContent=text;el.setAttribute('data-state',state||'');}
+    function api(action,payload){
+        if(!window.WCBiz||typeof window.WCBiz.api!=='function')return Promise.reject(new Error('Booking service is not ready. Refresh and try again.'));
+        return window.WCBiz.api(action,payload);
+    }
+    function renderTrip(trip){
+        var card=document.createElement('article'),title=document.createElement('h3'),meta=document.createElement('p');
+        var route=trip.route||((trip.origin||'')+' to '+(trip.destination||''));
+        card.className='bus-trip-option';title.textContent=route;
+        meta.textContent=[trip.date,trip.departure||trip.departure_time,trip.bus||trip.bus_type,
+            trip.price==null?'':'Fare: '+trip.price].filter(Boolean).join(' · ');
+        var choose=document.createElement('button');choose.type='button';choose.className='btn-submit';
+        choose.textContent='Select this bus';choose.disabled=!(parseInt(trip.total_seats||trip.capacity||'40',10)>0);
+        choose.addEventListener('click',function(){selectTrip(trip);});
+        card.appendChild(title);card.appendChild(meta);card.appendChild(choose);return card;
+    }
+    function tripDate(trip){
+        return String(trip.date||trip.departure_date||trip.trip_date||'').slice(0,10);
+    }
+    function loadTrips(route,date){
+        var button=document.getElementById('busFindButton');
+        button.disabled=true;button.textContent='Loading trips…';results.textContent='Loading available trips…';
+        return releaseCurrentHold().then(function(){
+            return api('list',{entity:'trips',route:route||'',date:date||''});
+        }).then(function(response){
+            if(!response||!response.success||!Array.isArray(response.data)){
+                throw new Error((response&&response.error)||'Could not load live trips.');
+            }
+            var today=document.getElementById('busDate').min;
+            var trips=response.data.filter(function(trip){
+                var dateValue=tripDate(trip);
+                return !dateValue||!today||dateValue>=today;
+            });
+            trips.sort(function(a,b){
+                var dateOrder=tripDate(a).localeCompare(tripDate(b));
+                if(dateOrder)return dateOrder;
+                return String(a.departure||a.departure_time||'').localeCompare(String(b.departure||b.departure_time||''));
+            });
+            results.textContent='';
+            if(!trips.length){
+                results.textContent=route||date
+                    ?'No upcoming trips match those filters. Try a different route or date.'
+                    :'No upcoming trips are available yet. Please check back later.';
+                return;
+            }
+            trips.forEach(function(trip){results.appendChild(renderTrip(trip));});
+        }).catch(function(error){
+            results.textContent='';
+            setStatus(results,error.message||'Could not load trips. Please try again.','error');
+        }).finally(function(){
+            button.disabled=false;button.textContent='Find buses';
+        });
+    }
+    function releaseCurrentHold(){
+        if(!currentHold)return Promise.resolve();
+        var hold=currentHold;currentHold=null;
+        if(window.__WC_HOLD__&&window.__WC_HOLD__.ref===hold.ref)window.__WC_HOLD__=null;
+        return api('release_hold',{entity:'bookings',ref:hold.ref}).then(function(response){
+            if(!response||!response.success){currentHold=hold;throw new Error((response&&response.error)||'Could not release the previous seat hold.');}
+        });
+    }
+    function selectTrip(trip){
+        releaseCurrentHold().then(function(){
+        pickedTrip=trip;pickedSeats=[];seatMap.textContent='Loading seat availability…';
+        document.getElementById('busTripId').value=trip.id;
+        document.getElementById('busTripSummary').textContent=
+            [trip.route||((trip.origin||'')+' to '+(trip.destination||'')),trip.date,trip.departure||trip.departure_time,
+                trip.price==null?'':'Fare: '+trip.price].filter(Boolean).join(' · ');
+        window.WCBiz.activeTrip=trip;window.WCBiz.selectedSeats=pickedSeats;
+        api('availability',{entity:'bookings',trip_id:trip.id}).then(function(response){
+            if(!response||!response.success||!response.data)throw new Error((response&&response.error)||'Could not load seat availability.');
+            var capacity=parseInt(response.data.total_seats||trip.total_seats||trip.capacity||'0',10);
+            if(!Number.isFinite(capacity)||capacity<1)throw new Error('This trip does not have a seat layout yet.');
+            var reserved=response.data.reserved_seats||[];
+            var held=response.data.held_seats||[];
+            var booked=response.data.booked_seats||[];
+            // Dynamic rows from live capacity (4 seats per row, A–Z): small
+            // buses render A–J, larger fleets extend rows — never hardcoded.
+            var rowCount=Math.min(26,Math.max(10,Math.ceil(capacity/4)));
+            var rows=[];for(var ri=0;ri<rowCount;ri++)rows.push(String.fromCharCode(65+ri));
+            seatMap.textContent='';
+            for(let row=0;row<rows.length;row++)for(let col=1;col<=4;col++){
+                if(col===3){
+                    var aisle=document.createElement('div');
+                    aisle.className='aisle-gap';
+                    seatMap.appendChild(aisle);
+                }
+                let seatName=rows[row]+col,seatIndex=row*4+col;
+                if(seatIndex>capacity)break;
+                let seat=document.createElement('button');seat.type='button';seat.className='bus-seat';
+                seat.textContent=seatName;seat.setAttribute('data-seat',seatName);seat.setAttribute('aria-pressed','false');
+                let isHeld=held.indexOf(seatName)!==-1,isBooked=booked.indexOf(seatName)!==-1;
+                let isTaken=isHeld||isBooked||reserved.indexOf(seatName)!==-1;
+                if(isHeld)seat.classList.add('held');
+                if(isBooked)seat.classList.add('booked');
+                seat.disabled=isTaken;
+                seat.setAttribute('aria-label','Seat '+seatName+(isHeld?', held during checkout':(isBooked?', booked':(isTaken?', unavailable':', available'))));
+                if(isTaken&&!isHeld&&!isBooked)seat.classList.add('booked');
+                seat.addEventListener('click',function(){
+                    var name=seat.getAttribute('data-seat'),idx=pickedSeats.indexOf(name);
+                    if(idx===-1){if(pickedSeats.length>=6){setStatus(holdStatus,'You can select up to six seats per booking.','error');return;}pickedSeats.push(name);}
+                    else pickedSeats.splice(idx,1);
+                    seat.classList.toggle('selected',idx===-1);seat.setAttribute('aria-pressed',idx===-1?'true':'false');
+                    window.WCBiz.selectedSeats=pickedSeats.slice();
+                });
+                seatMap.appendChild(seat);
+            }
+            window.WCBiz.gotoStep('seats');
+        }).catch(function(error){seatMap.textContent='';setStatus(holdStatus,error.message,'error');window.WCBiz.gotoStep('seats');});
+        }).catch(function(error){setStatus(holdStatus,error.message,'error');});
+    }
+    search.addEventListener('submit',function(event){
+        event.preventDefault();
+        loadTrips(document.getElementById('busRoute').value.trim(),document.getElementById('busDate').value);
+    });
+    holdButton.addEventListener('click',function(){
+        if(!pickedTrip||!pickedSeats.length){setStatus(holdStatus,'Select at least one available seat.','error');return;}
+        holdButton.disabled=true;holdButton.textContent='Holding seats…';
+        window.WCBiz.hold('bookings',{trip_id:pickedTrip.id,seats:pickedSeats}).then(function(response){
+            if(!response||!response.success||!response.data)throw new Error((response&&response.error)||'Could not hold seats.');
+            currentHold=response.data;
+            setStatus(holdStatus,'Seats held for 15 minutes. Hold reference: '+response.data.ref,'success');
+            window.WCBiz.gotoStep('details');
+        }).catch(function(error){setStatus(holdStatus,error.message||'Seat hold failed. Refresh availability and try again.','error');})
+        .finally(function(){holdButton.disabled=false;holdButton.textContent='Hold seats';});
+    });
+    document.getElementById('busPassengerForm').addEventListener('wc:booking-confirmed',function(event){
+        var booking=(event.detail&&event.detail.data)||null;
+        if(!booking||!booking.ref){setStatus(ticketStatus,'Booking was saved, but its ticket reference was not returned. Check My tickets.','error');return;}
+        currentHold=null;
+        lastBooking=booking;
+        var box=document.getElementById('busTicketBox'),ref=document.createElement('div'),details=document.createElement('p');
+        ref.className='ref';ref.textContent=booking.ref;
+        box.textContent='';box.appendChild(ref);
+        box.insertAdjacentHTML('beforeend',window.WCBiz.ticketQR(booking.ref,180,booking.verify_token||''));
+        var verifyLink=document.createElement('p');
+        var verifyUrl=(window.WCBiz.ticketVerifyUrl?window.WCBiz.ticketVerifyUrl(booking.ref,booking.verify_token||''):('verify.php?ref='+encodeURIComponent(booking.ref)));
+        verifyLink.innerHTML='Verify this ticket: <a href="'+verifyUrl.replace(/"/g,'')+'" target="_blank" rel="noopener">open verification</a>';
+        details.textContent=(booking.passenger||'')+' · Trip '+(booking.trip_id||'')+' · Seats '+(Array.isArray(booking.seats)?booking.seats.join(', '):booking.seats||'')+
+            ' · '+(booking.status||'pending')+' · '+(booking.payment_status||'unpaid');
+        box.appendChild(details);
+        box.appendChild(verifyLink);
+        setStatus(ticketStatus,'Booking request saved. Payment remains unpaid until the operator confirms receipt.','success');
+        setStatus(paymentStatus,'','');
+        window.WCBiz.gotoStep('ticket');
+    });
+    document.querySelectorAll('[data-wc-pay]').forEach(function(button){
+        button.addEventListener('click',function(){
+            if(!lastBooking||!lastBooking.ref){setStatus(paymentStatus,'Confirm your booking before choosing a payment method.','error');return;}
+            button.disabled=true;
+            var method=button.getAttribute('data-wc-pay')||'counter';
+            setStatus(paymentStatus,method==='counter'?'Sending counter-payment request…':'Sending online-payment request…','');
+            window.WCBiz.pay(lastBooking.ref,method,lastBooking.amount,'bookings',{
+                email:lastBooking.email||'',
+                phone:lastBooking.phone||''
+            }).then(function(response){
+                if(!response||!response.success)throw new Error((response&&response.error)||'Payment request could not be saved.');
+                lastBooking=response.data||lastBooking;
+                var msg=response.message||(method==='counter'
+                    ?'Counter payment selected. Your booking remains unpaid until staff records the payment.'
+                    :'Online payment requested. The operator will follow up; no online charge was made.');
+                setStatus(paymentStatus,msg,'success');
+            }).catch(function(error){
+                setStatus(paymentStatus,error.message||'Network error. Please try again.','error');
+            }).finally(function(){button.disabled=false;});
+        });
+    });
+    document.getElementById('busPrintButton').addEventListener('click',function(){
+        if(!lastBooking||!window.WCBiz.printTicket(lastBooking))setStatus(ticketStatus,'Allow pop-ups to print your ticket.','error');
+    });
+    document.getElementById('busCancelButton').addEventListener('click',function(){
+        if(!lastBooking)return;
+        if(!window.confirm('Cancel this booking?'))return;
+        api('cancel',{entity:'bookings',id:lastBooking.id,phone:lastBooking.phone,email:lastBooking.email||''}).then(function(response){
+            if(!response||!response.success)throw new Error((response&&response.error)||'Cancellation failed.');
+            lastBooking=response.data;setStatus(ticketStatus,'Ticket cancelled. Seat capacity is released.','success');
+        }).catch(function(error){setStatus(ticketStatus,error.message,'error');});
+    });
+    var dateField=document.getElementById('busDate'),today=new Date();
+    today.setMinutes(today.getMinutes()-today.getTimezoneOffset());dateField.min=today.toISOString().slice(0,10);
+    document.addEventListener('DOMContentLoaded',function(){loadTrips('','');},{once:true});
+})();
+</script>
+
+<script type="application/json" id="wc-biz-spec">{&quot;entities&quot;:[{&quot;id&quot;:&quot;inquiries&quot;,&quot;name&quot;:&quot;Inquiries&quot;,&quot;singular&quot;:&quot;Inquirie&quot;,&quot;icon&quot;:&quot;✉️&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;name&quot;,&quot;label&quot;:&quot;Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;message&quot;,&quot;label&quot;:&quot;Message&quot;,&quot;type&quot;:&quot;textarea&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;trips&quot;,&quot;name&quot;:&quot;Trips&quot;,&quot;singular&quot;:&quot;Trip&quot;,&quot;icon&quot;:&quot;🚌&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;route&quot;,&quot;label&quot;:&quot;Route&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;date&quot;,&quot;label&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;date&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;price&quot;,&quot;label&quot;:&quot;Price&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;bookings&quot;,&quot;name&quot;:&quot;Bookings&quot;,&quot;singular&quot;:&quot;Booking&quot;,&quot;icon&quot;:&quot;🎫&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;trip_id&quot;,&quot;label&quot;:&quot;Trip&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]},{&quot;name&quot;:&quot;seats&quot;,&quot;label&quot;:&quot;Seats&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;reviews&quot;,&quot;name&quot;:&quot;Reviews&quot;,&quot;singular&quot;:&quot;Review&quot;,&quot;icon&quot;:&quot;⭐&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;reviewer&quot;,&quot;label&quot;:&quot;Reviewer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;stars&quot;,&quot;label&quot;:&quot;Stars&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]}]}</script><script data-wc-biz-runtime>(function(){
 var SPEC=null;try{SPEC=JSON.parse(document.getElementById('wc-biz-spec')?.textContent||'null')}catch(e){}
 var SLUG=("0bfbba81d81b4279bbf9bfc37dba4c3e");
+var IS_BUS_BOOKING=(true);
 // Dual backend: Node.js API first (JSON database), PHP fallback.
 // Fallback happens ONLY on network failure (Node down) — validation
 // errors (HTTP 4xx) are final and never retried elsewhere, so a submit
 // can never create two records. Same idempotency key on both attempts.
 var NODE_API=("http:\/\/localhost:3100").replace(/\/$/,'');
+var OPS_API=("http:\/\/localhost\/project\/webbbuilder\/api\/business-ops.php");
 try{window.__WC_NODE_API__=NODE_API;}catch(e){}
 function postJson(url,body,ms){
   var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
@@ -14,17 +491,75 @@ function postJson(url,body,ms){
     body:JSON.stringify(body),signal:ctrl?ctrl.signal:undefined}).then(function(r){return r.json().then(function(j){return {status:r.status,body:j};});})
     .finally(function(){if(timer)clearTimeout(timer);});
 }
+// A mobile menu must never render next to the desktop navigation. The
+// model's own CSS often defines .mobile-menu only inside a max-width media
+// query, so on desktop it falls back to a plain block (a duplicated nav
+// row). Hide it whenever the desktop nav is on screen.
+function wcFixMobileMenus(){
+  var menus = document.querySelectorAll('.mobile-menu, .mobile-nav, #mobile-menu, [id^="mobile-menu"], [class^="mobile-menu"]');
+  if(!menus.length) return;
+  var desktop = document.querySelector('.nav-links, .nav-actions, header nav, nav .nav-links');
+  var desktopVisible = false;
+  try{
+    desktopVisible = !!desktop && (desktop.offsetWidth > 0 || desktop.offsetHeight > 0)
+      && getComputedStyle(desktop).display !== 'none';
+  }catch(e){}
+  var wide = (window.innerWidth || 1024) > 640;
+  menus.forEach(function(menu){
+    if(desktopVisible && wide){
+      menu.style.setProperty('display','none','important');
+      menu.setAttribute('data-wc-mobile-menu-hidden','1');
+    }else if(menu.getAttribute('data-wc-mobile-menu-hidden')==='1'){
+      menu.removeAttribute('data-wc-mobile-menu-hidden');
+      menu.style.removeProperty('display');
+    }
+  });
+  // The burger that opens it must not sit next to the desktop nav either.
+  var burgers = document.querySelectorAll('.hamburger, .menu-toggle, #hamburger, [class^="hamburger"]');
+  if(burgers.length){
+    burgers.forEach(function(b){
+      if(desktopVisible && wide) b.style.setProperty('display','none','important');
+      else b.style.removeProperty('display');
+    });
+  }
+}
+// No-flash guard: wide screens never show a mobile menu, even before this
+// script runs (the model's own rule may live in a max-width query only).
+try{
+  if(!document.getElementById('wc-mobile-menu-guard')){
+    var st=document.createElement('style');
+    st.id='wc-mobile-menu-guard';
+    st.textContent='@media (min-width:1024px){.mobile-menu,.mobile-nav,#mobile-menu,[id^="mobile-menu"],[class^="mobile-menu"]{display:none !important}}';
+    (document.head||document.documentElement).appendChild(st);
+  }
+}catch(e){}
+try{ wcFixMobileMenus(); }catch(e){}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wcFixMobileMenus);
+else wcFixMobileMenus();
+window.addEventListener('load',wcFixMobileMenus);
+window.addEventListener('resize',wcFixMobileMenus);
 function apiNode(action,payload){
   return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+action,
     Object.assign({slug:SLUG},payload||{}),2500).then(function(r){return r.body;});
 }
 function apiPhp(action,payload){
-  var url=(function(){try{return new URL('api/business-ops.php',document.baseURI).toString();}catch(e){return 'api/business-ops.php';}})();
-  return postJson(url,Object.assign({action:action,slug:SLUG},payload||{}),12000).then(function(r){return r.body;});
+  return postJson(OPS_API,Object.assign({action:action,slug:SLUG},payload||{}),12000).then(function(r){return r.body;});
 }
 // Node action names differ slightly from the PHP contract — translate here.
 function api(action,payload){
   payload=payload||{};
+  // Bus operations share one PHP transaction store across trips, holds,
+  // bookings, history, tickets, payment, cancellation and the admin mirror.
+  if(IS_BUS_BOOKING&&(
+    (action==='list'&&['trips','bookings'].indexOf(payload.entity)>=0)
+    ||action==='ticket'||action==='pay'||action==='verify'||action==='payment_intent'
+    ||(action==='cancel'&&payload.entity==='bookings')
+  ))return apiPhp(action,payload);
+  // Booking holds/creates and seat availability use the PHP transaction layer
+  // so capacity checks, hold consumption, and the admin mirror stay atomic.
+  if(action==='availability'||action==='release_hold'||action==='verify'
+    ||((action==='hold'||action==='create')&&payload.entity==='bookings'))
+    return apiPhp(action,payload);
   var nodeCall;
   if(action==='create')nodeCall=function(){return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+encodeURIComponent(payload.entity||'inquiries'),
     {record:payload.record||{},idempotency_key:payload.idempotency_key||''},2500).then(function(r){return r.body;});};
@@ -232,26 +767,16 @@ document.querySelectorAll('[data-wc-ticket-lookup]').forEach(function(box){
         +'<div style="font-size:.72rem;font-weight:800;color:#059669;letter-spacing:.08em;">YOUR TICKET</div>'
         +'<div style="font-size:1.6rem;font-weight:900;color:#0f172a;letter-spacing:.03em;">'+escH(r.ref||r.id||'')+'</div>'
         +'<div style="display:flex;gap:1rem;flex-wrap:wrap;margin:.6rem 0;">'
-        +'<div>'+window.WCBiz.ticketQR(r.ref||r.id||'',150)+'</div>'
+        +'<div>'+window.WCBiz.ticketQR(r.ref||r.id||'',150,r.verify_token||'')+'</div>'
         +'<div style="font-size:.86rem;color:#0f172a;line-height:1.7;">'
         +'<div><strong>'+escH(r.passenger||r.customer||r.name||'')+'</strong></div>'
         +'<div>Seats: '+escH(seats==null?'—':seats)+'</div>'
         +'<div>Status: '+escH(r.status||'received')+(r.payment_status?' · '+escH(r.payment_status):'')+'</div>'
         +'</div></div>'
         +'<div style="display:flex;gap:.5rem;flex-wrap:wrap;">'
-        +'<button type="button" data-tk-pay="counter" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#6366f1;color:#fff;font-weight:700;cursor:pointer;">Pay at Counter</button>'
-        +'<button type="button" data-tk-pay="online" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#0ea5e9;color:#fff;font-weight:700;cursor:pointer;">Pay Online</button>'
         +'<button type="button" data-tk-print="1" style="padding:.5rem 1rem;border-radius:9px;border:none;background:#0f172a;color:#fff;font-weight:700;cursor:pointer;">Print ticket</button>'
         +'<button type="button" data-tk-cancel="1" style="padding:.5rem 1rem;border-radius:9px;border:1px solid #f87171;background:#fff;color:#b91c1c;font-weight:700;cursor:pointer;">Cancel ticket</button>'
         +'</div></div>';
-      out.querySelectorAll('[data-tk-pay]').forEach(function(b){
-        b.addEventListener('click',function(){
-          window.WCBiz.pay(r.ref||r.id||'',b.getAttribute('data-tk-pay'),'0').then(function(p){
-            if(p&&p.success)note('Payment recorded — status: '+(p.data&&p.data.status||'confirmed'),true,out);
-            else note('Payment failed: '+((p&&p.error)||'error'),false,out);
-          }).catch(function(){note('Network error. Try again.',false,out);});
-        });
-      });
       var cb=out.querySelector('[data-tk-cancel]');
       if(cb)cb.addEventListener('click',function(){
         if(!confirm('Cancel this ticket? Capacity is released immediately.'))return;
@@ -333,14 +858,250 @@ document.querySelectorAll('form[data-wc-search]').forEach(function(f){
     }).catch(function(){note('Network error. Try again.',false,f);});
   });
 });
+// ── LIVE LIST: the rows the admin edits in the panel, rendered on the page ──
+// [data-wc-list="trips"] shows the database rows (route, date, price, seats)
+// as cards. NOTHING is invented here: no demo prices, no fake seat counts,
+// no hardcoded rows - an empty table shows an honest empty state.
+function liveField(rec,keys){
+  if(!rec)return '';
+  for(var i=0;i<keys.length;i++){
+    var v=rec[keys[i]];
+    if(v==null||v==='')continue;
+    return v;
+  }
+  return '';
+}
+function liveTitle(rec,entity){
+  var v=liveField(rec,['title','name','label','route','product','service','subject','headline']);
+  if(v!=='')return String(v);
+  if(entity==='trips')return 'Trip';
+  return 'Item';
+}
+function liveMetaParts(rec){
+  var out=[];
+  var date=liveField(rec,['date','departure_date','trip_date','day','schedule_date']);
+  var time=liveField(rec,['departure','departure_time','time','slot','start_time']);
+  var kind=liveField(rec,['bus','bus_type','type','category','vehicle','room_type','speciality','service_type']);
+  if(date!=='')out.push(String(date));
+  if(time!=='')out.push(String(time));
+  if(kind!=='')out.push(String(kind));
+  return out;
+}
+function liveSeats(rec){
+  var s=liveField(rec,['seats_available','available_seats','seats_left']);
+  if(s==='')s=liveField(rec,['total_seats','capacity','seat_capacity','seats']);
+  return s===''?'':String(s);
+}
+function livePrice(rec){
+  var p=liveField(rec,['price','amount','fare','rate','cost','fee']);
+  if(p==='')return '';
+  var s=String(p);
+  if(s.indexOf('\u20b9')>=0||s.indexOf('$')>=0||s.indexOf('\u20ac')>=0||s.indexOf('\u00a3')>=0)return s;
+  return '\u20b9'+s;
+}
+function liveCtaLabel(entity,box){
+  var l=box.getAttribute('data-wc-list-cta-label');
+  if(l)return l;
+  if(entity==='trips'||entity==='buses'||entity==='bus')return 'Select This Bus';
+  if(entity==='products'||entity==='items')return 'View details';
+  return 'Book Now';
+}
+window.__wcLiveRows=window.__wcLiveRows||{};
+function renderLiveList(box,rows,entity){
+  window.__wcLiveRows[entity]=rows;
+  if(!rows||!rows.length){
+    box.innerHTML='<p class="wc-live-empty" style="color:#64748b;text-align:center;padding:1.25rem .5rem;">'
+      +'No '+escH(entity)+' are published yet - the team adds them from the admin panel.</p>';
+    return;
+  }
+  var limit=parseInt(box.getAttribute('data-wc-list-limit')||'12',10)||12;
+  var h='';
+  rows.slice(0,limit).forEach(function(r,idx){
+    var meta=liveMetaParts(r).map(escH).join(' &bull; ');
+    var seats=liveSeats(r);
+    var price=livePrice(r);
+    h+='<article class="wc-live-card trip-card" data-wc-list-row data-wc-entity="'+escH(entity)+'" data-wc-index="'+idx+'"'
+      +' style="display:flex;justify-content:space-between;align-items:center;gap:1.25rem;flex-wrap:wrap;padding:1rem 1.15rem;border:1px solid #e2e8f0;border-radius:14px;background:#fff;margin-bottom:.85rem;">'
+      +'<div class="wc-live-info trip-info" style="display:flex;justify-content:space-between;gap:1rem;flex:1 1 320px;min-width:0;">'
+      +'<div style="min-width:0;"><div class="wc-live-title trip-time" style="font-size:1.12rem;font-weight:800;color:#0f172a;">'+escH(liveTitle(r,entity))+'</div>'
+      +(meta?'<div class="wc-live-meta trip-meta" style="color:#64748b;font-size:.9rem;margin-top:.15rem;">'+meta+'</div>':'')
+      +'</div>'
+      +(seats!==''?'<div class="wc-live-seats trip-meta" style="color:#64748b;font-size:.9rem;white-space:nowrap;">'+escH(seats)+' seats available</div>':'')
+      +'</div>'
+      +'<div class="wc-live-side" style="display:flex;align-items:center;gap:1.25rem;">'
+      +(price!==''?'<div class="wc-live-price trip-price" style="font-size:1.25rem;font-weight:800;color:#1d4ed8;">'+escH(price)+'</div>':'')
+      +'<button type="button" class="btn btn-primary wc-live-cta" data-wc-list-cta style="cursor:pointer;">'+escH(liveCtaLabel(entity,box))+'</button>'
+      +'</div></article>';
+  });
+  box.innerHTML=h;
+}
+// Selecting a live row: the page may own the booking flow, so we announce it
+// first (wc:list-select). When the page does not handle it we fall back to
+// the page's own search form so the customer lands in the seat flow.
+function liveFallbackSelect(entity,rec){
+  var forms=document.querySelectorAll('form[data-wc-search]');
+  var form=null,best=-1;
+  for(var i=0;i<forms.length;i++){
+    var f=forms[i];
+    if((f.getAttribute('data-wc-search')||'').toLowerCase()!==entity)continue;
+    var score=0;
+    var tid=(f.getAttribute('data-wc-target')||'');
+    var fid=(f.id||'');
+    if(/bus|trip/i.test(fid))score+=10;
+    if(/bus|trip/i.test(tid))score+=10;
+    try{var tgt=tid?document.querySelector(tid):null;if(tgt&&tgt.closest&&(tgt.closest('[data-wc-step]')||tgt.closest('#booking')))score+=20;}catch(e){}
+    if(score>best){best=score;form=f;}
+  }
+  if(!form)form=forms[0];
+  if(!form){
+    if(window.WCBiz&&typeof window.WCBiz.gotoStep==='function')window.WCBiz.gotoStep('seats');
+    return;
+  }
+  var route=String(liveField(rec,['route','origin','from','title','name'])||'');
+  var dest=String(liveField(rec,['destination','to'])||'');
+  var date=String(liveField(rec,['date','departure_date','trip_date'])||'');
+  var set=function(name,val){
+    if(!val)return;
+    var el=form.querySelector('[name="'+name+'"]');
+    if(el){try{el.value=val;}catch(e){}}
+  };
+  set('route',route);set('origin',route);set('from',route);
+  set('destination',dest);set('to',dest);
+  set('date',date);set('travel_date',date);
+  var btn=form.querySelector('button[type=submit],input[type=submit]');
+  try{ if(btn)btn.click(); else if(form.requestSubmit)form.requestSubmit(); }catch(e){}
+  var tries=0;
+  var tick=function(){
+    tries++;
+    // Only a PAGE-OWNED select button (the page renders its own trip cards);
+    // never our own live-list CTA (that would loop).
+    var b=null;
+    var lists=document.querySelectorAll('[data-wc-results]');
+    for(var i=0;i<lists.length;i++){
+      b=lists[i].querySelector('.bus-trip-option button,[data-wc-trip-select]');
+      if(b)break;
+    }
+    if(b){try{b.click();}catch(e){}return;}
+    if(tries<12)setTimeout(tick,400);
+  };
+  setTimeout(tick,700);
+}
+function liveSelect(entity,rec){
+  var handled=false;
+  try{
+    var ev=new CustomEvent('wc:list-select',{detail:{entity:entity,record:rec},cancelable:true,bubbles:true});
+    document.dispatchEvent(ev);
+    handled=ev.defaultPrevented;
+  }catch(e){handled=false;}
+  if(!handled)liveFallbackSelect(entity,rec);
+}
+// 1) Hardcoded "demo" blocks (fake trip cards + their note) become live lists.
+document.querySelectorAll('[id^="demo-"]').forEach(function(demo){
+  var entity=(demo.id||'').replace(/^demo-/,'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  demo.querySelectorAll('[data-demo-trip],.trip-card,.demo-card').forEach(function(fake){fake.remove();});
+  if(demo.querySelector('[data-wc-list]'))return;
+  var box=document.createElement('div');
+  box.setAttribute('data-wc-list',entity);
+  box.setAttribute('data-wc-list-limit','8');
+  box.setAttribute('data-wc-list-cta','book');
+  demo.appendChild(box);
+});
+// 2) The "demo schedule" note becomes an honest live-data note.
+document.querySelectorAll('p,small,span,div').forEach(function(el){
+  if(el.children&&el.children.length)return;
+  var t=el.textContent||'';
+  if(t.length>160)return;
+  if(/demo schedule|demo trips?|sample schedule|demo rows/i.test(t)&&t.indexOf('Live schedule')<0){
+    el.textContent='Live schedule - updated from the admin panel.';
+  }
+});
+// 3) Render every live list.
+document.querySelectorAll('[data-wc-list]').forEach(function(box){
+  var entity=(box.getAttribute('data-wc-list')||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  box.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,parseFilterAttr(box)).then(function(j){
+    if(j&&j.success)renderLiveList(box,j.data||[],entity);
+    else box.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){box.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+});
+// 4) The select button on a live card.
+document.addEventListener('click',function(e){
+  var btn=(e.target&&e.target.closest)?e.target.closest('[data-wc-list-cta]'):null;
+  if(!btn)return;
+  var card=btn.closest('[data-wc-list-row]');
+  if(!card)return;
+  e.preventDefault();
+  var entity=card.getAttribute('data-wc-entity')||'';
+  var idx=parseInt(card.getAttribute('data-wc-index')||'0',10)||0;
+  var rows=window.__wcLiveRows[entity]||[];
+  if(rows[idx])liveSelect(entity,rows[idx]);
+});
+// 5) A page that paints hardcoded rows on submit gets them replaced by the
+//    live rows (registered on DOMContentLoaded so it runs after the page's
+//    own submit handler).
+function liveCleanFakeResults(root){
+  if(!root||!root.querySelector)return false;
+  var fake=root.querySelector('[data-demo-trip]');
+  if(!fake)return false;
+  var form=document.querySelector('form[data-wc-search]');
+  var entity=form?(form.getAttribute('data-wc-search')||'trips').toLowerCase().replace(/[^a-z0-9_]/g,''):'trips';
+  var filters={};
+  if(form){try{new FormData(form).forEach(function(v,k){v=String(v).trim();if(v&&k!=='company')filters[k]=v;});}catch(e){}}
+  root.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,filters).then(function(j){
+    if(j&&j.success)renderLiveList(root,j.data||[],entity);
+    else root.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){root.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+  return true;
+}
+function liveWatchResults(){
+  document.querySelectorAll('form[data-wc-search]').forEach(function(f){
+    f.addEventListener('submit',function(e){
+      var target=document.querySelector(f.getAttribute('data-wc-target')||'[data-wc-results]');
+      if(!target)return;
+      if(liveCleanFakeResults(target))e.preventDefault();
+    });
+  });
+  document.querySelectorAll('[data-wc-results]').forEach(function(box){
+    if(!window.MutationObserver)return;
+    var mo=new MutationObserver(function(){
+      if(box.querySelector('[data-demo-trip]'))liveCleanFakeResults(box);
+    });
+    try{mo.observe(box,{childList:true,subtree:true});}catch(e){}
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',liveWatchResults);
+else liveWatchResults();
 // Booking: seat hold -> confirm -> QR ticket -> cancel (bus reference workflow)
 // Step navigation + QR + ticket lookup share one helper set so every
 // generated page behaves the same without custom scroll/QR code.
 function wcGotoStep(id){
   var el=document.querySelector('[data-wc-step="'+String(id).replace(/"/g,'')+'"]');
   if(!el)return false;
+  document.querySelectorAll('[data-wc-step]').forEach(function(step){
+    if(step!==el)step.setAttribute('hidden','');
+  });
   el.removeAttribute('hidden');
   try{if(el.style)el.style.display='';}catch(e){}
+  document.querySelectorAll('.step-indicator-item').forEach(function(item){
+    var ind=item.getAttribute('data-indicator');
+    if(ind===id||(id==='ticket'&&ind==='ticket')){
+      item.classList.add('active');
+    }else{
+      item.classList.remove('active');
+    }
+  });
+  try{
+    var offset=0;
+    document.querySelectorAll('header,nav,[role="banner"]').forEach(function(bar){
+      var style=window.getComputedStyle(bar),rect=bar.getBoundingClientRect();
+      if((style.position==='fixed'||style.position==='sticky')&&rect.top<=1&&rect.bottom>0)
+        offset=Math.max(offset,rect.bottom);
+    });
+    el.style.scrollMarginTop=Math.ceil(offset+20)+'px';
+  }catch(e){}
   try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){
     try{el.scrollIntoView();}catch(e2){}
   }
@@ -358,20 +1119,37 @@ function wcTicketQRFallback(ref,size){
     +'<div style="font-size:1.5rem;font-weight:900;color:#0f172a;letter-spacing:.04em;margin:.4rem 0;word-break:break-all;">'+safe+'</div>'
     +'<div style="font-size:.72rem;color:#64748b;">QR image offline — this code scans the same.</div></div>';
 }
-function wcTicketQR(ref,size){
+function wcTicketVerifyUrl(ref,token){
+  ref=String(ref==null?'':ref);
+  try{
+    var base='';
+    try{base=new URL('verify.php',document.baseURI).toString();}catch(e){base='verify.php';}
+    var full=new URL(base,document.baseURI||window.location.href);
+    full.searchParams.set('ref',ref);
+    if(token)full.searchParams.set('t',String(token));
+    return full.toString();
+  }catch(e){
+    var q='verify.php?ref='+encodeURIComponent(ref);
+    if(token)q+='&t='+encodeURIComponent(String(token));
+    return q;
+  }
+}
+function wcTicketQR(ref,size,token){
   ref=String(ref==null?'':ref);size=size||180;
   var q=String(ref).split(String.fromCharCode(92)).join('').split("'").join('').slice(0,64);
-  var url='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(ref);
+  var data=wcTicketVerifyUrl(ref,token||'');
+  var url='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(data);
   return '<img src="'+url+'" width="'+size+'" height="'+size+'" alt="Ticket QR '+q+'" loading="lazy" style="border-radius:12px;background:#fff;padding:6px;max-width:100%;" onerror="this.outerHTML=window.WCBiz.ticketQRFallback(\''+q+'\','+size+')">';
 }
-// Printable ticket (backend record in, print window out). QR comes from the
-// same ref the backend returns, so the printout always matches the record.
+// Printable ticket (backend record in, print window out). QR encodes the
+// ticket-verification URL (ref + token when present) so a scan opens the
+// authoritative record; the printout always matches the backend row.
 function wcPrintTicketHTML(r){
   r=r||{};
   var seats=r.seats;
   if(Object.prototype.toString.call(seats)==='[object Array]')seats=seats.join(', ');
   var ref=String(r.ref||r.id||'');
-  var qr='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(ref);
+  var qr='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(wcTicketVerifyUrl(ref,r.verify_token||''));
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket '+escH(ref)+'</title>'
     +'<style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}'
     +' .t{max-width:480px;margin:0 auto;border:2px solid #059669;border-radius:16px;padding:28px;}'
@@ -390,7 +1168,8 @@ function wcPrintTicketHTML(r){
     +'<div class="foot">Printed '+escH(new Date().toLocaleString())+'</div>'
     +'<div class="noprint" style="text-align:center;margin-top:16px;">'
     +'<button onclick="window.print()" style="padding:10px 26px;font-size:15px;font-weight:700;background:#059669;color:#fff;border:none;border-radius:9px;cursor:pointer;">Print</button></div>'
-    +'</div></body></html>';
+    // Escaped so later HTML tail injectors can never match this inline string.
+    +'<\/div><\/body><\/html>';
 }
 function wcPrintTicket(r){
   try{
@@ -440,6 +1219,8 @@ function wcHold(entity,payload){
         window.__WC_HOLD__={entity:entity,trip_id:j.data.trip_id||payload.trip_id,
           seats:j.data.seats||payload.seats,ref:j.data.ref,hold_id:j.data.id,at:Date.now()};
         try{window.WCBiz.holdRef=j.data.ref;}catch(e){}
+        // Page-level code (AI generations) reads res.ref directly.
+        if(j.ref===undefined)j.ref=j.data.ref;
       }
     }catch(e){}
     return j;
@@ -464,14 +1245,52 @@ window.WCBiz=Object.assign({},__pageBiz,{
   list:wcList,
   cancel:function(entity,id,identity){return api('cancel',Object.assign({entity:entity,id:id},identity||{}));},
   history:function(entity,identifier){return api('list',Object.assign({entity:entity},identifier||{}));},
-  pay:function(ref,method,amount){return api('pay',{ref:ref,method:method,amount:amount});},
+  pay:function(ref,method,amount,entity,identity){
+    identity=identity||{};
+    var booking=__pageBiz.lastBooking||window.__WC_LAST_BOOKING__||{};
+    var form=document.querySelector('[data-wc-form="booking"]');
+    if(form){
+      ['email','phone'].forEach(function(key){
+        var field=form.elements.namedItem(key);
+        if(!identity[key]&&field)identity[key]=field.value||'';
+      });
+    }
+    return api('payment_intent',Object.assign({
+      entity:entity||'bookings',ref:ref,method:method,
+      email:identity.email||booking.email||'',
+      phone:identity.phone||booking.phone||''
+    }));
+  },
   ticket:function(entity,phone,ref){return api('ticket',{entity:entity||'bookings',phone:phone,ref:ref});},
+  verify:function(ref,token,entity){return api('verify',{entity:entity||'bookings',ref:ref,token:token||''});},
+  ticketVerifyUrl:wcTicketVerifyUrl,
   gotoStep:(__wcFn(__pageBiz.gotoStep)?__pageBiz.gotoStep:wcGotoStep),
   ticketQR:wcTicketQR,
   ticketQRFallback:wcTicketQRFallback,
   printTicket:wcPrintTicket,
   create:wcCreate
 });
+document.addEventListener('click',function(event){
+  var button=event.target&&event.target.closest
+    ?event.target.closest('button[data-pay],button[data-payment-method]'):null;
+  if(!button)return;
+  event.stopImmediatePropagation();
+  event.preventDefault();
+  var method=String(button.getAttribute('data-pay')||button.getAttribute('data-payment-method')||'').toLowerCase();
+  var booking=window.__WC_LAST_BOOKING__||{};
+  var ref=String(booking.ref||window.__WC_LAST_REF__||window.WCBiz.bookingRef||'');
+  if(!ref){note('Confirm your booking before choosing a payment method.',false,button.parentNode);return;}
+  if(method!=='counter'&&method!=='online'){note('This payment method is not supported.',false,button.parentNode);return;}
+  button.disabled=true;
+  window.WCBiz.pay(ref,method,booking.amount||0,'bookings',{
+    email:booking.email||'',phone:booking.phone||''
+  }).then(function(result){
+    if(!result||!result.success)throw new Error((result&&result.error)||'Payment request could not be saved.');
+    note(result.message||'Payment request saved.',true,button.parentNode);
+  }).catch(function(error){
+    note(error.message||'Network error. Please try again.',false,button.parentNode);
+  }).finally(function(){button.disabled=false;});
+},true);
 // Dedup core: same customer intent within 2s shares one request.
 var wcCreateVOLATILE={hold_id:1,idempotency_key:1,company:1};
 var wcCreateIDENTITY={passenger:1,customer:1,name:1,email:1,phone:1};
@@ -510,7 +1329,13 @@ function wcCreate(entity,record,opts){
   p.then(function(j){
     try{
       if(j&&j.success&&j.data){
-        if(entity==='bookings'&&j.data.ref){try{window.WCBiz.bookingRef=j.data.ref;}catch(e){}}
+        if(entity==='bookings'&&j.data.ref){
+          try{
+            window.WCBiz.bookingRef=j.data.ref;
+            window.__WC_LAST_BOOKING__=j.data;
+            window.__WC_LAST_REF__=j.data.ref;
+          }catch(e){}
+        }
       }else if(j&&!j.success&&entity==='bookings'){
         var msg=String(j.error||'');
         if(/Missing trip|Select at least/i.test(msg)){
@@ -522,8 +1347,7 @@ function wcCreate(entity,record,opts){
   },function(){});
   return p;
 }
-// After a real backend confirmation: printable QR ticket on the ticket box
-// + auto-fill booking history with the buyer's email (backend-backed).
+// After a real backend confirmation: printable QR ticket and matching history lookup.
 document.addEventListener('wc:booking-confirmed',function(ev){
   var rec=null;
   try{rec=(ev&&ev.detail&&((ev.detail.data)||(ev.detail.body&&ev.detail.body.data)))||null;}catch(e){}
@@ -540,134 +1364,16 @@ document.addEventListener('wc:booking-confirmed',function(ev){
       }
     }catch(e){}
     try{
-      var email=rec?String(rec.email||''):'';
       var hb=document.querySelector('[data-wc-history]');
-      if(hb&&email){
+      var identity=hb?String(hb.getAttribute('data-wc-id')||'email'):'email';
+      var contact=rec?String(rec[identity]||''):'';
+      if(hb&&contact){
         var inp=hb.querySelector('[data-wc-history-id]');
         var frm=hb.querySelector('form');
-        if(inp&&frm&&!inp.value){inp.value=email;try{frm.dispatchEvent(new Event('submit',{cancelable:true}));}catch(e2){}}
+        if(inp&&frm&&!inp.value){inp.value=contact;try{frm.dispatchEvent(new Event('submit',{cancelable:true}));}catch(e2){}}
       }
     }catch(e){}
   },400);
 });
-})();</script><script>
-/* WebCraft contact wiring — sends this form to contact.php via platform mailer */
-(function(){
-  function note(msg, ok){
-    var d = document.createElement('div');
-    d.textContent = msg;
-    d.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14px;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.4);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
-    document.body.appendChild(d);
-    setTimeout(function(){ d.remove(); }, 4000);
-  }
-  document.addEventListener('submit', function(e){
-    var f = e.target;
-    if (!f || f.tagName !== 'FORM' || f.dataset.wcWired) return;
-    var hasEmail = f.querySelector('input[type=email]');
-    var hasMsg = f.querySelector('textarea') || f.querySelector('[name=message],[name=your-message],[name=comments]') || f.id === 'contact-form';
-    if (!hasEmail || !hasMsg) return; // not a contact form — leave it alone
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    f.dataset.wcWired = '1';
-    var btn = f.querySelector('[type=submit],button');
-    var orig = btn ? btn.innerHTML : '';
-    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
-    fetch('contact.php', { method: 'POST', body: new FormData(f) })
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        if (j && j.success) {
-          f.innerHTML = '<div style="padding:28px;text-align:center;background:rgba(16,185,129,.1);border:1.5px solid #10b981;border-radius:12px;font-weight:700;">✓ Thank you! Your message has been sent. We will reply soon.</div>';
-        } else {
-          note((j && j.error) || 'Could not send. Try again.', false);
-          if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-          delete f.dataset.wcWired;
-        }
-      })
-      .catch(function(){
-        note('Network error. Try again.', false);
-        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-        delete f.dataset.wcWired;
-      });
-  }, true);
-})();
-</script>
-<script data-wc-pak-submit>
-/* WebCraft universal form wiring — every data form posts to submit.php
-   (no admin login needed) and the record appears in the admin panel. */
-(function(){
-  function note(msg, ok, form){
-    var host = (form && form.parentNode) ? form.parentNode : document.body;
-    var d = document.createElement('div');
-    d.textContent = msg;
-    d.style.cssText = 'margin:12px 0;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
-    if (host === document.body) d.style.cssText += 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;';
-    host.appendChild(d);
-    setTimeout(function(){ d.remove(); }, 5000);
-  }
-  function purpose(f){
-    var p = (f.getAttribute('data-wc-form') || f.getAttribute('data-form') || '').toLowerCase();
-    if (p) return p;
-    var html = ((f.id || '') + ' ' + (f.className || '') + ' ' + (f.innerHTML || '')).toLowerCase();
-    // Booking markers win over order markers: a bus passenger form talks
-    // about "payment" (pay online/counter) but its record is a booking, and
-    // "order" also matches "in order to". Shop checkouts carry cart/buy
-    // markers that never collide with booking words.
-    if (/book|reserv|appoint|seat|trip|schedule|slot/.test(html)) return 'booking';
-    if (/checkout|cart|order|payment|buy|add-to-cart/.test(html)) return 'order';
-    if (/subscrib|newsletter/.test(html)) return 'newsletter';
-    if (/review|rating|testimonial|feedback/.test(html)) return 'review';
-    if (/quote|estimate/.test(html)) return 'quote';
-    if (/register|signup|sign-up|join|member/.test(html)) return 'registration';
-    return '';
-  }
-  document.addEventListener('submit', function(e){
-    var f = e.target;
-    if (!f || f.tagName !== 'FORM' || f.dataset.wcPakWired) return;
-    // Search/catalog/lookup forms never create records — the storefront
-    // runtime (or the page's own JS) owns them. Hijacking them here would
-    // break trip search AND file bogus bookings (stopImmediatePropagation
-    // runs before their handlers).
-    if (f.hasAttribute('data-wc-search') || f.getAttribute('data-remote') === 'off'
-        || f.hasAttribute('data-wc-history') || f.hasAttribute('data-wc-ticket-lookup')
-        || f.hasAttribute('data-wc-lookup') || /history|lookup|track|my-booking/i.test(f.id || '')) return;
-    // Contact forms keep the contact.php+mailer flow; skip them here.
-    var hasEmail = f.querySelector('input[type=email]');
-    var hasMsg = f.querySelector('textarea');
-    if (hasEmail && hasMsg) return;
-    var p = purpose(f);
-    if (!p) return; // generic/static form — leave native behaviour alone
-    // Hold/slot flows (booking/order/appointment) belong to the storefront
-    // runtime when present: it attaches held trip+seats, uses idempotency,
-    // and tries Node first. Posting them here instead would drop the hold
-    // context and fail validation. On runtime-less pages submit.php serves.
-    if ((p === 'booking' || p === 'order' || p === 'appointment')
-        && window.WCBiz && typeof window.WCBiz.create === 'function') return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    f.dataset.wcPakWired = '1';
-    var btn = f.querySelector('[type=submit],button');
-    var orig = btn ? btn.innerHTML : '';
-    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
-    var fd = new FormData(f);
-    fd.append('form', p);
-    fetch('submit.php', { method: 'POST', body: fd })
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        if (j && j.success) {
-          f.reset();
-          note(j.deduped ? 'Already received — thank you!' : '✓ Thank you! We received it and will be in touch shortly.', true, f);
-        } else {
-          note((j && j.error) || 'Could not send. Try again.', false, f);
-        }
-        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-        delete f.dataset.wcPakWired;
-      })
-      .catch(function(){
-        note('Network error. Try again.', false, f);
-        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-        delete f.dataset.wcPakWired;
-      });
-  }, true);
-})();
-</script>
+})();</script>
 </body></html><!-- v2 -->

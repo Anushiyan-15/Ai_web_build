@@ -96,7 +96,7 @@ class StorageService {
         return [
             'gb' => $gb,
             'rate' => round($rate, 2),
-            'total' => round($rate * $gb, 2),
+            'total' => round(round($rate, 2) * $gb, 2),
             'currency' => $currency,
             'plan_slug' => $plan['slug'],
             'plan_name' => $plan['name'],

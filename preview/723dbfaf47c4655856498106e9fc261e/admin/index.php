@@ -87,7 +87,7 @@ header_html('dashboard', 'Dashboard');
   <?php foreach ($entities as $e): ?>
   <div class="stat-box"><div class="stat-lbl"><?= htmlspecialchars($e['icon'] . ' ' . $e['name']) ?></div>
     <div class="stat-val"><?= (int)($counts[$e['id']] ?? 0) ?></div>
-    <div style="font-size:.75rem;color:#64748b"><a href="<?= htmlspecialchars($e['id']) ?>.php" style="color:#818cf8;text-decoration:none">Manage →</a></div></div>
+    <div style="font-size:.75rem;color:#64748b"><a href="<?= htmlspecialchars(db_entity_href($e['id'])) ?>" style="color:#818cf8;text-decoration:none">Manage/ →</a></div></div>
   <?php endforeach; ?>
 </div>
 
@@ -123,7 +123,7 @@ header_html('dashboard', 'Dashboard');
   <div style="display:flex;gap:.6rem;flex-wrap:wrap">
     <a class="btn btn-ghost" href="inbox.php">✉️ Inbox<?= $unread > 0 ? ' (' . $unread . ')' : '' ?></a>
     <?php foreach ($entities as $e): ?>
-      <a class="btn btn-ghost" href="<?= htmlspecialchars($e['id']) ?>.php"><?= htmlspecialchars($e['icon'] . ' ' . $e['name']) ?></a>
+      <a class="btn btn-ghost" href="<?= htmlspecialchars(db_entity_href($e['id'])) ?>">/<?= htmlspecialchars($e['icon'] . ' ' . $e['name']) ?></a>
     <?php endforeach; ?>
     <a class="btn btn-ghost" href="settings.php">⚙️ Settings</a>
     <a class="btn btn-ghost" href="server.php">🖥️ Server</a>

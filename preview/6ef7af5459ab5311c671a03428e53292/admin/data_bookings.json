@@ -1,0 +1,12 @@
+[
+    {
+        "customer": "Preview Rider",
+        "trip_id": "T1",
+        "seats": "C3",
+        "phone": "0770000111",
+        "status": "pending",
+        "id": "r_112ff6083b196f70",
+        "created_at": "2026-10-21T10:56:53+01:00",
+        "updated_at": "2026-10-21T10:56:53+01:00"
+    }
+]

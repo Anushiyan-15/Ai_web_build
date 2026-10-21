@@ -1,0 +1,135 @@
+{
+    "token": "6ef7af5459ab5311c671a03428e53292",
+    "bizName": "Bus Test Co",
+    "slug": "bus-test-co",
+    "entities": [
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "textarea",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "trips",
+            "name": "Trips",
+            "singular": "Trip",
+            "icon": "🚌",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "date",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "reviews",
+            "name": "Reviews",
+            "singular": "Review",
+            "icon": "⭐",
+            "fields": [
+                {
+                    "name": "reviewer",
+                    "label": "Reviewer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "stars",
+                    "label": "Stars",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "contactEmail": "owner@example.com",
+    "genMode": "admin",
+    "createdAt": "2026-10-21T10:56:52+01:00",
+    "updatedAt": "2026-10-21T10:56:54+01:00",
+    "htmlHash": "0dc5f1da72cc89dd059aeac514e147a5",
+    "sharing": {
+        "enabled": true,
+        "expiresAt": 1793786214
+    },
+    "feature_additions": [
+        {
+            "requirements": "Add reviews with reviewer and stars",
+            "files_added": 1,
+            "entities_added": [
+                "reviews"
+            ],
+            "added_at": "2026-10-21 10:56:54"
+        }
+    ]
+}

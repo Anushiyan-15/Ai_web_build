@@ -1,0 +1,12 @@
+[
+    {
+        "route": "Chennai → Bangalore",
+        "date": "2026-10-22",
+        "departure": "7.30",
+        "price": "130",
+        "total_seats": "32",
+        "id": "TRIP-20261021-E86BC2",
+        "created_at": "2026-10-21T14:18:21+01:00",
+        "updated_at": "2026-10-21T14:18:21+01:00"
+    }
+]

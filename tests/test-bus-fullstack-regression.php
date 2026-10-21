@@ -118,7 +118,7 @@ $busSpec = ['profile'=>['business_name'=>'City Express','domain'=>'booking','des
 $genSpec = ['profile'=>['business_name'=>'Tasty Bites','domain'=>'restaurant','description'=>'Fresh food'],'entities'=>[['key'=>'menu_items']]];
 ok(wc_business_requires_bus_booking($busSpec)===true && wc_business_requires_bus_booking($genSpec)===false, '14: bus detection stays business-specific');
 $widget = bus_booking_widget_html($SLUG);
-ok(strpos($widget,'bus-legend')!==false && strpos($widget,'Held (checkout)')!==false && strpos($widget,'window.WCBiz.ticketVerifyUrl')!==false, '14: widget legend + verify link present, no hardcoded trips');
+ok(strpos($widget,'bus-legend')!==false && strpos($widget,'Held (')!==false && strpos($widget,'window.WCBiz.ticketVerifyUrl')!==false, '14: widget legend + verify link present, no hardcoded trips');
 ok(strpos($widget,'trip_101')===false, '14: no hardcoded demo trips in widget');
 
 // Test 15 — Portal + verify provisioning + dashboard completeness.

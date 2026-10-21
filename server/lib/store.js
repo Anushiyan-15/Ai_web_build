@@ -92,10 +92,23 @@ async function loadEntity(slug, entity) {
     if (!byId.has(id)) byId.set(id, r);
     else byId.set(id, newer(byId.get(id), r));
   }
-  if (entity === 'trips' && byId.size === 0) {
-    const publishedTrips = await readJson(safeJoin(adminDir(slug), 'data_trips.json'), []);
-    for (const r of (Array.isArray(publishedTrips) ? publishedTrips : [])) {
-      if (r && typeof r === 'object' && r.id != null) byId.set(String(r.id), r);
+  // Owner-managed rows (admin store) are part of the public union for
+  // catalog entities, so an admin add/edit is live on the site
+  // immediately - even when the public mirror has not caught up yet.
+  // Transactional entities are never unioned (no other customers'
+  // records in a public list).
+  let publicEntity = false;
+  try {
+    const business = require('./business.js');
+    publicEntity = (business.PUBLIC_ENTITIES || []).includes(entity);
+  } catch (e) { /* registry unavailable: keep previous behaviour */ }
+  if (publicEntity) {
+    const published = await readJson(safeJoin(adminDir(slug), 'data_' + entity + '.json'), []);
+    for (const r of (Array.isArray(published) ? published : [])) {
+      if (!r || typeof r !== 'object' || r.id == null) continue;
+      const id = String(r.id);
+      if (!byId.has(id)) byId.set(id, r);
+      else byId.set(id, newer(byId.get(id), r));
     }
   }
   return [...byId.values()];

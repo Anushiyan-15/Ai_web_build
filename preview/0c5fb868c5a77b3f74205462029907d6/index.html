@@ -924,7 +924,7 @@
                             <p style="text-align: center; color: var(--muted);">Enter route and date, then hit Find to view available departures.</p>
                         </div>
 
-                        <!-- Demo Schedule Fallback -->
+                        <!-- Live schedule: rows are rendered from the database -->
                         <div id="demo-trips" style="margin-top: 2rem;">
                             <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">Featured Daily Schedules</h4>
                             <div class="trip-card">
@@ -953,7 +953,7 @@
                                     <button type="button" class="btn btn-primary" data-demo-trip="D2">Select This Bus</button>
                                 </div>
                             </div>
-                            <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 1rem;">Demo schedule — admin confirms live trips after publish.</p>
+                            <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 1rem;">Live schedule - updated from the admin panel.</p>
                         </div>
                     </div>
 
@@ -1847,6 +1847,11 @@
     document.addEventListener('DOMContentLoaded',function(){loadTrips('','');},{once:true});
 })();
 </script>
+
+
+
+
+
 <script type="application/json" id="wc-biz-spec">{&quot;gen_mode&quot;:&quot;database&quot;,&quot;pages&quot;:[&quot;home&quot;,&quot;search&quot;,&quot;trip-detail&quot;,&quot;seat-select&quot;,&quot;booking&quot;,&quot;ticket&quot;,&quot;my-bookings&quot;,&quot;contact&quot;],&quot;features&quot;:[&quot;trip_search&quot;,&quot;seat_map&quot;,&quot;hold_seats&quot;,&quot;passenger_form&quot;,&quot;qr_ticket&quot;,&quot;cancel_booking&quot;,&quot;pay_at_counter&quot;,&quot;contact_form&quot;],&quot;admin_modules&quot;:[&quot;dashboard&quot;,&quot;trips&quot;,&quot;bookings&quot;,&quot;payments&quot;,&quot;customers&quot;,&quot;reports&quot;,&quot;settings&quot;],&quot;needs_admin&quot;:true,&quot;canonical&quot;:{&quot;schema&quot;:&quot;biz-spec\/1&quot;,&quot;profile&quot;:{&quot;business_name&quot;:&quot;City Express Travels&quot;,&quot;description&quot;:&quot;City Express Travels\nBus, Transport &amp; Travel\nDaily bus service from Chennai to Bangalore with online seat booking, QR tickets and counter payment.\nDaily commuters, office goers, students and weekend travellers on the Chennai-Bangalore route.\nDaily Chennai-Bangalore trips, Online seat booking with 15-min hold, QR ticket at boarding, Counter + online payment, Easy cancellation&quot;,&quot;domain&quot;:&quot;booking&quot;,&quot;business_model&quot;:&quot;booking&quot;,&quot;objectives&quot;:[],&quot;target_users&quot;:[],&quot;context&quot;:[]},&quot;requirements&quot;:[{&quot;id&quot;:&quot;REQ-AC-001&quot;,&quot;description&quot;:&quot;Public landing page presenting City Express Travels&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;explicit&quot;,&quot;confidence&quot;:0.95,&quot;reason&quot;:&quot;Stated business needs a web presence&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Landing renders with business name + contact&quot;,&quot;class&quot;:&quot;confirmed&quot;,&quot;approval&quot;:&quot;accepted&quot;,&quot;order&quot;:0},{&quot;id&quot;:&quot;REQ-AC-002&quot;,&quot;description&quot;:&quot;Browsable offerings with search\/filter and detail view&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.8,&quot;reason&quot;:&quot;Sell signals detected&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;List + detail reachable; filters narrow results&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:1},{&quot;id&quot;:&quot;REQ-AC-003&quot;,&quot;description&quot;:&quot;Availability-checked reservation flow with hold expiry&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.85,&quot;reason&quot;:&quot;Reservable resource detected&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Double-reserve same unit rejected; expired holds release&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:2},{&quot;id&quot;:&quot;REQ-AC-004&quot;,&quot;description&quot;:&quot;Cancellation with eligibility check and capacity release&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.8,&quot;reason&quot;:&quot;Reservation lifecycle requires reversal path&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Cancelled record inactive; capacity reusable&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:3},{&quot;id&quot;:&quot;REQ-AC-005&quot;,&quot;description&quot;:&quot;Payment recording verified server-side; QR\/reference is identifier only&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.85,&quot;reason&quot;:&quot;Payments require proof separation&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Unpaid booking never shows paid; duplicate confirm rejected&quot;,&quot;class&quot;:&quot;needs_confirmation&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:4,&quot;unresolved&quot;:&quot;Refund\/counter-pay deadline policy&quot;},{&quot;id&quot;:&quot;REQ-AC-006&quot;,&quot;description&quot;:&quot;Customer accounts with owner-only record access enforced in backend&quot;,&quot;category&quot;:&quot;security&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.8,&quot;reason&quot;:&quot;Accounts\/dashboard signals&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;User A cannot read user B records (backend test)&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:5},{&quot;id&quot;:&quot;REQ-AC-007&quot;,&quot;description&quot;:&quot;Contact\/inquiry capture with validation and owner notification&quot;,&quot;category&quot;:&quot;functional&quot;,&quot;priority&quot;:&quot;should&quot;,&quot;source&quot;:&quot;recommended&quot;,&quot;confidence&quot;:0.7,&quot;reason&quot;:&quot;Standard for service discovery&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Invalid email rejected; valid stored&quot;,&quot;class&quot;:&quot;recommended&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:6},{&quot;id&quot;:&quot;REQ-AC-008&quot;,&quot;description&quot;:&quot;Admin operations dashboard for owner-authorized records&quot;,&quot;category&quot;:&quot;operational&quot;,&quot;priority&quot;:&quot;must&quot;,&quot;source&quot;:&quot;inferred&quot;,&quot;confidence&quot;:0.75,&quot;reason&quot;:&quot;Operational management signals&quot;,&quot;dependencies&quot;:[],&quot;validation&quot;:&quot;Non-admin blocked from admin APIs&quot;,&quot;class&quot;:&quot;inferred&quot;,&quot;approval&quot;:&quot;pending&quot;,&quot;order&quot;:7}],&quot;entities&quot;:[{&quot;key&quot;:&quot;trips&quot;,&quot;name&quot;:&quot;trips&quot;,&quot;label&quot;:&quot;Trips&quot;,&quot;purpose&quot;:&quot;Baseline from business analysis&quot;,&quot;fields&quot;:[&quot;route:text*&quot;,&quot;date:date*&quot;,&quot;departure:text*&quot;,&quot;price:number*&quot;,&quot;total_seats:number*&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;bookings&quot;,&quot;name&quot;:&quot;bookings&quot;,&quot;label&quot;:&quot;Bookings&quot;,&quot;purpose&quot;:&quot;Baseline from business analysis&quot;,&quot;fields&quot;:[&quot;trip_id:text*&quot;,&quot;seats:json*&quot;,&quot;passenger:text*&quot;,&quot;phone:text*&quot;,&quot;status:select:held|awaiting_payment|confirmed|cancelled|expired&quot;,&quot;payment_status:select:unpaid|paid|refunded&quot;,&quot;ref:text*&quot;,&quot;qr:text&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;payments&quot;,&quot;name&quot;:&quot;payments&quot;,&quot;label&quot;:&quot;Payments&quot;,&quot;purpose&quot;:&quot;Baseline from business analysis&quot;,&quot;fields&quot;:[&quot;booking_ref:text*&quot;,&quot;method:select:counter|online&quot;,&quot;amount:number*&quot;,&quot;status:select:pending|completed|refunded&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;bus&quot;,&quot;name&quot;:&quot;Bus&quot;,&quot;label&quot;:&quot;Bus&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;route&quot;,&quot;capacity&quot;,&quot;schedule&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;scheduled&quot;,&quot;boarding&quot;,&quot;in_transit&quot;,&quot;completed&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;seat&quot;,&quot;name&quot;:&quot;Seat&quot;,&quot;label&quot;:&quot;Seat&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;seat_number&quot;,&quot;status&quot;,&quot;price&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;available&quot;,&quot;held&quot;,&quot;booked&quot;,&quot;cancelled&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;ticket&quot;,&quot;name&quot;:&quot;Ticket&quot;,&quot;label&quot;:&quot;Ticket&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;pnr&quot;,&quot;qr_code&quot;,&quot;passenger_name&quot;,&quot;fare&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;issued&quot;,&quot;validated&quot;,&quot;cancelled&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;},{&quot;key&quot;:&quot;payment&quot;,&quot;name&quot;:&quot;Payment&quot;,&quot;label&quot;:&quot;Payment&quot;,&quot;purpose&quot;:&quot;AI-proposed domain entity&quot;,&quot;fields&quot;:[&quot;amount&quot;,&quot;method&quot;,&quot;transaction_id&quot;,&quot;status&quot;],&quot;relations&quot;:[],&quot;ownership&quot;:&quot;owner-or-admin&quot;,&quot;crud&quot;:{&quot;create&quot;:&quot;customer|staff&quot;,&quot;read&quot;:&quot;owner-or-admin&quot;,&quot;update&quot;:&quot;staff|admin&quot;,&quot;delete&quot;:&quot;admin&quot;},&quot;lifecycle&quot;:[&quot;pending&quot;,&quot;completed&quot;,&quot;refunded&quot;,&quot;failed&quot;],&quot;validation&quot;:[&quot;required fields present&quot;],&quot;effects&quot;:[],&quot;source&quot;:&quot;inferred&quot;}],&quot;actors&quot;:[{&quot;role&quot;:&quot;visitor&quot;,&quot;description&quot;:&quot;Public browser&quot;,&quot;actions&quot;:[&quot;browse&quot;,&quot;submit inquiry&quot;],&quot;resources&quot;:[&quot;public pages&quot;],&quot;restrictions&quot;:[&quot;no private records&quot;]},{&quot;role&quot;:&quot;customer&quot;,&quot;description&quot;:&quot;Authenticated buyer\/booker&quot;,&quot;actions&quot;:[&quot;create own records&quot;,&quot;view own history&quot;,&quot;cancel own eligible&quot;],&quot;resources&quot;:[&quot;own records&quot;],&quot;restrictions&quot;:[&quot;no others records&quot;,&quot;no admin APIs&quot;]},{&quot;role&quot;:&quot;staff&quot;,&quot;description&quot;:&quot;Operational staff&quot;,&quot;actions&quot;:[&quot;verify&quot;,&quot;confirm&quot;,&quot;record payment&quot;],&quot;resources&quot;:[&quot;assigned records&quot;],&quot;restrictions&quot;:[&quot;role-gated transitions&quot;]},{&quot;role&quot;:&quot;admin&quot;,&quot;description&quot;:&quot;Owner&quot;,&quot;actions&quot;:[&quot;full CRUD&quot;,&quot;reports&quot;,&quot;settings&quot;],&quot;resources&quot;:[&quot;all project records&quot;],&quot;restrictions&quot;:[&quot;project-scoped only&quot;]}],&quot;capabilities&quot;:[&quot;identity&quot;,&quot;catalog&quot;,&quot;capacity&quot;,&quot;scheduling&quot;,&quot;booking&quot;,&quot;payments&quot;,&quot;notify&quot;,&quot;reports&quot;,&quot;documents&quot;],&quot;custom&quot;:[],&quot;workflows&quot;:[{&quot;key&quot;:&quot;reservation&quot;,&quot;name&quot;:&quot;Reservation lifecycle&quot;,&quot;trigger&quot;:&quot;customer selects unit&quot;,&quot;steps&quot;:[&quot;search&quot;,&quot;select&quot;,&quot;hold (15-min expiry)&quot;,&quot;details&quot;,&quot;confirm&quot;,&quot;QR reference&quot;,&quot;pay (online|counter)&quot;,&quot;use|verify&quot;,&quot;cancel?&quot;],&quot;transitions&quot;:{&quot;held&quot;:[&quot;awaiting_payment&quot;,&quot;expired&quot;],&quot;awaiting_payment&quot;:[&quot;confirmed&quot;,&quot;cancelled&quot;,&quot;expired&quot;],&quot;confirmed&quot;:[&quot;cancelled&quot;,&quot;completed&quot;]},&quot;rejected&quot;:[&quot;pay cancelled\/expired&quot;,&quot;double-confirm paid&quot;,&quot;reuse cancelled as active&quot;],&quot;failures&quot;:[&quot;hold expires→release&quot;,&quot;conflict→reject with reason&quot;],&quot;idempotency&quot;:&quot;idempotency_key dedupe&quot;,&quot;notifications&quot;:[&quot;confirm&quot;,&quot;cancel&quot;],&quot;audit&quot;:[&quot;status + payment transitions with timestamps&quot;]},{&quot;key&quot;:&quot;inquiry&quot;,&quot;name&quot;:&quot;Inquiry handling&quot;,&quot;trigger&quot;:&quot;form submit&quot;,&quot;steps&quot;:[&quot;validate&quot;,&quot;store&quot;,&quot;notify owner&quot;],&quot;transitions&quot;:{&quot;new&quot;:[&quot;read&quot;,&quot;archived&quot;]},&quot;rejected&quot;:[&quot;invalid email&quot;,&quot;spam honeypot&quot;],&quot;failures&quot;:[&quot;store fail→error message&quot;],&quot;idempotency&quot;:&quot;none&quot;,&quot;notifications&quot;:[&quot;owner&quot;],&quot;audit&quot;:[&quot;inbox record&quot;]}],&quot;pages&quot;:[{&quot;route&quot;:&quot;\/&quot;,&quot;title&quot;:&quot;City Express Travels&quot;,&quot;sections&quot;:[&quot;hero&quot;,&quot;offerings&quot;,&quot;trust&quot;,&quot;contact&quot;],&quot;forms&quot;:[],&quot;components&quot;:[]},{&quot;route&quot;:&quot;\/shop&quot;,&quot;title&quot;:&quot;Browse&quot;,&quot;sections&quot;:[&quot;grid&quot;,&quot;filters&quot;],&quot;forms&quot;:[&quot;search&quot;],&quot;components&quot;:[&quot;product-card&quot;]},{&quot;route&quot;:&quot;\/book&quot;,&quot;title&quot;:&quot;Book&quot;,&quot;sections&quot;:[&quot;search&quot;,&quot;availability&quot;,&quot;form&quot;,&quot;ticket&quot;],&quot;forms&quot;:[&quot;booking&quot;],&quot;components&quot;:[&quot;availability-grid&quot;,&quot;qr-ticket&quot;]},{&quot;route&quot;:&quot;\/account&quot;,&quot;title&quot;:&quot;My account&quot;,&quot;sections&quot;:[&quot;history&quot;],&quot;forms&quot;:[&quot;login&quot;,&quot;register&quot;],&quot;components&quot;:[]},{&quot;route&quot;:&quot;\/admin&quot;,&quot;title&quot;:&quot;Manage&quot;,&quot;sections&quot;:[&quot;dashboard&quot;],&quot;forms&quot;:[],&quot;components&quot;:[&quot;entity-table&quot;]}],&quot;backend&quot;:{&quot;apis&quot;:[{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=create&quot;,&quot;auth&quot;:&quot;public-with-validation&quot;},{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=list&quot;,&quot;auth&quot;:&quot;owner-or-admin&quot;},{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=cancel&quot;,&quot;auth&quot;:&quot;owner-or-admin+eligibility&quot;},{&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;\/api\/business-ops.php?action=pay&quot;,&quot;auth&quot;:&quot;staff|admin, verified server-side&quot;}],&quot;tables&quot;:[{&quot;name&quot;:&quot;trips&quot;,&quot;fields&quot;:[&quot;route:text*&quot;,&quot;date:date*&quot;,&quot;departure:text*&quot;,&quot;price:number*&quot;,&quot;total_seats:number*&quot;]},{&quot;name&quot;:&quot;bookings&quot;,&quot;fields&quot;:[&quot;trip_id:text*&quot;,&quot;seats:json*&quot;,&quot;passenger:text*&quot;,&quot;phone:text*&quot;,&quot;status:select:held|awaiting_payment|confirmed|cancelled|expired&quot;,&quot;payment_status:select:unpaid|paid|refunded&quot;,&quot;ref:text*&quot;,&quot;qr:text&quot;]},{&quot;name&quot;:&quot;payments&quot;,&quot;fields&quot;:[&quot;booking_ref:text*&quot;,&quot;method:select:counter|online&quot;,&quot;amount:number*&quot;,&quot;status:select:pending|completed|refunded&quot;]},{&quot;name&quot;:&quot;bus&quot;,&quot;fields&quot;:[&quot;route&quot;,&quot;capacity&quot;,&quot;schedule&quot;]},{&quot;name&quot;:&quot;seat&quot;,&quot;fields&quot;:[&quot;seat_number&quot;,&quot;status&quot;,&quot;price&quot;]},{&quot;name&quot;:&quot;ticket&quot;,&quot;fields&quot;:[&quot;pnr&quot;,&quot;qr_code&quot;,&quot;passenger_name&quot;,&quot;fare&quot;]},{&quot;name&quot;:&quot;payment&quot;,&quot;fields&quot;:[&quot;amount&quot;,&quot;method&quot;,&quot;transaction_id&quot;,&quot;status&quot;]}],&quot;transactions&quot;:[&quot;reserve-then-confirm atomic&quot;,&quot;cancel releases capacity in same write&quot;],&quot;authz&quot;:[&quot;backend-enforced per-record ownership&quot;,&quot;project isolation by slug&quot;]},&quot;nonfunctional&quot;:{&quot;performance&quot;:[&quot;list &lt; 2s&quot;,&quot;no N+1 on availability&quot;],&quot;accessibility&quot;:[&quot;labels&quot;,&quot;focus states&quot;,&quot;44px targets&quot;,&quot;keyboard flows&quot;],&quot;security&quot;:[&quot;prepared statements\/file locks&quot;,&quot;no secrets in browser&quot;,&quot;no client-only success&quot;],&quot;privacy&quot;:[&quot;customers see only own records&quot;]},&quot;tests&quot;:[{&quot;id&quot;:&quot;T01&quot;,&quot;scenario&quot;:&quot;happy booking\/order&quot;,&quot;steps&quot;:[&quot;create&quot;,&quot;confirm&quot;,&quot;pay&quot;],&quot;expect&quot;:&quot;confirmed + paid, visible in history&quot;},{&quot;id&quot;:&quot;T02&quot;,&quot;scenario&quot;:&quot;double-book guard&quot;,&quot;steps&quot;:[&quot;hold seat A1 twice&quot;],&quot;expect&quot;:&quot;second rejected&quot;},{&quot;id&quot;:&quot;T03&quot;,&quot;scenario&quot;:&quot;expiry&quot;,&quot;steps&quot;:[&quot;hold then wait 15min&quot;],&quot;expect&quot;:&quot;released, re-bookable&quot;},{&quot;id&quot;:&quot;T04&quot;,&quot;scenario&quot;:&quot;cancel&quot;,&quot;steps&quot;:[&quot;cancel confirmed&quot;],&quot;expect&quot;:&quot;inactive + capacity released&quot;},{&quot;id&quot;:&quot;T05&quot;,&quot;scenario&quot;:&quot;duplicate pay&quot;,&quot;steps&quot;:[&quot;pay same ref twice&quot;],&quot;expect&quot;:&quot;second rejected&quot;},{&quot;id&quot;:&quot;T06&quot;,&quot;scenario&quot;:&quot;authz&quot;,&quot;steps&quot;:[&quot;user A reads user B record&quot;],&quot;expect&quot;:&quot;403&quot;}],&quot;uncertainty&quot;:{&quot;confirmed&quot;:[&quot;Customer description received&quot;,&quot;How should customers pay you? → both&quot;,&quot;What is your cancellation and refund policy? → none&quot;],&quot;inferred&quot;:[&quot;Capability: identity&quot;,&quot;Capability: catalog&quot;,&quot;Capability: capacity&quot;,&quot;Capability: scheduling&quot;,&quot;Capability: booking&quot;,&quot;Capability: payments&quot;,&quot;Capability: notify&quot;,&quot;Capability: reports&quot;,&quot;Capability: documents&quot;,&quot;What exactly can customers reserve, and what is its capacity? → seats&quot;,&quot;How long should an unpaid reservation be held before release? → 1h&quot;],&quot;recommended&quot;:[],&quot;unresolved&quot;:[&quot;Are refunds allowed and under what conditions?&quot;,&quot;Reservation hold duration? (default 15 min)&quot;,&quot;Payment deadline \/ refund policy?&quot;],&quot;assumptions&quot;:[]},&quot;meta&quot;:{&quot;engine&quot;:&quot;biz-intel\/1+gemini-3.5-flash-lite&quot;,&quot;created_at&quot;:&quot;2026-10-21T10:12:24+01:00&quot;,&quot;ai_stages&quot;:[&quot;understand&quot;,&quot;model&quot;]},&quot;compat&quot;:{&quot;gen_mode&quot;:&quot;database&quot;,&quot;pages&quot;:[&quot;home&quot;,&quot;search&quot;,&quot;trip-detail&quot;,&quot;seat-select&quot;,&quot;booking&quot;,&quot;ticket&quot;,&quot;my-bookings&quot;,&quot;contact&quot;],&quot;features&quot;:[&quot;trip_search&quot;,&quot;seat_map&quot;,&quot;hold_seats&quot;,&quot;passenger_form&quot;,&quot;qr_ticket&quot;,&quot;cancel_booking&quot;,&quot;pay_at_counter&quot;,&quot;contact_form&quot;],&quot;admin_modules&quot;:[&quot;dashboard&quot;,&quot;trips&quot;,&quot;bookings&quot;,&quot;payments&quot;,&quot;customers&quot;,&quot;reports&quot;,&quot;settings&quot;],&quot;needs_admin&quot;:true}}}</script><script data-wc-biz-runtime>(function(){
 var SPEC=null;try{SPEC=JSON.parse(document.getElementById('wc-biz-spec')?.textContent||'null')}catch(e){}
 var SLUG=("0c5fb868c5a77b3f74205462029907d6");
@@ -1865,6 +1870,53 @@ function postJson(url,body,ms){
     body:JSON.stringify(body),signal:ctrl?ctrl.signal:undefined}).then(function(r){return r.json().then(function(j){return {status:r.status,body:j};});})
     .finally(function(){if(timer)clearTimeout(timer);});
 }
+// A mobile menu must never render next to the desktop navigation. The
+// model's own CSS often defines .mobile-menu only inside a max-width media
+// query, so on desktop it falls back to a plain block (a duplicated nav
+// row). Hide it whenever the desktop nav is on screen.
+function wcFixMobileMenus(){
+  var menus = document.querySelectorAll('.mobile-menu, .mobile-nav, #mobile-menu, [id^="mobile-menu"], [class^="mobile-menu"]');
+  if(!menus.length) return;
+  var desktop = document.querySelector('.nav-links, .nav-actions, header nav, nav .nav-links');
+  var desktopVisible = false;
+  try{
+    desktopVisible = !!desktop && (desktop.offsetWidth > 0 || desktop.offsetHeight > 0)
+      && getComputedStyle(desktop).display !== 'none';
+  }catch(e){}
+  var wide = (window.innerWidth || 1024) > 640;
+  menus.forEach(function(menu){
+    if(desktopVisible && wide){
+      menu.style.setProperty('display','none','important');
+      menu.setAttribute('data-wc-mobile-menu-hidden','1');
+    }else if(menu.getAttribute('data-wc-mobile-menu-hidden')==='1'){
+      menu.removeAttribute('data-wc-mobile-menu-hidden');
+      menu.style.removeProperty('display');
+    }
+  });
+  // The burger that opens it must not sit next to the desktop nav either.
+  var burgers = document.querySelectorAll('.hamburger, .menu-toggle, #hamburger, [class^="hamburger"]');
+  if(burgers.length){
+    burgers.forEach(function(b){
+      if(desktopVisible && wide) b.style.setProperty('display','none','important');
+      else b.style.removeProperty('display');
+    });
+  }
+}
+// No-flash guard: wide screens never show a mobile menu, even before this
+// script runs (the model's own rule may live in a max-width query only).
+try{
+  if(!document.getElementById('wc-mobile-menu-guard')){
+    var st=document.createElement('style');
+    st.id='wc-mobile-menu-guard';
+    st.textContent='@media (min-width:1024px){.mobile-menu,.mobile-nav,#mobile-menu,[id^="mobile-menu"],[class^="mobile-menu"]{display:none !important}}';
+    (document.head||document.documentElement).appendChild(st);
+  }
+}catch(e){}
+try{ wcFixMobileMenus(); }catch(e){}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wcFixMobileMenus);
+else wcFixMobileMenus();
+window.addEventListener('load',wcFixMobileMenus);
+window.addEventListener('resize',wcFixMobileMenus);
 function apiNode(action,payload){
   return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+action,
     Object.assign({slug:SLUG},payload||{}),2500).then(function(r){return r.body;});
@@ -2185,6 +2237,222 @@ document.querySelectorAll('form[data-wc-search]').forEach(function(f){
     }).catch(function(){note('Network error. Try again.',false,f);});
   });
 });
+// ── LIVE LIST: the rows the admin edits in the panel, rendered on the page ──
+// [data-wc-list="trips"] shows the database rows (route, date, price, seats)
+// as cards. NOTHING is invented here: no demo prices, no fake seat counts,
+// no hardcoded rows - an empty table shows an honest empty state.
+function liveField(rec,keys){
+  if(!rec)return '';
+  for(var i=0;i<keys.length;i++){
+    var v=rec[keys[i]];
+    if(v==null||v==='')continue;
+    return v;
+  }
+  return '';
+}
+function liveTitle(rec,entity){
+  var v=liveField(rec,['title','name','label','route','product','service','subject','headline']);
+  if(v!=='')return String(v);
+  if(entity==='trips')return 'Trip';
+  return 'Item';
+}
+function liveMetaParts(rec){
+  var out=[];
+  var date=liveField(rec,['date','departure_date','trip_date','day','schedule_date']);
+  var time=liveField(rec,['departure','departure_time','time','slot','start_time']);
+  var kind=liveField(rec,['bus','bus_type','type','category','vehicle','room_type','speciality','service_type']);
+  if(date!=='')out.push(String(date));
+  if(time!=='')out.push(String(time));
+  if(kind!=='')out.push(String(kind));
+  return out;
+}
+function liveSeats(rec){
+  var s=liveField(rec,['seats_available','available_seats','seats_left']);
+  if(s==='')s=liveField(rec,['total_seats','capacity','seat_capacity','seats']);
+  return s===''?'':String(s);
+}
+function livePrice(rec){
+  var p=liveField(rec,['price','amount','fare','rate','cost','fee']);
+  if(p==='')return '';
+  var s=String(p);
+  if(s.indexOf('\u20b9')>=0||s.indexOf('$')>=0||s.indexOf('\u20ac')>=0||s.indexOf('\u00a3')>=0)return s;
+  return '\u20b9'+s;
+}
+function liveCtaLabel(entity,box){
+  var l=box.getAttribute('data-wc-list-cta-label');
+  if(l)return l;
+  if(entity==='trips'||entity==='buses'||entity==='bus')return 'Select This Bus';
+  if(entity==='products'||entity==='items')return 'View details';
+  return 'Book Now';
+}
+window.__wcLiveRows=window.__wcLiveRows||{};
+function renderLiveList(box,rows,entity){
+  window.__wcLiveRows[entity]=rows;
+  if(!rows||!rows.length){
+    box.innerHTML='<p class="wc-live-empty" style="color:#64748b;text-align:center;padding:1.25rem .5rem;">'
+      +'No '+escH(entity)+' are published yet - the team adds them from the admin panel.</p>';
+    return;
+  }
+  var limit=parseInt(box.getAttribute('data-wc-list-limit')||'12',10)||12;
+  var h='';
+  rows.slice(0,limit).forEach(function(r,idx){
+    var meta=liveMetaParts(r).map(escH).join(' &bull; ');
+    var seats=liveSeats(r);
+    var price=livePrice(r);
+    h+='<article class="wc-live-card trip-card" data-wc-list-row data-wc-entity="'+escH(entity)+'" data-wc-index="'+idx+'"'
+      +' style="display:flex;justify-content:space-between;align-items:center;gap:1.25rem;flex-wrap:wrap;padding:1rem 1.15rem;border:1px solid #e2e8f0;border-radius:14px;background:#fff;margin-bottom:.85rem;">'
+      +'<div class="wc-live-info trip-info" style="display:flex;justify-content:space-between;gap:1rem;flex:1 1 320px;min-width:0;">'
+      +'<div style="min-width:0;"><div class="wc-live-title trip-time" style="font-size:1.12rem;font-weight:800;color:#0f172a;">'+escH(liveTitle(r,entity))+'</div>'
+      +(meta?'<div class="wc-live-meta trip-meta" style="color:#64748b;font-size:.9rem;margin-top:.15rem;">'+meta+'</div>':'')
+      +'</div>'
+      +(seats!==''?'<div class="wc-live-seats trip-meta" style="color:#64748b;font-size:.9rem;white-space:nowrap;">'+escH(seats)+' seats available</div>':'')
+      +'</div>'
+      +'<div class="wc-live-side" style="display:flex;align-items:center;gap:1.25rem;">'
+      +(price!==''?'<div class="wc-live-price trip-price" style="font-size:1.25rem;font-weight:800;color:#1d4ed8;">'+escH(price)+'</div>':'')
+      +'<button type="button" class="btn btn-primary wc-live-cta" data-wc-list-cta style="cursor:pointer;">'+escH(liveCtaLabel(entity,box))+'</button>'
+      +'</div></article>';
+  });
+  box.innerHTML=h;
+}
+// Selecting a live row: the page may own the booking flow, so we announce it
+// first (wc:list-select). When the page does not handle it we fall back to
+// the page's own search form so the customer lands in the seat flow.
+function liveFallbackSelect(entity,rec){
+  var forms=document.querySelectorAll('form[data-wc-search]');
+  var form=null,best=-1;
+  for(var i=0;i<forms.length;i++){
+    var f=forms[i];
+    if((f.getAttribute('data-wc-search')||'').toLowerCase()!==entity)continue;
+    var score=0;
+    var tid=(f.getAttribute('data-wc-target')||'');
+    var fid=(f.id||'');
+    if(/bus|trip/i.test(fid))score+=10;
+    if(/bus|trip/i.test(tid))score+=10;
+    try{var tgt=tid?document.querySelector(tid):null;if(tgt&&tgt.closest&&(tgt.closest('[data-wc-step]')||tgt.closest('#booking')))score+=20;}catch(e){}
+    if(score>best){best=score;form=f;}
+  }
+  if(!form)form=forms[0];
+  if(!form){
+    if(window.WCBiz&&typeof window.WCBiz.gotoStep==='function')window.WCBiz.gotoStep('seats');
+    return;
+  }
+  var route=String(liveField(rec,['route','origin','from','title','name'])||'');
+  var dest=String(liveField(rec,['destination','to'])||'');
+  var date=String(liveField(rec,['date','departure_date','trip_date'])||'');
+  var set=function(name,val){
+    if(!val)return;
+    var el=form.querySelector('[name="'+name+'"]');
+    if(el){try{el.value=val;}catch(e){}}
+  };
+  set('route',route);set('origin',route);set('from',route);
+  set('destination',dest);set('to',dest);
+  set('date',date);set('travel_date',date);
+  var btn=form.querySelector('button[type=submit],input[type=submit]');
+  try{ if(btn)btn.click(); else if(form.requestSubmit)form.requestSubmit(); }catch(e){}
+  var tries=0;
+  var tick=function(){
+    tries++;
+    // Only a PAGE-OWNED select button (the page renders its own trip cards);
+    // never our own live-list CTA (that would loop).
+    var b=null;
+    var lists=document.querySelectorAll('[data-wc-results]');
+    for(var i=0;i<lists.length;i++){
+      b=lists[i].querySelector('.bus-trip-option button,[data-wc-trip-select]');
+      if(b)break;
+    }
+    if(b){try{b.click();}catch(e){}return;}
+    if(tries<12)setTimeout(tick,400);
+  };
+  setTimeout(tick,700);
+}
+function liveSelect(entity,rec){
+  var handled=false;
+  try{
+    var ev=new CustomEvent('wc:list-select',{detail:{entity:entity,record:rec},cancelable:true,bubbles:true});
+    document.dispatchEvent(ev);
+    handled=ev.defaultPrevented;
+  }catch(e){handled=false;}
+  if(!handled)liveFallbackSelect(entity,rec);
+}
+// 1) Hardcoded "demo" blocks (fake trip cards + their note) become live lists.
+document.querySelectorAll('[id^="demo-"]').forEach(function(demo){
+  var entity=(demo.id||'').replace(/^demo-/,'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  demo.querySelectorAll('[data-demo-trip],.trip-card,.demo-card').forEach(function(fake){fake.remove();});
+  if(demo.querySelector('[data-wc-list]'))return;
+  var box=document.createElement('div');
+  box.setAttribute('data-wc-list',entity);
+  box.setAttribute('data-wc-list-limit','8');
+  box.setAttribute('data-wc-list-cta','book');
+  demo.appendChild(box);
+});
+// 2) The "demo schedule" note becomes an honest live-data note.
+document.querySelectorAll('p,small,span,div').forEach(function(el){
+  if(el.children&&el.children.length)return;
+  var t=el.textContent||'';
+  if(t.length>160)return;
+  if(/demo schedule|demo trips?|sample schedule|demo rows/i.test(t)&&t.indexOf('Live schedule')<0){
+    el.textContent='Live schedule - updated from the admin panel.';
+  }
+});
+// 3) Render every live list.
+document.querySelectorAll('[data-wc-list]').forEach(function(box){
+  var entity=(box.getAttribute('data-wc-list')||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  box.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,parseFilterAttr(box)).then(function(j){
+    if(j&&j.success)renderLiveList(box,j.data||[],entity);
+    else box.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){box.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+});
+// 4) The select button on a live card.
+document.addEventListener('click',function(e){
+  var btn=(e.target&&e.target.closest)?e.target.closest('[data-wc-list-cta]'):null;
+  if(!btn)return;
+  var card=btn.closest('[data-wc-list-row]');
+  if(!card)return;
+  e.preventDefault();
+  var entity=card.getAttribute('data-wc-entity')||'';
+  var idx=parseInt(card.getAttribute('data-wc-index')||'0',10)||0;
+  var rows=window.__wcLiveRows[entity]||[];
+  if(rows[idx])liveSelect(entity,rows[idx]);
+});
+// 5) A page that paints hardcoded rows on submit gets them replaced by the
+//    live rows (registered on DOMContentLoaded so it runs after the page's
+//    own submit handler).
+function liveCleanFakeResults(root){
+  if(!root||!root.querySelector)return false;
+  var fake=root.querySelector('[data-demo-trip]');
+  if(!fake)return false;
+  var form=document.querySelector('form[data-wc-search]');
+  var entity=form?(form.getAttribute('data-wc-search')||'trips').toLowerCase().replace(/[^a-z0-9_]/g,''):'trips';
+  var filters={};
+  if(form){try{new FormData(form).forEach(function(v,k){v=String(v).trim();if(v&&k!=='company')filters[k]=v;});}catch(e){}}
+  root.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,filters).then(function(j){
+    if(j&&j.success)renderLiveList(root,j.data||[],entity);
+    else root.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){root.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+  return true;
+}
+function liveWatchResults(){
+  document.querySelectorAll('form[data-wc-search]').forEach(function(f){
+    f.addEventListener('submit',function(e){
+      var target=document.querySelector(f.getAttribute('data-wc-target')||'[data-wc-results]');
+      if(!target)return;
+      if(liveCleanFakeResults(target))e.preventDefault();
+    });
+  });
+  document.querySelectorAll('[data-wc-results]').forEach(function(box){
+    if(!window.MutationObserver)return;
+    var mo=new MutationObserver(function(){
+      if(box.querySelector('[data-demo-trip]'))liveCleanFakeResults(box);
+    });
+    try{mo.observe(box,{childList:true,subtree:true});}catch(e){}
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',liveWatchResults);
+else liveWatchResults();
 // Booking: seat hold -> confirm -> QR ticket -> cancel (bus reference workflow)
 // Step navigation + QR + ticket lookup share one helper set so every
 // generated page behaves the same without custom scroll/QR code.

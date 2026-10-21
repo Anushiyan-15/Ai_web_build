@@ -1,0 +1,238 @@
+{
+    "schema": "business-manifest\/1",
+    "slug": "gate-test-co",
+    "order_id": "PREVIEW-715e806a",
+    "business": {
+        "name": "Gate Test Co",
+        "category": "general",
+        "label": "General business"
+    },
+    "entities": [
+        {
+            "id": "inquiries",
+            "name": "Inquiries",
+            "singular": "Inquirie",
+            "icon": "✉️",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "message",
+                    "label": "Message",
+                    "type": "textarea",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "trips",
+            "name": "Trips",
+            "singular": "Trip",
+            "icon": "🚌",
+            "fields": [
+                {
+                    "name": "route",
+                    "label": "Route",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "date",
+                    "label": "Date",
+                    "type": "date",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "price",
+                    "label": "Price",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        },
+        {
+            "id": "bookings",
+            "name": "Bookings",
+            "singular": "Booking",
+            "icon": "🎫",
+            "fields": [
+                {
+                    "name": "customer",
+                    "label": "Customer",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "trip_id",
+                    "label": "Trip",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "seats",
+                    "label": "Seats",
+                    "type": "text",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "passenger",
+                    "label": "Passenger",
+                    "type": "text",
+                    "required": false
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "tel",
+                    "required": false
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": false
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "held",
+                        "confirmed",
+                        "pending",
+                        "approved",
+                        "rejected",
+                        "cancelled"
+                    ]
+                },
+                {
+                    "name": "payment_status",
+                    "label": "Payment status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "unpaid",
+                        "paid",
+                        "refund_pending",
+                        "refunded"
+                    ]
+                },
+                {
+                    "name": "amount",
+                    "label": "Fare total",
+                    "type": "number",
+                    "required": false
+                }
+            ]
+        },
+        {
+            "id": "customers",
+            "name": "Customers",
+            "singular": "Customer",
+            "icon": "👥",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Full Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "tel",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "total_bookings",
+                    "label": "Bookings",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "total_spent",
+                    "label": "Total Spent",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "active",
+                        "inactive",
+                        "blocked"
+                    ]
+                },
+                {
+                    "name": "notes",
+                    "label": "Notes",
+                    "type": "textarea",
+                    "required": false,
+                    "options": []
+                }
+            ]
+        }
+    ],
+    "admin_modules": [
+        {
+            "id": "inquiries",
+            "label": "Inquiries",
+            "icon": "✉️",
+            "entity": "inquiries"
+        },
+        {
+            "id": "trips",
+            "label": "Trips",
+            "icon": "🚌",
+            "entity": "trips"
+        },
+        {
+            "id": "bookings",
+            "label": "Bookings",
+            "icon": "🎫",
+            "entity": "bookings"
+        },
+        {
+            "id": "customers",
+            "label": "Customers",
+            "icon": "👥",
+            "entity": "customers"
+        }
+    ],
+    "frontend_api_map": [],
+    "updated_at": "2026-10-21T10:56:55+01:00"
+}

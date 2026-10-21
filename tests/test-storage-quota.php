@@ -216,7 +216,8 @@ unlink($fixtureOrderFile);
 
 // ── 10. Pricing math (server-side) ────────────────────────────
 $q = StorageService::quoteExtraStorage('pro', 3);
-ok($q && $q['total'] === round($q['rate'] * 3, 2) && $q['gb'] === 3 && $q['currency'] === 'USD', 'per-GB total = rate × gb in gateway currency');
+$gatewayCurrency = defined('PAYPAL_CURRENCY') ? strtoupper((string)PAYPAL_CURRENCY) : 'USD';
+ok($q && $q['total'] === round($q['rate'] * 3, 2) && $q['gb'] === 3 && $q['currency'] === $gatewayCurrency, 'per-GB total = rate × gb in gateway currency');
 ok(StorageService::quoteExtraStorage('no-such-plan', 2) === null, 'unknown plan quotes null');
 $s = StorageService::getSummary($e7);
 ok(StorageService::extraGbNeeded($s, 10 * 1073741824) === (int)ceil(((int)$s['used_bytes'] + 10 * 1073741824 - ((int)$s['effective_limit_mb']) * 1048576) / 1073741824), 'extraGbNeeded math correct');

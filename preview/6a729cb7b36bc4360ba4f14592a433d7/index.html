@@ -285,7 +285,314 @@
     today.setMinutes(today.getMinutes()-today.getTimezoneOffset());dateField.min=today.toISOString().slice(0,10);
     document.addEventListener('DOMContentLoaded',function(){loadTrips('','');},{once:true});
 })();
-</script><script type="application/json" id="wc-biz-spec">{&quot;entities&quot;:[{&quot;id&quot;:&quot;inquiries&quot;,&quot;name&quot;:&quot;Inquiries&quot;,&quot;singular&quot;:&quot;Inquirie&quot;,&quot;icon&quot;:&quot;✉️&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;name&quot;,&quot;label&quot;:&quot;Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;message&quot;,&quot;label&quot;:&quot;Message&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;bookings&quot;,&quot;name&quot;:&quot;Bookings&quot;,&quot;singular&quot;:&quot;Booking&quot;,&quot;icon&quot;:&quot;🎫&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;trip_id&quot;,&quot;label&quot;:&quot;Trip&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]},{&quot;name&quot;:&quot;seats&quot;,&quot;label&quot;:&quot;Seats&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]},{&quot;name&quot;:&quot;phone&quot;,&quot;label&quot;:&quot;Phone&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;orders&quot;,&quot;name&quot;:&quot;Orders&quot;,&quot;singular&quot;:&quot;Order&quot;,&quot;icon&quot;:&quot;🧾&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;total&quot;,&quot;label&quot;:&quot;Total&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;customers&quot;,&quot;name&quot;:&quot;Customers&quot;,&quot;singular&quot;:&quot;Customer&quot;,&quot;icon&quot;:&quot;👥&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;name&quot;,&quot;label&quot;:&quot;Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;reviews&quot;,&quot;name&quot;:&quot;Reviews&quot;,&quot;singular&quot;:&quot;Review&quot;,&quot;icon&quot;:&quot;⭐&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;reviewer&quot;,&quot;label&quot;:&quot;Reviewer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;stars&quot;,&quot;label&quot;:&quot;Stars&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;appointments&quot;,&quot;name&quot;:&quot;Appointments&quot;,&quot;singular&quot;:&quot;Appointment&quot;,&quot;icon&quot;:&quot;📅&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;date&quot;,&quot;label&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;date&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;subscribers&quot;,&quot;name&quot;:&quot;Subscribers&quot;,&quot;singular&quot;:&quot;Subscriber&quot;,&quot;icon&quot;:&quot;💌&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:true,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;trips&quot;,&quot;name&quot;:&quot;Trips&quot;,&quot;singular&quot;:&quot;Trip&quot;,&quot;icon&quot;:&quot;🚌&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;route&quot;,&quot;label&quot;:&quot;Route&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;date&quot;,&quot;label&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;date&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]}]}</script><script data-wc-biz-runtime>(function(){
+</script>
+<script data-wc-pak-submit>
+/* WebCraft universal form wiring — every data form posts to submit.php
+   (no admin login needed) and the record appears in the admin panel. */
+(function(){
+  function note(msg, ok, form){
+    var host = (form && form.parentNode) ? form.parentNode : document.body;
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'margin:12px 0;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
+    if (host === document.body) d.style.cssText += 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;';
+    host.appendChild(d);
+    setTimeout(function(){ d.remove(); }, 5000);
+  }
+  function purpose(f){
+    var p = (f.getAttribute('data-wc-form') || f.getAttribute('data-form') || '').toLowerCase();
+    if (p) return p;
+    var html = ((f.id || '') + ' ' + (f.className || '') + ' ' + (f.innerHTML || '')).toLowerCase();
+    // Booking markers win over order markers: a bus passenger form talks
+    // about "payment" (pay online/counter) but its record is a booking, and
+    // "order" also matches "in order to". Shop checkouts carry cart/buy
+    // markers that never collide with booking words.
+    if (/book|reserv|appoint|seat|trip|schedule|slot/.test(html)) return 'booking';
+    if (/checkout|cart|order|payment|buy|add-to-cart/.test(html)) return 'order';
+    if (/subscrib|newsletter/.test(html)) return 'newsletter';
+    if (/review|rating|testimonial|feedback/.test(html)) return 'review';
+    if (/quote|estimate/.test(html)) return 'quote';
+    if (/register|signup|sign-up|join|member/.test(html)) return 'registration';
+    return '';
+  }
+  document.addEventListener('submit', function(e){
+    var f = e.target;
+    if (!f || f.tagName !== 'FORM' || f.dataset.wcPakWired) return;
+    // Search/catalog/lookup forms never create records — the storefront
+    // runtime (or the page's own JS) owns them. Hijacking them here would
+    // break trip search AND file bogus bookings (stopImmediatePropagation
+    // runs before their handlers).
+    if (f.hasAttribute('data-wc-search') || f.getAttribute('data-remote') === 'off'
+        || f.hasAttribute('data-wc-history') || f.hasAttribute('data-wc-ticket-lookup')
+        || f.hasAttribute('data-wc-lookup') || /history|lookup|track|my-booking/i.test(f.id || '')) return;
+    // Contact forms keep the contact.php+mailer flow; skip them here.
+    var hasEmail = f.querySelector('input[type=email]');
+    var hasMsg = f.querySelector('textarea');
+    if (hasEmail && hasMsg) return;
+    var p = purpose(f);
+    if (!p) return; // generic/static form — leave native behaviour alone
+    // Hold/slot flows (booking/order/appointment) belong to the storefront
+    // runtime when present: it attaches held trip+seats, uses idempotency,
+    // and tries Node first. Posting them here instead would drop the hold
+    // context and fail validation. On runtime-less pages submit.php serves.
+    if ((p === 'booking' || p === 'order' || p === 'appointment')
+        && window.WCBiz && typeof window.WCBiz.create === 'function') return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    f.dataset.wcPakWired = '1';
+    var btn = f.querySelector('[type=submit],button');
+    var orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
+    var fd = new FormData(f);
+    fd.append('form', p);
+    fetch('submit.php', { method: 'POST', body: fd })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.success) {
+          f.reset();
+          note(j.deduped ? 'Already received — thank you!' : '✓ Thank you! We received it and will be in touch shortly.', true, f);
+        } else {
+          note((j && j.error) || 'Could not send. Try again.', false, f);
+        }
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcPakWired;
+      })
+      .catch(function(){
+        note('Network error. Try again.', false, f);
+        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        delete f.dataset.wcPakWired;
+      });
+  }, true);
+})();
+</script>
+</body></html>';
+}
+function wcPrintTicket(r){
+  try{
+    var w=window.open('','_blank','width=560,height=780');
+    if(!w)return false;
+    w.document.write(wcPrintTicketHTML(r||{}));
+    w.document.close();
+    try{w.focus();}catch(e){}
+    try{var t=w.setTimeout(function(){try{w.print();}catch(e){}},600);}catch(e){}
+    return true;
+  }catch(e){return false;}
+}
+// Merge with the page's own WCBiz (AI pages keep UI state: selectedSeats,
+// activeTrip, gotoStep, custom helpers). Backend data methods ALWAYS win so
+// holds, bookings, tickets, payments and history hit the real backend.
+var __pageBiz=(window.WCBiz&&typeof window.WCBiz==='object')?window.WCBiz:{};
+function __wcFn(v){return typeof v==='function';}
+// Trip/seat context from live page state (never trusts stale hidden inputs
+// alone): the confirm step can no longer fail with "Missing trip" while the
+// visitor visibly selected seats on this same page.
+function __wcTripCtx(){
+  var trip='',seats=[];
+  try{
+    var WB=window.WCBiz||{};
+    var at=WB.activeTrip||__pageBiz.activeTrip||null;
+    if(at&&typeof at==='object')trip=String(at.id||at.trip_id||'');
+    var ss=WB.selectedSeats||__pageBiz.selectedSeats||[];
+    if(Object.prototype.toString.call(ss)==='[object Array]'&&ss.length)seats=ss.slice();
+    if(!trip){var hf=document.querySelector('input[name=trip_id],select[name=trip_id],input[name=trip]');if(hf&&hf.value)trip=String(hf.value).trim();}
+    if(!seats.length){
+      var sel=[];
+      var btns=document.querySelectorAll('.wc-seat.selected,[data-seat].selected');
+      for(var i=0;i<btns.length;i++){var s=btns[i].getAttribute('data-seat');if(s)sel.push(s);}
+      if(sel.length)seats=sel;
+    }
+  }catch(e){}
+  return {trip_id:trip,seats:seats};
+}
+function wcHold(entity,payload){
+  payload=Object.assign({},payload||{});
+  var ctx=__wcTripCtx();
+  if(!payload.trip_id&&ctx.trip_id)payload.trip_id=ctx.trip_id;
+  if((!payload.seats||!payload.seats.length)&&ctx.seats.length)payload.seats=ctx.seats;
+  return api('hold',Object.assign({entity:entity},payload)).then(function(j){
+    try{
+      if(j&&j.success&&j.data){
+        window.__WC_HOLD__={entity:entity,trip_id:j.data.trip_id||payload.trip_id,
+          seats:j.data.seats||payload.seats,ref:j.data.ref,hold_id:j.data.id,at:Date.now()};
+        try{window.WCBiz.holdRef=j.data.ref;}catch(e){}
+        // Persist the hold so a page reload while entering passenger details
+        // does not discard the server-side reservation (Phase 3-C).
+        try{sessionStorage.setItem('__WC_HOLD__',JSON.stringify(window.__WC_HOLD__));}catch(e){}
+      }
+    }catch(e){}
+    return j;
+  });
+}
+// Restore a live hold across page reloads so the passenger-details step does
+// not require the customer to select and hold the same seat again (Phase 3-C).
+// The server remains authoritative: a restored hold is re-validated on submit
+// and rejected if expired or released.
+try{
+  var _storedHold = sessionStorage.getItem('__WC_HOLD__');
+  if(_storedHold){
+    var _parsed = JSON.parse(_storedHold);
+    if(_parsed && _parsed.ref && _parsed.trip_id && _parsed.seats && !window.__WC_HOLD__){
+      var _now = Date.now();
+      if(_parsed.at && _now - _parsed.at < 900000){
+        window.__WC_HOLD__ = _parsed;
+        try{ window.WCBiz.holdRef = _parsed.ref; }catch(e){}
+      } else {
+        sessionStorage.removeItem('__WC_HOLD__');
+      }
+    }
+  }
+}catch(e){}
+var __PRIVATE_STORES={bookings:1,appointments:1,orders:1,inquiries:1,subscribers:1,payments:1,customers:1,tickets:1,members:1};
+function wcList(entity,query){
+  var qp=Object.assign({entity:entity},query||{});
+  function pageFallback(){
+    if(__PRIVATE_STORES[String(entity||'').toLowerCase()])return[];
+    if(__wcFn(__pageBiz.list)){try{var r=__pageBiz.list.call(__pageBiz,entity,query);return r;}catch(e){}}
+    return[];
+  }
+  return api('list',qp).then(function(j){
+    if(j&&j.success&&Object.prototype.toString.call(j.data)==='[object Array]'&&j.data.length)return j.data;
+    return pageFallback();
+  }).catch(function(){return pageFallback();});
+}
+window.WCBiz=Object.assign({},__pageBiz,{
+  spec:SPEC,slug:SLUG,api:api,
+  hold:wcHold,
+  list:wcList,
+  cancel:function(entity,id,identity){return api('cancel',Object.assign({entity:entity,id:id},identity||{}));},
+  history:function(entity,identifier){return api('list',Object.assign({entity:entity},identifier||{}));},
+  pay:function(ref,method,amount,entity,identity){
+    identity=identity||{};
+    var booking=__pageBiz.lastBooking||window.__WC_LAST_BOOKING__||{};
+    var form=document.querySelector('[data-wc-form="booking"]');
+    if(form){
+      ['email','phone'].forEach(function(key){
+        var field=form.elements.namedItem(key);
+        if(!identity[key]&&field)identity[key]=field.value||'';
+      });
+    }
+    return api('payment_intent',Object.assign({
+      entity:entity||'bookings',ref:ref,method:method,
+      email:identity.email||booking.email||'',
+      phone:identity.phone||booking.phone||''
+    }));
+  },
+  ticket:function(entity,phone,ref){return api('ticket',{entity:entity||'bookings',phone:phone,ref:ref});},
+  verify:function(ref,token,entity){return api('verify',{entity:entity||'bookings',ref:ref,token:token||''});},
+  ticketVerifyUrl:wcTicketVerifyUrl,
+  gotoStep:(__wcFn(__pageBiz.gotoStep)?__pageBiz.gotoStep:wcGotoStep),
+  ticketQR:wcTicketQR,
+  ticketQRFallback:wcTicketQRFallback,
+  printTicket:wcPrintTicket,
+  create:wcCreate
+});
+document.addEventListener('click',function(event){
+  var button=event.target&&event.target.closest
+    ?event.target.closest('button[data-pay],button[data-payment-method]'):null;
+  if(!button)return;
+  event.stopImmediatePropagation();
+  event.preventDefault();
+  var method=String(button.getAttribute('data-pay')||button.getAttribute('data-payment-method')||'').toLowerCase();
+  var booking=window.__WC_LAST_BOOKING__||{};
+  var ref=String(booking.ref||window.__WC_LAST_REF__||window.WCBiz.bookingRef||'');
+  if(!ref){note('Confirm your booking before choosing a payment method.',false,button.parentNode);return;}
+  if(method!=='counter'&&method!=='online'){note('This payment method is not supported.',false,button.parentNode);return;}
+  button.disabled=true;
+  window.WCBiz.pay(ref,method,booking.amount||0,'bookings',{
+    email:booking.email||'',phone:booking.phone||''
+  }).then(function(result){
+    if(!result||!result.success)throw new Error((result&&result.error)||'Payment request could not be saved.');
+    note(result.message||'Payment request saved.',true,button.parentNode);
+  }).catch(function(error){
+    note(error.message||'Network error. Please try again.',false,button.parentNode);
+  }).finally(function(){button.disabled=false;});
+},true);
+// Dedup core: same customer intent within 2s shares one request.
+var wcCreateVOLATILE={hold_id:1,idempotency_key:1,company:1};
+var wcCreateIDENTITY={passenger:1,customer:1,name:1,email:1,phone:1};
+function wcNormKey(entity,rec){
+  rec=rec||{};
+  var idkeys=Object.keys(rec).filter(function(k){return wcCreateIDENTITY[k]&&!wcCreateVOLATILE[k];}).sort();
+  if(idkeys.length)return String(entity||'')+'|'+idkeys.map(function(k){return k+'='+JSON.stringify(rec[k]);}).join('&');
+  var keys=Object.keys(rec).filter(function(k){return !wcCreateVOLATILE[k];}).sort();
+  return String(entity||'')+'|'+keys.map(function(k){return k+'='+JSON.stringify(rec[k]);}).join('&');
+}
+function wcCreate(entity,record,opts){
+  record=Object.assign({},record||{});
+  if(opts&&typeof opts==='object'){
+    ['trip_id','seats','hold_ref','hold_id'].forEach(function(k){
+      if(record[k]===undefined&&opts[k]!==undefined)record[k]=opts[k];
+    });
+  }
+  try{
+    // Direct page calls often skip the generic form handler, so they lack
+    // trip context — fill from the live hold / visible page selection.
+    if(entity==='bookings'||entity==='appointments'){
+      var HS3=window.__WC_HOLD__||null;
+      var CX3=__wcTripCtx();
+      if(record.trip_id===undefined)record.trip_id=((HS3&&HS3.entity===entity&&HS3.trip_id)||CX3.trip_id||undefined);
+      if(record.seats===undefined)record.seats=((HS3&&HS3.entity===entity&&HS3.seats)||CX3.seats||undefined);
+      if(record.hold_ref===undefined&&HS3&&HS3.entity===entity&&HS3.ref)record.hold_ref=HS3.ref;
+    }
+  }catch(e){}
+  var key=wcNormKey(entity,record);
+  var now=Date.now();
+  if(key===wcCreate._k&&(now-wcCreate._t)<2000&&wcCreate._p)return wcCreate._p;
+  var payload={entity:entity,record:record};
+  if(opts&&typeof opts==='object'&&opts.idempotency_key)payload.idempotency_key=opts.idempotency_key;
+  var p=api('create',payload);
+  wcCreate._k=key;wcCreate._t=now;wcCreate._p=p;
+  p.then(function(j){
+    try{
+      if(j&&j.success&&j.data){
+        if(entity==='bookings'&&j.data.ref){
+          try{
+            window.WCBiz.bookingRef=j.data.ref;
+            window.__WC_LAST_BOOKING__=j.data;
+            window.__WC_LAST_REF__=j.data.ref;
+          }catch(e){}
+        }
+      }else if(j&&!j.success&&entity==='bookings'){
+        var msg=String(j.error||'');
+        if(/Missing trip|Select at least/i.test(msg)){
+          var bf=document.querySelector('[data-wc-form="booking"]');
+          note('Pick your bus and press "Hold Seats" first — then fill this form.',false,bf||undefined);
+        }
+      }
+    }catch(e){}
+  },function(){});
+  return p;
+}
+// After a real backend confirmation: printable QR ticket and matching history lookup.
+document.addEventListener('wc:booking-confirmed',function(ev){
+  var rec=null;
+  try{rec=(ev&&ev.detail&&((ev.detail.data)||(ev.detail.body&&ev.detail.body.data)))||null;}catch(e){}
+  setTimeout(function(){
+    try{
+      var tb=document.getElementById('ticket-box');
+      if(tb&&!tb.querySelector('[data-wc-print]')){
+        var b=document.createElement('button');
+        b.setAttribute('type','button');b.setAttribute('data-wc-print','1');
+        b.textContent='Print ticket with QR';
+        b.style.cssText='margin-top:0.9rem;padding:0.6rem 1.2rem;border-radius:10px;border:none;background:#0f172a;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;';
+        b.addEventListener('click',function(){if(!wcPrintTicket(rec||{}))note('Popup blocked — allow popups to print the ticket.',false,tb);});
+        tb.appendChild(b);
+      }
+    }catch(e){}
+    try{
+      var hb=document.querySelector('[data-wc-history]');
+      var identity=hb?String(hb.getAttribute('data-wc-id')||'email'):'email';
+      var contact=rec?String(rec[identity]||''):'';
+      if(hb&&contact){
+        var inp=hb.querySelector('[data-wc-history-id]');
+        var frm=hb.querySelector('form');
+        if(inp&&frm&&!inp.value){inp.value=contact;try{frm.dispatchEvent(new Event('submit',{cancelable:true}));}catch(e2){}}
+      }
+    }catch(e){}
+  },400);
+});
+})();</script>
+<script type="application/json" id="wc-biz-spec">{&quot;entities&quot;:[{&quot;id&quot;:&quot;inquiries&quot;,&quot;name&quot;:&quot;Inquiries&quot;,&quot;singular&quot;:&quot;Inquirie&quot;,&quot;icon&quot;:&quot;✉️&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;name&quot;,&quot;label&quot;:&quot;Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;message&quot;,&quot;label&quot;:&quot;Message&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;bookings&quot;,&quot;name&quot;:&quot;Bookings&quot;,&quot;singular&quot;:&quot;Booking&quot;,&quot;icon&quot;:&quot;🎫&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;trip_id&quot;,&quot;label&quot;:&quot;Trip&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]},{&quot;name&quot;:&quot;seats&quot;,&quot;label&quot;:&quot;Seats&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]},{&quot;name&quot;:&quot;phone&quot;,&quot;label&quot;:&quot;Phone&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;orders&quot;,&quot;name&quot;:&quot;Orders&quot;,&quot;singular&quot;:&quot;Order&quot;,&quot;icon&quot;:&quot;🧾&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;total&quot;,&quot;label&quot;:&quot;Total&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;customers&quot;,&quot;name&quot;:&quot;Customers&quot;,&quot;singular&quot;:&quot;Customer&quot;,&quot;icon&quot;:&quot;👥&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;name&quot;,&quot;label&quot;:&quot;Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;reviews&quot;,&quot;name&quot;:&quot;Reviews&quot;,&quot;singular&quot;:&quot;Review&quot;,&quot;icon&quot;:&quot;⭐&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;reviewer&quot;,&quot;label&quot;:&quot;Reviewer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;stars&quot;,&quot;label&quot;:&quot;Stars&quot;,&quot;type&quot;:&quot;number&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;appointments&quot;,&quot;name&quot;:&quot;Appointments&quot;,&quot;singular&quot;:&quot;Appointment&quot;,&quot;icon&quot;:&quot;📅&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;customer&quot;,&quot;label&quot;:&quot;Customer&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;date&quot;,&quot;label&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;date&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;subscribers&quot;,&quot;name&quot;:&quot;Subscribers&quot;,&quot;singular&quot;:&quot;Subscriber&quot;,&quot;icon&quot;:&quot;💌&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;email&quot;,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;,&quot;required&quot;:true,&quot;options&quot;:[]}]},{&quot;id&quot;:&quot;trips&quot;,&quot;name&quot;:&quot;Trips&quot;,&quot;singular&quot;:&quot;Trip&quot;,&quot;icon&quot;:&quot;🚌&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;route&quot;,&quot;label&quot;:&quot;Route&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true,&quot;options&quot;:[]},{&quot;name&quot;:&quot;date&quot;,&quot;label&quot;:&quot;Date&quot;,&quot;type&quot;:&quot;date&quot;,&quot;required&quot;:false,&quot;options&quot;:[]}]}]}</script><script data-wc-biz-runtime>(function(){
 var SPEC=null;try{SPEC=JSON.parse(document.getElementById('wc-biz-spec')?.textContent||'null')}catch(e){}
 var SLUG=("6a729cb7b36bc4360ba4f14592a433d7");
 var IS_BUS_BOOKING=(true);
@@ -303,6 +610,53 @@ function postJson(url,body,ms){
     body:JSON.stringify(body),signal:ctrl?ctrl.signal:undefined}).then(function(r){return r.json().then(function(j){return {status:r.status,body:j};});})
     .finally(function(){if(timer)clearTimeout(timer);});
 }
+// A mobile menu must never render next to the desktop navigation. The
+// model's own CSS often defines .mobile-menu only inside a max-width media
+// query, so on desktop it falls back to a plain block (a duplicated nav
+// row). Hide it whenever the desktop nav is on screen.
+function wcFixMobileMenus(){
+  var menus = document.querySelectorAll('.mobile-menu, .mobile-nav, #mobile-menu, [id^="mobile-menu"], [class^="mobile-menu"]');
+  if(!menus.length) return;
+  var desktop = document.querySelector('.nav-links, .nav-actions, header nav, nav .nav-links');
+  var desktopVisible = false;
+  try{
+    desktopVisible = !!desktop && (desktop.offsetWidth > 0 || desktop.offsetHeight > 0)
+      && getComputedStyle(desktop).display !== 'none';
+  }catch(e){}
+  var wide = (window.innerWidth || 1024) > 640;
+  menus.forEach(function(menu){
+    if(desktopVisible && wide){
+      menu.style.setProperty('display','none','important');
+      menu.setAttribute('data-wc-mobile-menu-hidden','1');
+    }else if(menu.getAttribute('data-wc-mobile-menu-hidden')==='1'){
+      menu.removeAttribute('data-wc-mobile-menu-hidden');
+      menu.style.removeProperty('display');
+    }
+  });
+  // The burger that opens it must not sit next to the desktop nav either.
+  var burgers = document.querySelectorAll('.hamburger, .menu-toggle, #hamburger, [class^="hamburger"]');
+  if(burgers.length){
+    burgers.forEach(function(b){
+      if(desktopVisible && wide) b.style.setProperty('display','none','important');
+      else b.style.removeProperty('display');
+    });
+  }
+}
+// No-flash guard: wide screens never show a mobile menu, even before this
+// script runs (the model's own rule may live in a max-width query only).
+try{
+  if(!document.getElementById('wc-mobile-menu-guard')){
+    var st=document.createElement('style');
+    st.id='wc-mobile-menu-guard';
+    st.textContent='@media (min-width:1024px){.mobile-menu,.mobile-nav,#mobile-menu,[id^="mobile-menu"],[class^="mobile-menu"]{display:none !important}}';
+    (document.head||document.documentElement).appendChild(st);
+  }
+}catch(e){}
+try{ wcFixMobileMenus(); }catch(e){}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wcFixMobileMenus);
+else wcFixMobileMenus();
+window.addEventListener('load',wcFixMobileMenus);
+window.addEventListener('resize',wcFixMobileMenus);
 function apiNode(action,payload){
   return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+action,
     Object.assign({slug:SLUG},payload||{}),2500).then(function(r){return r.body;});
@@ -623,6 +977,222 @@ document.querySelectorAll('form[data-wc-search]').forEach(function(f){
     }).catch(function(){note('Network error. Try again.',false,f);});
   });
 });
+// ── LIVE LIST: the rows the admin edits in the panel, rendered on the page ──
+// [data-wc-list="trips"] shows the database rows (route, date, price, seats)
+// as cards. NOTHING is invented here: no demo prices, no fake seat counts,
+// no hardcoded rows - an empty table shows an honest empty state.
+function liveField(rec,keys){
+  if(!rec)return '';
+  for(var i=0;i<keys.length;i++){
+    var v=rec[keys[i]];
+    if(v==null||v==='')continue;
+    return v;
+  }
+  return '';
+}
+function liveTitle(rec,entity){
+  var v=liveField(rec,['title','name','label','route','product','service','subject','headline']);
+  if(v!=='')return String(v);
+  if(entity==='trips')return 'Trip';
+  return 'Item';
+}
+function liveMetaParts(rec){
+  var out=[];
+  var date=liveField(rec,['date','departure_date','trip_date','day','schedule_date']);
+  var time=liveField(rec,['departure','departure_time','time','slot','start_time']);
+  var kind=liveField(rec,['bus','bus_type','type','category','vehicle','room_type','speciality','service_type']);
+  if(date!=='')out.push(String(date));
+  if(time!=='')out.push(String(time));
+  if(kind!=='')out.push(String(kind));
+  return out;
+}
+function liveSeats(rec){
+  var s=liveField(rec,['seats_available','available_seats','seats_left']);
+  if(s==='')s=liveField(rec,['total_seats','capacity','seat_capacity','seats']);
+  return s===''?'':String(s);
+}
+function livePrice(rec){
+  var p=liveField(rec,['price','amount','fare','rate','cost','fee']);
+  if(p==='')return '';
+  var s=String(p);
+  if(s.indexOf('\u20b9')>=0||s.indexOf('$')>=0||s.indexOf('\u20ac')>=0||s.indexOf('\u00a3')>=0)return s;
+  return '\u20b9'+s;
+}
+function liveCtaLabel(entity,box){
+  var l=box.getAttribute('data-wc-list-cta-label');
+  if(l)return l;
+  if(entity==='trips'||entity==='buses'||entity==='bus')return 'Select This Bus';
+  if(entity==='products'||entity==='items')return 'View details';
+  return 'Book Now';
+}
+window.__wcLiveRows=window.__wcLiveRows||{};
+function renderLiveList(box,rows,entity){
+  window.__wcLiveRows[entity]=rows;
+  if(!rows||!rows.length){
+    box.innerHTML='<p class="wc-live-empty" style="color:#64748b;text-align:center;padding:1.25rem .5rem;">'
+      +'No '+escH(entity)+' are published yet - the team adds them from the admin panel.</p>';
+    return;
+  }
+  var limit=parseInt(box.getAttribute('data-wc-list-limit')||'12',10)||12;
+  var h='';
+  rows.slice(0,limit).forEach(function(r,idx){
+    var meta=liveMetaParts(r).map(escH).join(' &bull; ');
+    var seats=liveSeats(r);
+    var price=livePrice(r);
+    h+='<article class="wc-live-card trip-card" data-wc-list-row data-wc-entity="'+escH(entity)+'" data-wc-index="'+idx+'"'
+      +' style="display:flex;justify-content:space-between;align-items:center;gap:1.25rem;flex-wrap:wrap;padding:1rem 1.15rem;border:1px solid #e2e8f0;border-radius:14px;background:#fff;margin-bottom:.85rem;">'
+      +'<div class="wc-live-info trip-info" style="display:flex;justify-content:space-between;gap:1rem;flex:1 1 320px;min-width:0;">'
+      +'<div style="min-width:0;"><div class="wc-live-title trip-time" style="font-size:1.12rem;font-weight:800;color:#0f172a;">'+escH(liveTitle(r,entity))+'</div>'
+      +(meta?'<div class="wc-live-meta trip-meta" style="color:#64748b;font-size:.9rem;margin-top:.15rem;">'+meta+'</div>':'')
+      +'</div>'
+      +(seats!==''?'<div class="wc-live-seats trip-meta" style="color:#64748b;font-size:.9rem;white-space:nowrap;">'+escH(seats)+' seats available</div>':'')
+      +'</div>'
+      +'<div class="wc-live-side" style="display:flex;align-items:center;gap:1.25rem;">'
+      +(price!==''?'<div class="wc-live-price trip-price" style="font-size:1.25rem;font-weight:800;color:#1d4ed8;">'+escH(price)+'</div>':'')
+      +'<button type="button" class="btn btn-primary wc-live-cta" data-wc-list-cta style="cursor:pointer;">'+escH(liveCtaLabel(entity,box))+'</button>'
+      +'</div></article>';
+  });
+  box.innerHTML=h;
+}
+// Selecting a live row: the page may own the booking flow, so we announce it
+// first (wc:list-select). When the page does not handle it we fall back to
+// the page's own search form so the customer lands in the seat flow.
+function liveFallbackSelect(entity,rec){
+  var forms=document.querySelectorAll('form[data-wc-search]');
+  var form=null,best=-1;
+  for(var i=0;i<forms.length;i++){
+    var f=forms[i];
+    if((f.getAttribute('data-wc-search')||'').toLowerCase()!==entity)continue;
+    var score=0;
+    var tid=(f.getAttribute('data-wc-target')||'');
+    var fid=(f.id||'');
+    if(/bus|trip/i.test(fid))score+=10;
+    if(/bus|trip/i.test(tid))score+=10;
+    try{var tgt=tid?document.querySelector(tid):null;if(tgt&&tgt.closest&&(tgt.closest('[data-wc-step]')||tgt.closest('#booking')))score+=20;}catch(e){}
+    if(score>best){best=score;form=f;}
+  }
+  if(!form)form=forms[0];
+  if(!form){
+    if(window.WCBiz&&typeof window.WCBiz.gotoStep==='function')window.WCBiz.gotoStep('seats');
+    return;
+  }
+  var route=String(liveField(rec,['route','origin','from','title','name'])||'');
+  var dest=String(liveField(rec,['destination','to'])||'');
+  var date=String(liveField(rec,['date','departure_date','trip_date'])||'');
+  var set=function(name,val){
+    if(!val)return;
+    var el=form.querySelector('[name="'+name+'"]');
+    if(el){try{el.value=val;}catch(e){}}
+  };
+  set('route',route);set('origin',route);set('from',route);
+  set('destination',dest);set('to',dest);
+  set('date',date);set('travel_date',date);
+  var btn=form.querySelector('button[type=submit],input[type=submit]');
+  try{ if(btn)btn.click(); else if(form.requestSubmit)form.requestSubmit(); }catch(e){}
+  var tries=0;
+  var tick=function(){
+    tries++;
+    // Only a PAGE-OWNED select button (the page renders its own trip cards);
+    // never our own live-list CTA (that would loop).
+    var b=null;
+    var lists=document.querySelectorAll('[data-wc-results]');
+    for(var i=0;i<lists.length;i++){
+      b=lists[i].querySelector('.bus-trip-option button,[data-wc-trip-select]');
+      if(b)break;
+    }
+    if(b){try{b.click();}catch(e){}return;}
+    if(tries<12)setTimeout(tick,400);
+  };
+  setTimeout(tick,700);
+}
+function liveSelect(entity,rec){
+  var handled=false;
+  try{
+    var ev=new CustomEvent('wc:list-select',{detail:{entity:entity,record:rec},cancelable:true,bubbles:true});
+    document.dispatchEvent(ev);
+    handled=ev.defaultPrevented;
+  }catch(e){handled=false;}
+  if(!handled)liveFallbackSelect(entity,rec);
+}
+// 1) Hardcoded "demo" blocks (fake trip cards + their note) become live lists.
+document.querySelectorAll('[id^="demo-"]').forEach(function(demo){
+  var entity=(demo.id||'').replace(/^demo-/,'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  demo.querySelectorAll('[data-demo-trip],.trip-card,.demo-card').forEach(function(fake){fake.remove();});
+  if(demo.querySelector('[data-wc-list]'))return;
+  var box=document.createElement('div');
+  box.setAttribute('data-wc-list',entity);
+  box.setAttribute('data-wc-list-limit','8');
+  box.setAttribute('data-wc-list-cta','book');
+  demo.appendChild(box);
+});
+// 2) The "demo schedule" note becomes an honest live-data note.
+document.querySelectorAll('p,small,span,div').forEach(function(el){
+  if(el.children&&el.children.length)return;
+  var t=el.textContent||'';
+  if(t.length>160)return;
+  if(/demo schedule|demo trips?|sample schedule|demo rows/i.test(t)&&t.indexOf('Live schedule')<0){
+    el.textContent='Live schedule - updated from the admin panel.';
+  }
+});
+// 3) Render every live list.
+document.querySelectorAll('[data-wc-list]').forEach(function(box){
+  var entity=(box.getAttribute('data-wc-list')||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  box.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,parseFilterAttr(box)).then(function(j){
+    if(j&&j.success)renderLiveList(box,j.data||[],entity);
+    else box.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){box.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+});
+// 4) The select button on a live card.
+document.addEventListener('click',function(e){
+  var btn=(e.target&&e.target.closest)?e.target.closest('[data-wc-list-cta]'):null;
+  if(!btn)return;
+  var card=btn.closest('[data-wc-list-row]');
+  if(!card)return;
+  e.preventDefault();
+  var entity=card.getAttribute('data-wc-entity')||'';
+  var idx=parseInt(card.getAttribute('data-wc-index')||'0',10)||0;
+  var rows=window.__wcLiveRows[entity]||[];
+  if(rows[idx])liveSelect(entity,rows[idx]);
+});
+// 5) A page that paints hardcoded rows on submit gets them replaced by the
+//    live rows (registered on DOMContentLoaded so it runs after the page's
+//    own submit handler).
+function liveCleanFakeResults(root){
+  if(!root||!root.querySelector)return false;
+  var fake=root.querySelector('[data-demo-trip]');
+  if(!fake)return false;
+  var form=document.querySelector('form[data-wc-search]');
+  var entity=form?(form.getAttribute('data-wc-search')||'trips').toLowerCase().replace(/[^a-z0-9_]/g,''):'trips';
+  var filters={};
+  if(form){try{new FormData(form).forEach(function(v,k){v=String(v).trim();if(v&&k!=='company')filters[k]=v;});}catch(e){}}
+  root.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,filters).then(function(j){
+    if(j&&j.success)renderLiveList(root,j.data||[],entity);
+    else root.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){root.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+  return true;
+}
+function liveWatchResults(){
+  document.querySelectorAll('form[data-wc-search]').forEach(function(f){
+    f.addEventListener('submit',function(e){
+      var target=document.querySelector(f.getAttribute('data-wc-target')||'[data-wc-results]');
+      if(!target)return;
+      if(liveCleanFakeResults(target))e.preventDefault();
+    });
+  });
+  document.querySelectorAll('[data-wc-results]').forEach(function(box){
+    if(!window.MutationObserver)return;
+    var mo=new MutationObserver(function(){
+      if(box.querySelector('[data-demo-trip]'))liveCleanFakeResults(box);
+    });
+    try{mo.observe(box,{childList:true,subtree:true});}catch(e){}
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',liveWatchResults);
+else liveWatchResults();
 // Booking: seat hold -> confirm -> QR ticket -> cancel (bus reference workflow)
 // Step navigation + QR + ticket lookup share one helper set so every
 // generated page behaves the same without custom scroll/QR code.
@@ -634,6 +1204,14 @@ function wcGotoStep(id){
   });
   el.removeAttribute('hidden');
   try{if(el.style)el.style.display='';}catch(e){}
+  document.querySelectorAll('.step-indicator-item').forEach(function(item){
+    var ind=item.getAttribute('data-indicator');
+    if(ind===id||(id==='ticket'&&ind==='ticket')){
+      item.classList.add('active');
+    }else{
+      item.classList.remove('active');
+    }
+  });
   try{
     var offset=0;
     document.querySelectorAll('header,nav,[role="banner"]').forEach(function(bar){
@@ -709,127 +1287,8 @@ function wcPrintTicketHTML(r){
     +'<div class="foot">Printed '+escH(new Date().toLocaleString())+'</div>'
     +'<div class="noprint" style="text-align:center;margin-top:16px;">'
     +'<button onclick="window.print()" style="padding:10px 26px;font-size:15px;font-weight:700;background:#059669;color:#fff;border:none;border-radius:9px;cursor:pointer;">Print</button></div>'
-    +'</div><script>
-/* WebCraft contact wiring — sends this form to contact.php via platform mailer */
-(function(){
-  function note(msg, ok){
-    var d = document.createElement('div');
-    d.textContent = msg;
-    d.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14px;font-family:inherit;box-shadow:0 10px 30px rgba(0,0,0,.4);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
-    document.body.appendChild(d);
-    setTimeout(function(){ d.remove(); }, 4000);
-  }
-  document.addEventListener('submit', function(e){
-    var f = e.target;
-    if (!f || f.tagName !== 'FORM' || f.dataset.wcWired) return;
-    var hasEmail = f.querySelector('input[type=email]');
-    var hasMsg = f.querySelector('textarea') || f.querySelector('[name=message],[name=your-message],[name=comments]') || f.id === 'contact-form';
-    if (!hasEmail || !hasMsg) return; // not a contact form — leave it alone
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    f.dataset.wcWired = '1';
-    var btn = f.querySelector('[type=submit],button');
-    var orig = btn ? btn.innerHTML : '';
-    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
-    fetch('contact.php', { method: 'POST', body: new FormData(f) })
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        if (j && j.success) {
-          f.innerHTML = '<div style="padding:28px;text-align:center;background:rgba(16,185,129,.1);border:1.5px solid #10b981;border-radius:12px;font-weight:700;">✓ Thank you! Your message has been sent. We will reply soon.</div>';
-        } else {
-          note((j && j.error) || 'Could not send. Try again.', false);
-          if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-          delete f.dataset.wcWired;
-        }
-      })
-      .catch(function(){
-        note('Network error. Try again.', false);
-        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-        delete f.dataset.wcWired;
-      });
-  }, true);
-})();
-</script>
-<script data-wc-pak-submit>
-/* WebCraft universal form wiring — every data form posts to submit.php
-   (no admin login needed) and the record appears in the admin panel. */
-(function(){
-  function note(msg, ok, form){
-    var host = (form && form.parentNode) ? form.parentNode : document.body;
-    var d = document.createElement('div');
-    d.textContent = msg;
-    d.style.cssText = 'margin:12px 0;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);background:' + (ok ? '#059669' : '#dc2626') + ';color:#fff;';
-    if (host === document.body) d.style.cssText += 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;';
-    host.appendChild(d);
-    setTimeout(function(){ d.remove(); }, 5000);
-  }
-  function purpose(f){
-    var p = (f.getAttribute('data-wc-form') || f.getAttribute('data-form') || '').toLowerCase();
-    if (p) return p;
-    var html = ((f.id || '') + ' ' + (f.className || '') + ' ' + (f.innerHTML || '')).toLowerCase();
-    // Booking markers win over order markers: a bus passenger form talks
-    // about "payment" (pay online/counter) but its record is a booking, and
-    // "order" also matches "in order to". Shop checkouts carry cart/buy
-    // markers that never collide with booking words.
-    if (/book|reserv|appoint|seat|trip|schedule|slot/.test(html)) return 'booking';
-    if (/checkout|cart|order|payment|buy|add-to-cart/.test(html)) return 'order';
-    if (/subscrib|newsletter/.test(html)) return 'newsletter';
-    if (/review|rating|testimonial|feedback/.test(html)) return 'review';
-    if (/quote|estimate/.test(html)) return 'quote';
-    if (/register|signup|sign-up|join|member/.test(html)) return 'registration';
-    return '';
-  }
-  document.addEventListener('submit', function(e){
-    var f = e.target;
-    if (!f || f.tagName !== 'FORM' || f.dataset.wcPakWired) return;
-    // Search/catalog/lookup forms never create records — the storefront
-    // runtime (or the page's own JS) owns them. Hijacking them here would
-    // break trip search AND file bogus bookings (stopImmediatePropagation
-    // runs before their handlers).
-    if (f.hasAttribute('data-wc-search') || f.getAttribute('data-remote') === 'off'
-        || f.hasAttribute('data-wc-history') || f.hasAttribute('data-wc-ticket-lookup')
-        || f.hasAttribute('data-wc-lookup') || /history|lookup|track|my-booking/i.test(f.id || '')) return;
-    // Contact forms keep the contact.php+mailer flow; skip them here.
-    var hasEmail = f.querySelector('input[type=email]');
-    var hasMsg = f.querySelector('textarea');
-    if (hasEmail && hasMsg) return;
-    var p = purpose(f);
-    if (!p) return; // generic/static form — leave native behaviour alone
-    // Hold/slot flows (booking/order/appointment) belong to the storefront
-    // runtime when present: it attaches held trip+seats, uses idempotency,
-    // and tries Node first. Posting them here instead would drop the hold
-    // context and fail validation. On runtime-less pages submit.php serves.
-    if ((p === 'booking' || p === 'order' || p === 'appointment')
-        && window.WCBiz && typeof window.WCBiz.create === 'function') return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    f.dataset.wcPakWired = '1';
-    var btn = f.querySelector('[type=submit],button');
-    var orig = btn ? btn.innerHTML : '';
-    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
-    var fd = new FormData(f);
-    fd.append('form', p);
-    fetch('submit.php', { method: 'POST', body: fd })
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        if (j && j.success) {
-          f.reset();
-          note(j.deduped ? 'Already received — thank you!' : '✓ Thank you! We received it and will be in touch shortly.', true, f);
-        } else {
-          note((j && j.error) || 'Could not send. Try again.', false, f);
-        }
-        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-        delete f.dataset.wcPakWired;
-      })
-      .catch(function(){
-        note('Network error. Try again.', false, f);
-        if (btn) { btn.disabled = false; btn.innerHTML = orig; }
-        delete f.dataset.wcPakWired;
-      });
-  }, true);
-})();
-</script>
-</body></html>';
+    // Escaped so later HTML tail injectors can never match this inline string.
+    +'<\/div><\/body><\/html>';
 }
 function wcPrintTicket(r){
   try{
@@ -879,33 +1338,13 @@ function wcHold(entity,payload){
         window.__WC_HOLD__={entity:entity,trip_id:j.data.trip_id||payload.trip_id,
           seats:j.data.seats||payload.seats,ref:j.data.ref,hold_id:j.data.id,at:Date.now()};
         try{window.WCBiz.holdRef=j.data.ref;}catch(e){}
-        // Persist the hold so a page reload while entering passenger details
-        // does not discard the server-side reservation (Phase 3-C).
-        try{sessionStorage.setItem('__WC_HOLD__',JSON.stringify(window.__WC_HOLD__));}catch(e){}
+        // Page-level code (AI generations) reads res.ref directly.
+        if(j.ref===undefined)j.ref=j.data.ref;
       }
     }catch(e){}
     return j;
   });
 }
-// Restore a live hold across page reloads so the passenger-details step does
-// not require the customer to select and hold the same seat again (Phase 3-C).
-// The server remains authoritative: a restored hold is re-validated on submit
-// and rejected if expired or released.
-try{
-  var _storedHold = sessionStorage.getItem('__WC_HOLD__');
-  if(_storedHold){
-    var _parsed = JSON.parse(_storedHold);
-    if(_parsed && _parsed.ref && _parsed.trip_id && _parsed.seats && !window.__WC_HOLD__){
-      var _now = Date.now();
-      if(_parsed.at && _now - _parsed.at < 900000){
-        window.__WC_HOLD__ = _parsed;
-        try{ window.WCBiz.holdRef = _parsed.ref; }catch(e){}
-      } else {
-        sessionStorage.removeItem('__WC_HOLD__');
-      }
-    }
-  }
-}catch(e){}
 var __PRIVATE_STORES={bookings:1,appointments:1,orders:1,inquiries:1,subscribers:1,payments:1,customers:1,tickets:1,members:1};
 function wcList(entity,query){
   var qp=Object.assign({entity:entity},query||{});
@@ -1055,4 +1494,5 @@ document.addEventListener('wc:booking-confirmed',function(ev){
     }catch(e){}
   },400);
 });
-})();</script></body></html>
+})();</script>
+</body></html>

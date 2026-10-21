@@ -1,0 +1,14 @@
+[
+    {
+        "id": "r_07a62f91b7ea74af",
+        "name": "Preview Visitor",
+        "email": "visitor@example.com",
+        "phone": "",
+        "message": "Hello preview inbox",
+        "date": "2026-10-21 10:56",
+        "created_at": "2026-10-21T10:56:53+01:00",
+        "updated_at": "2026-10-21T10:56:53+01:00",
+        "read": false,
+        "status": "unread"
+    }
+]

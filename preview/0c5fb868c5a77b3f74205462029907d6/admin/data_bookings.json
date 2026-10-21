@@ -1,5 +1,329 @@
 [
     {
+        "trip_id": "TRIP-20261021-32D230",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-0389CC7AF0A7560B90D0AF8009BFE981",
+        "id": "BKG-4914025D4F46",
+        "created_at": "2026-10-21T13:41:18+01:00",
+        "updated_at": "2026-10-21T13:41:18+01:00",
+        "ref": "BK-DB871460",
+        "verify_token": "42f10fe7f4a2848e12f98ff4dea6dd0b",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T13:41:18+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T13:41:18+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-70FF572F",
+        "cancelled_at": "2026-10-21T13:41:18+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-A944D9",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-A695653385CB815F016EE8B471AA5C54",
+        "id": "BKG-BA1B2C936388",
+        "created_at": "2026-10-21T13:28:22+01:00",
+        "updated_at": "2026-10-21T13:28:22+01:00",
+        "ref": "BK-D8CF6CCB",
+        "verify_token": "cb202dc483714f560e4c57068e671e19",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T13:28:22+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T13:28:22+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-42996E66",
+        "cancelled_at": "2026-10-21T13:28:22+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-7E8EC0",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-134E7FDD1ED994F91D7BCEF156209686",
+        "id": "BKG-F9219554F971",
+        "created_at": "2026-10-21T13:15:13+01:00",
+        "updated_at": "2026-10-21T13:15:13+01:00",
+        "ref": "BK-89DC9C49",
+        "verify_token": "9230d90a806f5e7a8024343abbf11500",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T13:15:13+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T13:15:13+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-C8452F28",
+        "cancelled_at": "2026-10-21T13:15:13+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-552981",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-3B9140E16BD0C34375D5CA6CA0AB77A7",
+        "id": "BKG-76D53652BB0A",
+        "created_at": "2026-10-21T12:42:57+01:00",
+        "updated_at": "2026-10-21T12:42:57+01:00",
+        "ref": "BK-51A3C68A",
+        "verify_token": "d804c225324fa0654128240682744bbc",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T12:42:57+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T12:42:57+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-D789FF94",
+        "cancelled_at": "2026-10-21T12:42:57+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-5C93C6",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-78A8EAD46772AC22F4C2FBBD23F3D71D",
+        "id": "BKG-06A0D798F9F3",
+        "created_at": "2026-10-21T12:24:41+01:00",
+        "updated_at": "2026-10-21T12:24:41+01:00",
+        "ref": "BK-C8615701",
+        "verify_token": "a6d17e3fde57b872555b6f4b90c3bdbf",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T12:24:41+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T12:24:41+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-95132C24",
+        "cancelled_at": "2026-10-21T12:24:41+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-CA32BD",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-77365DE72239F7776E5A32347BFEFF36",
+        "id": "BKG-CDEBFDACD05F",
+        "created_at": "2026-10-21T12:01:57+01:00",
+        "updated_at": "2026-10-21T12:01:57+01:00",
+        "ref": "BK-15ED7487",
+        "verify_token": "d671c9a3a87ac88f4e0c15c81476d452",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T12:01:57+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T12:01:57+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-A1847373",
+        "cancelled_at": "2026-10-21T12:01:57+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-F23167",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-03FAA4CCAF73F88329B6F8F3C118C71C",
+        "id": "BKG-03F31AA5DF03",
+        "created_at": "2026-10-21T11:50:35+01:00",
+        "updated_at": "2026-10-21T11:50:35+01:00",
+        "ref": "BK-10F2D139",
+        "verify_token": "58abe68e5689a4765eb9f5b52d6ee668",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T11:50:35+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T11:50:35+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-74115481",
+        "cancelled_at": "2026-10-21T11:50:35+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-7F555E",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-A60CA85D5243ECA02C72494C6E54C66D",
+        "id": "BKG-B13BAEA0D3CE",
+        "created_at": "2026-10-21T11:41:29+01:00",
+        "updated_at": "2026-10-21T11:41:29+01:00",
+        "ref": "BK-DA7D4EDD",
+        "verify_token": "f979b015c154b406c2b1d66a16dcb895",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T11:41:29+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T11:41:29+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-2FBEB673",
+        "cancelled_at": "2026-10-21T11:41:29+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-02889F",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-6EDFBDF26012FBFEADEE81D7020E72A0",
+        "id": "BKG-EFDF4CB5364C",
+        "created_at": "2026-10-21T11:40:35+01:00",
+        "updated_at": "2026-10-21T11:40:35+01:00",
+        "ref": "BK-9DE1B760",
+        "verify_token": "fe712172c4b4fae37d8abdb28c55f181",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T11:40:35+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T11:40:35+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-CD73965F",
+        "cancelled_at": "2026-10-21T11:40:35+01:00"
+    },
+    {
         "passenger": "Anu Anushiyan",
         "phone": "+94752038598",
         "email": "ut01336tic2024@gmail.com",
@@ -10,7 +334,7 @@
         "hold_ref": "HOLD-385A01098A5767F303B4D1454960C2A2",
         "id": "BKG-BDD25BC5CC81",
         "created_at": "2026-10-21T10:15:46+01:00",
-        "updated_at": "2026-10-21T10:15:48+01:00",
+        "updated_at": "2026-10-21T10:29:32+01:00",
         "idempotency_key": "k_mvhwd3ua_jbkzy5",
         "ref": "BK-82D6A172",
         "verify_token": "11bfae4419dd3abf558dcdfc93e8f018",
@@ -20,10 +344,29 @@
         "price_per_seat": 899,
         "amount": 899,
         "currency": "LKR",
-        "status": "pending",
-        "payment_status": "unpaid",
+        "status": "approved",
+        "payment_status": "paid",
         "payment_method": "counter",
-        "payment_request_status": "pending",
-        "payment_requested_at": "2026-10-21T10:15:48+01:00"
+        "payment_request_status": "completed",
+        "payment_requested_at": "2026-10-21T10:15:48+01:00",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "approved",
+                "at": "2026-10-21T10:29:13+01:00"
+            }
+        ],
+        "approved_at": "2026-10-21T10:29:13+01:00",
+        "notification_status": "queued",
+        "notification_error": "",
+        "notification_queue_id": "mq_20261021102913_c8925302",
+        "paid_at": "2026-10-21T10:29:32+01:00",
+        "pay_method": "cash",
+        "pay_amount": 899,
+        "payment_id": "PAY-20261021-80A0BC6C",
+        "payment_received_at": "2026-10-21T10:29:32+01:00",
+        "seats_display": [
+            "6C"
+        ]
     }
 ]

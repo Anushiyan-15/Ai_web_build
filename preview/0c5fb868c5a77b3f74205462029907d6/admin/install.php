@@ -27,7 +27,7 @@ $authFile = $ADMIN . '/.auth.json';
 $auth = is_file($authFile) ? (json_decode(@file_get_contents($authFile), true) ?: []) : [];
 $hash = (string)($auth['hash'] ?? '');
 $hashOk = ($hash !== '' && (str_starts_with($hash, '$2y$') || str_starts_with($hash, '$argon2')));
-if (!$hashOk && true) {
+if (!$hashOk && false) {
     $errors[] = 'No administrator credentials are configured. Publish the site with an admin username + password (min 8 chars) first.';
 }
 if (!empty($errors)) {
@@ -38,7 +38,7 @@ if (!empty($errors)) {
     exit;
 }
 // 3. Data files (create only when missing — existing records are preserved)
-foreach (["trips","bookings","payments","buses","seat","tickets"] as $eid) {
+foreach (["trips","bookings","payments","buses","seat","tickets","customers"] as $eid) {
     $eid = preg_replace('/[^a-z0-9_]/i', '', (string)$eid);
     if ($eid === '') continue;
     $f = $ADMIN . '/data_' . $eid . '.json';

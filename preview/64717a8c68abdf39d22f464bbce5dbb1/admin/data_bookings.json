@@ -1,0 +1,40 @@
+[
+    {
+        "passenger": "anu",
+        "phone": "+94775253066",
+        "email": "ut01336tic2024@gmail.com",
+        "trip_id": "TRIP-20261021-E86BC2",
+        "seats": [
+            "A3"
+        ],
+        "hold_ref": "HOLD-02D9D7756DD85CDDF6640A6675492E06",
+        "id": "BKG-701ED51DE450",
+        "created_at": "2026-10-21T14:19:55+01:00",
+        "updated_at": "2026-10-21T14:20:30+01:00",
+        "idempotency_key": "k_mvi532r1_h0o2ey",
+        "ref": "BK-9E9DB0F6",
+        "verify_token": "b9cf09a99d6ae4363abe9d0568caa2b4",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-22",
+        "departure": "7.30",
+        "price_per_seat": 130,
+        "amount": 130,
+        "currency": "LKR",
+        "status": "approved",
+        "payment_status": "unpaid",
+        "payment_method": "counter",
+        "payment_request_status": "pending",
+        "payment_requested_at": "2026-10-21T14:19:57+01:00",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "approved",
+                "at": "2026-10-21T14:20:30+01:00"
+            }
+        ],
+        "approved_at": "2026-10-21T14:20:30+01:00",
+        "notification_status": "queued",
+        "notification_error": "",
+        "notification_queue_id": "mq_20261021142030_f9bc379a"
+    }
+]

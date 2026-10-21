@@ -1,0 +1,124 @@
+[
+    {
+        "id": "h_eab79a00bb7355c8",
+        "trip_id": "TRIP-20261021-205AD7",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "status": "held",
+        "payment_status": "unpaid",
+        "ref": "HOLD-F48DCAEE54C3806FEE1909F39331387D",
+        "created_at": "2026-10-21T11:40:11+01:00",
+        "updated_at": "2026-10-21T11:40:11+01:00",
+        "expires_at": "2026-10-21T11:55:11+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-2D7E39",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-55A56C9C56AE6FF9686709382D8E33C5",
+        "id": "BKG-4FE705990D4D",
+        "created_at": "2026-10-21T11:40:01+01:00",
+        "updated_at": "2026-10-21T11:40:01+01:00",
+        "ref": "BK-0D31319F",
+        "verify_token": "a76ea9c27624fa8266f3603d032afeb4",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T11:40:01+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T11:40:01+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-2FEFB67E",
+        "cancelled_at": "2026-10-21T11:40:01+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-4310D8",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-618CD2C82D5A22A3638FF2AF41C17FC9",
+        "id": "BKG-EAC12D61F507",
+        "created_at": "2026-10-21T11:39:52+01:00",
+        "updated_at": "2026-10-21T11:39:52+01:00",
+        "ref": "BK-5CBC28C5",
+        "verify_token": "aeff979083b54680889b38fe7212fa7c",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T11:39:52+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T11:39:52+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-86ED2393",
+        "cancelled_at": "2026-10-21T11:39:52+01:00"
+    },
+    {
+        "trip_id": "TRIP-20261021-5F4F9F",
+        "seats": [
+            "A1",
+            "A2"
+        ],
+        "passenger": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "hold_ref": "HOLD-4676F3981F80C492BCE0DF0787E36AEE",
+        "id": "BKG-BA9D241B64B6",
+        "created_at": "2026-10-21T11:39:22+01:00",
+        "updated_at": "2026-10-21T11:39:22+01:00",
+        "ref": "BK-892DF3BF",
+        "verify_token": "351e1a97ee74751a01ff404c78a72e0b",
+        "route": "Chennai → Bangalore",
+        "trip_date": "2026-10-23",
+        "departure": "07:45 AM",
+        "price_per_seat": 950,
+        "amount": 1900,
+        "currency": "LKR",
+        "status": "cancelled",
+        "payment_status": "refund_pending",
+        "status_history": [
+            {
+                "from": "pending",
+                "to": "confirmed",
+                "at": "2026-10-21T11:39:22+01:00"
+            }
+        ],
+        "paid_at": "2026-10-21T11:39:22+01:00",
+        "pay_method": "cash",
+        "pay_amount": 1900,
+        "payment_id": "PAY-20261021-CA1B56E9",
+        "cancelled_at": "2026-10-21T11:39:22+01:00"
+    }
+]

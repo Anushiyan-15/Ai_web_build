@@ -39,6 +39,15 @@ function db_entities(): array {
     return $cache;
 }
 
+/** Href for an entity module: its own page when it exists, otherwise
+ *  the generic entity manager (a missing page must never be a 404). */
+function db_entity_href(string $entity): string {
+    $id = strtolower(preg_replace('/[^a-z0-9_]/i', '', (string)$entity));
+    if ($id === '') return 'manage.php';
+    return is_file(db_dir() . '/' . $id . '.php')
+        ? $id . '.php'
+        : 'manage.php?entity=' . rawurlencode($id);
+}
 function db_entity_allowed(string $entity): bool {
     if (!preg_match('/^[a-z0-9_]{1,40}$/', $entity)) return false;
     return in_array($entity, db_entities(), true);

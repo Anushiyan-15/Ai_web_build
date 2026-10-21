@@ -206,6 +206,53 @@ function postJson(url,body,ms){
     body:JSON.stringify(body),signal:ctrl?ctrl.signal:undefined}).then(function(r){return r.json().then(function(j){return {status:r.status,body:j};});})
     .finally(function(){if(timer)clearTimeout(timer);});
 }
+// A mobile menu must never render next to the desktop navigation. The
+// model's own CSS often defines .mobile-menu only inside a max-width media
+// query, so on desktop it falls back to a plain block (a duplicated nav
+// row). Hide it whenever the desktop nav is on screen.
+function wcFixMobileMenus(){
+  var menus = document.querySelectorAll('.mobile-menu, .mobile-nav, #mobile-menu, [id^="mobile-menu"], [class^="mobile-menu"]');
+  if(!menus.length) return;
+  var desktop = document.querySelector('.nav-links, .nav-actions, header nav, nav .nav-links');
+  var desktopVisible = false;
+  try{
+    desktopVisible = !!desktop && (desktop.offsetWidth > 0 || desktop.offsetHeight > 0)
+      && getComputedStyle(desktop).display !== 'none';
+  }catch(e){}
+  var wide = (window.innerWidth || 1024) > 640;
+  menus.forEach(function(menu){
+    if(desktopVisible && wide){
+      menu.style.setProperty('display','none','important');
+      menu.setAttribute('data-wc-mobile-menu-hidden','1');
+    }else if(menu.getAttribute('data-wc-mobile-menu-hidden')==='1'){
+      menu.removeAttribute('data-wc-mobile-menu-hidden');
+      menu.style.removeProperty('display');
+    }
+  });
+  // The burger that opens it must not sit next to the desktop nav either.
+  var burgers = document.querySelectorAll('.hamburger, .menu-toggle, #hamburger, [class^="hamburger"]');
+  if(burgers.length){
+    burgers.forEach(function(b){
+      if(desktopVisible && wide) b.style.setProperty('display','none','important');
+      else b.style.removeProperty('display');
+    });
+  }
+}
+// No-flash guard: wide screens never show a mobile menu, even before this
+// script runs (the model's own rule may live in a max-width query only).
+try{
+  if(!document.getElementById('wc-mobile-menu-guard')){
+    var st=document.createElement('style');
+    st.id='wc-mobile-menu-guard';
+    st.textContent='@media (min-width:1024px){.mobile-menu,.mobile-nav,#mobile-menu,[id^="mobile-menu"],[class^="mobile-menu"]{display:none !important}}';
+    (document.head||document.documentElement).appendChild(st);
+  }
+}catch(e){}
+try{ wcFixMobileMenus(); }catch(e){}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wcFixMobileMenus);
+else wcFixMobileMenus();
+window.addEventListener('load',wcFixMobileMenus);
+window.addEventListener('resize',wcFixMobileMenus);
 function apiNode(action,payload){
   return postJson(NODE_API+'/node-api/'+encodeURIComponent(SLUG)+'/'+action,
     Object.assign({slug:SLUG},payload||{}),2500).then(function(r){return r.body;});
@@ -526,6 +573,222 @@ document.querySelectorAll('form[data-wc-search]').forEach(function(f){
     }).catch(function(){note('Network error. Try again.',false,f);});
   });
 });
+// ── LIVE LIST: the rows the admin edits in the panel, rendered on the page ──
+// [data-wc-list="trips"] shows the database rows (route, date, price, seats)
+// as cards. NOTHING is invented here: no demo prices, no fake seat counts,
+// no hardcoded rows - an empty table shows an honest empty state.
+function liveField(rec,keys){
+  if(!rec)return '';
+  for(var i=0;i<keys.length;i++){
+    var v=rec[keys[i]];
+    if(v==null||v==='')continue;
+    return v;
+  }
+  return '';
+}
+function liveTitle(rec,entity){
+  var v=liveField(rec,['title','name','label','route','product','service','subject','headline']);
+  if(v!=='')return String(v);
+  if(entity==='trips')return 'Trip';
+  return 'Item';
+}
+function liveMetaParts(rec){
+  var out=[];
+  var date=liveField(rec,['date','departure_date','trip_date','day','schedule_date']);
+  var time=liveField(rec,['departure','departure_time','time','slot','start_time']);
+  var kind=liveField(rec,['bus','bus_type','type','category','vehicle','room_type','speciality','service_type']);
+  if(date!=='')out.push(String(date));
+  if(time!=='')out.push(String(time));
+  if(kind!=='')out.push(String(kind));
+  return out;
+}
+function liveSeats(rec){
+  var s=liveField(rec,['seats_available','available_seats','seats_left']);
+  if(s==='')s=liveField(rec,['total_seats','capacity','seat_capacity','seats']);
+  return s===''?'':String(s);
+}
+function livePrice(rec){
+  var p=liveField(rec,['price','amount','fare','rate','cost','fee']);
+  if(p==='')return '';
+  var s=String(p);
+  if(s.indexOf('\\u20b9')>=0||s.indexOf('$')>=0||s.indexOf('\\u20ac')>=0||s.indexOf('\\u00a3')>=0)return s;
+  return '\\u20b9'+s;
+}
+function liveCtaLabel(entity,box){
+  var l=box.getAttribute('data-wc-list-cta-label');
+  if(l)return l;
+  if(entity==='trips'||entity==='buses'||entity==='bus')return 'Select This Bus';
+  if(entity==='products'||entity==='items')return 'View details';
+  return 'Book Now';
+}
+window.__wcLiveRows=window.__wcLiveRows||{};
+function renderLiveList(box,rows,entity){
+  window.__wcLiveRows[entity]=rows;
+  if(!rows||!rows.length){
+    box.innerHTML='<p class="wc-live-empty" style="color:#64748b;text-align:center;padding:1.25rem .5rem;">'
+      +'No '+escH(entity)+' are published yet - the team adds them from the admin panel.</p>';
+    return;
+  }
+  var limit=parseInt(box.getAttribute('data-wc-list-limit')||'12',10)||12;
+  var h='';
+  rows.slice(0,limit).forEach(function(r,idx){
+    var meta=liveMetaParts(r).map(escH).join(' &bull; ');
+    var seats=liveSeats(r);
+    var price=livePrice(r);
+    h+='<article class="wc-live-card trip-card" data-wc-list-row data-wc-entity="'+escH(entity)+'" data-wc-index="'+idx+'"'
+      +' style="display:flex;justify-content:space-between;align-items:center;gap:1.25rem;flex-wrap:wrap;padding:1rem 1.15rem;border:1px solid #e2e8f0;border-radius:14px;background:#fff;margin-bottom:.85rem;">'
+      +'<div class="wc-live-info trip-info" style="display:flex;justify-content:space-between;gap:1rem;flex:1 1 320px;min-width:0;">'
+      +'<div style="min-width:0;"><div class="wc-live-title trip-time" style="font-size:1.12rem;font-weight:800;color:#0f172a;">'+escH(liveTitle(r,entity))+'</div>'
+      +(meta?'<div class="wc-live-meta trip-meta" style="color:#64748b;font-size:.9rem;margin-top:.15rem;">'+meta+'</div>':'')
+      +'</div>'
+      +(seats!==''?'<div class="wc-live-seats trip-meta" style="color:#64748b;font-size:.9rem;white-space:nowrap;">'+escH(seats)+' seats available</div>':'')
+      +'</div>'
+      +'<div class="wc-live-side" style="display:flex;align-items:center;gap:1.25rem;">'
+      +(price!==''?'<div class="wc-live-price trip-price" style="font-size:1.25rem;font-weight:800;color:#1d4ed8;">'+escH(price)+'</div>':'')
+      +'<button type="button" class="btn btn-primary wc-live-cta" data-wc-list-cta style="cursor:pointer;">'+escH(liveCtaLabel(entity,box))+'</button>'
+      +'</div></article>';
+  });
+  box.innerHTML=h;
+}
+// Selecting a live row: the page may own the booking flow, so we announce it
+// first (wc:list-select). When the page does not handle it we fall back to
+// the page's own search form so the customer lands in the seat flow.
+function liveFallbackSelect(entity,rec){
+  var forms=document.querySelectorAll('form[data-wc-search]');
+  var form=null,best=-1;
+  for(var i=0;i<forms.length;i++){
+    var f=forms[i];
+    if((f.getAttribute('data-wc-search')||'').toLowerCase()!==entity)continue;
+    var score=0;
+    var tid=(f.getAttribute('data-wc-target')||'');
+    var fid=(f.id||'');
+    if(/bus|trip/i.test(fid))score+=10;
+    if(/bus|trip/i.test(tid))score+=10;
+    try{var tgt=tid?document.querySelector(tid):null;if(tgt&&tgt.closest&&(tgt.closest('[data-wc-step]')||tgt.closest('#booking')))score+=20;}catch(e){}
+    if(score>best){best=score;form=f;}
+  }
+  if(!form)form=forms[0];
+  if(!form){
+    if(window.WCBiz&&typeof window.WCBiz.gotoStep==='function')window.WCBiz.gotoStep('seats');
+    return;
+  }
+  var route=String(liveField(rec,['route','origin','from','title','name'])||'');
+  var dest=String(liveField(rec,['destination','to'])||'');
+  var date=String(liveField(rec,['date','departure_date','trip_date'])||'');
+  var set=function(name,val){
+    if(!val)return;
+    var el=form.querySelector('[name="'+name+'"]');
+    if(el){try{el.value=val;}catch(e){}}
+  };
+  set('route',route);set('origin',route);set('from',route);
+  set('destination',dest);set('to',dest);
+  set('date',date);set('travel_date',date);
+  var btn=form.querySelector('button[type=submit],input[type=submit]');
+  try{ if(btn)btn.click(); else if(form.requestSubmit)form.requestSubmit(); }catch(e){}
+  var tries=0;
+  var tick=function(){
+    tries++;
+    // Only a PAGE-OWNED select button (the page renders its own trip cards);
+    // never our own live-list CTA (that would loop).
+    var b=null;
+    var lists=document.querySelectorAll('[data-wc-results]');
+    for(var i=0;i<lists.length;i++){
+      b=lists[i].querySelector('.bus-trip-option button,[data-wc-trip-select]');
+      if(b)break;
+    }
+    if(b){try{b.click();}catch(e){}return;}
+    if(tries<12)setTimeout(tick,400);
+  };
+  setTimeout(tick,700);
+}
+function liveSelect(entity,rec){
+  var handled=false;
+  try{
+    var ev=new CustomEvent('wc:list-select',{detail:{entity:entity,record:rec},cancelable:true,bubbles:true});
+    document.dispatchEvent(ev);
+    handled=ev.defaultPrevented;
+  }catch(e){handled=false;}
+  if(!handled)liveFallbackSelect(entity,rec);
+}
+// 1) Hardcoded "demo" blocks (fake trip cards + their note) become live lists.
+document.querySelectorAll('[id^="demo-"]').forEach(function(demo){
+  var entity=(demo.id||'').replace(/^demo-/,'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  demo.querySelectorAll('[data-demo-trip],.trip-card,.demo-card').forEach(function(fake){fake.remove();});
+  if(demo.querySelector('[data-wc-list]'))return;
+  var box=document.createElement('div');
+  box.setAttribute('data-wc-list',entity);
+  box.setAttribute('data-wc-list-limit','8');
+  box.setAttribute('data-wc-list-cta','book');
+  demo.appendChild(box);
+});
+// 2) The "demo schedule" note becomes an honest live-data note.
+document.querySelectorAll('p,small,span,div').forEach(function(el){
+  if(el.children&&el.children.length)return;
+  var t=el.textContent||'';
+  if(t.length>160)return;
+  if(/demo schedule|demo trips?|sample schedule|demo rows/i.test(t)&&t.indexOf('Live schedule')<0){
+    el.textContent='Live schedule - updated from the admin panel.';
+  }
+});
+// 3) Render every live list.
+document.querySelectorAll('[data-wc-list]').forEach(function(box){
+  var entity=(box.getAttribute('data-wc-list')||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!entity)return;
+  box.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,parseFilterAttr(box)).then(function(j){
+    if(j&&j.success)renderLiveList(box,j.data||[],entity);
+    else box.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){box.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+});
+// 4) The select button on a live card.
+document.addEventListener('click',function(e){
+  var btn=(e.target&&e.target.closest)?e.target.closest('[data-wc-list-cta]'):null;
+  if(!btn)return;
+  var card=btn.closest('[data-wc-list-row]');
+  if(!card)return;
+  e.preventDefault();
+  var entity=card.getAttribute('data-wc-entity')||'';
+  var idx=parseInt(card.getAttribute('data-wc-index')||'0',10)||0;
+  var rows=window.__wcLiveRows[entity]||[];
+  if(rows[idx])liveSelect(entity,rows[idx]);
+});
+// 5) A page that paints hardcoded rows on submit gets them replaced by the
+//    live rows (registered on DOMContentLoaded so it runs after the page's
+//    own submit handler).
+function liveCleanFakeResults(root){
+  if(!root||!root.querySelector)return false;
+  var fake=root.querySelector('[data-demo-trip]');
+  if(!fake)return false;
+  var form=document.querySelector('form[data-wc-search]');
+  var entity=form?(form.getAttribute('data-wc-search')||'trips').toLowerCase().replace(/[^a-z0-9_]/g,''):'trips';
+  var filters={};
+  if(form){try{new FormData(form).forEach(function(v,k){v=String(v).trim();if(v&&k!=='company')filters[k]=v;});}catch(e){}}
+  root.innerHTML='<p style="color:#64748b">Loading...</p>';
+  catalogQuery(entity,filters).then(function(j){
+    if(j&&j.success)renderLiveList(root,j.data||[],entity);
+    else root.innerHTML='<p style="color:#b91c1c">Could not load. Please refresh.</p>';
+  }).catch(function(){root.innerHTML='<p style="color:#b91c1c">Network error. Please refresh.</p>';});
+  return true;
+}
+function liveWatchResults(){
+  document.querySelectorAll('form[data-wc-search]').forEach(function(f){
+    f.addEventListener('submit',function(e){
+      var target=document.querySelector(f.getAttribute('data-wc-target')||'[data-wc-results]');
+      if(!target)return;
+      if(liveCleanFakeResults(target))e.preventDefault();
+    });
+  });
+  document.querySelectorAll('[data-wc-results]').forEach(function(box){
+    if(!window.MutationObserver)return;
+    var mo=new MutationObserver(function(){
+      if(box.querySelector('[data-demo-trip]'))liveCleanFakeResults(box);
+    });
+    try{mo.observe(box,{childList:true,subtree:true});}catch(e){}
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',liveWatchResults);
+else liveWatchResults();
 // Booking: seat hold -> confirm -> QR ticket -> cancel (bus reference workflow)
 // Step navigation + QR + ticket lookup share one helper set so every
 // generated page behaves the same without custom scroll/QR code.
@@ -834,6 +1097,12 @@ JS;
 function business_runtime_inject(string $html, array $spec, string $slug): string {
     // Strip AI-generated mock backends before anything else touches the HTML.
     $html = wc_neutralize_mock_wcbiz($html);
+
+    // The schedule is LIVE data (admin-managed rows) - the old demo note and
+    // demo markers must not survive in the shipped HTML.
+    $html = preg_replace('/Demo schedule\s*[-\x{2013}\x{2014}:]?\s*admin confirms live trips after publish\.?/iu', 'Live schedule - updated from the admin panel.', $html);
+    $html = preg_replace('/<!--\s*Demo Schedule Fallback\s*-->/i', '<!-- Live schedule: rows are rendered from the database -->', $html);
+    $html = preg_replace('/Demo schedule(?![a-z])/i', 'Live schedule', $html);
 
     $isBus = wc_business_requires_bus_booking($spec);
     if ($isBus) {

@@ -159,11 +159,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             }
             $email = strtolower(trim((string)($_POST['email'] ?? '')));
             $password = (string)($_POST['password'] ?? '');
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                throw new InvalidArgumentException('Enter a valid email address.');
-            }
-            if (in_array($action, ['register', 'login'], true) && $password === '') {
-                throw new InvalidArgumentException('Enter your password.');
+            // Only sign in / sign up need the typed credentials. Session
+            // actions (profile, cancel) use the signed-in identity - asking
+            // for the email again made every customer cancel fail.
+            if (in_array($action, ['register', 'login'], true)) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new InvalidArgumentException('Enter a valid email address.');
+                }
+                if ($password === '') {
+                    throw new InvalidArgumentException('Enter your password.');
+                }
             }
             if ($action === 'register') {
                 $name = trim((string)($_POST['name'] ?? ''));
@@ -195,7 +200,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 // Mirror customer into customers collection & admin data
                 try {
                     $custRecord = [
-                        'id' => 'cust_' . substr(md5($email), 0, 12),
+                        'id' => function_exists('bops_customer_record_id') ? bops_customer_record_id($email, $phone) : ('cust_' . substr(md5($email), 0, 12)),
                         'name' => $name,
                         'email' => $email,
                         'phone' => $phone,
@@ -477,7 +482,7 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
           <p class="empty">No upcoming trips. <a href="index.html">Book a journey</a>.</p>
         <?php else: foreach ($upcomingBookings as $booking):
             $booking = function_exists('bops_booking_view') ? bops_booking_view($booking) : $booking;
-            $seats = $booking['seats'] ?? [];
+            $seats = $booking['seats_display'] ?? ($booking['seats'] ?? []);
             if (!is_array($seats)) $seats = preg_split('/[\s,;|]+/', (string)$seats, -1, PREG_SPLIT_NO_EMPTY);
             $route = trim((string)($booking['route'] ?? ''));
             $tripLine = $route !== '' ? $route : (string)($booking['trip_id'] ?? 'Trip');
@@ -536,7 +541,7 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
           <p class="empty">No bookings are linked to this email yet. Book a journey using <?= $esc($user['email']) ?> and it will appear here.</p>
         <?php else: foreach ($bookings as $booking):
             $booking = function_exists('bops_booking_view') ? bops_booking_view($booking) : $booking;
-            $seats = $booking['seats'] ?? [];
+            $seats = $booking['seats_display'] ?? ($booking['seats'] ?? []);
             if (!is_array($seats)) $seats = preg_split('/[\s,;|]+/', (string)$seats, -1, PREG_SPLIT_NO_EMPTY);
             $route = trim((string)($booking['route'] ?? ''));
             $tripLine = $route !== '' ? $route : (string)($booking['trip_id'] ?? 'Trip');

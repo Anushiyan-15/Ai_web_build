@@ -1075,8 +1075,8 @@ if (\$__extra > 0) {
 \$__sysKeys = ['id' => true, 'created_at' => true, 'updated_at' => true, 'idempotency_key' => true];
 \$__fieldNames = [];
 foreach (\$activeEntity['fields'] ?? [] as \$__ff) { \$__fieldNames[(string)(\$__ff['name'] ?? '')] = true; }
-\$__isBusBookingManager = \$activeEntityId === 'bookings'
-    && isset(\$__fieldNames['trip_id']) && isset(\$__fieldNames['seats']);
+\$__isBusBookingManager = isset(\$__fieldNames['trip_id']) && isset(\$__fieldNames['seats']);
+\$__isTripEntity = isset(\$__fieldNames['route']) && isset(\$__fieldNames['total_seats']);
 \$__isBusPaymentLedger = \$activeEntityId === 'payments'
     && isset(\$__fieldNames['payment_id']) && isset(\$__fieldNames['booking_ref']);
 \$__isBusLifecycleEntity = false; // Full CRUD enabled for all entities without lifecycle locks
@@ -1161,9 +1161,9 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Edit preserves keys the form does not render (ref, payment, seats,
         // ...); only known fields are overwritten. Nothing is ever dropped.
-        \$newId = (\$activeEntityId === 'trips')
+        \$newId = (\$__isTripEntity)
             ? 'TRIP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)))
-            : ((\$activeEntityId === 'bookings')
+            : (\$__isBusBookingManager
                 ? 'BK-' . strtoupper(bin2hex(random_bytes(4)))
                 : (string)time());
         \$base = ['id' => \$isEdit ? \$id : \$newId];
@@ -1182,7 +1182,7 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
                 \$item[\$fname] = \$base[\$fname] ?? '';
             }
         }
-        if (\$activeEntityId === 'bookings' && empty(\$item['ref'])) {
+        if (\$__isBusBookingManager && empty(\$item['ref'])) {
             \$item['ref'] = 'BK-' . strtoupper(bin2hex(random_bytes(4)));
         }
 
@@ -1274,7 +1274,7 @@ renderAdminHeader('manage', 'Manage Data');
   <?php if (empty(\$records)): ?>
     <div style="text-align:center;padding:3rem 1rem;color:#64748b">
       <div style="font-size:2rem;margin-bottom:.5rem">📂</div>
-      <p><?= \$__isBusPaymentLedger ? 'No received payments have been recorded yet.' : (\$__isBusBookingManager ? 'Customer bookings will appear here after they submit a ticket request.' : 'No records found yet. Click <strong>+ Add New</strong> above to create your first entry.') ?></p>
+      <p><?= \$__isBusPaymentLedger ? 'No received payments have been recorded yet.' : (\$__isBusBookingManager ? 'Customer requests will appear here after they submit a request.' : 'No records found yet. Click <strong>+ Add New</strong> above to create your first entry.') ?></p>
     </div>
   <?php else: ?>
     <div style="overflow-x:auto">
@@ -1303,8 +1303,8 @@ renderAdminHeader('manage', 'Manage Data');
               <td style="text-align:right;white-space:nowrap">
                 <?php if (\$__isBusBookingManager && in_array((string)(\$row['status'] ?? 'pending'), ['pending', 'approved'], true)): ?>
                   <?php if ((\$row['status'] ?? 'pending') === 'pending'): ?>
-                    <button type="button" class="btn btn-primary" style="padding:.35rem .6rem;font-size:.76rem;margin-right:.25rem" onclick='wcBookingStatus(<?= json_encode((string)(\$row['id'] ?? '')) ?>,"approved")'>Approve</button>
-                    <button type="button" class="btn btn-danger" style="padding:.35rem .6rem;font-size:.76rem;margin-right:.25rem" onclick='wcBookingStatus(<?= json_encode((string)(\$row['id'] ?? '')) ?>,"rejected")'>Reject</button>
+                    <button type="button" class="btn btn-primary" style="padding:.35rem .6rem;font-size:.76rem;margin-right:.25rem" onclick='wcRecordStatus(<?= json_encode((string)(\$row['id'] ?? '')) ?>,"approved")'>Approve</button>
+                    <button type="button" class="btn btn-danger" style="padding:.35rem .6rem;font-size:.76rem;margin-right:.25rem" onclick='wcRecordStatus(<?= json_encode((string)(\$row['id'] ?? '')) ?>,"rejected")'>Reject</button>
                   <?php endif; ?>
                 <?php endif; ?>
                 <?php if (!\$__isBusLifecycleEntity): ?><button type="button" class="btn btn-ghost" style="padding:.35rem .75rem;font-size:.78rem;margin-right:.4rem"
@@ -1394,9 +1394,9 @@ function wcOps(payload) {
     return data;
   });
 }
-function wcBookingStatus(id, status) {
+function wcRecordStatus(id, status) {
   if (!confirm('Set this booking to ' + status + '?')) return;
-  wcOps({action:'update', entity:'bookings', id:id, patch:{status:status}})
+  wcOps({action:'update', entity:WC_ACTIVE_ENTITY, id:id, patch:{status:status}})
     .then(function(data) {
       const notice = data.notification || {};
       const mail = notice.status === 'queued' ? 'Customer status notification queued.'
@@ -1435,7 +1435,7 @@ document.getElementById('wc-payment-lookup').addEventListener('click', function(
   document.getElementById('wc-payment-submit').disabled = true;
   if (!ref) { out.textContent = 'Enter a ticket reference first.'; return; }
   out.textContent = 'Loading fare…';
-  wcOps({action:'payment_quote', entity:'bookings', ref:ref})
+  wcOps({action:'payment_quote', entity:WC_ACTIVE_ENTITY, ref:ref})
     .then(function(result) {
       wcPaymentQuote = result.data;
       out.textContent = result.data.ref + ' · ' + (result.data.passenger || 'Customer') + ' · '
@@ -1452,7 +1452,7 @@ document.getElementById('wc-payment-form').addEventListener('submit', function(e
   const method = document.getElementById('wc-payment-method').value;
   const submit = document.getElementById('wc-payment-submit');
   submit.disabled = true;
-  wcOps({action:'pay', entity:'bookings', ref:wcPaymentQuote.ref, method:method})
+  wcOps({action:'pay', entity:WC_ACTIVE_ENTITY, ref:wcPaymentQuote.ref, method:method})
     .then(function(result) {
       const payment = result.payment || {};
       document.getElementById('wc-payment-quote').textContent = 'Payment saved: '

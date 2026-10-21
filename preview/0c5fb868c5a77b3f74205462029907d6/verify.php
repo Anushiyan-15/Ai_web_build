@@ -79,7 +79,7 @@ $verdictLabel = $verdict !== '' ? $statusLabel($verdict) : '';
   <?php elseif ($ref !== '' && ($ticket || $limited)): ?>
     <p><span class="verdict <?= $esc(strtolower(preg_replace('/[^a-z-]/', '', $verdict))) ?>"><?= $esc($verdictLabel) ?></span></p>
     <?php if (is_array($ticket)): ?>
-      <?php $seats = $ticket['seats'] ?? []; if (!is_array($seats)) $seats = [$seats]; ?>
+      <?php $seats = $ticket['seats_display'] ?? ($ticket['seats'] ?? []); if (!is_array($seats)) $seats = [$seats]; ?>
       <dl>
         <dt>Reference</dt><dd><?= $esc($ticket['ref'] ?? $ref) ?></dd>
         <dt>Passenger</dt><dd><?= $esc($ticket['passenger'] ?? '') ?></dd>
@@ -90,7 +90,7 @@ $verdictLabel = $verdict !== '' ? $statusLabel($verdict) : '';
         <dt>Payment</dt><dd><?= $esc($statusLabel($ticket['payment_status'] ?? 'unpaid')) ?></dd>
       </dl>
     <?php elseif (is_array($limited)): ?>
-      <?php $seats = $limited['seats'] ?? []; if (!is_array($seats)) $seats = [$seats]; ?>
+      <?php $seats = $limited['seats_display'] ?? ($limited['seats'] ?? []); if (!is_array($seats)) $seats = [$seats]; ?>
       <dl>
         <dt>Reference</dt><dd><?= $esc($limited['ref'] ?? $ref) ?></dd>
         <dt>Route</dt><dd><?= $esc($limited['route'] ?? '') ?></dd>

@@ -18,11 +18,8 @@ $isBusBookingPage = $ENTITY === 'bookings'
     && in_array('trip_id', $fieldKeys, true) && in_array('seats', $fieldKeys, true);
 $isBusPaymentsPage = $ENTITY === 'payments'
     && in_array('payment_id', $fieldKeys, true) && in_array('booking_ref', $fieldKeys, true);
-$isBusLifecyclePage = $isBusBookingPage || $isBusPaymentsPage;
-$editableFields = $isBusBookingPage
-    ? array_values(array_filter($fields, static fn($field) =>
-        !in_array((string)($field['name'] ?? ''), ['status', 'payment_status', 'payment_id', 'amount'], true)))
-    : $fields;
+$isBusLifecyclePage = false; // Lifecycle locks removed: admin has full CRUD capability
+$editableFields = $fields;
 $flash = '';
 $flashErr = '';
 if (isset($_GET['flash'])) {
@@ -61,10 +58,7 @@ function ent_validate(array $fields, array $input, &$clean, &$err): bool {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_validate();
     $action = (string)($_POST['action'] ?? '');
-    if ($isBusLifecyclePage) {
-        http_response_code(403);
-        exit('Bus booking and payment records can only be changed through their lifecycle actions.');
-    } elseif ($action === 'save') {
+    if ($action === 'save') {
         $id = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($_POST['id'] ?? ''));
         if (ent_validate($editableFields, $_POST, $clean, $err)) {
             if ($id !== '') {
@@ -109,7 +103,9 @@ if (!function_exists('bus_booking_cell')) {
             return '—';
         }
         if ($field === 'seats') {
-            foreach (['seats','seat_numbers','seatNumbers','seat','seats_string','selected_seats'] as $k) {
+            // seats_display = the label the customer actually clicked
+            // (e.g. "6C"); seats = canonical fleet seat (e.g. "F3").
+            foreach (['seats_display','seats','seat_numbers','seatNumbers','seat','seats_string','selected_seats'] as $k) {
                 if (!array_key_exists($k, $row) || $row[$k] === '' || $row[$k] === null) continue;
                 $v = $row[$k];
                 if (is_array($v)) { $s = implode(', ', array_slice(array_map('strval', $v), 0, 8)); if ($s !== '') return $s; }
@@ -218,6 +214,69 @@ header_html('ent_' . $ENTITY, $LABEL);
       <a class="btn btn-ghost" href="<?= $ENTITY ?>.php">Cancel</a>
     </div>
   </form>
+</div>
+<?php endif; ?>
+
+<?php if ($ENTITY === 'customers' && $editRow !== null): ?>
+<?php
+  $custEmail = strtolower(trim((string)($editRow['email'] ?? '')));
+  $custPhone = trim((string)($editRow['phone'] ?? ''));
+  $custBookings = [];
+  $custSpent = 0.0;
+  foreach (db_read('bookings') as $b) {
+    if (!is_array($b)) continue;
+    $bEmail = strtolower(trim((string)($b['email'] ?? '')));
+    $bPhone = trim((string)($b['phone'] ?? ''));
+    if (($custEmail !== '' && $bEmail === $custEmail) || ($custPhone !== '' && $bPhone === $custPhone)) {
+      $custBookings[] = $b;
+      $custSpent += (float)($b['amount'] ?? 0);
+    }
+  }
+?>
+<div class="card">
+  <h2 style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:1rem">👤 Customer details</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem;margin-bottom:1.25rem">
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">BOOKINGS</div>
+      <div style="color:#fff;font-size:1.4rem;font-weight:800"><?= count($custBookings) ?></div>
+    </div>
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">TOTAL SPENT</div>
+      <div style="color:#fff;font-size:1.4rem;font-weight:800"><?= htmlspecialchars(number_format($custSpent, 2)) ?></div>
+    </div>
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">MEMBER SINCE</div>
+      <div style="color:#fff;font-size:.95rem;font-weight:800"><?= htmlspecialchars(substr((string)($editRow['created_at'] ?? ''), 0, 10)) ?: '—' ?></div>
+    </div>
+    <div style="border:1px solid #263244;border-radius:10px;padding:.8rem">
+      <div style="color:#64748b;font-size:.72rem;font-weight:700">STATUS</div>
+      <div style="color:#fff;font-size:.95rem;font-weight:800"><?= htmlspecialchars((string)($editRow['status'] ?? 'active')) ?></div>
+    </div>
+  </div>
+  <?php if (!$custBookings): ?>
+    <p style="color:#64748b;font-size:.85rem">No bookings recorded for this customer yet.</p>
+  <?php else: ?>
+  <div style="overflow-x:auto"><table>
+    <thead><tr><th>Ref</th><th>Trip</th><th>Route</th><th>Date</th><th>Seats</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    <?php foreach ($custBookings as $b):
+      $bSeats = $b['seats_display'] ?? ($b['seats'] ?? []);
+      if (!is_array($bSeats)) $bSeats = preg_split('/[\s,;|]+/', (string)$bSeats, -1, PREG_SPLIT_NO_EMPTY);
+    ?>
+      <tr>
+        <td><?= htmlspecialchars((string)($b['ref'] ?? $b['id'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['trip_id'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['route'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['trip_date'] ?? '')) ?></td>
+        <td><?= htmlspecialchars(implode(', ', array_map('strval', $bSeats))) ?></td>
+        <td><?= htmlspecialchars((string)($b['amount'] ?? '')) ?></td>
+        <td><?= htmlspecialchars((string)($b['status'] ?? '')) ?></td>
+        <td><a class="btn btn-ghost" style="padding:.3rem .6rem;font-size:.75rem" href="bookings.php?edit=<?= urlencode((string)($b['id'] ?? '')) ?>">Open</a></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table></div>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 

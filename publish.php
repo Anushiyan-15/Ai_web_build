@@ -624,6 +624,12 @@ if (($_GET['action'] ?? '') === 'do_publish') {
             $siteHtml = business_runtime_inject($siteHtml, $runtimeSpec, $slug);
         }
     }
+    // 1a3. Write the live page itself. The order HTML was fully prepared
+    // above (contact wiring, form wiring, safety net, real runtime) - it has
+    // to land on disk or the published URL is empty.
+    if (trim((string)$siteHtml) !== '' && stripos($siteHtml, '</html>') !== false) {
+        file_put_contents($targetDir . '/index.html', $siteHtml);
+    }
     $isBusSite = (stripos($siteHtml, 'data-wc-live-bus-booking') !== false || (isset($runtimeSpec) && is_array($runtimeSpec) && wc_business_requires_bus_booking($runtimeSpec)));
     if ($isBusSite && !copy(__DIR__ . '/includes/templates/bus-customer-portal.php', $targetDir . '/customer.php')) {
         throw new RuntimeException('Unable to create the generated bus customer portal.');

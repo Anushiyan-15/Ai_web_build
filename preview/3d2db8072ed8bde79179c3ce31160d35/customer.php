@@ -12,10 +12,8 @@ if ($slug === '') {
 }
 
 $sessionKey = 'bus_customer_' . $slug;
-$pendingRegistrationKey = 'bus_customer_registration_' . $slug;
 $accountDir = bops_root() . '/collections/' . $slug;
 $accountFile = $accountDir . '/customer_accounts.json';
-$verificationFile = $accountDir . '/customer_verifications.json';
 $esc = static fn($value) => htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 $readAccounts = static function () use ($accountFile): array {
     if (!is_file($accountFile)) return [];
@@ -89,75 +87,9 @@ if (is_file($metaFile)) {
 $csrfKey = 'bus_customer_csrf_' . $slug;
 if (empty($_SESSION[$csrfKey])) $_SESSION[$csrfKey] = bin2hex(random_bytes(32));
 $csrf = (string)$_SESSION[$csrfKey];
-$requestVerification = static function (string $email) use ($updateVerifications, $projectRoot, $siteName): array {
-    $verificationKey = hash('sha256', $email);
-    $issued = $updateVerifications(static function (array &$verifications) use ($verificationKey): array {
-        $now = time();
-        $record = $verifications[$verificationKey] ?? [];
-        if (!empty($record['sent_at']) && $now - (int)$record['sent_at'] < 60) {
-            return ['success' => false, 'error' => 'A verification code was recently sent. Wait one minute before trying again.'];
-        }
-        $sendTimes = array_values(array_filter((array)($record['send_times'] ?? []), static fn($sentAt) => $now - (int)$sentAt < 3600));
-        if (count($sendTimes) >= 5) {
-            return ['success' => false, 'error' => 'Too many verification codes were requested. Try again in an hour.'];
-        }
-        $code = (string)random_int(100000, 999999);
-        $verifications[$verificationKey] = [
-            'code_hash' => password_hash($code, PASSWORD_DEFAULT),
-            'expires_at' => $now + 600,
-            'attempts' => 0,
-            'sent_at' => $now,
-            'send_times' => array_merge($sendTimes, [$now]),
-        ];
-        return ['success' => true, 'code' => $code];
-    });
-    if (empty($issued['success'])) return $issued;
-
-    require_once $projectRoot . '/includes/Mailer.php';
-    $safeSiteName = htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8');
-    $code = (string)$issued['code'];
-    $sent = Mailer::send(
-        $email,
-        'Verify your email for ' . $siteName,
-        '<p>Use this code to activate your customer account for <strong>' . $safeSiteName
-            . '</strong>. It expires in 10 minutes.</p><p style="font:700 28px monospace;letter-spacing:.25em">'
-            . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '</p>',
-        'Your ' . $siteName . ' verification code is ' . $code . '. It expires in 10 minutes.'
-    );
-    if (empty($sent['success'])) {
-        error_log('[bus customer portal] verification email failed: ' . (string)($sent['error'] ?? 'unknown error'));
-        return ['success' => true, 'dev_code' => $code];
-    }
-    return ['success' => true];
-};
-$verifyRegistration = static function (string $email, string $code) use ($updateVerifications): array {
-    $verificationKey = hash('sha256', $email);
-    return $updateVerifications(static function (array &$verifications) use ($verificationKey, $code): array {
-        $record = $verifications[$verificationKey] ?? null;
-        if (!is_array($record)) return ['success' => false, 'error' => 'No verification code found. Request a new one.'];
-        if (time() > (int)($record['expires_at'] ?? 0)) {
-            unset($record['code_hash'], $record['expires_at'], $record['attempts']);
-            $verifications[$verificationKey] = $record;
-            return ['success' => false, 'error' => 'The verification code expired. Request a new one.'];
-        }
-        if ((int)($record['attempts'] ?? 0) >= 5) {
-            unset($record['code_hash'], $record['expires_at'], $record['attempts']);
-            $verifications[$verificationKey] = $record;
-            return ['success' => false, 'error' => 'Too many incorrect codes. Request a new one.'];
-        }
-        if (!preg_match('/^\d{6}$/', $code) || !password_verify($code, (string)($record['code_hash'] ?? ''))) {
-            $record['attempts'] = (int)($record['attempts'] ?? 0) + 1;
-            $verifications[$verificationKey] = $record;
-            return ['success' => false, 'error' => 'The verification code is incorrect.'];
-        }
-        unset($verifications[$verificationKey]);
-        return ['success' => true];
-    });
-};
 $notice = '';
 $noticeType = 'error';
 $mode = (string)($_GET['mode'] ?? 'login') === 'register' ? 'register' : 'login';
-if (!empty($_SESSION[$pendingRegistrationKey])) $mode = 'verify';
 // Login-attempt protection: 5 failures per email+IP per 15 minutes.
 $loginAttemptsFile = $accountDir . '/customer_login_attempts.json';
 $loginRateLimited = static function (string $email) use ($loginAttemptsFile): bool {
@@ -227,11 +159,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             }
             $email = strtolower(trim((string)($_POST['email'] ?? '')));
             $password = (string)($_POST['password'] ?? '');
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                throw new InvalidArgumentException('Enter a valid email address.');
-            }
-            if (in_array($action, ['register', 'login'], true) && $password === '') {
-                throw new InvalidArgumentException('Enter your password.');
+            // Only sign in / sign up need the typed credentials. Session
+            // actions (profile, cancel) use the signed-in identity - asking
+            // for the email again made every customer cancel fail.
+            if (in_array($action, ['register', 'login'], true)) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new InvalidArgumentException('Enter a valid email address.');
+                }
+                if ($password === '') {
+                    throw new InvalidArgumentException('Enter your password.');
+                }
             }
             if ($action === 'register') {
                 $name = trim((string)($_POST['name'] ?? ''));
@@ -243,76 +180,54 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         throw new InvalidArgumentException('An account already exists for this email. Sign in instead.');
                     }
                 }
-                $sent = $requestVerification($email);
-                if (empty($sent['success'])) throw new InvalidArgumentException((string)($sent['error'] ?? 'Unable to send verification code.'));
-                $_SESSION[$pendingRegistrationKey] = [
-                    'name' => $name,
-                    'email' => $email,
-                    'phone' => $phone,
-                    'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                    'expires_at' => time() + 600,
-                ];
-                $mode = 'verify';
-                $notice = 'A verification code was sent to your email address. Enter it below to activate your account.' . (!empty($sent['dev_code']) ? ' (Verification code: <strong>' . htmlspecialchars($sent['dev_code']) . '</strong>)' : '');
-                $noticeType = 'success';
-            } elseif ($action === 'resend_register') {
-                $pending = $_SESSION[$pendingRegistrationKey] ?? null;
-                if (!is_array($pending) || strtolower((string)($pending['email'] ?? '')) !== $email) {
-                    unset($_SESSION[$pendingRegistrationKey]);
-                    throw new InvalidArgumentException('Your registration session expired. Start again.');
-                }
-                if (time() > (int)($pending['expires_at'] ?? 0)) {
-                    unset($_SESSION[$pendingRegistrationKey]);
-                    throw new InvalidArgumentException('Your registration expired. Start again.');
-                }
-                $sent = $requestVerification($email);
-                if (empty($sent['success'])) throw new InvalidArgumentException((string)($sent['error'] ?? 'Unable to send verification code.'));
-                $mode = 'verify';
-                $notice = 'A new verification code was sent to your email address.' . (!empty($sent['dev_code']) ? ' (Verification code: <strong>' . htmlspecialchars($sent['dev_code']) . '</strong>)' : '');
-                $noticeType = 'success';
-            } elseif ($action === 'verify_register') {
-                $pending = $_SESSION[$pendingRegistrationKey] ?? null;
-                if (!is_array($pending) || strtolower((string)($pending['email'] ?? '')) !== $email) {
-                    unset($_SESSION[$pendingRegistrationKey]);
-                    throw new InvalidArgumentException('Your registration session expired. Start again.');
-                }
-                if (time() > (int)($pending['expires_at'] ?? 0)) {
-                    unset($_SESSION[$pendingRegistrationKey]);
-                    throw new InvalidArgumentException('Your registration expired. Start again.');
-                }
-                $verified = $verifyRegistration($email, (string)($_POST['code'] ?? ''));
-                if (empty($verified['success'])) {
-                    $mode = 'verify';
-                    throw new InvalidArgumentException((string)($verified['error'] ?? 'Unable to verify this code.'));
-                }
-                $account = $updateAccounts(static function (array &$accounts) use ($pending): array {
+                $account = $updateAccounts(static function (array &$accounts) use ($name, $email, $phone, $password): array {
                     foreach ($accounts as $existing) {
-                        if (is_array($existing) && strtolower((string)($existing['email'] ?? '')) === strtolower((string)$pending['email'])) {
+                        if (is_array($existing) && strtolower((string)($existing['email'] ?? '')) === $email) {
                             throw new InvalidArgumentException('An account already exists for this email. Sign in instead.');
                         }
                     }
                     $created = [
-                        'name' => (string)$pending['name'],
-                        'email' => (string)$pending['email'],
-                        'phone' => (string)$pending['phone'],
-                        'password_hash' => (string)$pending['password_hash'],
-                        'email_verified_at' => date('c'),
+                        'name' => $name,
+                        'email' => $email,
+                        'phone' => $phone,
+                        'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                         'created_at' => date('c'),
                     ];
                     $accounts[] = $created;
                     return $created;
                 });
-                unset($_SESSION[$pendingRegistrationKey]);
+
+                // Mirror customer into customers collection & admin data
+                try {
+                    $custRecord = [
+                        'id' => function_exists('bops_customer_record_id') ? bops_customer_record_id($email, $phone) : ('cust_' . substr(md5($email), 0, 12)),
+                        'name' => $name,
+                        'email' => $email,
+                        'phone' => $phone,
+                        'status' => 'active',
+                        'created_at' => date('c'),
+                        'updated_at' => date('c'),
+                    ];
+                    if (function_exists('bops_transact')) {
+                        bops_transact($slug, 'customers', function ($rows) use ($custRecord, $email) {
+                            foreach ($rows as $r) {
+                                if (strtolower((string)($r['email'] ?? '')) === $email) return [false, 'Customer exists'];
+                            }
+                            $rows[] = $custRecord;
+                            return [$rows, $custRecord];
+                        });
+                    }
+                    if (function_exists('bops_mirror_admin')) {
+                        bops_mirror_admin($slug, 'customers', $custRecord);
+                    }
+                } catch (\Throwable $e) {}
+
                 session_regenerate_id(true);
-                $_SESSION[$sessionKey] = ['name' => $account['name'], 'email' => $account['email'], 'phone' => $account['phone']];
-                if (function_exists('bops_upsert_customer')) {
-                    bops_upsert_customer($slug, [
-                        'name' => (string)$account['name'],
-                        'email' => (string)$account['email'],
-                        'phone' => (string)$account['phone'],
-                        'status' => 'verified'
-                    ]);
-                }
+                $_SESSION[$sessionKey] = [
+                    'name' => (string)$account['name'],
+                    'email' => (string)$account['email'],
+                    'phone' => (string)($account['phone'] ?? ''),
+                ];
                 header('Location: customer.php');
                 exit;
             }
@@ -395,11 +310,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             throw new InvalidArgumentException('Choose sign in or create account.');
         } catch (InvalidArgumentException $error) {
             $notice = $error->getMessage();
-            if ((string)($_POST['action'] ?? '') === 'register') $mode = 'register';
-            elseif (in_array((string)($_POST['action'] ?? ''), ['verify_register', 'resend_register'], true)) {
-                $mode = !empty($_SESSION[$pendingRegistrationKey]) ? 'verify' : 'register';
-            }
-            else $mode = 'login';
+            $mode = ((string)($_POST['action'] ?? '') === 'register') ? 'register' : 'login';
         } catch (Throwable $error) {
             error_log('[bus customer portal] ' . $error->getMessage());
             $notice = 'We could not access your account right now. Please try again shortly.';
@@ -511,9 +422,9 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
 <main>
   <header class="masthead">
     <div>
-      <p class="eyebrow"><?= $esc($siteName) ?> · Customer service</p>
-      <h1><?= is_array($user) ? 'Your journeys' : ($mode === 'verify' ? 'Verify your email' : ($mode === 'register' ? 'Create your account' : 'Sign in to your account')) ?></h1>
-      <p class="lede"><?= is_array($user) ? 'Your tickets and booking updates, gathered in one place.' : ($mode === 'verify' ? 'Confirm you own this email address before linking it to booking history.' : 'Use an account created for this bus service to view your booking history.') ?></p>
+      <p class="eyebrow"><?= $esc($siteName) ?> Â· Customer service</p>
+      <h1><?= is_array($user) ? 'Your journeys' : ($mode === 'register' ? 'Create your account' : 'Sign in to your account') ?></h1>
+      <p class="lede"><?= is_array($user) ? 'Your tickets and booking updates, gathered in one place.' : ($mode === 'register' ? 'Create an account for this bus service to book and view your booking history.' : 'Use your account for this bus service to view your booking history.') ?></p>
     </div>
     <nav class="mast-actions" aria-label="Customer navigation">
       <a href="index.html">Book a journey</a>
@@ -560,7 +471,7 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
         <?php elseif (!$bookings): ?>
           <p class="empty">No bookings are linked to this email yet. Book a journey using <?= $esc($user['email']) ?> and it will appear here.</p>
         <?php else: ?>
-          <p class="muted">Upcoming: <?= count($upcomingBookings) ?> · History: <?= count($pastBookings) ?> · Paid: <?= $paidCount ?></p>
+          <p class="muted">Upcoming: <?= count($upcomingBookings) ?> Â· History: <?= count($pastBookings) ?> Â· Paid: <?= $paidCount ?></p>
         <?php endif; ?>
       </section>
       <section aria-labelledby="upcoming-heading" style="margin-top:2rem">
@@ -571,13 +482,13 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
           <p class="empty">No upcoming trips. <a href="index.html">Book a journey</a>.</p>
         <?php else: foreach ($upcomingBookings as $booking):
             $booking = function_exists('bops_booking_view') ? bops_booking_view($booking) : $booking;
-            $seats = $booking['seats'] ?? [];
+            $seats = $booking['seats_display'] ?? ($booking['seats'] ?? []);
             if (!is_array($seats)) $seats = preg_split('/[\s,;|]+/', (string)$seats, -1, PREG_SPLIT_NO_EMPTY);
             $route = trim((string)($booking['route'] ?? ''));
             $tripLine = $route !== '' ? $route : (string)($booking['trip_id'] ?? 'Trip');
             $date = (string)($booking['trip_date'] ?? '');
-            if ($date !== '') $tripLine .= ' · ' . $date;
-            if (!empty($booking['departure'])) $tripLine .= ' · ' . (string)$booking['departure'];
+            if ($date !== '') $tripLine .= ' Â· ' . $date;
+            if (!empty($booking['departure'])) $tripLine .= ' Â· ' . (string)$booking['departure'];
             $created = strtotime((string)($booking['created_at'] ?? ''));
             $ref = (string)($booking['ref'] ?? 'Ticket pending');
             $ticketUrl = $ticketVerifyUrl($booking);
@@ -587,9 +498,9 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
               <span class="ref"><?= $esc($ref) ?></span>
               <span class="route"><?= $esc($tripLine) ?></span>
               <div class="booking-meta">
-                <span>Trip <?= $esc($booking['trip_id'] ?? '—') ?></span>
-                <span>Seats <?= $esc(implode(', ', array_map('strval', $seats))) ?: '—' ?></span>
-                <?php if ($created): ?><span><?= $esc(date('M j, Y · H:i', $created)) ?></span><?php endif; ?>
+                <span>Trip <?= $esc($booking['trip_id'] ?? 'â€”') ?></span>
+                <span>Seats <?= $esc(implode(', ', array_map('strval', $seats))) ?: 'â€”' ?></span>
+                <?php if ($created): ?><span><?= $esc(date('M j, Y Â· H:i', $created)) ?></span><?php endif; ?>
               </div>
               <div class="ticket-box" style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.8rem;align-items:center">
                 <div><?= $ticketQrImg($booking) ?></div>
@@ -607,9 +518,9 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
             <span class="status"><?= $esc($statusLabel($booking['status'] ?? 'pending')) ?></span>
             <div class="payment">
               Payment: <?= $esc($statusLabel($booking['payment_status'] ?? 'unpaid')) ?>
-              <?php if (!empty($booking['payment_id'])): ?> · Ref <?= $esc($booking['payment_id']) ?><?php endif; ?>
-              <?php if (isset($booking['pay_amount'])): ?> · <?= $esc($booking['currency'] ?? 'LKR') ?> <?= number_format((float)$booking['pay_amount'], 2) ?> <?= $esc($booking['pay_method'] ?? '') ?><?php endif; ?>
-              <?php if (($booking['payment_status'] ?? 'unpaid') !== 'paid'): ?><span> · Pay at counter or online via the booking page; the operator records receipt.</span><?php endif; ?>
+              <?php if (!empty($booking['payment_id'])): ?> Â· Ref <?= $esc($booking['payment_id']) ?><?php endif; ?>
+              <?php if (isset($booking['pay_amount'])): ?> Â· <?= $esc($booking['currency'] ?? 'LKR') ?> <?= number_format((float)$booking['pay_amount'], 2) ?> <?= $esc($booking['pay_method'] ?? '') ?><?php endif; ?>
+              <?php if (($booking['payment_status'] ?? 'unpaid') !== 'paid'): ?><span> Â· Pay at counter or online via the booking page; the operator records receipt.</span><?php endif; ?>
             </div>
             <?php if (!in_array(strtolower((string)($booking['status'] ?? '')), ['cancelled', 'rejected', 'expired'], true)): ?>
             <form method="post" action="customer.php" onsubmit="return confirm('Cancel this booking? Seats are released immediately.');" style="grid-column:1/-1;margin:.5rem 0 0">
@@ -630,12 +541,12 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
           <p class="empty">No bookings are linked to this email yet. Book a journey using <?= $esc($user['email']) ?> and it will appear here.</p>
         <?php else: foreach ($bookings as $booking):
             $booking = function_exists('bops_booking_view') ? bops_booking_view($booking) : $booking;
-            $seats = $booking['seats'] ?? [];
+            $seats = $booking['seats_display'] ?? ($booking['seats'] ?? []);
             if (!is_array($seats)) $seats = preg_split('/[\s,;|]+/', (string)$seats, -1, PREG_SPLIT_NO_EMPTY);
             $route = trim((string)($booking['route'] ?? ''));
             $tripLine = $route !== '' ? $route : (string)($booking['trip_id'] ?? 'Trip');
             $date = (string)($booking['trip_date'] ?? '');
-            if ($date !== '') $tripLine .= ' · ' . $date;
+            if ($date !== '') $tripLine .= ' Â· ' . $date;
             $created = strtotime((string)($booking['created_at'] ?? ''));
         ?>
           <article class="booking">
@@ -643,16 +554,16 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
               <span class="ref"><?= $esc($booking['ref'] ?? 'Ticket pending') ?></span>
               <span class="route"><?= $esc($tripLine) ?></span>
               <div class="booking-meta">
-                <span>Trip <?= $esc($booking['trip_id'] ?? '—') ?></span>
-                <span>Seats <?= $esc(implode(', ', array_map('strval', $seats))) ?: '—' ?></span>
-                <?php if ($created): ?><span><?= $esc(date('M j, Y · H:i', $created)) ?></span><?php endif; ?>
+                <span>Trip <?= $esc($booking['trip_id'] ?? 'â€”') ?></span>
+                <span>Seats <?= $esc(implode(', ', array_map('strval', $seats))) ?: 'â€”' ?></span>
+                <?php if ($created): ?><span><?= $esc(date('M j, Y Â· H:i', $created)) ?></span><?php endif; ?>
               </div>
             </div>
             <span class="status"><?= $esc($statusLabel($booking['status'] ?? 'pending')) ?></span>
             <div class="payment">
               Payment: <?= $esc($statusLabel($booking['payment_status'] ?? 'unpaid')) ?>
-              <?php if (!empty($booking['payment_id'])): ?> · Ref <?= $esc($booking['payment_id']) ?><?php endif; ?>
-              <?php if (isset($booking['pay_amount'])): ?> · <?= $esc($booking['currency'] ?? 'LKR') ?> <?= number_format((float)$booking['pay_amount'], 2) ?> <?= $esc($booking['pay_method'] ?? '') ?><?php endif; ?>
+              <?php if (!empty($booking['payment_id'])): ?> Â· Ref <?= $esc($booking['payment_id']) ?><?php endif; ?>
+              <?php if (isset($booking['pay_amount'])): ?> Â· <?= $esc($booking['currency'] ?? 'LKR') ?> <?= number_format((float)$booking['pay_amount'], 2) ?> <?= $esc($booking['pay_method'] ?? '') ?><?php endif; ?>
             </div>
           </article>
         <?php endforeach; endif; ?>
@@ -664,9 +575,9 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
         <?php else: ?>
           <?php foreach ($bookings as $booking): ?>
             <div class="payment" style="padding:.5rem 0;border-bottom:1px solid #d9dfda">
-              <?= $esc($booking['ref'] ?? '') ?> · Payment: <?= $esc($statusLabel($booking['payment_status'] ?? 'unpaid')) ?>
-              <?php if (!empty($booking['payment_id'])): ?> · <?= $esc($booking['payment_id']) ?><?php endif; ?>
-              <?php if (isset($booking['amount'])): ?> · <?= $esc($booking['currency'] ?? 'LKR') ?> <?= number_format((float)$booking['amount'], 2) ?><?php endif; ?>
+              <?= $esc($booking['ref'] ?? '') ?> Â· Payment: <?= $esc($statusLabel($booking['payment_status'] ?? 'unpaid')) ?>
+              <?php if (!empty($booking['payment_id'])): ?> Â· <?= $esc($booking['payment_id']) ?><?php endif; ?>
+              <?php if (isset($booking['amount'])): ?> Â· <?= $esc($booking['currency'] ?? 'LKR') ?> <?= number_format((float)$booking['amount'], 2) ?><?php endif; ?>
             </div>
           <?php endforeach; ?>
           <p class="muted" style="font-size:.85rem">Bookings stay unpaid until the operator records cash/card receipt in the admin panel. Counter or online choices on the booking page only record your intention.</p>
@@ -691,44 +602,23 @@ foreach ($bookings as $b) { if (($b['payment_status'] ?? '') === 'paid') $paidCo
     </script>
   <?php else: ?>
     <section class="form-layout">
-      <p class="eyebrow"><?= $mode === 'verify' ? 'Email verification' : ($mode === 'register' ? 'New customer' : 'Returning customer') ?></p>
-      <h2><?= $mode === 'verify' ? 'Enter your six-digit code' : ($mode === 'register' ? 'Create a bus-service account' : 'Access your booking history') ?></h2>
+      <p class="eyebrow"><?= $mode === 'register' ? 'New customer' : 'Returning customer' ?></p>
+      <h2><?= $mode === 'register' ? 'Create a bus-service account' : 'Access your booking history' ?></h2>
       <p class="lede">This account is for <?= $esc($siteName) ?> only. It is separate from any account used on the website-builder platform.</p>
       <form class="form" method="post" action="customer.php<?= $mode === 'register' ? '?mode=register' : '' ?>">
         <input type="hidden" name="csrf" value="<?= $esc($csrf) ?>">
-        <?php if ($mode === 'verify'):
-            $pendingRegistration = $_SESSION[$pendingRegistrationKey] ?? [];
-        ?>
-          <input type="hidden" name="action" value="verify_register">
-          <input type="hidden" name="email" value="<?= $esc($pendingRegistration['email'] ?? '') ?>">
-          <p class="help">A code was sent to <?= $esc($pendingRegistration['email'] ?? '') ?>. It expires in 10 minutes.</p>
-          <div class="field"><label for="code">Verification code</label><input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><p class="help">Enter the six-digit code from your email.</p></div>
-          <button type="submit">Verify and create account</button>
-          <p class="switch">Code missing or expired?</p>
-        <?php else: ?>
-          <input type="hidden" name="action" value="<?= $mode === 'register' ? 'register' : 'login' ?>">
-          <?php if ($mode === 'register'): ?>
-            <div class="field"><label for="name">Name</label><input id="name" name="name" autocomplete="name" maxlength="120" required><p class="help">Shown in your customer account.</p></div>
-            <div class="field"><label for="phone">Phone (optional)</label><input id="phone" name="phone" type="tel" autocomplete="tel"><p class="help">Used only to identify your customer profile.</p></div>
-          <?php endif; ?>
-          <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><p class="help">Use the same email address you enter when booking.</p></div>
-          <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="<?= $mode === 'register' ? 'new-password' : 'current-password' ?>" <?= $mode === 'register' ? 'minlength="8"' : '' ?> required><p class="help"><?= $mode === 'register' ? 'At least 8 characters.' : 'Your password for this bus service.' ?></p></div>
-          <button type="submit"><?= $mode === 'register' ? 'Continue to email verification' : 'Sign in' ?></button>
+        <input type="hidden" name="action" value="<?= $mode === 'register' ? 'register' : 'login' ?>">
+        <?php if ($mode === 'register'): ?>
+          <div class="field"><label for="name">Name</label><input id="name" name="name" autocomplete="name" maxlength="120" required><p class="help">Shown in your customer account.</p></div>
+          <div class="field"><label for="phone">Phone (optional)</label><input id="phone" name="phone" type="tel" autocomplete="tel"><p class="help">Used only to identify your customer profile.</p></div>
         <?php endif; ?>
+        <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><p class="help">Use the same email address you enter when booking.</p></div>
+        <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="<?= $mode === 'register' ? 'new-password' : 'current-password' ?>" <?= $mode === 'register' ? 'minlength="8"' : '' ?> required><p class="help"><?= $mode === 'register' ? 'At least 8 characters.' : 'Your password for this bus service.' ?></p></div>
+        <button type="submit"><?= $mode === 'register' ? 'Create account' : 'Sign in' ?></button>
       </form>
-      <?php if ($mode === 'verify'): ?>
-        <form class="form" method="post" action="customer.php">
-          <input type="hidden" name="csrf" value="<?= $esc($csrf) ?>">
-          <input type="hidden" name="action" value="resend_register">
-          <input type="hidden" name="email" value="<?= $esc($pendingRegistration['email'] ?? '') ?>">
-          <button type="submit">Send a new code</button>
-        </form>
-      <?php endif; ?>
-      <?php if ($mode !== 'verify'): ?>
-        <p class="switch"><?= $mode === 'register' ? 'Already registered?' : 'First time here?' ?>
-          <a href="customer.php<?= $mode === 'register' ? '' : '?mode=register' ?>"><?= $mode === 'register' ? 'Sign in' : 'Create an account' ?></a>
-        </p>
-      <?php endif; ?>
+      <p class="switch"><?= $mode === 'register' ? 'Already registered?' : 'First time here?' ?>
+        <a href="customer.php<?= $mode === 'register' ? '' : '?mode=register' ?>"><?= $mode === 'register' ? 'Sign in' : 'Create an account' ?></a>
+      </p>
     </section>
   <?php endif; ?>
 </main>

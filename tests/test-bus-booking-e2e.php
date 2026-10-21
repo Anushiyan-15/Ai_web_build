@@ -292,9 +292,9 @@ ok(strpos($cx['html'], 'data-wc-search="trips"') !== false && strpos($cx['html']
 
 // Booking contract: inline selectable demo schedule + no-navigate Find.
 $svc = (string)@file_get_contents(__DIR__ . '/../includes/OpenCodeService.php');
-ok(strpos($svc, 'DEMO_TRIPS') !== false && strpos($svc, 'demo-trips') !== false, 'CT: contract requires demo schedule grid');
-ok(strpos($svc, 'Select This Bus') !== false && strpos($svc, 'DEMO-') !== false, 'CT: demo trips selectable into seat flow');
-ok(strpos($svc, "WCBiz.gotoStep('seats')") !== false, 'CT: Select scrolls to seat step (no jump to top)');
+ok(strpos($svc, '7) LIVE SCHEDULE') !== false && strpos($svc, 'data-wc-list') !== false, 'CT: contract requires a LIVE schedule container (no demo grid)');
+ok(strpos($svc, 'wc:list-select') !== false && strpos($svc, 'data-wc-list') !== false, 'CT: live rows drive the seat flow via wc:list-select');
+ok(strpos($svc, "WCBiz.gotoStep('details')") !== false && strpos($svc, 'data-wc-step=') !== false, 'CT: seat step advances via gotoStep (no jump to top)');
 ok(strpos($svc, 'data-wc-step=') !== false, 'CT: steps are data-wc-step blocks advanced via gotoStep');
 ok(strpos($svc, 'window.WCBiz.ticketQR(ref,180)') !== false, 'CT: ticket QR via runtime helper with offline fallback');
 ok(strpos($svc, 'data-wc-ticket-lookup=') !== false, 'CT: phone + ref ticket lookup block required');

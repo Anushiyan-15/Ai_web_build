@@ -1,0 +1,57 @@
+[
+    {
+        "origin": "Chennai",
+        "destination": "Bangalore",
+        "route": "Chennai → Bangalore",
+        "date": "2026-10-23",
+        "departure": "07:45 AM",
+        "bus": "Volvo Multi-Axle AC",
+        "price": 950,
+        "total_seats": 40,
+        "id": "TRIP-20261021-205AD7",
+        "created_at": "2026-10-21T11:40:11+01:00",
+        "updated_at": "2026-10-21T11:40:11+01:00"
+    },
+    {
+        "route": "Chennai → Bangalore",
+        "origin": "Chennai",
+        "destination": "Bangalore",
+        "date": "2026-10-22",
+        "departure": "06:30",
+        "price": 899,
+        "total_seats": 40,
+        "bus": "AC Sleeper",
+        "id": "D1",
+        "created_at": "2026-10-21T10:56:55+01:00",
+        "updated_at": "2026-10-21T10:56:55+01:00",
+        "demo": true
+    },
+    {
+        "route": "Chennai → Bangalore",
+        "origin": "Chennai",
+        "destination": "Bangalore",
+        "date": "2026-10-22",
+        "departure": "22:15",
+        "price": 549,
+        "total_seats": 40,
+        "bus": "Non-AC Seater",
+        "id": "D2",
+        "created_at": "2026-10-21T10:56:55+01:00",
+        "updated_at": "2026-10-21T10:56:55+01:00",
+        "demo": true
+    },
+    {
+        "route": "Bangalore → Chennai",
+        "origin": "Bangalore",
+        "destination": "Chennai",
+        "date": "2026-10-23",
+        "departure": "21:00",
+        "price": 899,
+        "total_seats": 32,
+        "bus": "AC Sleeper",
+        "id": "D3",
+        "created_at": "2026-10-21T10:56:55+01:00",
+        "updated_at": "2026-10-21T10:56:55+01:00",
+        "demo": true
+    }
+]

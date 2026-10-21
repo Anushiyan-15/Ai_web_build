@@ -1,22 +1,44 @@
 [
     {
-        "id": "cust_d25d7ea34ce0",
-        "name": "Anu Anushiyan",
-        "email": "ut01336tic2024@gmail.com",
-        "phone": "+94752038598",
+        "id": "c_5128ab5fbe97",
+        "name": "Probe Customer",
+        "phone": "+94770011223",
+        "email": "customer.probe.1792583558@example.com",
+        "total_bookings": 7,
+        "total_spent": 910,
         "status": "active",
-        "created_at": "2026-10-21T10:17:19+01:00",
-        "updated_at": "2026-10-21T10:17:19+01:00"
+        "created_at": "2026-10-21T12:52:38+01:00",
+        "updated_at": "2026-10-21T13:41:34+01:00"
+    },
+    {
+        "id": "cust_d9092cc5b355",
+        "name": "Debug User",
+        "email": "dbg.1792583662@example.com",
+        "phone": "+94770099999",
+        "status": "active",
+        "created_at": "2026-10-21T12:54:22+01:00",
+        "updated_at": "2026-10-21T12:54:22+01:00"
+    },
+    {
+        "id": "c_a64bc5ccba24",
+        "name": "Rahul Sharma",
+        "phone": "9876543210",
+        "email": "passenger.test@example.com",
+        "total_bookings": 9,
+        "total_spent": 17100,
+        "status": "active",
+        "created_at": "2026-10-21T11:40:35+01:00",
+        "updated_at": "2026-10-21T13:41:18+01:00"
     },
     {
         "id": "c_d25d7ea34ce0",
         "name": "Anu Anushiyan",
-        "phone": "+94752038598",
         "email": "ut01336tic2024@gmail.com",
-        "total_bookings": 1,
-        "total_spent": 899,
+        "phone": "+94752038598",
         "status": "active",
         "created_at": "2026-10-21T10:15:46+01:00",
-        "updated_at": "2026-10-21T10:15:46+01:00"
+        "updated_at": "2026-10-21T10:42:18+01:00",
+        "total_bookings": 1,
+        "total_spent": 899
     }
 ]

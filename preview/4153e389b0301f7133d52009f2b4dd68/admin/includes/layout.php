@@ -3,6 +3,8 @@
 // Sidebar is built DYNAMICALLY from manifest.json + on-disk data files,
 // so entities added later appear without republishing the layout.
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/db.php';
 require_login();
 
 function pak_nav_entities(): array {
@@ -68,7 +70,7 @@ function sidebar(string $active = 'dashboard'): void {
     echo $nav('dashboard', 'index.php', '📊 Dashboard');
     echo $nav('inbox', 'inbox.php', '✉️ Inbox' . ($unread > 0 ? ' <span class="badge badge-green" style="margin-left:auto">' . $unread . '</span>' : ''));
     foreach ($ents as $e) {
-        echo $nav('ent_' . $e['id'], htmlspecialchars($e['id']) . '.php',
+        echo $nav('ent_' . $e['id'], htmlspecialchars(db_entity_href($e['id'])),
             htmlspecialchars($e['icon'] . ' ' . $e['name']));
     }
     echo $nav('settings', 'settings.php', '⚙️ Settings');

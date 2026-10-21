@@ -10,7 +10,33 @@ $projectRoot = dirname(__DIR__);
 require_once $projectRoot . '/config.php';
 require_once $projectRoot . '/includes/BusinessOps.php';
 
-$slug = 'd2ecd5c885191b468a23ed8f71380727';
+// Slug: CLI argument, else the newest preview that is a bus-booking site.
+$slug = (string)($argv[1] ?? '');
+if ($slug === '') {
+    $dirs = glob($projectRoot . '/preview/*', GLOB_ONLYDIR) ?: [];
+    usort($dirs, function ($a, $b) { return filemtime($b) <=> filemtime($a); });
+    $fallback = '';
+    foreach ($dirs as $d) {
+        $f = $d . '/index.html';
+        if (!is_file($f)) continue;
+        $h = (string)@file_get_contents($f);
+        if (strpos($h, 'IS_BUS_BOOKING=(true)') === false) continue;
+        $name = '';
+        foreach (['/admin/site.json', '/draft.json'] as $meta) {
+            $mf = $d . $meta;
+            if (!is_file($mf)) continue;
+            $j = json_decode((string)@file_get_contents($mf), true);
+            if (is_array($j)) {
+                $name = (string)($j['site_name'] ?? $j['bizName'] ?? $j['business']['name'] ?? '');
+                if ($name !== '') break;
+            }
+        }
+        if ($name === '' && preg_match('/<title>([^<]*City Express[^<]*)<\/title>/i', $h, $m)) $name = $m[1];
+        if (stripos($name, 'city express') !== false) { $slug = basename($d); break; }
+        if ($fallback === '') $fallback = basename($d);
+    }
+    if ($slug === '') $slug = $fallback;
+}
 $previewDir = $projectRoot . '/preview/' . $slug;
 $adminDir = $previewDir . '/admin';
 
@@ -41,11 +67,11 @@ check(is_file($previewDir . '/customer.php'), "Preview customer.php exists");
 check(is_file($previewDir . '/verify.php'), "Preview verify.php exists");
 check(is_file($previewDir . '/api/business-ops.php'), "Preview api/business-ops.php bridge exists");
 
-$html = file_get_contents($previewDir . '/index.html');
+$html = (string)@file_get_contents($previewDir . '/index.html');
 check(strpos($html, 'var IS_BUS_BOOKING=(true);') !== false, "index.html has IS_BUS_BOOKING=(true)");
 check(strpos($html, 'Demo schedule') === false, "index.html does not contain hardcoded demo schedule markers");
 check(strpos($html, "BK-849201") === false, "index.html does not contain fake BK-849201 mock booking");
-check(strpos($html, "setupSeatMap") !== false, "index.html contains live setupSeatMap function");
+check(strpos($html, "setupSeatMap") !== false || strpos($html, "renderSeatMap") !== false, "index.html contains a live seat-map renderer");
 
 // -----------------------------------------------------------------------------
 // STEP 2: Admin Adds a Trip via Backend API

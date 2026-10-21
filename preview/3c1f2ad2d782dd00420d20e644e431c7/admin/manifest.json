@@ -86,6 +86,67 @@
                     "required": false
                 }
             ]
+        },
+        {
+            "id": "customers",
+            "name": "Customers",
+            "singular": "Customer",
+            "icon": "👥",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Full Name",
+                    "type": "text",
+                    "required": true,
+                    "options": []
+                },
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "email",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "phone",
+                    "label": "Phone",
+                    "type": "tel",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "total_bookings",
+                    "label": "Bookings",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "total_spent",
+                    "label": "Total Spent",
+                    "type": "number",
+                    "required": false,
+                    "options": []
+                },
+                {
+                    "name": "status",
+                    "label": "Status",
+                    "type": "select",
+                    "required": false,
+                    "options": [
+                        "active",
+                        "inactive",
+                        "blocked"
+                    ]
+                },
+                {
+                    "name": "notes",
+                    "label": "Notes",
+                    "type": "textarea",
+                    "required": false,
+                    "options": []
+                }
+            ]
         }
     ],
     "admin_modules": [
@@ -94,8 +155,14 @@
             "label": "Bookings",
             "icon": "🎫",
             "entity": "bookings"
+        },
+        {
+            "id": "customers",
+            "label": "Customers",
+            "icon": "👥",
+            "entity": "customers"
         }
     ],
     "frontend_api_map": [],
-    "updated_at": "2026-10-20T14:20:55+01:00"
+    "updated_at": "2026-10-21T10:44:58+01:00"
 }
