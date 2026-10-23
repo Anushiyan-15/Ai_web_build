@@ -1,6 +1,0 @@
-RewriteEngine On
-RewriteCond %{ENV:REDIRECT_STATUS} ^$
-RewriteRule ^(.*)$ gate.php?__gate=$1 [QSA,L]
-<FilesMatch "(^\.|\.json$|\.installed$|\.attempts\.json$|_hits\.json$)">
-  Require all denied
-</FilesMatch>

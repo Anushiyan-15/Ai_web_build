@@ -150,6 +150,7 @@ if ($customerEmail && function_exists('getCustomerOrdersFromDatabase')) {
 
 $page_title = 'AI Website Builder — 3 Style Variations & AI Co-Pilot';
 $page_desc  = 'Describe your business, choose a mode and a design direction, and get 3 AI-generated style variations.';
+$wc_theme_surface = 'editor'; // keep the dark editor chrome (green accents)
 require_once __DIR__ . '/includes/nav.php';
 ?>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/wc-robot-3d.css?v=<?= @filemtime(__DIR__ . '/assets/css/wc-robot-3d.css') ?: 1 ?>">

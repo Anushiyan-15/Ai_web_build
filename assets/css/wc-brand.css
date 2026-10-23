@@ -1,0 +1,78 @@
+/* ═══════════════════════════════════════════════════════════════
+   //WEBbuilders.lk — Official Brand Logo Component
+   Markup is produced by includes/brand-logo.php (wc_brand_logo()).
+   Brand: vivid-orange "//" + bold uppercase orange "WEB" +
+          dark-grey "builders" + small ".lk" suffix at upper-right.
+   ═══════════════════════════════════════════════════════════════ */
+
+.wc-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: var(--wc-brand-size, 1.45rem);
+  text-decoration: none;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+}
+.wc-brand__slash {
+  color: #F97316;
+  font-weight: 900;
+  letter-spacing: -0.14em;
+  margin-right: 0.06em;
+  transform: translateY(-0.01em);
+}
+.wc-brand__web {
+  color: #F97316;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.045em;
+}
+.wc-brand__builders {
+  color: #374151;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.wc-brand__tld {
+  color: #374151;
+  font-weight: 800;
+  font-size: 0.5em;
+  letter-spacing: -0.02em;
+  align-self: flex-start;
+  position: relative;
+  top: 0.12em;
+  margin-left: 0.06em;
+  opacity: 0.92;
+}
+
+/* Inverted lockup for dark editor chrome / dark footers */
+.wc-brand--invert .wc-brand__builders,
+.wc-brand--invert .wc-brand__tld { color: #F8FAFC; }
+
+/* Sizes */
+.wc-brand--xs { --wc-brand-size: 1rem; }
+.wc-brand--sm { --wc-brand-size: 1.18rem; }
+.wc-brand--md { --wc-brand-size: 1.45rem; }
+.wc-brand--lg { --wc-brand-size: 2rem; }
+.wc-brand--xl { --wc-brand-size: 2.9rem; }
+
+/* When used inside a link, inherit hover motion without changing colours */
+a.wc-brand-link { display: inline-flex; align-items: center; text-decoration: none; }
+a.wc-brand-link:hover .wc-brand { filter: brightness(1.04); }
+a.wc-brand-link:focus-visible { outline: 2px solid #16A34A; outline-offset: 3px; border-radius: 6px; }
+
+/* Optional stacked tagline lockup */
+.wc-brand-lockup { display: inline-flex; flex-direction: column; gap: 0.28rem; }
+.wc-brand-lockup__tag {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #64748B;
+  line-height: 1.2;
+}
+.wc-brand--invert + .wc-brand-lockup__tag,
+.wc-brand-lockup--invert .wc-brand-lockup__tag { color: #94A3B8; }

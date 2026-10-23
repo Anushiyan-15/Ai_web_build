@@ -5,6 +5,7 @@ if (!headers_sent()) {
     header('Expires: 0');
 }
 require_once __DIR__ . '/config.php';
+$wc_theme_surface = 'editor'; // studio keeps its dark editor chrome with green accents
 $page_title = 'Visual Studio — Canva-Style Web Studio';
 ?>
 <!DOCTYPE html>
@@ -1700,14 +1701,7 @@ $page_title = 'Visual Studio — Canva-Style Web Studio';
       <button class="hdr-btn" onclick="openStudioPreview()" title="Preview in a new tab — opens in the selected device view (PC / Laptop / Tablet / Phone)">👁️ <span class="lbl">Preview</span></button>
       <button class="hdr-btn save-btn" onclick="saveAndReturnToBuilder()" title="Save all changes and return">✓ <span class="lbl">Save</span></button>
       <div class="header-divider"></div>
-      <div class="theme-wrap" title="Appearance theme">
-        <select class="theme-select" id="themeModeSelect" aria-label="Appearance mode" style="height:34px;font-size:.74rem;">
-          <option value="dark">🌙 Dark</option>
-          <option value="light">☀️ Light</option>
-          <option value="custom">🎨 Custom</option>
-        </select>
-        <a class="theme-gear" href="<?= SITE_URL ?>/settings.php" title="Appearance settings" aria-label="Appearance settings" style="font-size:.95rem;">⚙️</a>
-      </div>
+      <a class="theme-gear" href="<?= SITE_URL ?>/settings.php" title="Settings" aria-label="Settings" style="font-size:.95rem;">⚙️</a>
     </div>
   </header>
 

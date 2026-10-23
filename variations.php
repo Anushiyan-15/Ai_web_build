@@ -14,6 +14,7 @@ if (!headers_sent()) {
     header('Expires: 0');
 }
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/brand-logo.php';
 
 $customerUser  = $_SESSION['customer_user'] ?? null;
 $siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
@@ -129,27 +130,10 @@ $siteUrl = defined('SITE_URL') ? rtrim(SITE_URL, '/') : '';
 </div>
 
 <div class="var-topbar">
-  <div class="var-brand">✦ WebCraft <b>Variations</b></div>
-  <select id="varThemeSelect" aria-label="Appearance mode" style="margin-left:auto;height:36px;border-radius:10px;border:1px solid var(--wc-border,#334155);background:var(--wc-surface,#0b0f17);color:var(--wc-text,#cbd5e1);font-family:inherit;font-size:.76rem;font-weight:700;padding:0 .55rem;cursor:pointer">
-    <option value="dark">🌙 Dark</option>
-    <option value="light">☀️ Light</option>
-    <option value="custom">🎨 Custom</option>
-  </select>
-  <a class="var-back" style="margin-left:0" href="<?= htmlspecialchars($siteUrl) ?>/settings.php" title="Appearance settings">⚙️</a>
+  <div class="var-brand" style="display:flex;align-items:center;gap:.5rem"><?= wc_brand_logo(['size'=>'sm','variant'=>'invert']) ?> <b style="font-weight:800;color:#86EFAC">Variations</b></div>
+  <a class="var-back" style="margin-left:auto" href="<?= htmlspecialchars($siteUrl) ?>/settings.php" title="Settings">⚙️</a>
   <a class="var-back" style="margin-left:0" href="<?= htmlspecialchars($siteUrl) ?>/builder.php?wizard=1&step=1" onclick="return (window.varBackToBuilder ? varBackToBuilder(this) : true)">← Back to Builder</a>
 </div>
-<script>
-(function(){
-  var s = document.getElementById('varThemeSelect');
-  if (!s) return;
-  try {
-    var m = (window.WCTheme ? WCTheme.getMode() : null) || document.documentElement.getAttribute('data-theme') || 'dark';
-    if (m === 'dark' || m === 'light' || m === 'custom') s.value = m;
-  } catch (e) {}
-  s.addEventListener('change', function(){ if (window.WCTheme) WCTheme.setMode(s.value); });
-  document.addEventListener('wc:theme-change', function(e){ try { if (e.detail.mode) s.value = e.detail.mode; } catch (e2) {} });
-})();
-</script>
 
 <div class="var-head">
   <div class="var-badge">✦ 3 Style Variations</div>

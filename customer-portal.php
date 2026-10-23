@@ -19,9 +19,115 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/StorageService.php';
 require_once __DIR__ . '/includes/Csrf.php';
+require_once __DIR__ . '/includes/CustomerSupport.php';
 require_once __DIR__ . '/includes/reviews.php';
 require_once __DIR__ . '/includes/ui-lang.php';
 $UI_LANG = ui_resolve_lang();
+
+/**
+ * Establish an authenticated customer session and rotate the session id so a
+ * pre-login fixation token cannot be reused (login, signup, social sign-in).
+ */
+function portal_establish_session(array $customer): void {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    session_regenerate_id(true);
+    $_SESSION['customer_user'] = $customer;
+}
+
+/**
+ * Real, per-site setup/domain/SSL facts for the customer dashboard.
+ * Only reads order fields and the published folder — nothing is invented.
+ * SSL expiry falls back to the platform's published_at + 90-day auto-SSL
+ * cycle, clearly marked as estimated when no explicit date is stored.
+ */
+function portal_site_details(array $order): array {
+    $slug = trim((string)($order['slug'] ?? ''));
+    $root = defined('ROOT_DIR') ? ROOT_DIR : dirname(__DIR__);
+    $dir = $root . '/published/' . $slug;
+    $meta = [];
+    $metaFile = $dir . '/meta.json';
+    if ($slug !== '' && is_file($metaFile)) {
+        $decoded = json_decode((string)@file_get_contents($metaFile), true);
+        if (is_array($decoded)) $meta = $decoded;
+    }
+
+    $customDomain = strtolower(trim((string)($order['custom_domain'] ?? '')));
+    $contactEmail = trim((string)($order['contact_email'] ?? $order['admin_email'] ?? ($meta['contact_email'] ?? '')));
+    $publishedAt = trim((string)($order['published_at'] ?? ''));
+
+    $sslExpiry = trim((string)($order['ssl_expires_at'] ?? ''));
+    $sslEstimated = false;
+    if ($sslExpiry !== '' && strtotime($sslExpiry) === false) $sslExpiry = '';
+    if ($sslExpiry === '' && $publishedAt !== '') {
+        $ts = strtotime($publishedAt);
+        if ($ts) {
+            $sslExpiry = date('Y-m-d H:i:s', $ts + 90 * 86400);
+            $sslEstimated = true;
+        }
+    }
+    $sslTs = $sslExpiry !== '' ? strtotime($sslExpiry) : false;
+    $sslDaysLeft = $sslTs ? (int)floor(($sslTs - time()) / 86400) : null;
+    $sslStatus = 'unknown';
+    if ($sslDaysLeft !== null) {
+        if ($sslDaysLeft < 0) $sslStatus = 'expired';
+        elseif ($sslDaysLeft <= 14) $sslStatus = 'expiring';
+        else $sslStatus = 'active';
+    }
+
+    $preflight = is_array($meta['preflight'] ?? null) ? $meta['preflight'] : null;
+    $checks = [
+        [
+            'label' => 'Website files published',
+            'ok'    => $slug !== '' && is_file($dir . '/index.html'),
+            'detail'=> is_file($dir . '/index.html') ? 'index.html found' : 'No published index.html found',
+        ],
+        [
+            'label' => 'Publish completed',
+            'ok'    => !empty($order['published_at']) && (($meta['publish_status'] ?? '') !== 'failed'),
+            'detail'=> !empty($order['published_at']) ? 'Published ' . date('M j, Y', strtotime($order['published_at'])) : 'Not published yet',
+        ],
+        [
+            'label' => 'Site admin credentials',
+            'ok'    => !empty($order['admin_password_hash']) || !empty($order['admin_password_plain']),
+            'detail'=> !empty($order['admin_password_hash']) ? 'Password stored securely' : (!empty($order['admin_password_plain']) ? 'Legacy password stored' : 'No admin password recorded'),
+        ],
+        [
+            'label' => 'Contact email on site',
+            'ok'    => filter_var($contactEmail, FILTER_VALIDATE_EMAIL) !== false,
+            'detail'=> $contactEmail !== '' ? $contactEmail : 'Not configured',
+        ],
+        [
+            'label' => 'Contact form deployed',
+            'ok'    => array_key_exists('contact_form', $meta) ? !empty($meta['contact_form']) : null,
+            'detail'=> array_key_exists('contact_form', $meta) ? (!empty($meta['contact_form']) ? 'Enabled' : 'Not enabled') : 'Not reported by this publish',
+        ],
+        [
+            'label' => 'Custom domain',
+            'ok'    => $customDomain !== '',
+            'detail'=> $customDomain !== '' ? $customDomain : 'Using the standard published URL',
+        ],
+        [
+            'label' => 'SSL certificate',
+            'ok'    => $sslStatus === 'active' || $sslStatus === 'expiring',
+            'detail'=> $sslDaysLeft === null
+                ? 'No SSL date recorded'
+                : ($sslDaysLeft < 0 ? 'Expired ' . abs($sslDaysLeft) . ' days ago' : $sslDaysLeft . ' days remaining') . ($sslEstimated ? ' (estimated 90-day auto-SSL cycle)' : ''),
+        ],
+    ];
+
+    return [
+        'slug' => $slug,
+        'custom_domain' => $customDomain,
+        'contact_email' => $contactEmail,
+        'ssl_expiry' => $sslExpiry,
+        'ssl_estimated' => $sslEstimated,
+        'ssl_days_left' => $sslDaysLeft,
+        'ssl_status' => $sslStatus,
+        'preflight' => $preflight,
+        'checks' => $checks,
+        'ready' => $preflight['ready'] ?? null,
+    ];
+}
 
 // ─── UI LANGUAGE SWITCH (persists to account when logged in) ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'set_language') {
@@ -82,7 +188,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'social_callback') {
             $socialError = $prov['error'] ?? 'Social sign-in failed.';
         } else {
             unset($_SESSION['social_pending']);
-            $_SESSION['customer_user'] = $prov['customer'];
+            portal_establish_session($prov['customer']);
             $_SESSION['flash_success'] = ($prov['is_new'] ?? false)
                 ? 'Account created with ' . ucfirst($sp) . ' — welcome, ' . $prov['customer']['name'] . '!'
                 : 'Welcome back, ' . $prov['customer']['name'] . '!';
@@ -120,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } else {
             unset($_SESSION['social_pending']);
             $socialPending = null;
-            $_SESSION['customer_user'] = $prov['customer'];
+            portal_establish_session($prov['customer']);
             $_SESSION['flash_success'] = 'Signed in with ' . ucfirst($pend['provider'] ?? 'social') . ' — welcome!';
             try {
                 $spm = Mailer::buildSigninAlertPayload($prov['customer']['email'], $prov['customer']['name'], $_SERVER['REMOTE_ADDR'] ?? '');
@@ -233,7 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $res = createCustomerAccount($pend['name'], $pend['email'], $np);
         unset($_SESSION['pending_signup'], $_SESSION['signup_verified']);
         if ($res['success']) {
-            $_SESSION['customer_user'] = $res['customer'];
+            portal_establish_session($res['customer']);
             $_SESSION['flash_success'] = 'Account verified successfully. Welcome!';
             // Welcome email via background queue (never blocks signup)
             try {
@@ -268,6 +374,8 @@ $profileErr = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     if (empty($_SESSION['customer_user']['email'])) {
         $profileErr = 'Please sign in first.';
+    } elseif (!csrf_validate(csrf_token_from_request())) {
+        $profileErr = 'Your session security token expired. Please reload the page and try again.';
     } else {
         $em = $_SESSION['customer_user']['email'];
         $res = updateCustomerProfile($em, $_POST['pf_name'] ?? '', $_POST['pf_phone'] ?? '');
@@ -288,6 +396,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_avatar') {
     if (empty($_SESSION['customer_user']['email'])) {
         $profileErr = 'Please sign in first.';
+    } elseif (!csrf_validate(csrf_token_from_request())) {
+        $profileErr = 'Your session security token expired. Please reload the page and try again.';
     } else {
         $em = $_SESSION['customer_user']['email'];
         $res = uploadCustomerAvatar($em, $_FILES['avatar'] ?? []);
@@ -318,6 +428,8 @@ $reviewErr = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['review_add', 'review_edit', 'review_delete'], true)) {
     if (empty($_SESSION['customer_user']['email'])) {
         $reviewErr = 'Please sign in first.';
+    } elseif (!csrf_validate(csrf_token_from_request())) {
+        $reviewErr = 'Your session security token expired. Please reload the page and try again.';
     } else {
         $em = strtolower(trim($_SESSION['customer_user']['email']));
         $nm = $_SESSION['customer_user']['name'] ?? 'Customer';
@@ -459,6 +571,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'reset_exit') {
     header('Location: ' . SITE_URL . '/customer-portal.php');
     exit;
 }
+$loginError = '';
 if (isset($_GET['err'])) {
     $e = $_GET['err'];
     if (($_GET['view'] ?? '') === 'forgot' && !$resetError) $resetError = $e;
@@ -474,24 +587,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (empty($emailOrId)) {
         $loginError = 'Please enter your email or Order ID.';
     } elseif (empty($password)) {
-        // Quick access with Order ID if password omitted
-        $orders = getCustomerOrdersFromDatabase($emailOrId);
-        if (!empty($orders)) {
-            $first = $orders[0];
-            $_SESSION['customer_user'] = [
-                'email' => $first['admin_email'] ?: ($first['client_email'] ?? $emailOrId),
-                'name'  => $first['admin_username'] ?? $first['site_name'] ?? 'Customer',
-            ];
-            header('Location: ' . SITE_URL . '/customer-portal.php');
-            exit;
-        } else {
-            $loginError = 'No project found for this Order ID or Email.';
-        }
+        // An Order ID identifies a project, but it is not proof of ownership.
+        // Both email and Order ID sign-in require the account/site password.
+        $loginError = 'Please enter your password.';
     } elseif (filter_var($emailOrId, FILTER_VALIDATE_EMAIL)) {
         // 1. Real customer account first
         $res = verifyCustomerAccount($emailOrId, $password);
         if ($res['success']) {
-            $_SESSION['customer_user'] = $res['customer'];
+            portal_establish_session($res['customer']);
             try {
                 $sp = Mailer::buildSigninAlertPayload($res['customer']['email'], $res['customer']['name'], $_SERVER['REMOTE_ADDR'] ?? '');
                 queueMail($sp + ['kind' => 'signin_alert']);
@@ -502,7 +605,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         // 2. Legacy fallback: order admin password (published before signup existed)
         $legacy = verifyCustomerLoginCredentials($emailOrId, $password);
         if ($legacy['success']) {
-            $_SESSION['customer_user'] = $legacy['customer'];
+            portal_establish_session($legacy['customer']);
             try {
                 $sp = Mailer::buildSigninAlertPayload($legacy['customer']['email'], $legacy['customer']['name'], $_SERVER['REMOTE_ADDR'] ?? '');
                 queueMail($sp + ['kind' => 'signin_alert']);
@@ -515,11 +618,122 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         $res = verifyCustomerLoginCredentials($emailOrId, $password);
         if ($res['success']) {
-            $_SESSION['customer_user'] = $res['customer'];
+            portal_establish_session($res['customer']);
+            try {
+                $sp = Mailer::buildSigninAlertPayload($res['customer']['email'], $res['customer']['name'], $_SERVER['REMOTE_ADDR'] ?? '');
+                queueMail($sp + ['kind' => 'signin_alert']);
+            } catch (Throwable $e) {}
             header('Location: ' . SITE_URL . '/customer-portal.php');
             exit;
         } else {
             $loginError = $res['error'] ?? 'Invalid credentials.';
+        }
+    }
+}
+
+// ─── CHANGE PASSWORD (signed-in account) ─────────────────────
+$pwErr = '';
+$forcePortalTab = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    $forcePortalTab = 'account';
+    $sessEmail = strtolower(trim((string)($_SESSION['customer_user']['email'] ?? '')));
+    $current   = (string)($_POST['pw_current'] ?? '');
+    $newPw     = (string)($_POST['pw_new'] ?? '');
+    $newPw2    = (string)($_POST['pw_new2'] ?? '');
+    if ($sessEmail === '' || !filter_var($sessEmail, FILTER_VALIDATE_EMAIL)) {
+        $pwErr = 'Please sign in first.';
+    } elseif (!csrf_validate(csrf_token_from_request())) {
+        $pwErr = 'Your session security token expired. Please reload the page and try again.';
+    } elseif ($current === '') {
+        $pwErr = 'Please enter your current password.';
+    } elseif (strlen($newPw) < 8) {
+        $pwErr = 'New password must be at least 8 characters.';
+    } elseif ($newPw !== $newPw2) {
+        $pwErr = 'New passwords do not match.';
+    } elseif (hash_equals($current, $newPw)) {
+        $pwErr = 'Choose a new password that is different from the current one.';
+    } else {
+        $account = findCustomerByEmail($sessEmail);
+        $hasPortalPassword = !empty($account['password_hash']);
+        if ($hasPortalPassword) {
+            $check = verifyCustomerAccount($sessEmail, $current);
+            $authorized = !empty($check['success']);
+        } else {
+            // Legacy site-owner account with no portal password yet: accept
+            // the order/site password that authenticated this customer.
+            $check = verifyCustomerLoginCredentials($sessEmail, $current);
+            $authorized = !empty($check['success']);
+        }
+        if (!$authorized) {
+            $pwErr = 'Current password is incorrect. If you never set a portal password, use “Forgot password?” on the sign-in screen.';
+        } else {
+            $upd = setCustomerPassword($sessEmail, $newPw);
+            if (!empty($upd['success'])) {
+                try {
+                    $pp = Mailer::buildPasswordChangedPayload($sessEmail, $_SESSION['customer_user']['name'] ?? 'Customer');
+                    queueMail($pp + ['kind' => 'password_changed']);
+                } catch (Throwable $e) {}
+                $_SESSION['flash_success'] = 'Password updated successfully.';
+                header('Location: ' . SITE_URL . '/customer-portal.php?tab=account');
+                exit;
+            }
+            $pwErr = $upd['error'] ?? 'Password update failed.';
+        }
+    }
+}
+
+// ─── SUPPORT TICKETS (same files the platform-admin inbox reads) ───
+$supportErr = '';
+$supportNotice = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['support_create', 'support_reply', 'support_close', 'support_reopen'], true)) {
+    $forcePortalTab = 'support';
+    $sessEmail = strtolower(trim((string)($_SESSION['customer_user']['email'] ?? '')));
+    $sessName  = (string)($_SESSION['customer_user']['name'] ?? 'Customer');
+    if ($sessEmail === '' || !filter_var($sessEmail, FILTER_VALIDATE_EMAIL)) {
+        $supportErr = 'Please sign in first.';
+    } elseif (!csrf_validate(csrf_token_from_request())) {
+        $supportErr = 'Your session security token expired. Please reload the page and try again.';
+    } elseif ($_POST['action'] === 'support_create') {
+        $subject = trim((string)($_POST['sp_subject'] ?? ''));
+        $message = trim((string)($_POST['sp_message'] ?? ''));
+        $orderId = preg_replace('/[^A-Za-z0-9-]/', '', (string)($_POST['sp_order_id'] ?? ''));
+        // Only allow an Order ID that belongs to this signed-in customer.
+        if ($orderId !== '') {
+            $owned = false;
+            foreach (getCustomerOrdersFromDatabase($sessEmail) as $o) {
+                if (hash_equals((string)($o['order_id'] ?? ''), $orderId)) { $owned = true; break; }
+            }
+            if (!$owned) $orderId = '';
+        }
+        $res = support_ticket_create($sessEmail, $sessName, $subject, $message, $orderId);
+        if (!empty($res['success'])) {
+            $tid = (string)($res['ticket']['id'] ?? '');
+            $_SESSION['flash_success'] = !empty($res['duplicate'])
+                ? 'Your identical request was already received — opening that ticket instead of creating a duplicate.'
+                : 'Support ticket created. Our team will reply by email and in this tab.';
+            header('Location: ' . SITE_URL . '/customer-portal.php?tab=support' . ($tid !== '' ? '&ticket=' . urlencode($tid) : ''));
+            exit;
+        }
+        $supportErr = $res['error'] ?? 'Could not create the ticket.';
+    } else {
+        $tid = (string)($_POST['ticket_id'] ?? '');
+        if ($_POST['action'] === 'support_reply') {
+            $res = support_ticket_reply($tid, $sessEmail, $sessName, (string)($_POST['sp_reply'] ?? ''));
+            if (!empty($res['success'])) {
+                $_SESSION['flash_success'] = 'Reply sent to support.';
+                header('Location: ' . SITE_URL . '/customer-portal.php?tab=support&ticket=' . urlencode($tid));
+                exit;
+            }
+            $supportErr = $res['error'] ?? 'Could not send the reply.';
+        } else {
+            $newStatus = $_POST['action'] === 'support_close' ? 'closed' : 'open';
+            $res = support_ticket_set_status($tid, $sessEmail, $newStatus);
+            if (!empty($res['success'])) {
+                $_SESSION['flash_success'] = $newStatus === 'closed' ? 'Ticket closed.' : 'Ticket reopened.';
+                header('Location: ' . SITE_URL . '/customer-portal.php?tab=support&ticket=' . urlencode($tid));
+                exit;
+            }
+            $supportErr = $res['error'] ?? 'Could not update the ticket.';
         }
     }
 }
@@ -570,10 +784,17 @@ if (isset($_GET['action']) && in_array($_GET['action'], ['storage_return', 'stor
 $currentUser = $_SESSION['customer_user'] ?? null;
 $flashSuccess = $_SESSION['flash_success'] ?? '';
 unset($_SESSION['flash_success']);
+$flashError = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash_error']);
 $customerOrders = [];
 $customerNotifs = [];
 $myReviews = [];
-$portalTab = ($_GET['tab'] ?? '') === 'reviews' ? 'reviews' : ((($_GET['tab'] ?? '') === 'notifs' ? 'notifs' : ((($_GET['tab'] ?? '') === 'storage' ? 'storage' : 'sites'))));
+$allowedPortalTabs = ['sites', 'storage', 'notifs', 'reviews', 'support', 'account'];
+$requestedTab = (string)($_GET['tab'] ?? '');
+$portalTab = in_array($requestedTab, $allowedPortalTabs, true) ? $requestedTab : 'sites';
+if ($forcePortalTab !== '' && in_array($forcePortalTab, $allowedPortalTabs, true)) {
+    $portalTab = $forcePortalTab;
+}
 $reviewNeedsPw = false;
 $storageSummary = null;
 $storageFiles = [];
@@ -581,11 +802,43 @@ $storageTxns = [];
 $storageInvoices = ['subscription' => [], 'storage' => []];
 $storageResult = trim($_GET['storage_result'] ?? '');
 $storageDbOffline = false;
+$supportTickets = [];
+$supportSelected = null;
+$supportPrefillOrder = '';
+$nextRenewal = null;
 
 if ($currentUser) {
     $customerOrders = getCustomerOrdersFromDatabase($currentUser['email']);
     $myReviews = reviews_for_customer($currentUser['email'] ?? '');
     $reviewNeedsPw = review_delete_needs_password($currentUser['email'] ?? '');
+    $supportTickets = support_tickets_for_email($currentUser['email'] ?? '');
+
+    // Selected ticket must belong to the signed-in email.
+    $requestedTicket = trim((string)($_GET['ticket'] ?? ''));
+    if ($requestedTicket !== '') {
+        foreach ($supportTickets as $st) {
+            if (hash_equals($st['id'], $requestedTicket)) { $supportSelected = $st; break; }
+        }
+    }
+
+    // Optional order prefill for a new ticket — only for an owned order.
+    $requestedOrder = trim((string)($_GET['order'] ?? ''));
+    if ($requestedOrder !== '') {
+        foreach ($customerOrders as $o) {
+            if (hash_equals((string)($o['order_id'] ?? ''), $requestedOrder)) {
+                $supportPrefillOrder = $requestedOrder;
+                break;
+            }
+        }
+    }
+    foreach ($customerOrders as $o) {
+        if (!empty($o['next_payment_due'])) {
+            if ($nextRenewal === null || strtotime($o['next_payment_due']) < strtotime($nextRenewal)) {
+                $nextRenewal = $o['next_payment_due'];
+            }
+        }
+    }
+
     try {
         $refresh = StorageService::recalculateUsage($currentUser['email'] ?? '');
         if (empty($refresh['success'])) {
@@ -630,93 +883,62 @@ if ($currentUser) {
 <?php require_once __DIR__ . '/includes/theme-head.php'; ?>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/loader-3d.css">
-<script>
-/* Legacy bootstrap superseded by theme-head (wc_theme_mode aware); kept as no-op fallback. */
-(function(){
-  try {
-    if (document.documentElement.getAttribute('data-theme')) return;
-    var saved = localStorage.getItem('wc_theme');
-    var dark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
-  } catch(e) {}
-})();
-</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root {
-  --portal-bg: #f8fafc;
+  --portal-bg: #F0FDF4;
   --portal-card: #ffffff;
-  --portal-border: #e2e8f0;
-  --portal-text: #0f172a;
-  --portal-muted: #64748b;
+  --portal-border: #E2E8F0;
+  --portal-text: #1F2937;
+  --portal-muted: #64748B;
   --portal-topbar: #ffffff;
-  --portal-inp-bg: #f1f5f9;
+  --portal-inp-bg: #F0FDF4;
 }
-[data-theme="dark"] {
-  --portal-bg: #060911;
-  --portal-card: #0c1220;
-  --portal-border: #1e293b;
-  --portal-text: #e2e8f0;
-  --portal-muted: #94a3b8;
-  --portal-topbar: #0c1220;
-  --portal-inp-bg: #060a14;
-}
-/* Custom theme → follow the user's WCTheme custom tokens */
-[data-theme="custom"] {
-  --portal-bg: var(--wc-c-bg);
-  --portal-card: var(--wc-c-surface);
-  --portal-border: var(--wc-c-border);
-  --portal-text: var(--wc-c-text);
-  --portal-muted: var(--wc-c-text2);
-  --portal-topbar: var(--wc-c-surface);
-  --portal-inp-bg: var(--wc-c-bg2);
-}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--portal-bg);color:var(--portal-text);min-height:100vh;display:flex;flex-direction:column;transition:background .25s,color .25s;}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--portal-bg);color:var(--portal-text);min-height:100vh;display:flex;flex-direction:column;}
 a{color:inherit;text-decoration:none;}
 
 /* ── Top Bar ── */
-.topbar{background:#0c1220;border-bottom:1px solid #1e293b;padding:0.9rem 1.75rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
-.brand{display:flex;align-items:center;gap:0.75rem;font-weight:900;font-size:1.15rem;color:#fff;}
-.brand-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.topbar{background:#fff;border-bottom:1px solid #E2E8F0;padding:0.9rem 1.75rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.brand{display:flex;align-items:center;gap:0.75rem;font-weight:900;font-size:1.15rem;color:#1F2937;}
 .user-badge{display:flex;align-items:center;gap:0.85rem;}
-.user-pill{background:#1e1b4b;border:1px solid rgba(99,102,241,0.4);color:#c7d2fe;padding:0.4rem 0.85rem;border-radius:999px;font-size:0.8rem;font-weight:700;}
-.btn-logout{background:#1e293b;border:1px solid #334155;color:#ef4444;padding:0.4rem 0.85rem;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
-.btn-logout:hover{background:#7f1d1d;color:#fff;}
+.user-pill{background:#DCFCE7;border:1px solid #BBF7D0;color:#166534;padding:0.4rem 0.85rem;border-radius:999px;font-size:0.8rem;font-weight:700;}
+.btn-logout{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;padding:0.4rem 0.85rem;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.btn-logout:hover{background:#FEE2E2;color:#991B1B;}
 
 /* ── Login View ── */
-.login-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:2.5rem 1.25rem;background:radial-gradient(circle at 50% 25%,#151c38 0%,#060911 75%);}
-.login-card{width:100%;max-width:440px;background:#0c1220;border:1px solid #1e293b;border-radius:20px;padding:2.5rem 2rem;box-shadow:0 25px 60px rgba(0,0,0,0.6);position:relative;overflow:hidden;}
-.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#6366f1,#a855f7,#06b6d4);}
+.login-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:2.5rem 1.25rem;background:radial-gradient(circle at 50% 25%,#F0FDF4 0%,#FFFFFF 75%);}
+.login-card{width:100%;max-width:440px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:2.5rem 2rem;box-shadow:0 25px 60px rgba(22,163,74,0.12);position:relative;overflow:hidden;}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#16A34A,#22C55E,#15803D);}
 .field{margin-bottom:1.25rem;}
-.field label{display:block;font-size:0.75rem;font-weight:700;color:#cbd5e1;margin-bottom:0.45rem;text-transform:uppercase;letter-spacing:0.04em;}
-.inp{width:100%;padding:0.75rem 0.95rem;border:1.5px solid #1e293b;border-radius:10px;background:#060a14;color:#fff;font-family:inherit;font-size:0.88rem;transition:all 0.2s;}
-.inp:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.25);}
-.btn-primary{width:100%;padding:0.85rem;border-radius:11px;border:none;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:800;font-size:0.92rem;cursor:pointer;transition:all 0.2s;box-shadow:0 8px 24px rgba(99,102,241,0.4);display:flex;align-items:center;justify-content:center;gap:0.5rem;}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(99,102,241,0.6);}
-.err-box{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;padding:0.75rem;border-radius:10px;font-size:0.82rem;margin-bottom:1.25rem;}
-.back-login-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:9px;background:#131c30;border:1.5px solid #243049;color:#cbd5e1;font-size:.8rem;font-weight:800;text-decoration:none;transition:all .18s;}
-.back-login-btn:hover{border-color:#6366f1;color:#fff;background:#1e1b4b;transform:translateX(-2px);}
-.ok-box{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.4);color:#6ee7b7;padding:0.75rem;border-radius:10px;font-size:0.82rem;margin-bottom:1.25rem;}
-.otp-inp{width:100%;padding:0.85rem 1rem;border:1.5px solid #6366f1;border-radius:10px;background:#060a14;color:#fff;font-family:monospace;font-size:1.4rem;letter-spacing:10px;text-align:center;transition:all 0.2s;}
-.otp-inp:focus{outline:none;border-color:#a5b4fc;box-shadow:0 0 0 3px rgba(99,102,241,0.25);}
-.pw-track{height:8px;background:#1e293b;border-radius:999px;overflow:hidden;margin-top:.55rem;}
+.field label{display:block;font-size:0.75rem;font-weight:700;color:#374151;margin-bottom:0.45rem;text-transform:uppercase;letter-spacing:0.04em;}
+.inp{width:100%;padding:0.75rem 0.95rem;border:1.5px solid #CBD5E1;border-radius:10px;background:#fff;color:#1F2937;font-family:inherit;font-size:0.88rem;transition:all 0.2s;}
+.inp:focus{outline:none;border-color:#16A34A;box-shadow:0 0 0 3px rgba(22,163,74,0.2);}
+.btn-primary{width:100%;padding:0.85rem;border-radius:11px;border:none;background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;font-weight:800;font-size:0.92rem;cursor:pointer;transition:all 0.2s;box-shadow:0 8px 24px rgba(22,163,74,0.3);display:flex;align-items:center;justify-content:center;gap:0.5rem;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(22,163,74,0.4);}
+.err-box{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;padding:0.75rem;border-radius:10px;font-size:0.82rem;margin-bottom:1.25rem;}
+.back-login-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:9px;background:#fff;border:1.5px solid #E2E8F0;color:#4B5563;font-size:.8rem;font-weight:800;text-decoration:none;transition:all .18s;}
+.back-login-btn:hover{border-color:#16A34A;color:#166534;background:#F0FDF4;transform:translateX(-2px);}
+.ok-box{background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;padding:0.75rem;border-radius:10px;font-size:0.82rem;margin-bottom:1.25rem;}
+.otp-inp{width:100%;padding:0.85rem 1rem;border:1.5px solid #16A34A;border-radius:10px;background:#fff;color:#1F2937;font-family:monospace;font-size:1.4rem;letter-spacing:10px;text-align:center;transition:all 0.2s;}
+.otp-inp:focus{outline:none;border-color:#15803D;box-shadow:0 0 0 3px rgba(22,163,74,0.2);}
+.pw-track{height:8px;background:#E2E8F0;border-radius:999px;overflow:hidden;margin-top:.55rem;}
 .pw-fill{height:100%;width:0%;border-radius:999px;transition:width .3s ease,background .3s ease;background:#ef4444;}
-.pw-hint{font-size:.74rem;color:#64748b;margin-top:.4rem;line-height:1.5;}
+.pw-hint{font-size:.74rem;color:#64748B;margin-top:.4rem;line-height:1.5;}
 
 /* ── 3D animated auth scene (login + create account) ── */
 .login-wrap{position:relative;overflow:hidden;perspective:1200px;}
 .auth-bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
 .auth-bg .orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;animation:orbDrift 14s ease-in-out infinite alternate;}
-.auth-bg .orb.o1{width:420px;height:420px;left:-120px;top:-100px;background:radial-gradient(circle,#6366f1,transparent 70%);}
-.auth-bg .orb.o2{width:380px;height:380px;right:-100px;top:20%;background:radial-gradient(circle,#a855f7,transparent 70%);animation-delay:-5s;animation-duration:17s;}
-.auth-bg .orb.o3{width:340px;height:340px;left:30%;bottom:-140px;background:radial-gradient(circle,#06b6d4,transparent 70%);animation-delay:-9s;animation-duration:20s;}
+.auth-bg .orb.o1{width:420px;height:420px;left:-120px;top:-100px;background:radial-gradient(circle,rgba(22,163,74,.55),transparent 70%);}
+.auth-bg .orb.o2{width:380px;height:380px;right:-100px;top:20%;background:radial-gradient(circle,rgba(34,197,94,.45),transparent 70%);animation-delay:-5s;animation-duration:17s;}
+.auth-bg .orb.o3{width:340px;height:340px;left:30%;bottom:-140px;background:radial-gradient(circle,rgba(21,128,61,.35),transparent 70%);animation-delay:-9s;animation-duration:20s;}
 @keyframes orbDrift{from{transform:translate(0,0) scale(1);}to{transform:translate(60px,40px) scale(1.15);}}
-.auth-bg .gridfloor{position:absolute;left:-25%;right:-25%;bottom:-12%;height:46%;background-image:linear-gradient(rgba(99,102,241,.22) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.22) 1px,transparent 1px);background-size:44px 44px;transform:perspective(700px) rotateX(62deg);transform-origin:bottom;-webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 85%);mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 85%);animation:gridMove 7s linear infinite;}
+.auth-bg .gridfloor{position:absolute;left:-25%;right:-25%;bottom:-12%;height:46%;background-image:linear-gradient(rgba(22,163,74,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(22,163,74,.16) 1px,transparent 1px);background-size:44px 44px;transform:perspective(700px) rotateX(62deg);transform-origin:bottom;-webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 85%);mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 85%);animation:gridMove 7s linear infinite;}
 @keyframes gridMove{from{background-position:0 0,0 0;}to{background-position:0 44px,0 0;}}
 .cube3d{position:absolute;width:110px;height:110px;transform-style:preserve-3d;animation:cubeSpin 16s linear infinite;}
 .cube3d.c1{left:9%;top:16%;}
 .cube3d.c2{right:8%;bottom:14%;width:76px;height:76px;animation-duration:11s;animation-direction:reverse;}
-.cube3d .face{position:absolute;inset:0;border:1.5px solid rgba(129,140,248,.55);background:linear-gradient(135deg,rgba(99,102,241,.22),rgba(168,85,247,.08));box-shadow:0 0 28px rgba(99,102,241,.25) inset;border-radius:10px;}
+.cube3d .face{position:absolute;inset:0;border:1.5px solid rgba(34,197,94,.45);background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(34,197,94,.05));box-shadow:0 0 28px rgba(22,163,74,.18) inset;border-radius:10px;}
 .cube3d .f1{transform:translateZ(55px);}
 .cube3d .f2{transform:rotateY(180deg) translateZ(55px);}
 .cube3d .f3{transform:rotateY(90deg) translateZ(55px);}
@@ -730,7 +952,7 @@ a{color:inherit;text-decoration:none;}
 .cube3d.c2 .f5{transform:rotateX(90deg) translateZ(38px);}
 .cube3d.c2 .f6{transform:rotateX(-90deg) translateZ(38px);}
 @keyframes cubeSpin{from{transform:rotateX(-18deg) rotateY(0deg);}to{transform:rotateX(-18deg) rotateY(360deg);}}
-.auth-bg .floatchip{position:absolute;padding:.5rem .9rem;border-radius:12px;background:rgba(17,22,34,.72);border:1px solid rgba(129,140,248,.35);backdrop-filter:blur(8px);font-size:.72rem;font-weight:800;color:#c7d2fe;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:chipFloat 6s ease-in-out infinite alternate;}
+.auth-bg .floatchip{position:absolute;padding:.5rem .9rem;border-radius:12px;background:rgba(255,255,255,.86);border:1px solid rgba(22,163,74,.28);backdrop-filter:blur(8px);font-size:.72rem;font-weight:800;color:#166534;box-shadow:0 12px 30px rgba(22,163,74,.14);animation:chipFloat 6s ease-in-out infinite alternate;}
 .auth-bg .floatchip.fc1{left:12%;bottom:22%;}
 .auth-bg .floatchip.fc2{right:11%;top:18%;animation-delay:-3s;}
 @keyframes chipFloat{from{transform:translateY(-8px) rotate(-2deg);}to{transform:translateY(10px) rotate(2deg);}}
@@ -743,13 +965,14 @@ a{color:inherit;text-decoration:none;}
 }
 
 /* ── Social login row ── */
-.social-divider{display:flex;align-items:center;gap:.75rem;margin:1.35rem 0 1rem;color:#64748b;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
-.social-divider::before,.social-divider::after{content:'';flex:1;height:1px;background:#1e293b;}
+.social-divider{display:flex;align-items:center;gap:.75rem;margin:1.35rem 0 1rem;color:#64748B;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
+.social-divider::before,.social-divider::after{content:'';flex:1;height:1px;background:#E2E8F0;}
 .social-row{display:flex;gap:.6rem;}
-.social-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem .4rem;border-radius:10px;background:#131c30;border:1.5px solid #243049;color:#e2e8f0;font-weight:800;font-size:.8rem;font-family:inherit;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
-.social-btn:hover{transform:translateY(-2px);border-color:#6366f1;box-shadow:0 10px 26px rgba(99,102,241,.35);}
+.social-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem .4rem;border-radius:10px;background:#fff;border:1.5px solid #E2E8F0;color:#374151;font-weight:800;font-size:.8rem;font-family:inherit;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+.social-btn:hover{transform:translateY(-2px);border-color:#16A34A;box-shadow:0 10px 26px rgba(22,163,74,.18);}
 .social-btn:active{transform:translateY(0);}
 @media(max-width:420px){.social-row{flex-direction:column;}}
+@media(max-width:900px){.support-grid,.account-grid{grid-template-columns:1fr !important;}}
 
 /* ── Dashboard View ── */
 .dash-wrap{flex:1;max-width:1250px;width:100%;margin:0 auto;padding:2rem 1.5rem;}
@@ -761,7 +984,7 @@ a{color:inherit;text-decoration:none;}
 .stat-val{font-size:1.75rem;font-weight:900;color:#fff;margin:0.35rem 0;}
 
 /* ── Tabs ── */
-.tabs-bar{display:flex;gap:0.5rem;border-bottom:1px solid #1e293b;margin-bottom:1.75rem;}
+.tabs-bar{display:flex;gap:0.5rem;border-bottom:1px solid #1e293b;margin-bottom:1.75rem;flex-wrap:wrap;}
 .tab-btn{background:none;border:none;color:#94a3b8;font-family:inherit;font-size:0.92rem;font-weight:700;padding:0.75rem 1.25rem;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;}
 .tab-btn:hover{color:#fff;}
 .tab-btn.active{color:#a5b4fc;border-bottom-color:#6366f1;}
@@ -851,57 +1074,46 @@ a{color:inherit;text-decoration:none;}
 
 <!-- ─── TOPBAR ─────────────────────────────────────────────── -->
 <header class="topbar">
-  <a href="<?= SITE_URL ?>" class="brand">
-    <div class="brand-icon">⚡</div>
-    <div><?= SITE_NAME ?> <span style="font-size:0.75rem;color:#818cf8;font-weight:600;margin-left:0.35rem;">Customer Portal</span></div>
+  <a href="<?= SITE_URL ?>" class="brand" aria-label="//WEBbuilders.lk Home">
+    <?php require_once __DIR__ . '/includes/brand-logo.php'; ?>
+    <?= wc_brand_logo(['size' => 'sm']) ?>
+    <span style="font-size:0.75rem;color:#15803D;font-weight:700;margin-left:0.35rem;">Customer Portal</span>
   </a>
 
   <div style="display:flex; align-items:center; gap:0.75rem;">
     <form method="POST" action="customer-portal.php<?= !empty($_GET['tab']) ? '?tab=' . urlencode($_GET['tab']) : '' ?>" style="margin:0;">
       <input type="hidden" name="action" value="set_language">
-      <select name="ui_lang" onchange="this.form.submit()" title="Language / மொழி / භාෂාව" style="background:#1e1b4b;border:1.5px solid rgba(99,102,241,0.4);color:#c7d2fe;padding:0.4rem 0.6rem;border-radius:999px;font-size:0.78rem;font-weight:700;font-family:inherit;cursor:pointer;">
+      <select name="ui_lang" onchange="this.form.submit()" title="Language / மொழி / භාෂාව" style="background:#F0FDF4;border:1.5px solid #BBF7D0;color:#166534;padding:0.4rem 0.6rem;border-radius:999px;font-size:0.78rem;font-weight:700;font-family:inherit;cursor:pointer;">
         <?php foreach (ui_lang_list() as $lc => $ln): ?>
           <option value="<?= $lc ?>"<?= $UI_LANG === $lc ? ' selected' : '' ?>><?= htmlspecialchars($ln) ?></option>
         <?php endforeach; ?>
       </select>
     </form>
-    <div style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.75rem; border-radius:999px; font-size:0.75rem; font-weight:800; background:rgba(16,185,129,0.15); border:1.5px solid #10b981; color:#34d399;" title="Supabase Cloud Database Active">
-      <span style="width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+    <div style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.75rem; border-radius:999px; font-size:0.75rem; font-weight:800; background:rgba(22,163,74,0.12); border:1.5px solid #BBF7D0; color:#15803D;" title="Supabase Cloud Database Active">
+      <span style="width:7px; height:7px; border-radius:50%; background:#16A34A; box-shadow:0 0 8px #16A34A;"></span>
       <span>⚡ Supabase Connected</span>
     </div>
 
-    <!-- Theme controls: same Dark/Light/Custom system as main header -->
-    <div class="theme-wrap">
-      <button type="button" class="theme-btn" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle dark/light mode">
-        <span class="theme-icon" id="themeToggleIcon">🌙</span>
-      </button>
-      <select class="theme-select" id="themeModeSelect" aria-label="Appearance mode">
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-        <option value="custom">Custom</option>
-      </select>
-      <?php if ($currentUser): ?>
-      <a class="theme-gear" href="<?= SITE_URL ?>/settings.php" title="Appearance settings" aria-label="Appearance settings">⚙️</a>
-      <?php endif; ?>
-    </div>
+    <?php if ($currentUser): ?>
+      <a class="theme-gear" href="<?= SITE_URL ?>/settings.php" title="Settings" aria-label="Settings" style="text-decoration:none;font-size:1rem;">⚙️</a>
+    <?php endif; ?>
 
     <?php if ($currentUser): ?>
       <div class="user-badge">
         <?php $topAvatar = customerAvatarUrl($currentUser); ?>
         <?php if ($topAvatar): ?>
-          <img src="<?= htmlspecialchars($topAvatar) ?>" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #6366f1;">
+          <img src="<?= htmlspecialchars($topAvatar) ?>" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #16A34A;">
         <?php endif; ?>
         <span class="user-pill">👤 <?= htmlspecialchars($currentUser['email']) ?></span>
         <a href="customer-portal.php?action=logout" class="btn-logout">🚪 <?= ui_t('p_logout') ?></a>
       </div>
     <?php else: ?>
-      <div style="font-size:0.82rem;color:#94a3b8;">
-        Need assistance? Contact <a href="mailto:<?= defined('SUPPORT_EMAIL') ? SUPPORT_EMAIL : 'support@webcraft.ai' ?>" style="color:#38bdf8;"><?= defined('SUPPORT_EMAIL') ? SUPPORT_EMAIL : 'support@webcraft.ai' ?></a>
+      <div style="font-size:0.82rem;color:#64748B;">
+        Need assistance? Contact <a href="mailto:<?= defined('SUPPORT_EMAIL') ? SUPPORT_EMAIL : 'support@webbuilders.lk' ?>" style="color:#15803D;"><?= defined('SUPPORT_EMAIL') ? SUPPORT_EMAIL : 'support@webbuilders.lk' ?></a>
       </div>
     <?php endif; ?>
   </div>
 </header>
-<!-- portal theme toggle is handled by WCTheme (themeToggleBtn/themeModeSelect above) -->
 
 <?php if (!$currentUser): ?>
 <!-- ══════════════════════════════════════════════════════════
@@ -1089,8 +1301,8 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <input type="text" name="email_or_id" class="inp" placeholder="e.g. you@email.com or WBL-2026-XXXX" required autofocus value="<?= htmlspecialchars($_POST['email_or_id'] ?? '') ?>">
       </div>
       <div class="field">
-        <label>Password <span style="font-weight:400;color:#64748b;">(Optional for Order ID)</span></label>
-        <input type="password" name="password" class="inp" placeholder="Enter your account password">
+        <label>Password</label>
+        <input type="password" name="password" class="inp" placeholder="Enter your account or site password" required autocomplete="current-password">
       </div>
       <button type="submit" class="btn-primary">
         <span>🚀 Access My Websites</span>
@@ -1118,6 +1330,9 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
   <?php if ($flashSuccess): ?>
     <div class="ok-box"><?= htmlspecialchars($flashSuccess) ?></div>
   <?php endif; ?>
+  <?php if ($flashError): ?>
+    <div class="err-box">⚠️ <?= htmlspecialchars($flashError) ?></div>
+  <?php endif; ?>
   <?php if (!empty($profileErr)): ?>
     <div class="err-box">⚠️ <?= htmlspecialchars($profileErr) ?></div>
   <?php endif; ?>
@@ -1138,6 +1353,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
     <!-- Direct photo upload (avatar click → file picker → auto upload) -->
     <form id="avatar-direct-form" method="POST" action="customer-portal.php" enctype="multipart/form-data" style="display:none;">
       <input type="hidden" name="action" value="upload_avatar">
+      <?= csrf_field() ?>
       <input type="file" id="avatar-direct-input" name="avatar" accept="image/jpeg,image/png,image/gif,image/webp" onchange="if(this.files.length){document.getElementById('avatar-direct-form').submit();}">
     </form>
     <div style="flex:1;min-width:200px;">
@@ -1161,6 +1377,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <?php endif; ?>
         <form method="POST" action="customer-portal.php">
           <input type="hidden" name="action" value="update_profile">
+          <?= csrf_field() ?>
           <div class="field">
             <label><?= ui_t('p_your_name') ?></label>
             <input type="text" name="pf_name" class="inp" required maxlength="120" value="<?= htmlspecialchars($currentUser['name'] ?? '') ?>">
@@ -1234,8 +1451,10 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
   <div class="tabs-bar">
     <button class="tab-btn<?= $portalTab === 'sites' ? ' active' : '' ?>" onclick="switchPortalTab('sites')" id="ptab-sites"><?= ui_t('p_tab_sites') ?> (<?= count($customerOrders) ?>)</button>
     <button class="tab-btn<?= $portalTab === 'storage' ? ' active' : '' ?>" onclick="switchPortalTab('storage')" id="ptab-storage">💾 Storage<?= $storageSummary ? ' (' . htmlspecialchars((string)$storageSummary['used_mb']) . ' MB)' : '' ?></button>
+    <button class="tab-btn<?= $portalTab === 'support' ? ' active' : '' ?>" onclick="switchPortalTab('support')" id="ptab-support">🎧 Support (<?= count($supportTickets) ?>)</button>
     <button class="tab-btn<?= $portalTab === 'notifs' ? ' active' : '' ?>" onclick="switchPortalTab('notifs')" id="ptab-notifs"><?= ui_t('p_tab_notifs') ?> (<?= count($customerNotifs) ?>)</button>
     <button class="tab-btn<?= $portalTab === 'reviews' ? ' active' : '' ?>" onclick="switchPortalTab('reviews')" id="ptab-reviews"><?= ui_t('p_tab_reviews') ?> (<?= count($myReviews) ?>)</button>
+    <button class="tab-btn<?= $portalTab === 'account' ? ' active' : '' ?>" onclick="switchPortalTab('account')" id="ptab-account">🔐 Account</button>
   </div>
 
   <!-- ── SITES LIST TAB ── -->
@@ -1261,6 +1480,8 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
           $dueDate = $order['next_payment_due'] ?? null;
           $managerUrl = SITE_URL . '/site-manager.php?order_id=' . urlencode($orderId);
           $editUrl = SITE_URL . '/builder.php?order_id=' . urlencode($orderId);
+          $siteDetails = portal_site_details($order);
+          $supportUrl = SITE_URL . '/customer-portal.php?tab=support&order=' . urlencode($orderId);
         ?>
         <div class="project-card">
           <div class="pc-top">
@@ -1299,7 +1520,48 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
               <strong>Order ID:</strong>
               <span style="font-family:'Fira Code',monospace;"><?= $orderId ?></span>
             </div>
+            <div class="pc-meta-item">
+              <strong>Custom Domain:</strong>
+              <span><?= $siteDetails['custom_domain'] !== '' ? htmlspecialchars($siteDetails['custom_domain']) : '<span style="color:#64748b;font-weight:600;">Standard published URL</span>' ?></span>
+            </div>
+            <div class="pc-meta-item">
+              <strong>SSL Certificate:</strong>
+              <?php
+                $sslColor = $siteDetails['ssl_status'] === 'active' ? '#34d399' : ($siteDetails['ssl_status'] === 'expiring' ? '#facc15' : ($siteDetails['ssl_status'] === 'expired' ? '#f87171' : '#64748b'));
+                $sslLabel = $siteDetails['ssl_days_left'] === null
+                    ? 'Not reported'
+                    : ($siteDetails['ssl_days_left'] < 0 ? 'Expired' : 'Valid · ' . (int)$siteDetails['ssl_days_left'] . ' days left');
+              ?>
+              <span style="color:<?= $sslColor ?>;"><?= htmlspecialchars($sslLabel) ?><?= !empty($siteDetails['ssl_estimated']) ? ' (est.)' : '' ?></span>
+            </div>
           </div>
+
+          <details style="background:#060a14;border:1px solid #1e293b;border-radius:12px;padding:.85rem 1rem;">
+            <summary style="cursor:pointer;color:#c7d2fe;font-size:.82rem;font-weight:800;">✅ Setup &amp; domain details</summary>
+            <div style="display:grid;gap:.45rem;margin-top:.75rem;">
+              <?php foreach ($siteDetails['checks'] as $check): ?>
+                <?php
+                  $checkIcon = $check['ok'] === true ? '✅' : ($check['ok'] === false ? '⚠️' : 'ℹ️');
+                  $checkColor = $check['ok'] === true ? '#34d399' : ($check['ok'] === false ? '#fca5a5' : '#94a3b8');
+                ?>
+                <div style="display:flex;gap:.55rem;align-items:flex-start;font-size:.79rem;">
+                  <span style="flex-shrink:0;"><?= $checkIcon ?></span>
+                  <span style="color:#cbd5e1;min-width:150px;"><?= htmlspecialchars($check['label']) ?></span>
+                  <span style="color:<?= $checkColor ?>;word-break:break-word;"><?= htmlspecialchars($check['detail']) ?></span>
+                </div>
+              <?php endforeach; ?>
+              <?php if (!empty($siteDetails['ssl_expiry'])): ?>
+                <div style="font-size:.74rem;color:#64748b;">
+                  SSL expiry: <?= htmlspecialchars(date('M j, Y', strtotime($siteDetails['ssl_expiry']))) ?><?= !empty($siteDetails['ssl_estimated']) ? ' (estimated from the publish date — no certificate date is stored)' : '' ?>
+                </div>
+              <?php endif; ?>
+              <?php if (is_array($siteDetails['preflight']) && isset($siteDetails['preflight']['ready'])): ?>
+                <div style="font-size:.74rem;color:<?= $siteDetails['preflight']['ready'] ? '#34d399' : '#fca5a5' ?>;">
+                  Publish preflight: <?= $siteDetails['preflight']['ready'] ? 'all recorded checks passed' : 'one or more recorded checks failed' ?>
+                </div>
+              <?php endif; ?>
+            </div>
+          </details>
 
           <div class="pc-actions">
             <a href="<?= $liveUrl ?>" target="_blank" class="act-btn act-btn-green">
@@ -1313,6 +1575,9 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
             </a>
             <a href="<?= $editUrl ?>" class="act-btn act-btn-dark">
               <span>🎨 Edit Design in Builder</span>
+            </a>
+            <a href="<?= $supportUrl ?>" class="act-btn act-btn-dark">
+              <span>🎧 Get Help With This Site</span>
             </a>
           </div>
         </div>
@@ -1516,6 +1781,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
       <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:1.1rem;"><?= ui_t('r_posting_as') ?> <strong style="color:#c7d2fe;"><?= htmlspecialchars($currentUser['name'] ?? 'Customer') ?></strong> · <?= ui_t('r_approved_note') ?></p>
       <form method="POST" action="customer-portal.php?tab=reviews" id="rv-add-form">
         <input type="hidden" name="action" value="review_add">
+        <?= csrf_field() ?>
         <div class="field">
           <label><?= ui_t('r_rating') ?></label>
           <div class="rv-stars" id="rv-stars-add" role="radiogroup" aria-label="Star rating">
@@ -1581,6 +1847,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
             <form method="POST" action="customer-portal.php?tab=reviews" onsubmit="return confirm('Delete this review? This cannot be undone.')" style="margin:0;">
               <input type="hidden" name="action" value="review_delete">
               <input type="hidden" name="rv_id" value="<?= $rvId ?>">
+              <?= csrf_field() ?>
               <button type="submit" class="rv-mini-btn rv-del"><?= ui_t('r_delete') ?></button>
             </form>
             <?php endif; ?>
@@ -1588,6 +1855,198 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         </div>
       <?php endforeach; ?>
     <?php endif; ?>
+  </div>
+
+  <!-- ── SUPPORT TAB (tickets stored in storage/submissions) ── -->
+  <div id="psec-support"<?= $portalTab === 'support' ? '' : ' style="display:none;"' ?>>
+    <?php if ($supportErr): ?>
+      <div class="err-box">⚠️ <?= htmlspecialchars($supportErr) ?></div>
+    <?php endif; ?>
+    <?php if ($supportNotice): ?>
+      <div class="ok-box"><?= htmlspecialchars($supportNotice) ?></div>
+    <?php endif; ?>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:1.25rem;align-items:start;" class="support-grid">
+      <!-- New ticket -->
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;">
+        <h3 style="color:#fff;font-size:1.05rem;margin-bottom:.25rem;">🎧 Contact support</h3>
+        <p style="color:#94a3b8;font-size:.8rem;margin-bottom:1.1rem;">Tickets appear in the platform support inbox. Replies are shown here and sent to <?= htmlspecialchars($currentUser['email']) ?>.</p>
+        <form method="POST" action="customer-portal.php?tab=support">
+          <input type="hidden" name="action" value="support_create">
+          <?= csrf_field() ?>
+          <div class="field">
+            <label>Subject</label>
+            <input type="text" name="sp_subject" class="inp" required minlength="3" maxlength="150" value="<?= htmlspecialchars($_POST['sp_subject'] ?? '') ?>" placeholder="e.g. Help updating my contact page">
+          </div>
+          <?php if (!empty($customerOrders)): ?>
+          <div class="field">
+            <label>Related website <span style="font-weight:400;color:#64748b;">(optional)</span></label>
+            <select name="sp_order_id" class="inp">
+              <option value="">— General account question —</option>
+              <?php
+                $prefillOrder = (string)($_POST['sp_order_id'] ?? $supportPrefillOrder);
+              ?>
+              <?php foreach ($customerOrders as $o): ?>
+                <option value="<?= htmlspecialchars((string)($o['order_id'] ?? '')) ?>"<?= $prefillOrder === (string)($o['order_id'] ?? '') ? ' selected' : '' ?>>
+                  <?= htmlspecialchars(($o['site_name'] ?? 'Website') . ' · ' . ($o['order_id'] ?? '')) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <?php endif; ?>
+          <div class="field">
+            <label>Message</label>
+            <textarea name="sp_message" class="inp" rows="6" required minlength="10" maxlength="5000" placeholder="Describe what you need help with. Include error messages or page names if relevant."><?= htmlspecialchars($_POST['sp_message'] ?? '') ?></textarea>
+          </div>
+          <button type="submit" class="btn-primary"><span>Submit ticket</span></button>
+        </form>
+      </div>
+
+      <!-- Ticket history -->
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;">
+        <h3 style="color:#fff;font-size:1.05rem;margin-bottom:.25rem;">Your tickets (<?= count($supportTickets) ?>)</h3>
+        <p style="color:#64748b;font-size:.78rem;margin-bottom:1rem;">Newest activity first. Closed tickets can be reopened.</p>
+        <?php if (empty($supportTickets)): ?>
+          <div style="color:#64748b;font-size:.84rem;border:1px dashed #1e293b;border-radius:10px;padding:1.5rem;text-align:center;">No tickets yet — send us a message and we'll reply here.</div>
+        <?php else: ?>
+          <?php foreach ($supportTickets as $t): ?>
+            <?php
+              $isSel = $supportSelected && hash_equals($supportSelected['id'], $t['id']);
+              $canManage = support_ticket_id_valid($t['id']);
+              $st = strtolower($t['status']);
+              $stColor = in_array($st, ['closed'], true) ? '#94a3b8' : ($st === 'resolved' ? '#34d399' : ($st === 'pending' ? '#facc15' : '#a5b4fc'));
+              $stBg = in_array($st, ['closed'], true) ? 'rgba(148,163,184,.12)' : ($st === 'resolved' ? 'rgba(16,185,129,.12)' : ($st === 'pending' ? 'rgba(245,158,11,.12)' : 'rgba(99,102,241,.14)'));
+            ?>
+            <details id="ticket-<?= htmlspecialchars($t['id']) ?>" style="background:#060a14;border:1px solid #1e293b;border-radius:12px;padding:.85rem 1rem;margin-bottom:.7rem;"<?= $isSel ? ' open' : '' ?>>
+              <summary style="cursor:pointer;display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;flex-wrap:wrap;">
+                <span style="color:#fff;font-weight:800;font-size:.86rem;"><?= htmlspecialchars($t['subject']) ?></span>
+                <span style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:.18rem .55rem;border-radius:999px;color:<?= $stColor ?>;background:<?= $stBg ?>;"><?= htmlspecialchars(support_ticket_status_label($t['status'])) ?></span>
+              </summary>
+              <div style="margin-top:.7rem;border-top:1px solid #1e293b;padding-top:.7rem;">
+                <div style="font-size:.7rem;color:#64748b;margin-bottom:.45rem;">
+                  <?= htmlspecialchars($t['id']) ?><?= $t['order_id'] !== '' ? ' · Order ' . htmlspecialchars($t['order_id']) : '' ?> · opened <?= htmlspecialchars($t['created_at']) ?>
+                </div>
+                <div style="font-size:.84rem;color:#cbd5e1;line-height:1.55;white-space:pre-wrap;"><?= htmlspecialchars($t['message']) ?></div>
+
+                <?php if (!empty($t['replies'])): ?>
+                  <div style="margin-top:.8rem;display:grid;gap:.5rem;">
+                    <?php foreach ($t['replies'] as $r): ?>
+                      <?php $isCustomerReply = (($r['role'] ?? '') === 'customer'); ?>
+                      <div style="background:<?= $isCustomerReply ? 'rgba(99,102,241,.08)' : 'rgba(16,185,129,.07)' ?>;border:1px solid #1e293b;border-radius:9px;padding:.55rem .75rem;">
+                        <div style="font-size:.7rem;color:<?= $isCustomerReply ? '#a5b4fc' : '#6ee7b7' ?>;font-weight:800;margin-bottom:.2rem;">
+                          <?= htmlspecialchars($r['by'] ?: ($isCustomerReply ? 'You' : 'Support')) ?><?= $isCustomerReply ? ' (you)' : ' · Support' ?> · <span style="color:#64748b;font-weight:600;"><?= htmlspecialchars($r['time']) ?></span>
+                        </div>
+                        <div style="font-size:.8rem;color:#cbd5e1;line-height:1.5;white-space:pre-wrap;"><?= htmlspecialchars($r['msg']) ?></div>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                <?php endif; ?>
+
+                <?php if ($st !== 'closed' && $canManage): ?>
+                  <form method="POST" action="customer-portal.php?tab=support&ticket=<?= urlencode($t['id']) ?>" style="margin-top:.8rem;">
+                    <input type="hidden" name="action" value="support_reply">
+                    <input type="hidden" name="ticket_id" value="<?= htmlspecialchars($t['id']) ?>">
+                    <?= csrf_field() ?>
+                    <div class="field" style="margin-bottom:.6rem;">
+                      <label style="font-size:.7rem;">Reply</label>
+                      <textarea name="sp_reply" class="inp" rows="3" required minlength="2" maxlength="3000" placeholder="Add more details for support…"></textarea>
+                    </div>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                      <button type="submit" class="rv-mini-btn">Send reply</button>
+                      <button type="button" class="rv-mini-btn" onclick="if(confirm('Close this ticket? You can reopen it later.')){var f=this.form;f.querySelector('input[name=action]').value='support_close';f.submit();}">Close ticket</button>
+                    </div>
+                  </form>
+                <?php elseif ($st === 'closed' && $canManage): ?>
+                  <form method="POST" action="customer-portal.php?tab=support&ticket=<?= urlencode($t['id']) ?>" style="margin-top:.8rem;">
+                    <input type="hidden" name="action" value="support_reopen">
+                    <input type="hidden" name="ticket_id" value="<?= htmlspecialchars($t['id']) ?>">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="rv-mini-btn">Reopen ticket</button>
+                  </form>
+                <?php endif; ?>
+              </div>
+            </details>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ACCOUNT & SECURITY TAB ── -->
+  <div id="psec-account"<?= $portalTab === 'account' ? '' : ' style="display:none;"' ?>>
+    <?php
+      $acctPlan = $storageSummary['plan'] ?? null;
+      $acctPlanName = $acctPlan['name'] ?? 'Unavailable';
+      $acctMaxSites = $acctPlan ? (int)($acctPlan['max_sites'] ?? 0) : null;
+      $acctSiteCount = count($customerOrders);
+      $acctSubInvoices = $storageInvoices['subscription'] ?? [];
+    ?>
+    <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1.25rem;align-items:start;" class="account-grid">
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;">
+        <h3 style="color:#fff;font-size:1.05rem;margin-bottom:.25rem;">📋 Plan &amp; billing</h3>
+        <p style="color:#64748b;font-size:.78rem;margin-bottom:1rem;">Live values from your account and the existing storage/billing records.</p>
+        <?php if (!$storageSummary): ?>
+          <div class="err-box" style="margin:0;">Plan and billing details are temporarily unavailable<?= $storageDbOffline ? ' (database offline)' : '' ?>. Please try again later.</div>
+        <?php else: ?>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;">
+            <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.8rem .9rem;font-size:.78rem;color:#94a3b8;">Plan<br><strong style="color:#fff;font-size:1rem;"><?= htmlspecialchars($acctPlanName) ?></strong></div>
+            <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.8rem .9rem;font-size:.78rem;color:#94a3b8;">Websites<br><strong style="color:#fff;font-size:1rem;"><?= $acctSiteCount ?><?= $acctMaxSites !== null ? ' / ' . ($acctMaxSites >= 9999 ? 'unlimited' : $acctMaxSites) : '' ?></strong></div>
+            <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.8rem .9rem;font-size:.78rem;color:#94a3b8;">Next renewal<br><strong style="color:#facc15;font-size:1rem;"><?= $nextRenewal ? htmlspecialchars(date('M j, Y', strtotime($nextRenewal))) : 'No renewal due' ?></strong></div>
+            <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.8rem .9rem;font-size:.78rem;color:#94a3b8;">Storage used<br><strong style="color:#fff;font-size:1rem;"><?= htmlspecialchars((string)$storageSummary['used_mb']) ?> / <?= htmlspecialchars((string)$storageSummary['limit_mb']) ?> MB</strong></div>
+            <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.8rem .9rem;font-size:.78rem;color:#94a3b8;">Bandwidth<br><strong style="color:#fff;font-size:1rem;"><?= htmlspecialchars((string)$storageSummary['bandwidth_used_mb']) ?> / <?= (int)$storageSummary['bandwidth_limit_mb'] ?> MB</strong></div>
+            <div style="background:#060a14;border:1px solid #1e293b;border-radius:10px;padding:.8rem .9rem;font-size:.78rem;color:#94a3b8;">Billing period ends<br><strong style="color:#fff;font-size:1rem;"><?= htmlspecialchars((string)($storageSummary['billing_period_end'] ?? '—')) ?></strong></div>
+          </div>
+          <?php if ($acctMaxSites !== null && $acctMaxSites < 9999 && $acctSiteCount >= $acctMaxSites): ?>
+            <div class="err-box" style="margin:1rem 0 0;">You have reached your plan's website limit (<?= $acctMaxSites ?>). Contact support to discuss your plan.</div>
+          <?php endif; ?>
+          <div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:1rem;">
+            <button type="button" class="rv-mini-btn" onclick="switchPortalTab('storage')">Open storage &amp; invoices (<?= count($acctSubInvoices) ?>)</button>
+            <a class="rv-mini-btn" href="<?= SITE_URL ?>/customer-portal.php?tab=support" style="text-decoration:none;">Ask about billing</a>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;">
+        <h3 style="color:#fff;font-size:1.05rem;margin-bottom:.25rem;">🔐 Change password</h3>
+        <p style="color:#64748b;font-size:.78rem;margin-bottom:1rem;">Use at least 8 characters. A confirmation email is sent after the change.</p>
+        <?php if ($pwErr): ?>
+          <div class="err-box">⚠️ <?= htmlspecialchars($pwErr) ?></div>
+        <?php endif; ?>
+        <form method="POST" action="customer-portal.php?tab=account">
+          <input type="hidden" name="action" value="change_password">
+          <?= csrf_field() ?>
+          <div class="field">
+            <label>Current password</label>
+            <input type="password" name="pw_current" class="inp" required autocomplete="current-password" placeholder="Current account or site password">
+          </div>
+          <div class="field">
+            <label>New password</label>
+            <input type="password" name="pw_new" class="inp" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters" oninput="pwMeter(this.value,'acct')">
+            <div class="pw-track"><div class="pw-fill" id="pw-fill-acct"></div></div>
+            <div class="pw-hint" id="pw-hint-acct">Use 8+ characters with upper, lower, number &amp; symbol.</div>
+          </div>
+          <div class="field">
+            <label>Confirm new password</label>
+            <input type="password" name="pw_new2" class="inp" required minlength="8" autocomplete="new-password" placeholder="Re-enter new password">
+          </div>
+          <button type="submit" class="btn-primary"><span>Update password</span></button>
+        </form>
+      </div>
+    </div>
+
+    <div style="background:#0c1220;border:1px solid #1e293b;border-radius:16px;padding:1.5rem;margin-top:1.25rem;">
+      <h3 style="color:#fff;font-size:1.05rem;margin-bottom:.9rem;">👤 Account details</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;font-size:.8rem;color:#94a3b8;">
+        <div>Name<br><strong style="color:#fff;"><?= htmlspecialchars($currentUser['name'] ?? 'Customer') ?></strong></div>
+        <div>Email<br><strong style="color:#fff;word-break:break-all;"><?= htmlspecialchars($currentUser['email']) ?></strong></div>
+        <div>Phone<br><strong style="color:#fff;"><?= htmlspecialchars($currentUser['phone'] ?? '—') ?></strong></div>
+        <div>Signed-in sites<br><strong style="color:#fff;"><?= $acctSiteCount ?></strong></div>
+      </div>
+      <div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:1rem;">
+        <button type="button" class="rv-mini-btn" onclick="openProfileModal()">Edit profile</button>
+        <a class="rv-mini-btn" href="<?= SITE_URL ?>/customer-portal.php?view=forgot" style="text-decoration:none;">Forgot password instead?</a>
+      </div>
+    </div>
   </div>
 
   <!-- ── REVIEW EDIT MODAL ── -->
@@ -1601,6 +2060,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <form method="POST" action="customer-portal.php?tab=reviews" id="rv-edit-form">
           <input type="hidden" name="action" value="review_edit">
           <input type="hidden" name="rv_id" id="rv-edit-id" value="">
+          <?= csrf_field() ?>
           <div class="field">
             <label><?= ui_t('r_rating') ?></label>
             <div class="rv-stars" id="rv-stars-edit" role="radiogroup" aria-label="Star rating">
@@ -1641,6 +2101,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
         <form method="POST" action="customer-portal.php?tab=reviews">
           <input type="hidden" name="action" value="review_delete">
           <input type="hidden" name="rv_id" id="rv-del-id" value="">
+          <?= csrf_field() ?>
           <div class="field">
             <label><?= ui_t('r_pw') ?></label>
             <input type="password" name="rv_password" class="inp" required autocomplete="current-password" placeholder="••••••••">
@@ -1658,7 +2119,7 @@ $pendingEmail = $_SESSION['pending_signup']['email'] ?? '';
 
 <script>
 function switchPortalTab(tab) {
-  ['sites', 'storage', 'notifs', 'reviews'].forEach(function (t) {
+  ['sites', 'storage', 'support', 'notifs', 'reviews', 'account'].forEach(function (t) {
     var sec = document.getElementById('psec-' + t);
     if (sec) sec.style.display = (tab === t) ? 'block' : 'none';
     var btn = document.getElementById('ptab-' + t);
@@ -1880,6 +2341,11 @@ document.querySelectorAll('form').forEach(function (f) {
         reset_complete: ['Updating password…', 'Securing your account', 'lock'],
         update_profile: ['Saving profile…', 'Updating your details', 'save'],
         upload_avatar: ['Uploading photo…', 'Saving your picture', 'save'],
+        change_password: ['Updating password…', 'Securing your account', 'lock'],
+        support_create: ['Creating ticket…', 'Sending your request to support', 'save'],
+        support_reply: ['Sending reply…', 'Adding your message to the ticket', 'save'],
+        support_close: ['Closing ticket…', 'Updating the ticket status', 'save'],
+        support_reopen: ['Reopening ticket…', 'Updating the ticket status', 'save'],
         social_email: ['Completing sign-in…', 'Setting up your workspace', 'lock']
       };
       var m = msgs[act];

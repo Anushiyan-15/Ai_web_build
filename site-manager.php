@@ -495,27 +495,10 @@ a{text-decoration:none;color:inherit}
 <div class="topbar">
   <div class="brand"><div class="logo">✦</div><?= defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'WebCraft AI' ?></div>
   <div class="topbar-actions">
-    <select id="smThemeSelect" aria-label="Appearance mode" style="height:34px;border-radius:8px;border:1.5px solid var(--wc-border,#283347);background:var(--wc-surface,#0b0f17);color:var(--wc-text,#cbd5e1);font-family:inherit;font-size:.76rem;font-weight:700;padding:0 .5rem;cursor:pointer">
-      <option value="dark">🌙 Dark</option>
-      <option value="light">☀️ Light</option>
-      <option value="custom">🎨 Custom</option>
-    </select>
-    <a href="<?= defined('SITE_URL') ? SITE_URL : '' ?>/settings.php" class="tb-btn" title="Appearance settings">⚙️</a>
+    <a href="<?= defined('SITE_URL') ? SITE_URL : '' ?>/settings.php" class="tb-btn" title="Settings">⚙️</a>
     <a href="<?= defined('SITE_URL') ? SITE_URL : '' ?>/builder.php" class="tb-btn">🏠 Back to Builder</a>
   </div>
 </div>
-<script>
-(function(){
-  var s = document.getElementById('smThemeSelect');
-  if (!s) return;
-  try {
-    var m = (window.WCTheme ? WCTheme.getMode() : null) || document.documentElement.getAttribute('data-theme') || 'dark';
-    if (m === 'dark' || m === 'light' || m === 'custom') s.value = m;
-  } catch (e) {}
-  s.addEventListener('change', function(){ if (window.WCTheme) WCTheme.setMode(s.value); });
-  document.addEventListener('wc:theme-change', function(e){ try { if (e.detail.mode) s.value = e.detail.mode; } catch (e2) {} });
-})();
-</script>
 
 <?php if ($notFound): ?>
 <!-- Not Found / Access Denied -->

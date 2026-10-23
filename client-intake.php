@@ -158,17 +158,6 @@ function hasErr(string $key): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Client Intake Questionnaire | Website Project Discovery</title>
 <?php require_once __DIR__ . '/includes/theme-head.php'; ?>
-<script>
-/* Legacy bootstrap superseded by theme-head (wc_theme_mode aware); kept as no-op fallback. */
-(function(){
-  try {
-    if (document.documentElement.getAttribute('data-theme')) return;
-    var saved = localStorage.getItem('wc_theme');
-    var dark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
-  } catch(e) {}
-})();
-</script>
 <style>
 /* ──────────────────────────────────────────────
    RESET & VARIABLES
@@ -806,13 +795,12 @@ select {
 <header class="site-header">
   <div style="position:absolute;top:1rem;right:1.25rem;display:flex;align-items:center;gap:.6rem;z-index:10;">
     <a href="index.php" style="color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:.35rem .75rem;border-radius:8px;">← Home</a>
-    <button type="button" id="intakeThemeToggle" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Toggle theme">🌙</button>
   </div>
   <div class="logo">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
     </svg>
-    WebCraft AI
+    //WEBbuilders.lk
   </div>
   <div class="header-badge">
     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
@@ -823,36 +811,6 @@ select {
   <h1>Website Project Discovery</h1>
   <p>Help us understand your vision so we can build something extraordinary together.</p>
 </header>
-<script>
-(function(){
-  var btn = document.getElementById('intakeThemeToggle');
-  if (!btn) return;
-  function update() {
-    var m = (window.WCTheme ? WCTheme.getMode() : null) || document.documentElement.getAttribute('data-theme') || 'dark';
-    if (m === 'custom') { btn.textContent = '🎨'; return; }
-    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    btn.textContent = isDark ? '☀️' : '🌙';
-  }
-  update();
-  document.addEventListener('wc:theme-change', update);
-  btn.addEventListener('click', function(){
-    if (window.WCTheme) {
-      var cur = document.documentElement.getAttribute('data-theme');
-      WCTheme.setMode(cur === 'light' ? 'dark' : 'light');
-    } else {
-      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      if (isDark) {
-        document.documentElement.removeAttribute('data-theme');
-        localStorage.setItem('wc_theme', 'light');
-      } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        localStorage.setItem('wc_theme', 'dark');
-      }
-    }
-    update();
-  });
-})();
-</script>
 
 <!-- ═══════════════════════════════════════════
      MAIN
